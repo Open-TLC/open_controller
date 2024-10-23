@@ -13,3 +13,11 @@ services:
       ssh: 
         - default=$HOME/.ssh/id_rsa
       dockerfile: docker/clockwork/Dockerfile
+
+  sumo-simulator:
+    image: sumo-world
+    build:
+      context: .
+      ssh:
+        - default=$HOME/.ssh/id_rsa
+      dockerfile: docker/simengine/Dockerfile
