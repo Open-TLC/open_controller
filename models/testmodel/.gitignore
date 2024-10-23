@@ -163,3 +163,7 @@ cython_debug/
 
 # Mac OS X
 .DS_Store
+
+# Pip
+Pipfile
+Pipfile.lock
