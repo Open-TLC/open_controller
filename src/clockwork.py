@@ -12,7 +12,7 @@ in the field or alternatively with a simulation model.
 SOFTWARE_NAME = "TrafficController"
 IMPL_VERSION = "0.2"
 
-DEFAULT_NATS_SERVER = "localhost"
+DEFAULT_NATS_SERVER = "nats"
 DEFAULT_NATS_PORT = 4222
 
 

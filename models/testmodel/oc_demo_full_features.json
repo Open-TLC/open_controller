@@ -9,7 +9,7 @@
 "operation_mode":"test",
 
 "nats":{
-    "server": "localhost",
+    "server": "nats",
     "port": "4222",
     "mode": "change"
 },
