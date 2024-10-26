@@ -39,7 +39,10 @@ UPDATE_INTERVAL = 1000 # ms
 NATS_REQ_TIMEOUT = 10 # s
 NUMBER_OF_GROUPS = 4
 
-NATS_SERVER = "localhost:4222"
+# For running locally
+#NATS_SERVER = "localhost:4222"
+# For running in docker
+NATS_SERVER = "nats:4222"
 # For testing with the itc unit
 #NATS_SERVER = "10.8.0.36:4222"
 # 270 (the test intersection)
@@ -613,7 +616,7 @@ if __name__ == '__main__':
     th = Thread(target=async_main_wrapper)
     th.start()
     
-    app.run(use_reloader=False, debug=True)
+    app.run(use_reloader=False, debug=True, host="0.0.0.0", port=8050) # run the app
     th.join()
     #asyncio.run(get_status())
     
