@@ -22,7 +22,7 @@ from threading import Thread
 from nats.aio.client import Client as NATS
 import json
 from message_storage import MessageStorage
-
+import time
 import sys
 # Maybe this should be set as module in the future?
 sys.path.insert(0, 'clockwork/')
@@ -40,9 +40,9 @@ NATS_REQ_TIMEOUT = 10 # s
 NUMBER_OF_GROUPS = 4
 
 # For running locally
-#NATS_SERVER = "localhost:4222"
+NATS_SERVER = "localhost:4222"
 # For running in docker
-NATS_SERVER = "nats:4222"
+#NATS_SERVER = "nats:4222"
 # For testing with the itc unit
 #NATS_SERVER = "10.8.0.36:4222"
 # 270 (the test intersection)
@@ -76,6 +76,9 @@ message_storage = None
 start_sim_pressed = False
 stop_sim_pressed = False
 
+controller_conf = None
+get_conf_button_pressed = False
+
 test_counter = 0 # DEBUG
 #
 # This is the Async part (NATS)
@@ -93,9 +96,11 @@ async def commands_handler():
     global nats
     global start_sim_pressed
     global stop_sim_pressed
+    global get_conf_button_pressed
+    global controller_conf
 
     while True:
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
         if start_sim_pressed:
             print("Starting simulation")
             await nats.publish(COMMAND_CHANNEL, "start".encode())
@@ -106,7 +111,12 @@ async def commands_handler():
             await nats.publish(COMMAND_CHANNEL, "stop".encode())
             stop_sim_pressed = False
             continue # Next await
-
+        if get_conf_button_pressed:
+            print("Getting configuration")
+            rep = await nats.request(CONF_CHANNEL, "get_conf".encode(), timeout=NATS_REQ_TIMEOUT)
+            controller_conf = json.loads(rep.data.decode())
+            get_conf_button_pressed = False
+            continue
 
 async def async_main():
     """Main async function"""
@@ -454,12 +464,14 @@ async def set_group_1_off(value):
     Input('groups-table', 'data'),
     Input('groups-table', 'columns'),
     prevent_initial_call=True)
-async def conf_edited_groups(rows, columns):
+def conf_edited_groups(rows, columns):
     global controller
     global nats
     errors = controller.update_group_params(rows)
     if errors is None:
-        rep = await nats.request(CONF_CHANNEL, json.dumps(controller.get_conf_as_dict()).encode(), timeout=NATS_REQ_TIMEOUT)
+        # Add to the NATS side
+        #rep = await nats.request(CONF_CHANNEL, json.dumps(controller.get_conf_as_dict()).encode(), timeout=NATS_REQ_TIMEOUT)
+        rep = "NOT OK" # Placeholder
         if rep == "Ok":
             return "Conf edited and saved"
         else:
@@ -472,12 +484,14 @@ async def conf_edited_groups(rows, columns):
     Input('intergreens-table', 'data'),
     Input('intergreens-table', 'columns'),
     prevent_initial_call=True)
-async def conf_edited_groups(rows, columns):
+def conf_edited_groups(rows, columns):
     global controller
     global nats
     errors = controller.update_ig_params(rows)
     if errors is None:
-        rep = await nats.request(CONF_CHANNEL, json.dumps(controller.get_conf_as_dict()).encode(), timeout=NATS_REQ_TIMEOUT)
+        # Add to the NATS side
+        #rep = await nats.request(CONF_CHANNEL, json.dumps(controller.get_conf_as_dict()).encode(), timeout=NATS_REQ_TIMEOUT)
+        rep = "NOT OK" # Placeholder
         if rep == "Ok":
             return "Conf edited and saved"
         else:
@@ -490,12 +504,14 @@ async def conf_edited_groups(rows, columns):
     Input('phases-table', 'data'),
     Input('phases-table', 'columns'),
     prevent_initial_call=True)
-async def conf_edited_groups(rows, columns):
+def conf_edited_groups(rows, columns):
     global controller
     global nats
     errors = controller.update_phase_params(rows)
     if errors is None:
-        rep = await nats.request(CONF_CHANNEL, json.dumps(controller.get_conf_as_dict()).encode(), timeout=NATS_REQ_TIMEOUT)
+        # Add to the NATS side        
+        #rep = await nats.request(CONF_CHANNEL, json.dumps(controller.get_conf_as_dict()).encode(), timeout=NATS_REQ_TIMEOUT)
+        rep = "NOT OK" # Placeholder
         if rep == "Ok":
             return "Conf edited and saved"
         else:
@@ -510,14 +526,17 @@ async def conf_edited_groups(rows, columns):
     Input('save-conf', 'n_clicks'),
     prevent_initial_call=True
 )
-async def save_conf(value):
+def save_conf(value):
     print("Get conf button pressed")
     global nats
     global controller
     if nats is not None:
         print("Saving conf")       
-        rep = await nats.request(COMMAND_CHANNEL, "save_conf".encode(), timeout=NATS_REQ_TIMEOUT)
-        rep_string = rep.data.decode().strip()
+        # Add to the NATS side
+        #rep = await nats.request(COMMAND_CHANNEL, "save_conf".encode(), timeout=NATS_REQ_TIMEOUT)
+        #rep_string = rep.data.decode().strip()
+        rep_string = "NOT OK" # Placeholder
+
         if rep_string == "OK":
             return ["Conf saved"]
         else:
@@ -540,62 +559,64 @@ async def save_conf(value):
     Input('get-conf', 'n_clicks'),
     prevent_initial_call=True
 )
-async def get_conf_groups(value):
+def get_conf_file(value):
     print("Get conf button pressed")
-    global nats
+    global get_conf_button_pressed
+    global controller_conf
+    
+    # This will (eventually) trigger request in nats thread
+    get_conf_button_pressed = True
     global controller
     conf = ""
-    if nats is not None:
-        rep = await nats.request(CONF_CHANNEL, "get_conf".encode(), timeout=NATS_REQ_TIMEOUT)
-        conf = json.loads(rep.data.decode())
-        # Note: we have no timer for this controller
-        controller = PhaseRingController(conf, None)
+    # this is not correct way to do this but we wait for the other process
+    while not controller_conf:
+        time.sleep(0.1)
+    controller = PhaseRingController(controller_conf, None)
 
-        # GROUPS
-        grp_params_df = controller.get_group_params_as_df()
-        grp_cols =  [{"name": i, "id": i} for i in grp_params_df.columns]
-        for col in grp_cols:
-            if col["name"] in ["request_type", "phase_request", "green_end"]:
-                col["presentation"]="dropdown"
-
-            if col["name"] in ["name", "channel"]:
-                col["editable"]=False
-
-        # INTERGREENS
-        ig_params_df = controller.get_intergreens_as_df()
-        ig_cols =  [{"name": i, "id": i} for i in ig_params_df.columns]
-        
-
-        # PHASES
-        phases_df = controller.get_phases_as_df()
-        phases_cols =  [{"name": i, "id": i} for i in phases_df.columns]
-        for col in phases_cols:
+    # GROUPS
+    grp_params_df = controller.get_group_params_as_df()
+    grp_cols =  [{"name": i, "id": i} for i in grp_params_df.columns]
+    for col in grp_cols:
+        if col["name"] in ["request_type", "phase_request", "green_end"]:
             col["presentation"]="dropdown"
 
-        # LANES
-        lanes_df = controller.get_lane_params_as_df()
-        lanes_cols =  [{"name": i, "id": i} for i in lanes_df.columns]
+        if col["name"] in ["name", "channel"]:
+            col["editable"]=False
+
+    # INTERGREENS
+    ig_params_df = controller.get_intergreens_as_df()
+    ig_cols =  [{"name": i, "id": i} for i in ig_params_df.columns]
         
 
-        return [
-            grp_params_df.to_dict('records'), 
-            grp_cols,
-            ig_params_df.to_dict('records'), 
-            ig_cols,
-            phases_df.to_dict('records'), 
-            phases_cols,
-            lanes_df.to_dict('records'),
-            lanes_cols
-            ]
+    # PHASES
+    phases_df = controller.get_phases_as_df()
+    phases_cols =  [{"name": i, "id": i} for i in phases_df.columns]
+    for col in phases_cols:
+        col["presentation"]="dropdown"
 
-    return None
+    # LANES
+    lanes_df = controller.get_lane_params_as_df()
+    lanes_cols =  [{"name": i, "id": i} for i in lanes_df.columns]
+        
+
+    return [
+        grp_params_df.to_dict('records'), 
+        grp_cols,
+        ig_params_df.to_dict('records'), 
+        ig_cols,
+        phases_df.to_dict('records'), 
+        phases_cols,
+        lanes_df.to_dict('records'),
+        lanes_cols
+        ]
+
 
 @callback(
     [Output('detectors-table', 'data'), Output('detectors-table', 'columns')],
     Input('get-conf', 'n_clicks'),
     prevent_initial_call=True
 )
-async def get_conf_detectors(value):
+def get_conf_detectors(value):
     columns=(
         [{'id': 'Model', 'name': 'Model'}] +
         [{'id': p, 'name': p} for p in params]
