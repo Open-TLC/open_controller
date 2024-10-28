@@ -137,7 +137,7 @@ async def async_main():
     global current_status
     global nats
     
-    nats_server = command_line.nats_server + ":" + str(command_line.nats_port)
+    nats_server = command_line_args.nats_server + ":" + str(command_line_args.nats_port)
     nats = NATS()
     await nats.connect(nats_server)
     
