@@ -96,12 +96,13 @@ test_counter = 0 # DEBUG
 #
 # This is the Async part (NATS)
 #
-async def some_print_task():
+async def update_messages():
     """Some async function"""
     global test_counter
     while True:
         await asyncio.sleep(2)
         test_counter += 2
+        await update_message_container()
 
 
 async def commands_handler():
@@ -148,7 +149,7 @@ async def async_main():
         data = msg.data.decode()
         current_status = data
     await nats.subscribe(STATUS_CHANNEL, cb=message_handler)
-    await asyncio.gather(some_print_task(), commands_handler())
+    await asyncio.gather(update_messages(), commands_handler())
 
 def async_main_wrapper():
     """Not async Wrapper around async_main to run it as target1function of Thread"""
@@ -348,7 +349,7 @@ async def update_message_container():
         message = msg.data.decode()
         message_storage.add_message(channel, message)
     await nats.subscribe("detector.status.*", cb=handle_messages)
-    await nats.subscribe("group.status.*.*", cb=handle_messages)
+    await nats.subscribe("group.status.*", cb=handle_messages)
     while True:
         await asyncio.sleep(1)
         #print(message_storage.get_detector_messages())
@@ -390,11 +391,12 @@ def update_output(value):
     Output('group-messages-table', 'columns'),
     Input('interval-component-messages', 'n_intervals')
 )
-async def update_output2(value):
+def update_output_messages(value):
     global message_storage
     if message_storage is None:
-        asyncio.create_task(update_message_container())
-        return "No messages yet", None, None # This should likely respond wit an empty table
+    #    asyncio.create_task(update_message_container())
+        return "No messages yet", None, None, None, None 
+        # This should likely respond wit an empty table
     else:    
         raw_messages = message_storage.get_latest_messages()
         det_messages_df = message_storage.get_detector_messages_as_df()
