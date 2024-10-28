@@ -1,0 +1,372 @@
+body {
+  background-color: #FFFFFF;
+  color: #6FA489;
+  font-family: Open Sans, sans-serif;
+  width: 100%;
+  height: 100vh;
+  max-width: 100% !important;
+  overflow-x: hidden;
+  margin: 0;
+}
+
+#big-app-container {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 6rem;
+}
+
+.output-datatable {
+  margin: 2rem 0rem 2rem 2rem;
+  line-height: 3;
+  align-self: flex-end;
+  width: 20%;
+}
+
+/* Tabs
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+#tabs {
+  width: 100%;
+}
+
+.custom-tabs {
+  background-color: #FFFFFF;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 14px;
+  height: fit-content;
+  cursor: pointer;
+}
+
+#Ops-tab.custom-tab,
+#Settings-tab.custom-tab,
+#Messages-tab.custom-tab,
+#Map-tab.custom-tab{
+  background-color: #B2B4B3;
+  letter-spacing: 1px;
+  color: inherit;
+  border: 0;
+  border-bottom: #B2B4B3 solid 8px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  height: 18px;
+}
+
+#Ops-tab.custom-tab--selected,
+#Settings-tab.custom-tab--selected,
+#Messages-tab.custom-tab--selected,
+#Map-tab.custom-tab--selected {
+  border-bottom: #F0F0F0 solid 8px !important;
+  background-color: #F0F0F0;
+}
+
+#Specs-tab.custom-tab {
+  margin-right: 5px;
+}
+
+#Control-chart-tab.custom-tab {
+  margin-left: 5px;
+}
+
+#Sumo-tab.custom-tab {
+  margin-left: 5px;
+}
+
+
+/* Main Dashboard Tab
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+#top-section-container {
+  height: 40rem;
+  flex-direction: row;
+  display: flex;
+  max-width: 100%;
+  /*width: 100%;*/
+}
+
+#metric_header > div {
+  font-weight: bold;
+  font-size: 1.35rem;
+  line-height: 3rem;
+}
+
+#m_header_5 {
+  margin-top: 0rem !important;
+}
+
+.metric-row {
+  font-size: 1.34rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center; /* vertical center row items*/
+}
+
+.metric-row:hover {
+  background-color: #0F1328;
+}
+
+
+
+#control-chart-container {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  border-top: #1E2130 solid 0.8rem;
+}
+
+#metric-summary-session {
+  height: 100%;
+  flex: 1 1 auto;
+}
+
+#ooc-piechart-outer {
+  height: 100%;
+  margin: 0;
+  border-left: #1E2130 solid 0.8rem;
+  flex: 1 1 auto;
+}
+
+#piechart.plot-container plotly {
+  height: 100%;
+}
+
+#card-1, #card-2, #utility-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+#card-1 {
+  margin-bottom: 3rem;
+}
+
+#utility-card {
+  height: 4rem !important;
+  margin-top: 2rem;
+}
+
+/*#stop-button > div > button:hover {
+  color: #91dfd2 !important;
+}*/
+
+
+/* Tab1 content
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+#set-specs-intro-container {
+  font-weight: bold;
+  margin: 2rem 5rem 0rem;
+  font-size: 1.6rem;
+}
+
+
+#metric-select-title {
+  color: darkgray;
+}
+
+
+#button-div {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+#value-setter-view-btn {
+  margin-left: 20px;
+}
+
+
+#value-setter-panel {
+  line-height: 2;
+}
+
+#value-setter-panel-header {
+  font-weight: bold;
+  color: darkgray;
+  line-height: 1;
+  padding: 2rem 0;
+  border-bottom: 1px solid #4b5460;
+}
+
+#value-setter-panel-header > div {
+  text-align: right;
+}
+
+/*
+#value-setter-view-btn, #value-setter-set-btn {
+  border: 1px solid #4B5460;
+  color: darkgray;
+}
+
+#value-setter-set-btn:hover, #value-setter-view-btn:hover {
+  color: #91dfd2;
+  border-color: white;
+}
+*/
+#value-setter-panel-usl, #value-setter-panel-lsl, #value-setter-panel-ucl, #value-setter-panel-lcl {
+  padding: 1rem 0;
+}
+
+.output-datatable {
+  margin: 2rem 0rem 2rem 2rem;
+  line-height: 3;
+  align-self: flex-end;
+  width: 80%;
+}
+
+/*Dropdown*/
+.setting-input {
+  width: 100% !important;
+  height: 100%;
+}
+
+.react-numeric-input, .react-numeric-input input {
+  width: 100% !important;
+}
+
+.react-numeric-input input {
+  background-color: #FFFFFF !important;
+  border-color: darkgray !important;
+  color: #0082A0 !important;
+}
+
+.react-numeric-input b:nth-child(2) i {
+  border-color: transparent transparent #0082A0 !important;
+}
+
+.react-numeric-input b:nth-child(3) i {
+  border-color: #0082A0 transparent transparent !important;
+}
+
+
+/* Dropdown
+----------------------------------------------*/
+
+/*Dropdown items*/
+.Select-control, .Select-multi-value-wrapper, .Select-menu-outer div {
+  background-color: #FFFFFF;
+}
+
+/*Dropdown items*/
+.Select-control, .Select, .Select-value-label, .Select-clear-zone {
+  color: #B2B4B3;
+}
+
+
+/*Dropdown items*/
+.Select-menu-outer {
+  background-color: #B2B4B3;
+  border: 1px solid darkgray !important;
+}
+
+/*Dropdown items*/
+.Select-menu-outer div:hover {
+  background-color: rgba(36, 38, 51, 0.5) !important;
+  cursor: pointer;
+}
+
+/*Dropdown arrow + delete button
+.Select-control, .Select-control > span {
+  color: white;
+  background: #FFFFFF !important;
+}
+*/
+
+/*Placeholder*/
+.Select.has-value.Select--single > .Select-control .Select-value .Select-value-label, .Select.has-value.is-pseudo-focused.Select--single > .Select-control .Select-value .Select-value-label {
+  color: #0082A0 !important;
+}
+
+/*Placeholder*/
+.Select--single > .Select-control .Select-value, .Select-placeholder {
+  /*border: 1px solid darkgray;*/
+  border-radius: 4px;
+  background-color: #FFFFFF;
+  cursor: pointer;
+}
+
+
+.Select.is-focused:not(.is-open) > .Select-control {
+  border-color: #91dfd2 !important;
+}
+
+/* Container
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+#app-container {
+  background: #F0F0F0;
+  margin: 1rem 2rem;
+  max-width: 100%;
+  width: 100% - 1rem;
+  height: calc(100vh - 20rem - 1px);
+  /*This might need adjusting*/
+}
+
+#app-content {
+  background: inherit;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+#settings-menu  {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-evenly;
+  margin: 4rem 5rem 1rem;
+}
+
+#phase-ring-menu {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-evenly;
+  margin: 4rem 5rem 1rem;
+}
+
+#group-select-menu {
+  flex: 1 1 0;
+}
+
+#phase-setup-menu {
+  flex: 1 1 0;
+}
+
+
+
+#value-setter-menu {
+  flex: 1 1 30%;
+  margin-left: 5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+#status-container {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+
+#graphs-container {
+  display: flex;
+  flex-direction: column;
+  flex: 3 1;
+  max-width: calc(75%);
+  width: 70%;
+}

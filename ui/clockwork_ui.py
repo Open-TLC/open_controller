@@ -48,6 +48,8 @@ NUMBER_OF_GROUPS = 4
 DEFAULT_NATS_SERVER = "localhost"
 DEFAULT_NATS_PORT = 4222
 
+OC_IMAGE_PATH = "assets/OC_logo_green.png"
+
 # For testing with the itc unit
 #NATS_SERVER = "10.8.0.36:4222"
 # 270 (the test intersection)
@@ -163,9 +165,11 @@ def async_main_wrapper():
 
 def build_tabs():
     return html.Div(
+        
         id="tabs",
         className="tabs",
         children=[
+            html.Img(src=OC_IMAGE_PATH, style={'width': '25%'}),
             dcc.Tabs(
                 id="app-tabs",
                 value="tab1",
