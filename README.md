@@ -3,9 +3,9 @@ This is the clockwork traffic controller repository. Note that this is intended 
 
 ## Simple usage
 
-Running the whole system should be done with
+Running the whole system should be done with:
 
-  doceker-compose up
+    docker-compose up
 
 
 
