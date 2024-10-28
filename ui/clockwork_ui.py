@@ -5,12 +5,15 @@
 # visit http://127.0.0.1:8050/ in your web browser.
 
 
-# Copyright 2023 by Conveqs Oy and Kari Koskinen
+# Copyright 2023-2024 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 #
 # Copyright 2023 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 #
+
+SOFTWARE_NAME = "Clockwork Traffic Controller UI"
+IMPL_VERSION = "0.1"
 
 from dash import Dash
 from dash import html, dcc, callback, Output, Input, dash_table
@@ -24,6 +27,8 @@ import json
 from message_storage import MessageStorage
 import time
 import sys
+import argparse
+
 # Maybe this should be set as module in the future?
 sys.path.insert(0, 'clockwork/')
 from signal_group_controller import PhaseRingController
@@ -39,10 +44,10 @@ UPDATE_INTERVAL = 1000 # ms
 NATS_REQ_TIMEOUT = 10 # s
 NUMBER_OF_GROUPS = 4
 
-# For running locally
-NATS_SERVER = "localhost:4222"
-# For running in docker
-#NATS_SERVER = "nats:4222"
+# For running locally (local run)
+DEFAULT_NATS_SERVER = "localhost"
+DEFAULT_NATS_PORT = 4222
+
 # For testing with the itc unit
 #NATS_SERVER = "10.8.0.36:4222"
 # 270 (the test intersection)
@@ -60,8 +65,11 @@ app = Dash(__name__, suppress_callback_exceptions=True)
 
 
 
-
+#
 # These will be GLOBAL variables
+#
+command_line_args = None
+
 current_status = "NOTHING HERE"
 nats=None
 # Note: we can only operate one controller for one user at a time
@@ -80,6 +88,11 @@ controller_conf = None
 get_conf_button_pressed = False
 
 test_counter = 0 # DEBUG
+
+#
+# End of GLOBAL
+#
+
 #
 # This is the Async part (NATS)
 #
@@ -120,10 +133,14 @@ async def commands_handler():
 
 async def async_main():
     """Main async function"""
+    global command_line_args
     global current_status
     global nats
+    
+    nats_server = command_line.nats_server + ":" + str(command_line.nats_port)
     nats = NATS()
-    await nats.connect(NATS_SERVER)
+    await nats.connect(nats_server)
+    
     async def message_handler(msg):
         global current_status
         subject = msg.subject
@@ -628,12 +645,43 @@ def get_conf_detectors(value):
         
     return data, columns
 
+def read_command_line():
+    """Returns parsed command line arguments
+    used for client serving data from nats to db
+    """
+    
 
+    operation_description = """
+    Service for connecting to the NATS reading data, manipulating it
+    and inserting the data into a db
+    """
+    parser = argparse.ArgumentParser(
+        description=operation_description)
+
+    vers = SOFTWARE_NAME + " v. " + IMPL_VERSION
+    parser.add_argument('--version', action='version', version=vers)
+
+    
+    parser.add_argument('--nats-server',
+                                help='Nats server address '
+                                    '(default: localhost)',
+                                default=DEFAULT_NATS_SERVER,
+                                required=False)
+    parser.add_argument('--nats-port',
+                                help='Nats server port '
+                                    '(default: 4222)',
+                                default=DEFAULT_NATS_PORT,
+                                required=False)
+    
+    args = parser.parse_args()
+
+    return args
 
 
 if __name__ == '__main__':
     #asyncio.create_task(get_status())
-    print("Test")
+    print("Clockwork UI")
+    command_line_args = read_command_line()
     th = Thread(target=async_main_wrapper)
     th.start()
     

@@ -9,7 +9,7 @@ in the field or alternatively with a simulation model.
 # All Rights Reserved
 #
 
-SOFTWARE_NAME = "TrafficController"
+SOFTWARE_NAME = "Clockwork Traffic Controller"
 IMPL_VERSION = "0.2"
 
 DEFAULT_NATS_SERVER = "nats"
