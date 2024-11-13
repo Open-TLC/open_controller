@@ -7,9 +7,6 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install sumo sumo-tools sumo-doc -y
 
-COPY docker/simengine/requirements.txt .
-
-RUN pip install --no-cache-dir -r requirements.txt
 
 
 # This is for private repo
@@ -34,12 +31,10 @@ RUN --mount=type=ssh git clone git@github.com:Open-TLC/sim_engine.git
 # docker build --ssh default=$HOME/.ssh/id_rsa -t simtest .
 # docker build --ssh default=$HOME/.ssh/id_rsa -t simtest -f docker/simengine/Dockerfile .
 
-# Copy NATS server binary from the first stage
-# Only if we want to run the NATS-server in the same container (i.e. not using docker-compose)
-#COPY --from=nats /nats-server /usr/local/bin
 
-# We expose the nats port
-#EXPOSE 4222
+# Install the python libraries for the sim_engine requirements
+RUN pip install --no-cache-dir -r sim_engine/requirements.txt
+
 
 # setup the SUMO_HOME environment variable
 ENV SUMO_HOME /usr/share/sumo
