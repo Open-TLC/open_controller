@@ -1,0 +1,291 @@
+# -*- coding: utf-8 -*-
+""" Output storage and handling
+"""
+# Copyright 2024 by Conveqs Oy and Kari Koskinen
+# All Rights Reserved
+#
+
+# This will need:
+# export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
+
+# Alternatively:
+# we need to import python modules from the $SUMO_HOME/tools directory
+import os
+import sys
+import json
+from datetime import datetime
+from shapely.geometry import Polygon, Point
+
+if 'SUMO_HOME' in os.environ:
+    SUMO_TOOLS = os.path.join(os.environ['SUMO_HOME'], 'tools')
+    sys.path.append(SUMO_TOOLS)
+    import traci
+else:
+    sys.exit("please declare environment variable 'SUMO_HOME'")
+
+
+CLENUP_TIME_LIMIT = 0.5 # seconds
+
+class Radar:
+    "This class is for handling the virtual radars"
+    def __init__(self, aoi):
+        # aoi = area of interest
+        poly_coords = []
+        for point in aoi:
+            poly_coords.append(tuple(point))
+        
+        self.aoi = Polygon(poly_coords)
+        self.vehicles = {}
+        self.id_counter = 0
+
+    def get_new_id(self):
+        "Returns a new unique id for the vehicle"
+        prev_id = self.id_counter
+        self.id_counter += 1
+        if self.id_counter > 255:
+            self.id_counter = 0
+        return prev_id
+
+    def add_vehicle(self, new_veh):
+        "Adds the vehicel to the radar if it is in the area of interest"
+        # Filter out all the vehs outside aoi
+        if not self.aoi.contains(new_veh['sumo_loc']):
+            return
+        
+        veh = dict(new_veh)
+        if not veh['sumo_id'] in self.vehicles:
+            # We need to generate an id for the vehicle
+            veh['id'] = self.get_new_id()
+        else:
+            veh['id'] = self.vehicles[veh['sumo_id']]['id']
+            
+
+        # We update the values    
+        vehicle_id = veh['sumo_id']
+        veh['lat'] = veh['sumo_loc'].x
+        veh['lon'] = veh['sumo_loc'].y
+        
+
+        speed = traci.vehicle.getSpeed(vehicle_id)
+        angle = traci.vehicle.getAngle(vehicle_id)
+        veh['speed'] = speed
+        veh['acceleration'] = traci.vehicle.getAcceleration(vehicle_id)
+        veh['sumo_angle'] = angle
+        veh['len'] = traci.vehicle.getLength(vehicle_id)
+        veh['lane'] = traci.vehicle.getLaneIndex(vehicle_id)
+        veh['cyc_ago'] = 0
+
+        sumo_class = traci.vehicle.getTypeID(vehicle_id)           
+        # FIXME: These should be configurable
+        veh['sumo_class'] =  sumo_class
+        if sumo_class == 'car_type':
+            veh['class'] = 2
+        elif sumo_class == 'truck_type':
+            veh['class'] = 4
+        else:
+            veh['class'] = 0
+
+        
+        veh['quality'] = 100        
+        veh['lastupdate'] = datetime.now()
+        # Finally we add/replace the vehicle data
+        self.vehicles[veh['sumo_id']] = veh
+
+
+    def remove_old_data(self):
+        "Removes the vehicles that have not been updated for a while"
+        # We need to check the age of the data
+        for veh_id in list(self.vehicles.keys()):
+            veh = self.vehicles[veh_id]
+            now = datetime.now()
+            lats_update = veh['lastupdate']
+            time_since_update = (now - lats_update).total_seconds()
+            if time_since_update > CLENUP_TIME_LIMIT:
+                del self.vehicles[veh_id]
+
+
+    def get_radar_data(self):
+        """Returns 'sumo radar' data to twinobject for updating veh tracking
+            This data should be the same format as in the live radar output
+        """
+        tstamp = round(datetime.now().timestamp() * 1000)
+        data = {}
+        data['source'] = 'sumo'
+        data['status'] = 'OK'
+        data['tstamp'] = tstamp    
+        data['nobjects'] = len(self.vehicles)    
+        data['objects'] = []
+        for veh in self.vehicles.values():
+            # We copy the dict to avoid modifying the original
+            # Note: this could be improved, maybe we should use a class
+            out_vehicle = dict(veh)
+            del out_vehicle['sumo_loc'] # Wont serialize
+            del out_vehicle['lastupdate'] # Wont serialize
+            data['objects'].append(out_vehicle)
+        return data
+
+
+    
+
+class DetStorage:
+    "This is a class for storing the detector states and indicating any change"
+    def __init__(self, conf):
+        # this will contain the dictionary of all the detector messages
+        self.statuses = {}
+        self.conf = conf
+        self.topic_prefix = conf['topic_prefix']
+
+    def add_det_value(self, det_id, loop_on):
+        "Adds a detector status to the dictionary returns True if the status has changed"
+        if det_id not in self.statuses:
+            self.statuses[det_id] = loop_on
+            return True
+        elif loop_on != self.statuses[det_id]:
+            self.statuses[det_id] = loop_on
+            return True
+        return False
+
+    def read_det_values_from_sumo(self):
+        "Returns dict of detector statuses"
+        sumo_loops = traci.inductionloop.getIDList()
+        det_statuses = {}
+        
+        for det_id_sumo in sumo_loops:
+            det_status = {}
+
+            current_time = datetime.now().isoformat()
+            det_status["tstamp"] = str(current_time)
+            
+            vehnum = traci.inductionloop.getLastStepVehicleNumber(det_id_sumo)
+            occup = traci.inductionloop.getLastStepOccupancy(det_id_sumo)
+
+            if (vehnum > 0) or (occup > 0):   # DBIK 10.22  or (occup > 0):
+                loop_on = True
+            else:
+                loop_on = False
+            det_status["loop_on"] = loop_on
+            det_statuses[det_id_sumo] = det_status
+        return det_statuses
+
+    def get_messages_current(self):
+        """Returns a dict with data to be send to NATS"""
+        messages = {}
+        from_sumo = self.read_det_values_from_sumo()
+        for det_id in from_sumo:
+            det_status = {}
+            det_status["id"] = self.topic_prefix + '.' +  det_id
+            det_status["loop_on"] = from_sumo[det_id]["loop_on"]
+            det_status["tstamp"] = str(datetime.now().isoformat())
+            det_status_json = json.dumps(det_status)
+            messages[self.topic_prefix + "." + det_id] = det_status_json.encode()
+        return messages
+
+    def get_messages_changed(self):
+        """Returns a dict with data to be send to NATS, but only for the ones changed"""
+        messages = {}
+        from_sumo = self.read_det_values_from_sumo()
+        for det_id in from_sumo:
+            if self.add_det_value(det_id, from_sumo[det_id]["loop_on"]):
+                det_status = {}
+                det_status["id"] = self.topic_prefix + '.' + det_id
+                det_status["loop_on"] = from_sumo[det_id]["loop_on"]
+                det_status["tstamp"] = str(datetime.now().isoformat())
+                det_status_json = json.dumps(det_status)
+                messages[self.topic_prefix + "." + det_id] = det_status_json.encode()
+        return messages
+
+
+    def test():
+        print("Test")
+
+class GroupStorage:
+    """This is a class for string the groups statuses"""
+    def __init__(self, conf):
+        self.statuses = {}
+        self.conf = conf
+        self.topic_prefix = conf['topic_prefix']
+
+    def read_group_statuses_from_sumo(self):
+        "Returns dict of traffic light statuses"
+        sumo_lights = traci.trafficlight.getIDList()
+        light_statuses = {}
+        current_time = datetime.now().isoformat()
+
+        for light_id_sumo in sumo_lights:
+            statuses = traci.trafficlight.getRedYellowGreenState(light_id_sumo)
+            id = 0
+            for status in statuses:
+                light_status = {}
+                light_id = light_id_sumo + "." + str(id)
+                light_status["id"] = self.topic_prefix + "." + light_id
+                light_status["tstamp"] = str(current_time)
+                light_status["substate"] = status
+                id += 1
+                light_statuses[light_id] = light_status
+        return light_statuses
+    
+    def get_messages_current(self):
+        """Returns a dict (keys are channels, values are json-strings) with data to be send to NATS"""
+        messages = {}
+        from_sumo = self.read_group_statuses_from_sumo()
+        for group_id in from_sumo:
+            light_status_json = json.dumps(from_sumo[group_id])
+            messages[self.topic_prefix + "." + group_id] = light_status_json.encode()
+        return messages
+
+    def add_group_value(self, group_id, substate):
+        "Adds a group status to the dictionary returns True if the status has changed"
+        if group_id not in self.statuses:
+            self.statuses[group_id] = substate
+            return True
+        elif substate != self.statuses[group_id]:
+            self.statuses[group_id] = substate
+            return True
+        return False
+
+    def get_messages_changed(self):
+        """Returns a dict (keys are channels, values are json-strings) 
+            with data to be send to NATS, but only for the ones changed"""
+        messages = {}
+        from_sumo = self.read_group_statuses_from_sumo()
+        for group_id, group_vals in from_sumo.items():
+            if self.add_group_value(group_id, group_vals["substate"]):
+                light_status_json = json.dumps(group_vals)
+                messages[self.topic_prefix + "." + group_id] = light_status_json.encode()
+        return messages
+
+class RadarStorage:
+    """This is a class for string the radar detections"""
+    def __init__(self, conf):
+        self.statuses = {}
+        self.conf = conf
+        for rad_id, rad_conf in self.conf['radars'].items():
+            aoi = rad_conf['area_of_interest']
+            self.conf['radars'][rad_id]['radar_object'] = Radar(aoi)
+        
+    def get_messages_current(self):
+        """Returns a dict (keys are channels, values are json-strings) with data to be send to NATS"""
+        self.update_radars()
+        messages = {}
+        for radar_conf in self.conf['radars'].values():
+            radar_data = radar_conf['radar_object'].get_radar_data()
+            radar_status_json = json.dumps(radar_data)
+            messages[radar_conf["topic"]] = radar_status_json.encode()
+        return messages
+    
+    def update_radars(self):
+        """We read the objects from the SUMO and update them to the radar objects"""
+        for radar_conf in self.conf['radars'].values():
+                radar_conf['radar_object'].remove_old_data()
+        
+        veh_id_list = traci.vehicle.getIDList()
+        for vehicle_id in veh_id_list:
+            new_vehicle = {}
+            new_vehicle['sumo_id'] = vehicle_id
+            # We need to calculate the location in order for the radar to determine
+            # whether the vehicle is within radar beam (in the area of interest)
+            pos_x, pos_y = traci.vehicle.getPosition(vehicle_id)
+            lon, lat = traci.simulation.convertGeo(pos_x, pos_y)
+            new_vehicle['sumo_loc'] = Point(lat, lon) 
+            for radar_conf in self.conf['radars'].values():
+                radar_conf['radar_object'].add_vehicle(new_vehicle)
