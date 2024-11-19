@@ -101,6 +101,10 @@ class MessageStorage:
     def get_group_messages_as_df(self):
         "Returns all group messages as a dataframe (for table in UI)"
         all_messages = {}
+        # No messages
+        if self.group_messages == {}:
+            return pd.DataFrame()
+        
         for group in self.group_messages:
             all_messages[group] = self.group_messages[group].__dict__
         df = pd.DataFrame.from_dict(all_messages)
@@ -128,7 +132,7 @@ class GroupMessage:
         self.id = id
         self.tstamp = tstamp
         self.substate = substate
-        self.id_number = int(id.split(".")[2])
+        self.id_number = id.split(".")[2]
         self.raw_message = raw_message
     
     def __str__(self):

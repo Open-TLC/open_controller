@@ -353,7 +353,7 @@ async def update_message_container():
         message = msg.data.decode()
         message_storage.add_message(channel, message)
     await nats.subscribe("detector.status.*", cb=handle_messages)
-    await nats.subscribe("group.status.*", cb=handle_messages)
+    await nats.subscribe("group.status.*.*", cb=handle_messages)
     while True:
         await asyncio.sleep(1)
         #print(message_storage.get_detector_messages())
