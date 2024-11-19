@@ -7,37 +7,15 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install sumo sumo-tools sumo-doc -y
 
-
-
-# This is for private repo
-# Install the ssh and git
-RUN apt-get update && \
-    apt-get install \
-        openssh-client \
-        git \
-    --yes --no-install-recommends &&\ 
-    apt-get clean
-
-# Uncomment this for setting up the known hosts (when running the docker create by hand)
-RUN mkdir -p -m 0600 ~/.ssh && \
-    ssh-keyscan -H github.com bitbucket.org >> ~/.ssh/known_hosts
-
-
-
-# Docker build with ssh key, some examples:
-#RUN --mount=type=ssh git clone git@bitbucket.org:conveqs/clockwork_tc.git
-RUN --mount=type=ssh git clone git@github.com:Open-TLC/sim_engine.git
-# Note: in order for this to work, one has to run the bild with:
-# docker build --ssh default=$HOME/.ssh/id_rsa -t simtest .
-# docker build --ssh default=$HOME/.ssh/id_rsa -t simtest -f docker/simengine/Dockerfile .
+# Copy the current directory contents into the container at /app
+COPY . .
 
 
 # Install the python libraries for the sim_engine requirements
-RUN pip install --no-cache-dir -r sim_engine/requirements.txt
+RUN pip install --no-cache-dir -r docker/simengine/requirements.txt
 
 
 # setup the SUMO_HOME environment variable
-ENV SUMO_HOME /usr/share/sumo
+ENV SUMO_HOME=/usr/share/sumo
 
-WORKDIR /app/sim_engine
-CMD ["sh", "world_start.sh"]
+ENTRYPOINT ["sh", "docker/simengine/sim_start.sh"]
