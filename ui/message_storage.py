@@ -62,7 +62,7 @@ class MessageStorage:
         self.detector_messages[det_id] = DetectorMessage(**msg_dict)
         
     def add_group_message(self, channel, message):
-        group_id = channel.split(".")[2]
+        group_id = channel.split(".")[-1]
         msg_dict = json.loads(message)
         msg_dict["raw_message"] = message
         self.group_messages[group_id] = GroupMessage(**msg_dict)
