@@ -47,4 +47,4 @@ COPY . .
 # setup the SUMO_HOME environment variable
 #ENV SUMO_HOME /usr/share/sumo
 
-CMD ["sh", "docker/clockwork/run_clockwork.sh"]
+ENTRYPOINT ["sh", "docker/clockwork/run_clockwork.sh"]
