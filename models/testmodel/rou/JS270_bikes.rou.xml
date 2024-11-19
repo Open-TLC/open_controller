@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Bicycle traffic for JS270 -->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+
+<vType id="bike" vClass="bicycle"/>
+
+<vType id="ped" vClass="pedestrian"/>
+
+<route id="Jatk2Tyyn_bike"  edges="Jatk_p02b Jatk_jp01b Tyyn_ylitVali65 -Tyyn_p13 -Tyyn12"/>
+
+<route id="Vali2Jatk_bike"  edges="Vali_p12 -Tyyn_jp14 Tyyn_ylitVali56 Jatk_jp01 Jatk_p02"/>
+
+<route id="Jatk2Vali_bike"  edges="Jatk_p02b Jatk_jp01b Tyyn_ylitVali65 -Tyyn_jp14b Vali_ylitTyy34 Vali_ylitTyyn42 Vali_ylitTyyn21 Vali_yliTyyn10 -Vali_p12 -Vali11 -Vali_p10"/>
+
+
+
+<flow id="F_Jatk2Tyyn_bike" from="Jatk_p02b"  to="Vali_p10" route="Jatk2Tyyn_bike"  begin="0" end="3600" type="bike" color="0,255,0" number="0"> </flow>
+
+<flow id="F_Vali2Jatk_bike" from="Vali_p12"   to="Jatk_p02" route="Vali2Jatk_bike"  begin="0" end="3600" type="bike" color="0,255,0" number="100"> </flow>
+
+<flow id="F_Jatk2Vali_bike" from="Jatk_p02b"  to="-Vali_p10" route="Jatk2Vali_bike"  begin="0" end="3600" type="bike" color="0,255,0" number="100"> </flow>
+
+<!---
+
+<route id="Jatk2Vali_bike"  edges="Jatk_p02b Jatk_jp01b Tyyn_ylitVali65 -Tyyn_jp14b Vali_ylitTyy34 Vali_ylitTyyn42 Vali_ylitTyyn21 Vali_yliTyyn10 -Vali_p12 -Vali11 -Vali_p10" />
+
+-->
+   
+</routes>

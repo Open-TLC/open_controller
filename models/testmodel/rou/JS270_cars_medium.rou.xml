@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Testiliikenne risteyksen 269-270 valojen toiminnan tarkasteluun -->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+
+<vType id="truck" accel="0.8" decel="4.5" sigma="0.5" length="18"  minGap="2.5" maxSpeed="16" guiShape="passenger"/>
+<vType id="car_type"   accel="4.6" decel="4.5" sigma="0.1" length="5"  minGap="0.5" maxSpeed="30" guiShape="passenger"/>
+<vType id="bus_type"   accel="9.6" decel="4.5" sigma="0.5" length="7"  minGap="3"   maxSpeed="25" guiShape="bus"/>
+<vType id="truck_type" accel="2.6" decel="4.5" sigma="0.1" length="15" minGap="0.5"   maxSpeed="25" guiShape="truck"/>
+
+<route id="Sat2Vali" edges="Tyyn09 Tyyn10 Tyyn11 Tyyn12 Tyyn13 Tyyn14 -Vali13 -Vali12 -Vali11 -Vali10" />
+<route id="Sat2Jatk" edges="Tyyn09 Tyyn10 Tyyn11 Tyyn12 Tyyn13 Tyyn14 Jatk01 Jatk02" />
+
+<route id="Vali2Jatk" edges="Vali10 Vali11 Vali12 Vali13 Jatk01 Jatk02" />
+<route id="Vali2Sat"  edges="Vali10 Vali11 Vali12 Vali13 -Tyyn14 -Tyyn13 -Tyyn12 -Tyyn11 -Tyyn10 -Tyyn09" />
+
+<route id="Jatk2Sat"  edges="-Jatk01 -Tyyn14 -Tyyn13 -Tyyn12 -Tyyn11 -Tyyn10 -Tyyn09" />
+<route id="Jatk2Vali"  edges="-Jatk01 -Vali13 -Vali12 -Vali11 -Vali10" />
+
+<vehicle id="sat1"  depart="3"   route="Sat2Jatk"  departPos="25"  departLane="2"/>
+
+<vehicle id="sat2"  depart="6"   route="Sat2Vali"  departPos="25"  departLane="2"/>
+
+<vehicle id="jatk1" depart="9"   route="Jatk2Sat"  departPos="25"  departLane="0"/>
+
+<vehicle id="jatk2" depart="12"  route="Jatk2Vali" departPos="25"  departLane="0"/>
+
+<vehicle id="vali1" depart="15"  route="Vali2Sat"  departPos="25"  departLane="0"/>
+
+<vehicle id="vali2" depart="18"  route="Vali2Jatk" departPos="25"  departLane="0"/>
+
+<flow id="F_Sat2Jatk"  from="Tyyn09"  to="Jatk02" route="Sat2Jatk"   begin="20" end="360000" type="car_type" color="255,0,0" probability="0.15"> </flow>
+
+<flow id="F_Sat2Vali"  from="Tyyn09"  to="-Vali10" route="Sat2Vali"  begin="22" end="360000" type="car_type" color="255,0,0" probability="0.03"></flow>
+
+<flow id="F_Jatk2Vali" from="-Jatk01" to="-Vali10" route="Jatk2Vali" begin="24" end="360000" type="car_type" color="255,0,0" probability="0.05"></flow>
+
+<flow id="F_Jatk2Sat"  from="-Jatk01" to="-Tyyn09" route="Jatk2Sat"  begin="26" end="360000" type="car_type" color="255,0,0" probability="0.15"> </flow>
+
+<flow id="F_Vali2Sat"  from="Vali10" to="-Tyyn09" route="Vali2Sat"  begin="28"  end="360000" type="car_type" color="255,0,0" probability="0.02"> </flow>
+
+<flow id="F_Vali2Jatk"  from="Vali10" to="Jatk02" route="Vali2Jatk"  begin="30" end="360000" type="car_type" color="255,0,0" probability="0.05"></flow>
+
+
+<!---
+
+
+>>>>>>> 173ad84d8092218f6902b809abef87682404e34f
+<vehicle id="cla3_f" depart="6"   route="clarion_north" departLane="0"/>
+<vehicle id="cla4" depart="15"  route="clarion_north" departLane="1"/>
+
+<vehicle id="cla5" depart="25"   route="clarion_east" departLane="0"/>
+<vehicle id="cla6" depart="35"  route="clarion_east" departLane="1"/>
+
+
+<flow id="Lv2Sat_truck1"  from="-KT51_01" to="-Tyyn08" route="Lv2Sat"     begin="0" end="3600" type="truck"   color="27,191,221"  number="100"> </flow>
+<flow id="Lv2Sat_car1"    from="-KT51_01" to="-Tyyn08" route="Lv2Sat"     begin="0" end="3600" type="auto"    color="27,191,221"  number="100"> </flow>
+<flow id="Lv2Hiet_car1"   from="-KT51_01" to="-Hiet07" route="Lv2Hiet"    begin="0" end="3600" type="auto"    color="250,192,0"   number="100"> </flow>
+<flow id="Lv2Mech_car1"   from="-KT51_01" to="Mech12"  route="Lv2Mech"    begin="0" end="3600" type="auto"    color="0,255,0"     number="100"> </flow>
+<flow id="Lv2Pork_car1"   from="-KT51_01" to="Pork12"  route="Lv2Pork"    begin="0" end="3600" type="auto"    color="142,165,137" number="100"> </flow>
+ 
+<flow id="Pork2Lv_car1"    from="-Pork12"  to="KT51_01"  route="Pork2Lv"     begin="0" end="3600" type="auto" color="255,0,0"     number="100"> </flow>
+<flow id="Pork2Hiet_car1"  from="Pork02"   to="-Hiet07"  route="Pork2Hiet"   begin="0" end="3600" type="auto" color="250,192,0"   number="100"> </flow>
+<flow id="Pork2Pork_car1"  from="Pork02"   to="Pork12"   route="Pork2Pork"   begin="0" end="3600" type="auto" color="142,165,137" number="100"> </flow>
+<flow id="-Pork2Pork_car1" from="-Pork12"  to="-Pork02"  route="-Pork2Pork"  begin="0" end="3600" type="auto" color="101,116,95"  number="100"> </flow>
+
+<flow id="Itam2Hiet_car1"  from="Itam02"   to="-Hiet07"  route="Itam2Hiet"   begin="0" end="3600" type="auto" color="250,192,0"   number="100"> </flow>
+<flow id="Itam2Mech_car1"  from="Itam02"   to="Mech12"   route="Itam2Mech"   begin="0" end="3600" type="auto" color="0,255,0"     number="100"> </flow>
+
+<flow id="Mech2Lv_car1"   from="-Mech12"  to="KT51_01" route="Mech2Lv"    begin="0" end="3600" type="auto"    color="255,0,0"     number="100"> </flow>
+<flow id="Mech2Sat_car1"  from="-Mech12"  to="-Tyyn08" route="Mech2Sat"   begin="0" end="3600" type="auto"    color="27,191,221"  number="100"> </flow>
+<flow id="Mech2Hiet_car1" from="-Mech12"  to="-Hiet07" route="Mech2Hiet"  begin="0" end="3600" type="auto"    color="250,192,0"   number="100"> </flow>
+<flow id="Mech2Vali_car1" from="-Mech12"  to="-Vali01" route="Mech2Vali"  begin="0" end="3600" type="auto"    color="126,125,177" number="50"> </flow>
+<flow id="Mech2Pork_car1" from="-Mech12"  to="-Pork02" route="Mech2Pork"  begin="0" end="3600" type="auto"    color="101,116,95"  number="100"> </flow>
+
+<flow id="Sat2Lv_truck1"  from="Tyyn08"   to="KT51_01" route="Sat2Lv"     begin="0" end="3600" type="truck"   color="255,0,0"     number="150"> </flow>
+<flow id="Sat2Lv_car1"    from="Tyyn08"   to="KT51_01" route="Sat2Lv"     begin="0" end="3600" type="auto"    color="255,0,0"     number="50"> </flow>
+<flow id="Sat2Hiet_car1"  from="Tyyn08"   to="-Hiet07" route="Sat2Hiet"   begin="0" end="3600" type="auto"    color="250,192,0"   number="50"> </flow>
+<flow id="Sat2Vali_car1"  from="Tyyn08"   to="-Vali01" route="Sat2Vali"   begin="0" end="3600" type="auto"    color="126,125,177" number="30"> </flow>
+<flow id="Sat2Mech_car1"  from="Tyyn08"   to="Mech12"  route="Sat2Mech"   begin="0" end="3600" type="auto"    color="126,125,177" number="50"> </flow>
+
+<flow id="Sat2Lv2_car1"   from="Lans01"   to="KT51_01" route="Sat2Lv2"    begin="0" end="3600" type="auto"    color="255,0,0"     number="100"> </flow>
+
+<flow id="Vali2Mech_car1" from="Vali01"   to="Mech12"  route="Vali2Mech"  begin="0" end="3600" type="auto"    color="0,255,0"     number="50"> </flow>
+
+<flow id="Hiet2Lv_car1"   from="Hiet06"   to="-KT51_01" route="Hiet2Lv"   begin="0" end="3600" type="auto"    color="255,0,0"     number="100">  </flow>
+<flow id="Hiet2Mech_car1" from="Hiet06"   to="Mech12"   route="Hiet2Mech" begin="0" end="3600" type="auto"    color="0,255,0"     number="100">  </flow>
+<flow id="Hiet2Vali_car1" from="Hiet06"   to="-Vali01"  route="Hiet2Vali" begin="0" end="3600" type="auto"    color="126,125,177" number="50"> </flow>
+<flow id="Hiet2Sat_car1"  from="Hiet06"   to="-Tyyn10"  route="Hiet2Sat"  begin="0" end="3600" type="auto"    color="27,191,221"  number="50"> </flow>
+ 
+<flow id="Ruor2Vali_car1" from="-Ruora05" to="-Vali01"  route="Ruor2Vali" begin="0" end="3600" type="auto" color="126,125,177"    number="50"> </flow>
+
+-->
+   
+</routes>
