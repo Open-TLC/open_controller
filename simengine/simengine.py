@@ -115,11 +115,11 @@ class SumoNatsInterface:
         # Setting the inputs
         # Corrently only group inputs are used
         all_inputs = self.config.get_input_params()
+        self.group_input = None
         if "sig_inputs" in all_inputs:
             if all_inputs["sig_inputs"]["type"] == "group":
                 self.group_input = all_inputs["sig_inputs"]
             else:
-                self.group_input = None
                 print("Unknown input type:", all_inputs["type"])
         print("Inputs:", all_inputs)
 
