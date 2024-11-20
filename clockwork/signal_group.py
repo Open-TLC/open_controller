@@ -611,6 +611,14 @@ class SignalGroup(Machine):
         #print("isred:", isred)
         return isred
 
+    def group_green(self):
+        """Returns true if group is in green state"""
+        par_st = self.state.split('_')[0]
+        if par_st == 'Green':
+            return True
+        else:
+            return False
+        
     def group_on(self):
         """Returns true if phase is
         1) green,
@@ -641,7 +649,7 @@ class SignalGroup(Machine):
     def group_green_or_amber(self):
         """Returns true if phase is
         1) green or
-        2) going green (Amber)
+        2) Amber
         """
         par_st = self.state.split('_')[0]
         is_on = par_st in ('Green', 'Amber')

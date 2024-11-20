@@ -428,7 +428,7 @@ def get_group_control_message(group, channel):
     msg["tstamp"] = current_time
     msg["substate"] = group.get_grp_state()
     msg["group"] = int(channel.split(".")[-1])
-    msg["green"] = (not group.group_red())
+    msg["green"] = group.group_green()
     return msg
 
 
