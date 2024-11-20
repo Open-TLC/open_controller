@@ -92,6 +92,10 @@ class GlobalConf:
 
         self.conf['outputs'] = outputs
 
+        # No default inputs
+        inputs = {}
+        self.conf['inputs'] = inputs
+
        
     def set_vals_from_conf(self, filename):
         """Opens the conf-file and update the self.conf"""
@@ -123,6 +127,10 @@ class GlobalConf:
                 self.conf['outputs']['sig_outputs'].update(config_from_file['outputs']['sig_outputs'])    
             if 'rad_outputs' in config_from_file['outputs']:
                 self.set_rad_outputs(config_from_file['outputs']['rad_outputs'])
+        # inputs
+        if 'inputs' in config_from_file:
+            if 'sig_inputs' in config_from_file['inputs']:
+                self.conf['inputs']['sig_inputs'] = config_from_file['inputs']['sig_inputs']
 
 
     def set_rad_outputs(self, rad_config):
@@ -167,6 +175,9 @@ class GlobalConf:
         """Returns outputs sections"""
         return self.conf['outputs']
     
+    def get_input_params(self):
+        """Returns inputs sections"""
+        return self.conf['inputs']
 
     
     def graph_mode(self):

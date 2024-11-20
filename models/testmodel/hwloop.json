@@ -40,6 +40,21 @@
     }
 },
 
+"inputs":{
+    "sig_inputs": {
+        "type": "group",
+        "trigger": "update",
+        "topic_prefix": "group.control",
+        "controller_mapping_mode": "direct",
+        "controller_map": {
+            "1": "270"
+        },
+        "signal_mapping_mode": "direct",
+        "signal_map": {
+            "1": "1"
+        }
+    }
+},
 
 
 "radars":{

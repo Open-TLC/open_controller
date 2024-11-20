@@ -111,7 +111,17 @@ class SumoNatsInterface:
                 self.ds_change_update.append(output_storage)
             else:
                 print("Unknown trigger:", configuration["trigger"])
-        
+
+        # Setting the inputs
+        # Corrently only group inputs are used
+        all_inputs = self.config.get_input_params()
+        if "sig_inputs" in all_inputs:
+            if all_inputs["sig_inputs"]["type"] == "group":
+                self.group_input = all_inputs["sig_inputs"]
+            else:
+                self.group_input = None
+                print("Unknown input type:", all_inputs["type"])
+        print("Inputs:", all_inputs)
 
     def start_sumo(self):
         """Starts the sumo"""
@@ -166,6 +176,23 @@ class SumoNatsInterface:
         await self.connect_nats()
         # TODO: Callbacks for control messages to be added here
         # Loop for handling the simulation
+        if self.group_input:
+            group_control_channel = self.group_input["topic_prefix"] + ".*.*"
+            async def sig_group_message_handler(msg):
+                subject = msg.subject
+                reply = msg.reply
+                data = msg.data.decode()
+                #print("Received a message on '{subject} {reply}': {data}".format(
+                #    subject=subject, reply=reply, data=dat a))
+                msg_dict = json.loads(data)
+                set_sumo_traffic_light_state(subject, msg_dict)
+            # As an inital state we set all the lights to red
+            self.set_all_sumo_groups_to_red()
+            # Sleep for five seconds to get all to red
+            await asyncio.sleep(5)
+            # And now we subscribe to the control messages
+            await self.nats.subscribe(group_control_channel, cb=sig_group_message_handler)
+
         self.draw_radars()
         while traci.simulation.getMinExpectedNumber() > 0:
             if not self.update_sumo():
@@ -194,6 +221,37 @@ class SumoNatsInterface:
             else:
                 polygon.append(tuple(pair))
         traci.polygon.add(polygon_name, polygon, color, layer=layer, lineWidth=line_width, fill=fill)
+
+    def set_all_sumo_groups_to_red(self):
+        "Initializes all traffic lights to red"
+        sumo_lights = traci.trafficlight.getIDList()
+        for light_id_sumo in sumo_lights:
+            cur_state = traci.trafficlight.getRedYellowGreenState(light_id_sumo)
+            all_Red = len(cur_state) * "r"
+            traci.trafficlight.setRedYellowGreenState(light_id_sumo, all_Red)
+        
+    def set_sumo_traffic_light_state(self, channel, message):
+        """Sets the traffic light state based on the message received from the nats server
+            (This message is sent by the clockwork or other external controller)
+        """
+        controller_id = channel.split(".")[-2]
+        light_id = int(channel.split(".")[-1])
+        controller_id = "270_Tyyn_Vali" #Debug
+        if 'green' in message:
+            # Control message
+            if message['green'] == True:
+                sumo_group_state = "g"
+            else:
+                sumo_group_state = "r"
+        else:
+            # Status message contains no command for green
+            # We induce the state from the substate
+            if message['substate'] in GREEN_SUBSTATES:
+                sumo_group_state = "g"
+            else:
+                sumo_group_state = "r"
+
+        traci.trafficlight.setLinkState(controller_id, light_id, sumo_group_state)
 
 
 async def main():
