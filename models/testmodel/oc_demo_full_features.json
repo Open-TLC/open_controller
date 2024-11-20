@@ -113,7 +113,7 @@
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
-            "request_type": "detector",
+            "request_type": "fixed",
             "phase_request": false,
             "green_end": "remain",
             "channel": "group.control.270.4"
@@ -157,7 +157,7 @@
             "min_amber_red": 1,
             "min_red": 15,
             "min_amber": 3,
-            "max_green": 1000,
+            "max_green": 15,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,

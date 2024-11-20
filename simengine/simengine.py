@@ -195,6 +195,13 @@ class SumoNatsInterface:
 
         self.draw_radars()
         while traci.simulation.getMinExpectedNumber() > 0:
+            
+            # Debugging, this mode has to be changed in order to make sumo yelding work better
+            # TODO: Needs only be sent once for vehicles (unneeded traci calls, and they are expemsive)
+            for vehicleId in traci.vehicle.getIDList():
+                # disable right of way check, vehicles can enter the junction, despite queue end
+                traci.vehicle.setSpeedMode(vehicleId,55) 
+
             if not self.update_sumo():
                 break
             # This will handle all the data stream from sumo to nats

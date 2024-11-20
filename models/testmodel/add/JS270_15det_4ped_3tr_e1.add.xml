@@ -52,8 +52,8 @@
     <e1Detector id="2-002" lane="-Jatk01_0" pos="218.85" freq="900.00" file="NUL"/>
     <e1Detector id="2-040" lane="-Jatk01_0" pos="-40.00" freq="900.00" file="NUL"/>
     <e1Detector id="3-002R" lane="Vali_R12_0" pos="-3.00" freq="900.00" file="NUL"/>
-    <e1Detector id="4-002R9" lane="-Jatk_R01_0" pos="218.19" freq="900.00" file="NUL" vTypes="tram_R9"/>
-    <e1Detector id="8-008R7" lane="-Jatk_R01_0" pos="212.19" freq="900.00" file="NUL" vTypes="tram_R7"/>
+    <e1Detector id="4-002R9" lane="-Jatk_R01_0" pos="208.19" freq="900.00" file="NUL" vTypes="tram_R9"/>
+    <e1Detector id="8-008R7" lane="-Jatk_R01_0" pos="202.19" freq="900.00" file="NUL" vTypes="tram_R7"/>
     <e1Detector id="5-002" lane="-Jatk01_1" pos="218.70" freq="900.00" file="NUL"/>
     <e1Detector id="5-040" lane="-Jatk01_1" pos="-43.00" freq="900.00" file="NUL"/>
     <e1Detector id="6-002A" lane="Tyyn13_0" pos="25.80" freq="900.00" file="NUL"/>
