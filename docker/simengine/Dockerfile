@@ -1,6 +1,3 @@
-# Only if we want to run the NATS-server in the same container (i.e. not using docker-compose)
-#FROM nats:latest as nats
-
 FROM python:3.9-slim
 
 WORKDIR /app
