@@ -27,6 +27,6 @@ After this you should be able to see the user interface via [http://127.0.0.1:80
 
 To be added...
 
-## Lisence
+## License
 
-Open source is released unde the EUPL-1.2 licence, click [here](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12) for more details.
+The sofware is released unde the EUPL-1.2 licence, click [here](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12) for more details.
