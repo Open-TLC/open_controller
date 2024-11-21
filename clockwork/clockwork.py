@@ -424,7 +424,7 @@ def get_group_control_message(group, channel):
     Takes group object as an input and returns"""
     msg = {}
     msg["id"] = channel
-    current_time = str(datetime.now()).replace(" ", "T") + "Z"
+    current_time = str(datetime.now().isoformat())
     msg["tstamp"] = current_time
     msg["substate"] = group.get_grp_state()
     msg["group"] = int(channel.split(".")[-1])
