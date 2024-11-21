@@ -48,7 +48,7 @@ NUMBER_OF_GROUPS = 4
 DEFAULT_NATS_SERVER = "localhost"
 DEFAULT_NATS_PORT = 4222
 
-OC_IMAGE_PATH = "assets/OC_logo_green.png"
+OC_IMAGE_PATH = "assets/OC_logo_green_horizontal.jpg"
 
 # For testing with the itc unit
 #NATS_SERVER = "10.8.0.36:4222"
