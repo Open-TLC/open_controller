@@ -10,16 +10,12 @@ services:
     image: clockwork-runner
     build:
       context: .
-      ssh: 
-        - default=$HOME/.ssh/id_rsa
       dockerfile: docker/clockwork/Dockerfile
 
   ui-runner:
     image: ui-runner
     build:
       context: .
-      ssh: 
-        - default=$HOME/.ssh/id_rsa
       dockerfile: docker/ui/Dockerfile
     ports:
       - "8050:8050"
@@ -28,6 +24,4 @@ services:
     image: sumo-world
     build:
       context: .
-      ssh:
-        - default=$HOME/.ssh/id_rsa
       dockerfile: docker/simengine/Dockerfile
