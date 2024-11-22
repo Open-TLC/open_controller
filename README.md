@@ -27,7 +27,6 @@ After this you should be able to see the user interface via [http://127.0.0.1:80
 
 To be added...
 
-    nats pub "group.control.270_Tyyn_Vali.1" "{ \"id\”: \"group.control.270_Tyyn_Vali.1\”, \"tstamp\”: \"2023-10-30T12:01:09.453+00:00\”, \"substate\”: \"5\”, \"green\”: true }"
 
     
 
