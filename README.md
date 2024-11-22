@@ -27,6 +27,9 @@ After this you should be able to see the user interface via [http://127.0.0.1:80
 
 To be added...
 
+    nats pub "group.control.270_Tyyn_Vali.1" '{ "id”: "group.control.270_Tyyn_Vali.1”, "tstamp”: "2023-10-30T12:01:09.453+00:00”, "substate”: "5”, "green”: true }'
+    
+
 ## License
 
 The sofware is released unde the EUPL-1.2 licence, click [here](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12) for more details.
