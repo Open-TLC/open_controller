@@ -42,7 +42,7 @@
     "sig_inputs": {
         "type": "group",
         "trigger": "update",
-        "topic_prefix": "group.status",
+        "topic_prefix": "group.control",
         "controller_mapping_mode": "direct",
         "controller_map": {
             "1": "270"
