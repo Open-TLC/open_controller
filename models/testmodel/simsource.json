@@ -38,6 +38,22 @@
     }
 },
 
+"inputs":{
+    "sig_inputs": {
+        "type": "group",
+        "trigger": "update",
+        "topic_prefix": "group.status",
+        "controller_mapping_mode": "direct",
+        "controller_map": {
+            "1": "270"
+        },
+        "signal_mapping_mode": "direct",
+        "signal_map": {
+            "1": "1"
+        }
+    }
+},
+
 "radars":{
     "int_270_1":{
         "sink_id": 1,
