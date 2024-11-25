@@ -10,7 +10,7 @@ In order to run the basic system you need to have [docker](https://docs.docker.c
 
 After this you can setup the full Open Controller system and run it with a relatively simple test model by issuing command:
 
-    docker-compose up
+    docker compose up
 
 This script will in essence install four separate docker containers and run them, they are:
 
@@ -26,6 +26,15 @@ After this you should be able to see the user interface via [http://127.0.0.1:80
 # Basic usage
 
 ## What comes with the package
+The open controller system conists of separate services communcating with each other via bub/sum messages (see Figure 1). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
+
+- Simclient, a sumo simulation environment with Open Controller interfaces
+- Clockwork, the traffic light controller
+- UI, an user interface for monitoring and controlling the services
+
+![Open Controller Docker Services](/doc/images/OC_Docker_Services.png)
+*Figure 1: Open Controller Standard Services*
+
 
 [comment]: <> (System description)
 
