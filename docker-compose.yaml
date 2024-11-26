@@ -8,12 +8,14 @@ services:
 
   clockwork-runner:
     image: clockwork-runner
+    container_name: oc_clockwork_container
     build:
       context: .
       dockerfile: docker/clockwork/Dockerfile
 
   ui-runner:
     image: ui-runner
+    container_name: oc_ui_container
     build:
       context: .
       dockerfile: docker/ui/Dockerfile
@@ -22,6 +24,7 @@ services:
 
   sumo-simulator:
     image: simengine-runner
+    container_name: oc_simengine_container
     build:
       context: .
       dockerfile: docker/simengine/Dockerfile

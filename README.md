@@ -21,7 +21,8 @@ This script will in essence install four separate docker containers and run them
 
 After this you should be able to see the user interface via [http://127.0.0.1:8050](http://127.0.0.1:8050)
 
-[comment]: <> (Reference to use with graphical ui here)
+One should note that the simulation model in this example is ran inside a container without a UI, if you wish to see the intersection in operation, you will need to run the Sumo and simengine in your local computer in the graphical mode. How to do this is explained in [here](#installing-and-running-simengine-in-local-computer)
+
 
 # Basic usage
 ## What comes with the package
@@ -51,7 +52,24 @@ In addittion, simclient can also receive *Signal Group control* messsages dictat
 Likely the fist use of the system is to be done via the UI component. When the system is run, one can access it in the localhost port 8050 (i.e. [http://127.0.0.1:8050](http://127.0.0.1:8050)) 
 
 ## Monitoring the messages
+In order to monitor the messages, you will need a nats-client. Installing this depends on your operating system, and the instructions can be found [here](https://docs.nats.io/running-a-nats-service/clients). It should be noted that the server itself is not needed, since it will be provided in it's own container and accessibles via the standard port in the host. That is, you can subscribe to all the NATS-messages by iussuing a command
 
+    nats sub ">"
+
+One can also subscribe to one or many subjects by replacing ">" with to subject. Wildcards ("*") are also possible. As an example, one can subscribe to all the detector status messages by issuing a command:
+
+    nats sub "detctor.status.*"
+
+Full list of channels are given in the table 1 and a more detailed desctiption of message types and data they contain are given [here](https://www.opencontroller.org/)
+
+*Table 1: The open controller data stream subjects*
+| Subject prefix   | Source    | Example                      | Description                           |
+| ---------------- | --------- | ---------------------------- | ------------------------------------- |
+| detector.status  | simengine | detector.status.1-001        | Status of a deector (occupied or not) |
+| group.status     | simengine | group.status.270.1           | Status of a traffic light             |
+| radar            | simengine | radar.270.2.objects.json     | Radar object list                     |
+| controller       | clockwork | controller.status.270        | Open controller status                |
+| group.control    | clockwork | group.control.270.1          | Control message of a traffic light    |
 
 ## Installing and running individual components
 ### Two methods for operating the system
@@ -65,7 +83,9 @@ It shoule be noted, that it is possible, and recommended, to use the docker inst
 
 ### Operating the Open Controller docker cointainers
 
-### Installing components to a local computer
+### Installing and running components to a local computer
+
+#### Installing and running simengine in local computer
 
 [comment]: <> (Installation to a local machine here)
 
