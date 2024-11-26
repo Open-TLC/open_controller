@@ -21,7 +21,7 @@ services:
       - "8050:8050"
 
   sumo-simulator:
-    image: sumo-world
+    image: simengine-runner
     build:
       context: .
       dockerfile: docker/simengine/Dockerfile
