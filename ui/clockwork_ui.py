@@ -195,14 +195,14 @@ def build_tabs():
                         value="tab4",
                         className="custom-tab",
                         selected_className="custom-tab--selected",
-                    ),
-                    dcc.Tab(
-                        id="Map-tab",
-                        label="Map",
-                        value="tab3",
-                        className="custom-tab",
-                        selected_className="custom-tab--selected",
-                    ),
+                    )#,
+                    #dcc.Tab(
+                    #    id="Map-tab",
+                    #    label="Map",
+                    #    value="tab3",
+                    #    className="custom-tab",
+                    #    selected_className="custom-tab--selected",
+                    #),
                 ],
             ),
         html.Div(id="app-content")    
