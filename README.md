@@ -40,7 +40,7 @@ The open controller system conists of separate services communcating with each o
 - *Signal Group statuses* (status of traffic lights), and
 - *Radar statuses* (object list of vehicles in pre-detemind area)
 
-In addittion, **simclient** can also receive *Signal Group control* messsages dictating the statuses of the signal groups (traffic lights) in the model. This is to be used for controlling the traffic controllers in the simulation model.
+In addittion, simclient can also receive *Signal Group control* messsages dictating the statuses of the signal groups (traffic lights) in the model. This is to be used for controlling the traffic controllers in the simulation model.
 
 **Clockwork** is a traffic light controller that subscribes to data inputs (e.g. detector statuses) and provides signal contol commands (*Signal Group Control* messages) as an output. It should be noted that this unit can be used both with a simulator as well as with real traffic controllers, given that there is an interface for relaying them to the controller (this part is not provided at the time of writing due to IP restrictions).
 
@@ -48,7 +48,7 @@ In addittion, **simclient** can also receive *Signal Group control* messsages di
 
 
 ## Operaing the user interface
-
+Likely the fist use of the system is to be done via the UI component. When the system is run, one can access it in the localhost port 8050 (i.e. [http://127.0.0.1:8050](http://127.0.0.1:8050)) 
 
 ## Monitoring the messages
 
