@@ -16,7 +16,6 @@ import os
 import time
 from confread_integrated import GlobalConf
 from timer import Timer
-#from traffic_controller import TrafficController
 sys.path.append('clockwork')
 from signal_group_controller import PhaseRingController
 from extender import StaticExtender
@@ -87,10 +86,11 @@ def run_sumo(conf_filename=None, runlog=None):
         traffic_controller.set_sumo_outputs(sumo_outputs)
     
     # Theese are detectors operating with SUMO model
-    dets = traffic_controller.req_dets + traffic_controller.ext_dets
-    exts = traffic_controller.extenders
-    
-    
+    e1dets = traffic_controller.req_dets + traffic_controller.ext_dets
+    e1exts = traffic_controller.extenders
+    e3dets = traffic_controller.e3detectors 
+
+
     # Graph always if set in conf, and also if param says so
     if sys_cnf['sumo']['graph']:
         sumo_bin = SUMO_BIN_NAME_GRAPH
@@ -104,18 +104,25 @@ def run_sumo(conf_filename=None, runlog=None):
     try:
         traci.start([sumo_bin, "-c", sumo_file,
                 "--start",
-                "--quit-on-end",
-                "--tripinfo-output", "tripinfo.xml"])
+                "--quit-on-end"])
     except Exception as e:
         print("Sumo start failed:", e)
         return
 
-    sumo_to_dets = get_det_mapping(dets)
-    print('sumo to dets: ')
-    print(sumo_to_dets)
+    sumo_to_e1dets = get_e1det_mapping(e1dets)
+    print('sumo to e1 dets: ')
+    print(sumo_to_e1dets)
+
+    sumo_to_e3dets = get_e3det_mapping(e3dets)
+    print('sumo to e3 dets: ')
+    print(sumo_to_e3dets)
 
     sumo_loops = traci.inductionloop.getIDList()
-    print('sumo loops: ')
+    print('sumo e1 loops: ')
+    print(sumo_loops)
+
+    sumo_e3dets = traci.multientryexit.getIDList()
+    print('sumo e1 loops: ')
     print(sumo_loops)
 
     # NEW UPDATE CYCLE   DBIK230724 
@@ -131,6 +138,8 @@ def run_sumo(conf_filename=None, runlog=None):
     statusstring = ""
     last_print = 0
     BP2 = False
+    SUMOSIM = True
+    sumovismode = 'main_states'
     
 
     print(system_timer.steps, real_time, next_update_time, sleep_count )
@@ -155,7 +164,12 @@ def run_sumo(conf_filename=None, runlog=None):
 
             # MULTI: looping the controllers start here
                
-            detections_to_controller(sumo_loops, sumo_to_dets)
+            if SUMOSIM:
+                Sumo_e1detections_to_controller(sumo_loops, sumo_to_e1dets)
+                Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_e3dets, sumovismode)
+            else:
+                pass
+                # Read detections from NATS
             
             traffic_controller.tick()   
 
@@ -210,7 +224,7 @@ def run_sumo(conf_filename=None, runlog=None):
     print("exit  ")
 
     
-def get_det_mapping(all_dets):
+def get_e1det_mapping(all_dets):
     loops = traci.inductionloop.getIDList()
     ret = {}
     for loop in loops:
@@ -227,29 +241,23 @@ def get_e3det_mapping(all_dets):
     ret = {}
     for e3det in e3dets:
         mapped_e3dets = []
-        for e3det in all_dets:
-            if e3det.sumo_id == e3det:
-                mapped_e3dets.append(e3det)
+        for dete3 in all_dets:
+            if dete3.sumo_id == e3det:
+                mapped_e3dets.append(dete3)
         ret[e3det] = mapped_e3dets
     print ('e3dets: ', e3dets)
     return ret
 
 # Note: params should be removed if it's own class
-def detections_to_controller(sumo_loops, sumo_to_dets):
+def Sumo_e1detections_to_controller(sumo_loops, sumo_to_dets):
+    """ Passes the Sumo e1-detector info to the controller detector objects"""
 
     occlist = [] 
     loop_stat = 'Loops: '
-    loop_out_list = ["269_R702R","269_601A"]
     
     for det_id_sumo in sumo_loops:
         vehnum = traci.inductionloop.getLastStepVehicleNumber(det_id_sumo)
         occup = traci.inductionloop.getLastStepOccupancy(det_id_sumo)
-
-        # DBIK  02/2023 Make the detector status list           
-        #if (occup > 0):
-        #    occlist.append(1)
-        #else:
-        #    occlist.append(0)      
 
         occstr='x'
         for det in sumo_to_dets[det_id_sumo]:
@@ -269,6 +277,160 @@ def detections_to_controller(sumo_loops, sumo_to_dets):
                    
     # print("SUMO occup:", occlist, end='') 
     # print("SUMO loops:", loop_stat, end='') 
+
+
+def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode): #DBIK241113  New function to pass e3 detector info
+    """ Passes the Sumo e3-detector info to the controller detector objects"""
+    for e3det_id_sumo in sumo_e3dets:
+        vehcount = traci.multientryexit.getLastStepVehicleNumber(e3det_id_sumo) 
+        e3vehlist = traci.multientryexit.getLastStepVehicleIDs(e3det_id_sumo)     
+        vehiclesdict = {}
+        for vehid in e3vehlist:
+                vehtype  = traci.vehicle.getTypeID(vehid)
+                vspeed   = traci.vehicle.getSpeed(vehid)
+                vehdict = {}
+                vehdict['vtype'] = vehtype               
+                vehdict['speed'] = vspeed
+                vehiclesdict[vehid] = vehdict
+                testdict = vehdict
+
+        for e3det in sumo_to_dets[e3det_id_sumo]:     
+            e3det.vehcount = vehcount
+            e3det.det_vehicles_dict = vehiclesdict
+            visgroup = e3det.owngroup_obj
+
+            # DBIK201118 Visualize signal states with vehicle colors
+            if vismode == 'main_states':  
+                sumo_indicate_main_signal_state(vehiclesdict,e3det.last_vehicles_dict,visgroup)
+            elif vismode == 'sub_states':
+                sumo_indicate_sub_signal_state(vehiclesdict,e3det.last_vehicles_dict,visgroup)
+            elif vismode == 'req_perm':
+                sumo_indicate_req_perm_state(vehiclesdict,e3det.last_vehicles_dict,visgroup)
+            e3det.last_vehicles_dict = vehiclesdict
+
+
+def sumo_indicate_main_signal_state(vehdict,lastvehdict,visgroup):
+
+        # DBIK202408  Set color of vehicles leaving the e3detector   
+        for key in lastvehdict:
+            if not(key in vehdict):
+                try:
+                    set_vehicle_color(key,'gray')
+                except:
+                    # errorcount += 1
+                    pass
+        
+        # DBIK202408  Set color of vehicles at the e3detector when the signal state changes
+        if visgroup.group_main_state_changed('Green',visgroup.state,visgroup.prev_state):
+            for key in vehdict:
+                set_vehicle_color(key,'green')
+        elif visgroup.group_main_state_changed('Red',visgroup.state,visgroup.prev_state):
+            for key in vehdict:
+                set_vehicle_color(key,'red')
+
+        # DBIK202408  Set color of vehicles entering e3detector
+        for key in vehdict:
+            if not(key in lastvehdict): # a vehicle entering
+                if visgroup.group_green_or_amber():
+                    set_vehicle_color(key,'green')
+                else:
+                    set_vehicle_color(key,'red')
+
+
+def sumo_indicate_sub_signal_state(vehdict,lastvehdict,visgroup):
+
+        # DBIK202408  Set color of vehicles leaving the e3detector   
+        for key in lastvehdict:
+            if not(key in vehdict):
+                try:
+                    set_signal_state_to_vehice_color(key,'Out')
+                except:
+                    # self.errorcount += 1
+                    pass
+            
+        # DBIK202408  Set color of vehicles at the e3detector when the signal state changes
+        vis_state = visgroup.group_sub_state_changed('Any',visgroup.state,visgroup.prev_state)
+        if vis_state != 'None':
+            for key in vehdict:
+                set_signal_state_to_vehice_color(key,vis_state)
+
+        for key in vehdict:       
+            if not(key in lastvehdict): # a new vehicle entering
+                set_signal_state_to_vehice_color(key,visgroup.state)
+
+
+def sumo_indicate_req_perm_state(vehdict,lastvehdict,visgroup):
+
+        # DBIK202408  Set color of vehicles leaving the e3detector   
+        for key in lastvehdict:
+            if not(key in vehdict):
+                try:
+                    set_req_perm_to_vehice_color(key,'Out',owngroup)
+                except:
+                    # errorcount += 1
+                    pass
+        
+        # DBIK202408  Set color of vehicles at the e3detector when the signal state changes
+        vis_state = visgroup.group_sub_state_changed('Any',visgroup.state,visgroup.prev_state)
+        if vis_state != 'None':
+            for key in vehdict:
+                set_req_perm_to_vehice_color(key,vis_state, visgroup)
+
+        for key in vehdict:       
+            if not(key in lastvehdict): # a new vehicle entering
+                set_req_perm_to_vehice_color(key,visgroup.state, visgroup)
+
+    
+def set_signal_state_to_vehice_color(vehid,sigstate):
+
+        if sigstate in ['Red_MinimumTime','Red_CanEnd']:
+            traci.vehicle.setColor(vehid,(153,0,0)) # Dark Red
+        elif sigstate in ['Red_ForceGreen']:
+            traci.vehicle.setColor(vehid,(255,0,0)) # Red
+        elif sigstate in ['Green_MinimumTime']:
+            traci.vehicle.setColor(vehid,(0,102,0)) # Dark Green
+        elif sigstate in ['Green_Extending']:
+            traci.vehicle.setColor(vehid,(0,255,0)) # Green
+        elif sigstate in ['Green_RemainGreen','Amber_MinimumTime']:
+            traci.vehicle.setColor(vehid,(0,128,255)) # Blue
+        elif sigstate in ['Green_RemainGreen']:
+            traci.vehicle.setColor(vehid,(0,128,255)) # Blue
+        elif sigstate in ['Red_WaitIntergreen','AmberRed_MinimumTime']:
+            traci.vehicle.setColor(vehid,(255,0,255)) # Pink
+        elif sigstate in ['Out']:
+            traci.vehicle.setColor(vehid,(220,220,220)) # Gray
+
+
+def set_req_perm_to_vehice_color(vehid,sigstate,visgroup):
+
+        if sigstate in ['Red_MinimumTime','Red_CanEnd','Red_ForceGreen']:
+            if visgroup.has_green_request():
+                traci.vehicle.setColor(vehid,(153,0,0)) # Dark Red
+            else:
+                traci.vehicle.setColor(vehid,(255,0,0)) # Red
+
+        if sigstate in ['Red_WaitIntergreen','AmberRed_MinimumTime','Green_MinimumTime','Green_Extending','Green_RemainGreen','Amber_MinimumTime']:
+            if visgroup.has_green_permission():
+                traci.vehicle.setColor(vehid,(0,102,0)) # Dark Green
+            else: 
+                traci.vehicle.setColor(vehid,(0,255,0)) # Green
+        
+        if sigstate in ['Out']:
+            traci.vehicle.setColor(vehid,(220,220,220)) # Gray
+
+
+def set_vehicle_color(vehid,vcolor):
+
+        if vcolor == "red":
+            traci.vehicle.setColor(vehid,(255,0,0))
+        elif vcolor == "darkred":
+            traci.vehicle.setColor(vehid,(153,0,0))
+        elif vcolor == "darkgreen":
+            traci.vehicle.setColor(vehid,(0,102,0))
+        elif vcolor == "green":
+            traci.vehicle.setColor(vehid,(0,255,0))
+        elif vcolor == "gray":
+            traci.vehicle.setColor(vehid,(220,220,220))
 
 
 def print_det_status():
