@@ -5,8 +5,12 @@ This module runs the controller in real time and relays the messages
 to NATS server in localhost. This is intended to be used with a real contoller
 in the field or alternatively with a simulation model.
 """
-# Copyright 2023 by Conveqs Oy and Kari Koskinen
-# All Rights Reserved
+# 
+# Open Controller, an open source traffic signal control platform
+# URL: https://www.opencontroller.org
+# Copyright 2023 - 2024 by Conveqs Oy, Kari Koskinen and others
+# This program has been released under EUPL-1.2 license which is available at
+# URL: https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
 #
 
 SOFTWARE_NAME = "Clockwork Traffic Controller"
