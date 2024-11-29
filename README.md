@@ -2,7 +2,7 @@
 
 # About 
 
-This is the main repository of Open Controller, an open source traffic light controller.
+This is the main repository of Open Controller, an open source traffic light controller.  **
 
 # Quickstart
 
