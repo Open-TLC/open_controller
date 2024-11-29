@@ -1,0 +1,107 @@
+{
+"connectivity":{
+	"notes": "This is for accessing the data",
+	"mode": "nats",
+	"nats": {
+		"ip": "localhost",
+		"port": 4222
+	}
+},
+
+"inputs":{
+    "sig_inputs": {
+        "type": "group",
+        "trigger": "update",
+        "topic_prefix": "group.control",
+        "controller_mapping_mode": "direct",
+        "controller_map": {
+            "1": "270"
+        },
+        "signal_mapping_mode": "direct",
+        "signal_map": {
+            "1": "1"
+        }
+        
+    }
+},
+
+"outputs":{
+    "det_outputs": {
+        "type": "detector",
+        "trigger": "change",
+        "det_mapping_mode": "direct",
+        "det_map": {
+            "sumo_det1":"det1"
+        },
+        "notes": "Ths is the detector output"
+    },
+    "sig_outputs": {
+        "type": "group",
+        "trigger": "change",
+        "controller_mapping_mode": "direct",
+        "controller_map": {
+            "1": "270"
+        },
+        "signal_mapping_mode": "direct",
+        "signal_map": {
+            "1": "1"
+        }
+    },
+    "rad_outputs":{
+        "type": "radar",
+        "trigger": "update",
+        "radars": ["int_270_1", "int_270_2", "int_270_3"]
+    }
+},
+
+
+
+"radars":{
+    "int_270_1":{
+        "sink_id": 1,
+        "service": "nats_server",
+        "topic": "radar.270.1.objects_port.json",
+        "data_type": "geo",
+        "source": "sumo_radar",
+        "trigger": "update",
+        "area_of_interest": [
+            [60.160404542895904, 24.921242473814157],
+            [60.16204326653248, 24.92140711330265],
+            [60.161700158584765, 24.92252898711453],
+            [60.160460875163245, 24.922528967307162],
+            [60.16005119605129, 24.921746781899724]
+            ],
+        "description": ""
+        },
+    "int_270_2":{
+        "sink_id": 5,
+        "service": "nats_server",
+        "topic": "radar.270.2.objects_port.json",
+        "data_type": "geo",
+        "source": "sumo_radar",
+        "trigger": "update",
+        "area_of_interest": [
+            [60.16006564169406, 24.921136797689137],
+            [60.159974366091575, 24.9192018732217],
+            [60.160358732002955, 24.919716864202332],
+            [60.160369395022016, 24.92105798178989]
+            ],
+        "description": ""
+        },
+    "int_270_3":{
+        "sink_id": 6,
+        "service": "nats_server",
+        "topic": "radar.270.3.objects_port.json",
+        "data_type": "geo",
+        "source": "sumo_radar",
+        "trigger": "update",
+        "area_of_interest": [
+            [60.16007688062209, 24.921921953577563],
+            [60.15851272900608, 24.92203981643083],
+            [60.15849139216473, 24.921299566294763],
+            [60.16007689970157, 24.920988553319525]
+            ],
+        "description": ""
+        }
+    }
+}
