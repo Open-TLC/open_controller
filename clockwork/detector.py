@@ -7,7 +7,7 @@ This module implements detecors for traffic controllers
 # Copyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 #
-#import traci
+# import traci
 from signal_group import SignalGroup
 #from timer import Timer
 
@@ -30,16 +30,23 @@ class Detector:
         self.type = conf['type']
         self._loop_on = False
         self.request_groups = []
-        if self.type in ['request','extender','e3detector']:
+        self.priolevel = 2
+        if self.type in ['request','extender','e3detector', 'prio']:
             self.sumo_id = conf['sumo_id']
         else:
             self.sumo_id = None
         self.detection_at = 0  # detection start time in seconds
         self.detection_end_at = 0  # detection end time, extension countdown start
-        if self.type == 'request':
+        if self.type in ['request']:
             names = conf['request_groups']
             self.owngroup_name = names[0]
-        else: self.owngroup_name = conf['group']
+        else: 
+            self.owngroup_name = conf['group']
+        if 'priority' in conf: 
+            self.priolevel = conf['priority']
+            print('Priority detector: ', name,' Priority level: ', self.priolevel)
+        else:
+            self.priolevel = 2
         
         self.owngroup_obj = None
 
@@ -47,7 +54,9 @@ class Detector:
         self.extgroup_name = '' 
 
         self.extend_on = False
-        
+
+        self.det_vehicles_dict = {}
+        self.last_vehicles_dict = {}
 
     def __str__(self):
         return "Det:{}, conf:{}".format(self.name, self.conf)
@@ -104,17 +113,17 @@ class Detector:
         if set_on and not self._loop_on:
             self.pulse_up()
             for grp in self.request_groups:
-                grp.request_green = True  # DBIK231213 Note: req turned ON ny pulse up only, to be reseted by group after served
-                if grp.group_name == 'group1':
-                    BP = 1
-                # if grp.group_red_started() and self._loop_on:
-                #    grp.request_green = True  # DBIK231213 If the detector stays on over the group red time, the request has to be set again
+                grp.request_green = True  # DBIK231213 Note: req turned ON by pulse up only, to be reseted by group after served
+                grp.own_request_level = self.priolevel # DBIK241029 pass the request priority level to the signal group
+                for confgrp in grp.conflicting_groups:  # DBIK241101 pass the request priority level to the conflicting signal groups
+                    other_req_level = confgrp['group'].other_request_level
+                    if self.priolevel > other_req_level:
+                        confgrp['group'].other_request_level = self.priolevel # DBIK201105 Set only if higher request level 
+          
+                
         if not set_on and self._loop_on:
             self.pulse_down()
 
-        #if set_on:
-        #    for grp in self.request_groups:
-        #        grp.request_green = True  # Note: req turned off by group after served
         self._loop_on = set_on
 
     def tick(self):  # DBIK231218 Checking if the green request need to be set ON
@@ -170,164 +179,35 @@ class e3Detector(Detector):
         # self.group = conf['group']
         self.vehcount = 0
         self.errorcount = 0
-        self.last_veh_list = []
-
+    
+        
     def is_extending(self):
         """Returns true if vehicle count is more than zero"""
         return self.veh_count(self) > 0
     
+  
     def tick(self):  # DBIK240801 tick for e3 detector
-        """ """
-        self.vehcount = traci.multientryexit.getLastStepVehicleNumber(self.sumo_id) 
-        e3vehlist = traci.multientryexit.getLastStepVehicleIDs(self.sumo_id)
+        """ Updating of e3-detector"""
         
-        for vehid in e3vehlist:
-            len = traci.vehicle.getLength(vehid)
-            if len > 10.0:
+        for vehid in self.det_vehicles_dict:
+
+            vtype = self.det_vehicles_dict[vehid]['vtype']
+
+            if vtype == 'truck':
                 self.vehcount +=2 # DBIK240923 Add extra weight for trucks 1 truck = 3 vehs
+                # print('vehtype : ', type)
+            if  vtype == 'ratikka':
+                self.vehcount +=100
 
-    
-        # self.indicate_main_signal_state(e3vehlist,self.last_veh_list)  
-        # self.indicate_sub_signal_state(e3vehlist,self.last_veh_list)      
-        self.indicate_req_perm_state(e3vehlist,self.last_veh_list)   
-
-        self.last_veh_list = e3vehlist
-
-
-    def indicate_main_signal_state(self,vehlist,lastlist):
-
-        owngroup = self.owngroup_obj
-
-        # DBIK202408  Set color of vehicles leaving the e3detector   
-        for vehid in lastlist:
-            if not(vehid in vehlist):
-                try:
-                    self.set_vehicle_color(vehid,'gray')
-                except:
-                    self.errorcount += 1
+            # Special setting for JS270T, should be configured in init-file DBIK20241025
+            if (vtype == 'tram_R9'):
+                if (self.owngroup_name == 'group4'):
+                    self.vehcount +=100            
+            if (vtype == 'tram_R7'):
+                if (self.owngroup_name == 'group8'):
+                    self.vehcount +=100
         
-        # DBIK20240905
-        if self.errorcount > 0:
-            DB = self.errorcount
-        
-        # DBIK202408  Set color of vehicles at the e3detector when the signal state changes
-        if owngroup.group_main_state_changed('Green',owngroup.state,owngroup.prev_state):
-            for vehid in vehlist:
-                self.set_vehicle_color(vehid,'green')
-        elif owngroup.group_main_state_changed('Red',owngroup.state,owngroup.prev_state):
-            for vehid in vehlist:
-                self.set_vehicle_color(vehid,'red')
 
-        # DBIK202408  Set color of vehicles entering e3detector
-        for vehid in vehlist:
-            if not(vehid in lastlist): # a vehicle entering
-                if owngroup.group_green_or_amber():
-                    self.set_vehicle_color(vehid,'green')
-                else:
-                    self.set_vehicle_color(vehid,'red')
-
-    def indicate_sub_signal_state(self,vehlist,lastlist):
-
-        owngroup = self.owngroup_obj
-
-        # DBIK202408  Set color of vehicles leaving the e3detector   
-        for vehid in lastlist:
-            if not(vehid in vehlist):
-                try:
-                    self.set_signal_state_to_vehice_color(vehid,'Out')
-                except:
-                    self.errorcount += 1
-        
-            # if not(vehid in vehlist):
-                # self.set_signal_state_to_vehice_color(vehid,'Out')
-        
-        # DBIK202408  Set color of vehicles at the e3detector when the signal state changes
-        og_state = owngroup.group_sub_state_changed('Any',owngroup.state,owngroup.prev_state)
-        if og_state != 'None':
-            for vehid in vehlist:
-                self.set_signal_state_to_vehice_color(vehid,og_state)
-
-        for vehid in vehlist:       
-            if not(vehid in lastlist): # a new vehicle entering
-                self.set_signal_state_to_vehice_color(vehid,self.owngroup_obj.state)
-
-
-    def indicate_req_perm_state(self,vehlist,lastlist):
-
-        owngroup = self.owngroup_obj
-
-        # DBIK202408  Set color of vehicles leaving the e3detector   
-        for vehid in lastlist:
-            if not(vehid in vehlist):
-                try:
-                    self.set_req_perm_to_vehice_color(vehid,'Out',owngroup)
-                except:
-                    self.errorcount += 1
-        
-            # if not(vehid in vehlist):
-                # self.set_signal_state_to_vehice_color(vehid,'Out')
-        
-        # DBIK202408  Set color of vehicles at the e3detector when the signal state changes
-        og_state = owngroup.group_sub_state_changed('Any',owngroup.state,owngroup.prev_state)
-        if og_state != 'None':
-            for vehid in vehlist:
-                self.set_req_perm_to_vehice_color(vehid,og_state, owngroup)
-
-        for vehid in vehlist:       
-            if not(vehid in lastlist): # a new vehicle entering
-                self.set_req_perm_to_vehice_color(vehid,self.owngroup_obj.state, owngroup)
-
-
-    def set_vehicle_color(self,vehid,vcolor):
-
-        if vcolor == "red":
-            traci.vehicle.setColor(vehid,(255,0,0))
-        elif vcolor == "darkred":
-            traci.vehicle.setColor(vehid,(153,0,0))
-        elif vcolor == "darkgreen":
-            traci.vehicle.setColor(vehid,(0,102,0))
-        elif vcolor == "green":
-            traci.vehicle.setColor(vehid,(0,255,0))
-        elif vcolor == "gray":
-            traci.vehicle.setColor(vehid,(220,220,220))
-
-    
-    def set_signal_state_to_vehice_color(self,vehid,sigstate):
-
-        if sigstate in ['Red_MinimumTime','Red_CanEnd']:
-            traci.vehicle.setColor(vehid,(153,0,0)) # Dark Red
-        elif sigstate in ['Red_ForceGreen']:
-            traci.vehicle.setColor(vehid,(255,0,0)) # Red
-        elif sigstate in ['Green_MinimumTime']:
-            traci.vehicle.setColor(vehid,(0,102,0)) # Dark Green
-        elif sigstate in ['Green_Extending']:
-            traci.vehicle.setColor(vehid,(0,255,0)) # Green
-        elif sigstate in ['Green_RemainGreen','Amber_MinimumTime']:
-            traci.vehicle.setColor(vehid,(0,128,255)) # Blue
-        elif sigstate in ['Green_RemainGreen']:
-            traci.vehicle.setColor(vehid,(0,128,255)) # Blue
-        elif sigstate in ['Red_WaitIntergreen','AmberRed_MinimumTime']:
-            traci.vehicle.setColor(vehid,(255,0,255)) # Pink
-        elif sigstate in ['Out']:
-            traci.vehicle.setColor(vehid,(220,220,220)) # Gray
-
-
-    def set_req_perm_to_vehice_color(self,vehid,sigstate,own_group):
-
-        if sigstate in ['Red_MinimumTime','Red_CanEnd','Red_ForceGreen']:
-            if own_group.has_green_request():
-                traci.vehicle.setColor(vehid,(153,0,0)) # Dark Red
-            else:
-                traci.vehicle.setColor(vehid,(255,0,0)) # Red
-
-        if sigstate in ['Red_WaitIntergreen','AmberRed_MinimumTime','Green_MinimumTime','Green_Extending','Green_RemainGreen','Amber_MinimumTime']:
-            if own_group.has_green_permission():
-                traci.vehicle.setColor(vehid,(0,102,0)) # Dark Green
-            else: 
-                traci.vehicle.setColor(vehid,(0,255,0)) # Green
-        
-        if sigstate in ['Out']:
-            traci.vehicle.setColor(vehid,(220,220,220)) # Gray
        
     def veh_count(self):
         # self.tick()

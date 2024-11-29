@@ -111,9 +111,6 @@ class SimplePhase():
         """returns True if one group is past min green in this phase"""
         #print("**** one_min_green_has_ended")
         for grp in self.groups:
-            #print("grp:", grp.name)
-            # grp.group_breakpoint('group3', 'Any', 'Green_MinimumTime', True)
-            # if grp.min_green_passed():
             if grp.is_not_in_min_green():            
                 print('Min Green Ended: ', grp.group_name)
                 return True
@@ -293,7 +290,11 @@ class PhaseRingController:
             time_step = self.timer.time_step # should be realayed as timer?
         else:
             time_step = 0.1
+
+        
+
         for det in det_cnf:
+
             if det_cnf[det]['type'] == 'request':
                 new_det = Detector(self.timer, det, det_cnf[det])
                 new_det.set_request_groups(self.groups) # Into init?
@@ -309,7 +310,6 @@ class PhaseRingController:
                 #new_det.owngroup_name = new_det.group_name  # DBIK231216
                 new_det.extgroup = self.get_signal_group_object(new_det.extgroup_name)
                 self.ext_groups.append(new_det) # these are for group extenders
-                DB = 1
                      
             if det_cnf[det]['type'] == 'e3detector':  # DBIK240731 new detector type (e3) and extender types (e3)
                 new_det = e3Detector(self.timer, det, det_cnf[det]) # create e3 detector
@@ -392,6 +392,8 @@ class PhaseRingController:
                 grp.extender.tick() # DBIK230331 The extender update moved here
             if grp.e3extender:     
                 grp.e3extender.tick() # DBIK240803 The e3extender update added
+            if grp.group_name == 'group3':
+               DB = 1
             grp.tick()
            
     
@@ -460,7 +462,11 @@ class PhaseRingController:
         for grp in self.groups:
                 if grp.is_in_min_green():
                     grp.permit_green = False
-        
+                    if grp.own_request_level > 2: 
+                        grp.own_request_level = 2   #DBIK241030 Reset priority request
+                        for confgrp in grp.conflicting_groups:
+                            confgrp['group'].other_request_level = 2  #DBIK241107 Reset conflict group priority request
+                
         if self.next_main_phase:
             if self.next_main_phase.phase_has_started(): 
                 self.current_main_phase = self.next_main_phase
@@ -471,8 +477,8 @@ class PhaseRingController:
         if self.status == 'Hold':
             if self.current_main_phase:
                 self.current_main_phase.set_signalgroup_green_permissions(do_permit=True)
-                # if self.current_main_phase.all_min_greens_have_ended():  
-                if self.current_main_phase.phase_min_time_reached():  #DBIK 20240926 One group reached the phase min  
+                if self.current_main_phase.all_min_greens_have_ended():  
+                # if self.current_main_phase.phase_min_time_reached():  #DBIK 20240926 One group reached the phase min  
                         self.status = 'Scan'
              
 
@@ -485,10 +491,29 @@ class PhaseRingController:
             if self.next_main_phase:
                 self.next_main_phase.set_signalgroup_green_permissions(do_permit=True)
         
-        for grp in self.groups:
-                if grp.is_in_min_green():
+        MultiPrio = False
+        if MultiPrio:
+            for grp in self.groups:
+                    if grp.min_green_start: # DBIK241107 State shift, under testing 
+                        grp.permit_green = False
+                        grp.own_request_level = 2   #DBIK241030 Reset priority request
+                        for confgrp in grp.conflicting_groups:
+                            OtherPrioReq = 2
+                            for conf2grp in confgrp.conflicting_groups: # DBIK241119 Check if there are other active priority requests
+                                if conf2grp.own_request_level > 2:
+                                    OtherPrioReq = conf2grp.own_request_level
+                            confgrp['group'].other_request_level = OtherPrioReq  #DBIK241107 Reset conflict group priority request
+        else:
+            for grp in self.groups:
+                if grp.min_green_start: # DBIK241107 State shift, under testing 
                     grp.permit_green = False
-        
+                    grp.own_request_level = 2   #DBIK241030 Reset priority request
+                    for confgrp in grp.conflicting_groups:
+                        confgrp['group'].other_request_level = 2  #DBIK241107 Reset conflict group priority request
+          
+            
+
+
         if self.next_main_phase:
             if self.next_main_phase.phase_has_started(): 
                 self.current_main_phase = self.next_main_phase
@@ -511,16 +536,27 @@ class PhaseRingController:
         maxstr = 25
         # ExtOut = 'group'
         ExtOut = 'group'
-        DetOut = 'req'
-        PermOut = 'perm'
+        DetOut = 'reqprio'
+        PermOut = 'perm_'
+        CutOut ='cut_'
+        CutOut ='prio2'
+
         # e3Out  = 'e3vehCnt'
         e3Out  = 'e3confCnt'
         e3Out  = 'e3crit2'
 
         sigstat = str(self.get_grp_states())
 
+        sig = ''
+        col = 0
+        for i in range(len(sigstat)):
+            if col % 5 == 0:
+                sig += ' '
+            col += 1
+            sig += sigstat[i] 
+
         # controller_stat = str(self.timer.steps) + ' ' + sigstat[0:maxstr]
-        controller_stat = sigstat[0:maxstr]  # DBIK230918 remove time stamp
+        controller_stat = sig[0:maxstr]  # DBIK230918 remove time stamp
         
         #cur_phase = self.get_state(self.state)
         #sub_state = cur_phase.submachine.state
@@ -537,6 +573,7 @@ class PhaseRingController:
         e3det_stat = ""
         e3ext_stat = ""
 
+        col = 0
         if DetOut=='loop':
             for det in self.req_dets:
                 if det.loop_on:
@@ -544,29 +581,52 @@ class PhaseRingController:
                 else:
                     loop_stat += '0'
             controller_stat += " LOOP:" + loop_stat[0:30] + ' '
-        else:
+        
+        elif DetOut=='req':
             for grp in self.groups:
+                
+                if col % 5 == 0:
+                   req += ' '
+                col += 1
+                   
                 if grp.request_green:
                     req += '1'
                 else:
                     req += '0'
             controller_stat += " REQ:" + req[0:maxstr] + ' '
         
+        elif DetOut=='reqprio':
+            for grp in self.groups:
+                
+                if col % 5 == 0:
+                   req += ' '
+                col += 1
+                   
+                if grp.request_green:
+                    req += str(grp.own_request_level)
+                else:
+                    req += '0'
+            controller_stat += " REQ:" + req[0:maxstr] + ' '
+        
+        col = 0
         if ExtOut=='group':
             for grp in self.groups:
+                if col % 5 == 0:
+                   ext_stat += ' '
+                col += 1
                 if grp.extender or grp.e3extender:
                     if grp.extender:
-                        if grp.extender.extend:
+                        if grp.extender.extend and grp.group_on:
                             ext_stat += "1"
                         else:
                             ext_stat += "0"
                     if grp.e3extender:
-                        if grp.e3extender.extend:
+                        if grp.e3extender.extend and grp.group_on:
                             ext_stat += "2"
                         else:
                             ext_stat += "0"                  
                 else: ext_stat += "X"
-            controller_stat += " EXT: " + ext_stat[0:maxstr] + ' '
+            controller_stat += " EXT:" + ext_stat[0:maxstr] + ' '
         else:
             for det in self.ext_dets:
                 if det.is_extending():
@@ -581,13 +641,50 @@ class PhaseRingController:
                  qdet_stat += "0"
             controller_stat += " QEXT: " + qdet_stat[0:maxstr] + ' '
 
+        col = 0
         if PermOut=='perm':
             for grp in self.groups:
+                if col % 5 == 0:
+                   prm_stat += ' '
+                col += 1
                 if grp.permit_green:
                     prm_stat += '1'
                 else:
                     prm_stat += '0'
             controller_stat += " PERM:" + prm_stat[0:maxstr] + ' '
+
+        col = 0
+        if CutOut=='cut':
+            for grp in self.groups:
+                if col % 5 == 0:
+                   cut_stat += ' '
+                col += 1
+                if grp.end_conflicting_greens_status(): # and grp.group_on():
+                    cut_stat += '1'
+                else:
+                    cut_stat += '0'
+            controller_stat += " CUT:" + cut_stat[0:maxstr] + ' '
+
+        col = 0
+        if CutOut=='prio1':            
+            for grp in self.groups:
+                if col % 5 == 0:
+                   cut_stat += ' '
+                col += 1
+                if grp.end_conflicting_greens_status() and grp.group_on():
+                    cut_stat += str(grp.other_request_level)
+                else:
+                    cut_stat += '0'
+            controller_stat += " PRI:" + cut_stat[0:maxstr] + ' '
+
+        col = 0
+        if CutOut=='prio2':
+            for grp in self.groups: 
+                if col % 5 == 0:
+                   cut_stat += ' '
+                col += 1               
+                cut_stat += str(grp.other_request_level)
+            controller_stat += " PRI:" + cut_stat[0:maxstr] + ' '
 
 
         controller_stat += '(cur:{}, next:{})'.format(cur_phase, nxt_phase)

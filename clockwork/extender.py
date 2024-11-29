@@ -111,7 +111,7 @@ class e3Extender(Extender):
         Threshold2 = 0.25
         Threshold3 = 0.25
         Threshold3start = 2.0
-        MaxGreen = 120
+        MaxGreen = 60 # 120
         self.conf_sum = 0
         eMode = 3
 

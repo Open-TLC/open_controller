@@ -122,14 +122,13 @@ class SignalGroup(Machine):
         # This is usefull for debugging
         self.instant_transfer = instant_transfer
 
-        # Control status variables
+        # Time memory variables
         self.red_started_at = 0
         self.amber_started_at = 0
         self.green_started_at = -1
         self.phase_started_at = -1
-        self.other_group_requests_end_green = False #This is for rest greens
         
-
+        # Relations to other signal groups
         self.conflicting_groups = []
         self.non_conflicting_groups = []
         self.delaying_groups = []
@@ -139,11 +138,18 @@ class SignalGroup(Machine):
         # External inputs, signals
         self._request_green = False  # external request to go green
         self._permit_green = False  # controller permission to go green
-        
+        self.other_group_requests_end_green = False #This is for rest greens
+
+        # Priority levels for requests and extensions
+        self.own_request_level = 2
+        self.other_request_level = 2
+    
         # External objects to be connected later
         self._extender = None # Extender sets this
         self.e3extender = None # DBIK240803 added
         self._stat_logger = None # set outside
+
+        
 
         # Substates
         # For fixed we always use the min as time
@@ -486,7 +492,7 @@ class SignalGroup(Machine):
         """We ask all conflicting groups to end their green"""
         for grp in self.conflicting_groups:
             grp['group'].other_group_requests_end_green = True
-
+            
     def clear_end_conflicting_greens(self):
         """We ask if there is a request by any conflicting group to end the green"""
         self.group.other_group_requests_end_green = False
@@ -570,7 +576,8 @@ class SignalGroup(Machine):
         if not 'delaying_groups' in grp_conf:
             return False
             # Fixed that this will not grash if not configured 
-            # FIXME: Should be handled in the conf read etc  
+            # FIXME: Should be handled in the conf read etc
+        
         if  self.delaying_groups:
             for dgrp in self.delaying_groups:
                     startdelay = grp_conf['delaying_groups'][dgrp.group_name]
@@ -618,7 +625,8 @@ class SignalGroup(Machine):
             return True
         else:
             return False
-        
+
+
     def group_on(self):
         """Returns true if phase is
         1) green,
@@ -649,7 +657,7 @@ class SignalGroup(Machine):
     def group_green_or_amber(self):
         """Returns true if phase is
         1) green or
-        2) Amber
+        2) going green (Amber)
         """
         par_st = self.state.split('_')[0]
         is_on = par_st in ('Green', 'Amber')
@@ -692,6 +700,17 @@ class SignalGroup(Machine):
             return phasetime
         return 0.0
 
+    def min_green_start(self):
+        """
+            Returns true at the start of min green
+            That is: we are extending or remain green
+        """
+        # DBIK20231013 The start of MinGreen is detected by the current state and the previous state
+        if self.prev_state in ['Any'] and self.state in ['Green_MinimumTime']: # DBIK241107 
+            return True
+        else:
+            return False
+
     def min_green_end(self):
         """
             Returns true if green after min green
@@ -699,14 +718,6 @@ class SignalGroup(Machine):
         """
         # DBIK20231013 The End of MinGreen is detected by state current state and the previous state
         if self.prev_state in ['Any'] and self.state in ['Green_Extending','Green_RemainGreen']: # DBIK20231013 
-        
-        # if self.prev_state in ['Any'] and self.state in ['Green_Extending','Green_RemainGreen']: # DBIK20231013 
-        
-        # if self.state in ['Green_Extending','Green_RemainGreen']:    # DBIK231129  Test
-        # if self.state in not['Red_ForceGreen','Red_WaitIntergreen','Green_MinimumTime']:
-        
-        # if (self.state=='Green_Extending') or (self.state=='Green_RemainGreen'): # DBIK20231012 
-        # Red_CanEnd','Red_MinimumTime', 'Red_CanEnd', 
             return True
         else:
             return False
@@ -895,12 +906,20 @@ class VehicleActuated(FixedTime):
                             dest='Exit',
                             conditions=[self.external_not_extending, self.terminate_after_ext_mode],
                             )
-        # Extension can go to RemainGreen state if ŕemain set and extensions end
+        # Extension can go to RemainGreen state if remain set and no extensions end
         self.add_transition(trigger='next_state',
                             source='Extending',
                             dest='RemainGreen',
-                            conditions=[self.external_not_extending, self.remain_green_mode]
+                            conditions=[self.external_not_extending, self.remain_green_mode]  
                             )
+        
+        # Extension can go to RemainGreen state if remain set and priority request end
+        self.add_transition(trigger='next_state',
+                            source='Extending',
+                            dest='RemainGreen',
+                            conditions=[self.other_group_request_priority, self.remain_green_mode]  # DBIK241029 add new transition condition for priority request 
+                            )
+        
         # Maximum time and no remain green -> exit
         self.add_transition(trigger='next_state',
                             source='Extending',
@@ -964,6 +983,13 @@ class VehicleActuated(FixedTime):
     def other_group_requests_end_green(self):
         #print("Other phase req:", self.group.other_phase_requests)
         return self.group.other_group_requests_end_green
+
+    # DBIK20241029  Priority request
+    def other_group_request_priority(self):        
+        # if self.group.other_group_requests_end_green:
+        if self.group.other_request_level > self.group.own_request_level:
+            return True
+        return False
 
     # set by conf
     def terminate_after_ext_mode(self):
