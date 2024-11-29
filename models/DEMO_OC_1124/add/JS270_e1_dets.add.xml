@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2023-11-19 10:46:18 by Eclipse SUMO netedit Version 1.10.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="C:\Users\iisak\clockwork_tc\models\JS270_TB\net\JS270_def.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="C:\Users\iisak\clockwork_tc\models\JS270_TB\net\JS270_def.net.xml"/>
+        <output.street-names value="true"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-internal-links value="false"/>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="8"/>
+        <junctions.internal-link-detail value="8"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="true"/>
+    </pedestrian>
+
+    <netedit>
+        <additional-files value="C:\Users\iisak\clockwork_tc\models\JS270_TB\add\JS270_15det_4ped_3tr_e1.add.xml"/>
+    </netedit>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <e1Detector id="1-002" lane="Vali12_0" pos="-38.00" freq="900.00" file="NUL"/>
+    <e1Detector id="1-040" lane="Vali12_0" pos="-3.00" freq="900.00" file="NUL"/>
+    <e1Detector id="10-001P" lane="Vali_ylitTyy34_0" pos="-1.50" freq="900.00" file="NUL" friendlyPos="1"/>
+    <e1Detector id="13-001P" lane="Jatk_jp01b_0" pos="-1.50" freq="900.00" file="NUL" friendlyPos="1"/>
+    <e1Detector id="15-001P" lane="-Tyyn_jp14_1" pos="-1.50" freq="900.00" file="NUL" friendlyPos="1"/>
+    <e1Detector id="2-002" lane="-Jatk01_0" pos="218.85" freq="900.00" file="NUL"/>
+    <e1Detector id="2-040" lane="-Jatk01_0" pos="-40.00" freq="900.00" file="NUL"/>
+    <e1Detector id="3-002R" lane="Vali_R12_0" pos="-3.00" freq="900.00" file="NUL"/>
+    <e1Detector id="4-002R9" lane="-Jatk_R01_0" pos="218.19" freq="900.00" file="NUL" vTypes="tram_R9"/>
+    <e1Detector id="8-008R7" lane="-Jatk_R01_0" pos="212.19" freq="900.00" file="NUL" vTypes="tram_R7"/>
+    <e1Detector id="5-002" lane="-Jatk01_1" pos="218.70" freq="900.00" file="NUL"/>
+    <e1Detector id="5-040" lane="-Jatk01_1" pos="-43.00" freq="900.00" file="NUL"/>
+    <e1Detector id="6-002A" lane="Tyyn13_0" pos="25.80" freq="900.00" file="NUL"/>
+    <e1Detector id="6-002B" lane="Tyyn13_1" pos="25.66" freq="900.00" file="NUL"/>
+    <e1Detector id="6-030" lane="Tyyn13_1" pos="-28.00" freq="900.00" file="NUL"/>
+    <e1Detector id="6-040" lane="Tyyn12_0" pos="-3.00" freq="900.00" file="NUL"/>
+    <e1Detector id="7-001" lane="Tyyn13_2" pos="25.54" freq="900.00" file="NUL"/>
+    <e1Detector id="7-020" lane="Tyyn13_2" pos="-18.00" freq="900.00" file="NUL"/>
+    <e1Detector id="9-002R" lane="Tyyn_R13_1" pos="66.51" freq="900.00" file="NUL"/>
+</additional>

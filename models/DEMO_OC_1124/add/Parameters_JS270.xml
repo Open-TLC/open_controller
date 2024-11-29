@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<risteys ID="270_Tyyn_Vali">
+
+    <vaihtoajat punakeltainen="1" keltainen="3">
+        <paattyva opastin="1">
+            <alkava opastin="5" aika="5"/>
+            <alkava opastin="6" aika="7"/>
+            <alkava opastin="7" aika="6"/>
+            <alkava opastin="8" aika="6"/>
+            <alkava opastin="9" aika="6"/>
+            <alkava opastin="10" aika="4"/>
+            <alkava opastin="11" aika="4"/>
+            <alkava opastin="12" aika="0"/>
+        </paattyva>
+        
+        <paattyva opastin="2">
+            <alkava opastin="7" aika="8"/>
+            <alkava opastin="10" aika="4"/>
+            <alkava opastin="11" aika="8"/>
+            <alkava opastin="12" aika="8"/>
+        </paattyva>
+        
+        <paattyva opastin="3">
+            <alkava opastin="5" aika="9"/>
+            <alkava opastin="7" aika="8"/>
+            <alkava opastin="8" aika="9"/>
+            <alkava opastin="9" aika="8"/>
+            <alkava opastin="10" aika="1"/>
+            <alkava opastin="11" aika="5"/>
+            <alkava opastin="12" aika="1"/>             
+        </paattyva>
+        
+        <paattyva opastin="4">
+            <alkava opastin="5" aika="8"/>
+            <alkava opastin="7" aika="7"/>
+            <alkava opastin="8" aika="4"/>
+            <alkava opastin="10" aika="6"/>
+            <alkava opastin="11" aika="10"/>
+            <alkava opastin="12" aika="6"/>
+        </paattyva>
+        
+        <paattyva opastin="5">
+            <alkava opastin="1" aika="7"/>
+            <alkava opastin="3" aika="5"/>
+            <alkava opastin="4" aika="5"/>
+            <alkava opastin="7" aika="5"/>
+            <alkava opastin="13" aika="4"/>
+            <alkava opastin="14" aika="8"/>
+            <alkava opastin="15" aika="8"/>      
+        </paattyva>    
+        
+        <paattyva opastin="6">
+            <alkava opastin="1" aika="5"/>
+            <alkava opastin="13" aika="4.5"/>
+            <alkava opastin="14" aika="4.5"/>
+            <alkava opastin="15" aika="0.5"/>      
+        </paattyva>
+        
+        <paattyva opastin="7">
+            <alkava opastin="1" aika="6"/>
+            <alkava opastin="2" aika="8"/>
+            <alkava opastin="3" aika="8"/>
+            <alkava opastin="4" aika="7"/>
+            <alkava opastin="5" aika="7"/>
+            <alkava opastin="8" aika="6"/>
+            <alkava opastin="9" aika="6"/>
+            <alkava opastin="13" aika="4.5"/>
+            <alkava opastin="14" aika="4.5"/>
+            <alkava opastin="15" aika="0.5"/>        
+        </paattyva>
+        
+        <paattyva opastin="8">
+            <alkava opastin="1" aika="8"/>
+            <alkava opastin="3" aika="8"/>
+            <alkava opastin="4" aika="4"/>
+            <alkava opastin="7" aika="8"/>
+            <alkava opastin="13" aika="6"/>
+            <alkava opastin="14" aika="10"/>
+            <alkava opastin="15" aika="6"/>        
+        </paattyva>
+        
+        <paattyva opastin="9">
+            <alkava opastin="1" aika="7"/>
+            <alkava opastin="3" aika="7"/>
+            <alkava opastin="7" aika="7"/>
+            <alkava opastin="13" aika="1"/>
+            <alkava opastin="14" aika="5"/>
+            <alkava opastin="15" aika="1"/>
+        </paattyva>
+        
+        <paattyva opastin="10">
+            <alkava opastin="1" aika="5"/>
+            <alkava opastin="2" aika="1"/>
+            <alkava opastin="3" aika="1"/>
+            <alkava opastin="4" aika="1"/>
+        </paattyva>
+        
+        <paattyva opastin="11">
+            <alkava opastin="1" aika="5"/>
+            <alkava opastin="2" aika="4"/>
+            <alkava opastin="3" aika="5"/>
+            <alkava opastin="4" aika="5"/>
+        </paattyva>
+        
+        <paattyva opastin="12">
+            <alkava opastin="1" aika="1"/>
+            <alkava opastin="2" aika="4"/>
+            <alkava opastin="3" aika="1"/>
+            <alkava opastin="4" aika="1"/>
+        </paattyva>
+        
+        <paattyva opastin="13" heti="ei">
+            <alkava opastin="5" aika="1"/>
+            <alkava opastin="6" aika="9"/>
+            <alkava opastin="7" aika="9"/>
+            <alkava opastin="8" aika="1"/>
+            <alkava opastin="9" aika="1"/>
+        </paattyva>
+        
+        <paattyva opastin="14" heti="ei">
+            <alkava opastin="5" aika="2"/>
+            <alkava opastin="6" aika="6"/>
+            <alkava opastin="7" aika="6"/>
+            <alkava opastin="8" aika="5"/>
+            <alkava opastin="9" aika="5"/>
+        </paattyva>
+        
+        <paattyva opastin="15" heti="ei">
+            <alkava opastin="5" aika="5"/>
+            <alkava opastin="6" aika="1"/>
+            <alkava opastin="7" aika="1"/>
+            <alkava opastin="8" aika="1"/>
+            <alkava opastin="9" aika="1"/>
+        </paattyva>
+        
+    
+    </vaihtoajat>
+    
+    <aloitusviiveet>
+        <viivytys opastin="15">
+            <viive opastin="1" aika="1"/>
+        </viivytys>
+        <viivytys opastin="12">
+            <viive opastin="7" aika="1"/>
+        </viivytys>
+    </aloitusviiveet>
+    
+    <vaiheet>
+        <ohjelma id="A">
+            <vaihe opastimet="5,6,8,9,10,11,12"/>
+            <vaihe opastimet="1,2,3,4,13,14,15"/>
+            <vaihe opastimet="6,7,10,11,12"/>
+        </ohjelma>
+    
+    </vaiheet>
+
+
+    <opastinasetukset>
+        <ohjelma id="3" vaiheohjelma="A" tyyppi="AR" KP="5,6,8,9,10,11,12">
+            <opastin id="1"  minvih="8" maxvih="35"/>
+            <opastin id="2"  minvih="8" maxvih="20"/>
+            <opastin id="3"  minvih="5" maxvih="20"/>
+            <opastin id="4"  minvih="5" maxvih="20"/>
+            <opastin id="5"  minvih="10" maxvih="35"/>
+            <opastin id="6"  minvih="9" maxvih="40"/>
+            <opastin id="7"  minvih="5" maxvih="15"/>
+            <opastin id="8"  minvih="5" maxvih="30"/>
+            <opastin id="9"  minvih="5" maxvih="30"/>
+            <opastin id="10" minvih="10" maxvih="33"/>
+            <opastin id="11" minvih="10" maxvih="33"/>
+            <opastin id="12" minvih="10" maxvih="33"/>
+            <opastin id="13" minvih="10" maxvih="33"/>
+            <opastin id="14" minvih="10" maxvih="33"/>
+            <opastin id="15" minvih="10" maxvih="33"/>            
+        </ohjelma>
+        
+        <ohjelma id="4" vaiheohjelma="A" tyyppi="PV" KP="5,6,8,9,10,11,12">
+            <opastin id="1"  minvih="8" maxvih="25"/>
+            <opastin id="2"  minvih="8" maxvih="15"/>
+            <opastin id="3"  minvih="5" maxvih="20"/>
+            <opastin id="4"  minvih="5" maxvih="20"/>
+            <opastin id="5"  minvih="10" maxvih="35"/>
+            <opastin id="6"  minvih="9" maxvih="35"/>
+            <opastin id="7"  minvih="5" maxvih="15"/>
+            <opastin id="8"  minvih="5" maxvih="30"/>
+            <opastin id="9"  minvih="5" maxvih="30"/>
+            <opastin id="10" minvih="10" maxvih="33"/>
+            <opastin id="11" minvih="10" maxvih="33"/>
+            <opastin id="12" minvih="10" maxvih="33"/>
+            <opastin id="13" minvih="10" maxvih="33"/>
+            <opastin id="14" minvih="10" maxvih="33"/>
+            <opastin id="15" minvih="10" maxvih="33"/>            
+        </ohjelma>
+        
+        <ohjelma id="5" vaiheohjelma="A" tyyppi="IR" KP="5,6,8,9,10,11,12">
+            <opastin id="1"  minvih="8" maxvih="30"/>
+            <opastin id="2"  minvih="8" maxvih="15"/>
+            <opastin id="3"  minvih="5" maxvih="20"/>
+            <opastin id="4"  minvih="5" maxvih="20"/>
+            <opastin id="5"  minvih="10" maxvih="40"/>
+            <opastin id="6"  minvih="9" maxvih="45"/>
+            <opastin id="7"  minvih="5" maxvih="20"/>
+            <opastin id="8"  minvih="5" maxvih="30"/>
+            <opastin id="9"  minvih="5" maxvih="30"/>
+            <opastin id="10" minvih="10" maxvih="33"/>
+            <opastin id="11" minvih="10" maxvih="33"/>
+            <opastin id="12" minvih="10" maxvih="33"/>
+            <opastin id="13" minvih="10" maxvih="33"/>
+            <opastin id="14" minvih="10" maxvih="33"/>
+            <opastin id="15" minvih="10" maxvih="33"/>            
+        </ohjelma>
+        
+        <ohjelma id="6" vaiheohjelma="A" tyyppi="LAIVA" KP="5,6,8,9,10,11,12">
+            <opastin id="1"  minvih="8" maxvih="25"/>
+            <opastin id="2"  minvih="8" maxvih="15"/>
+            <opastin id="3"  minvih="5" maxvih="20"/>
+            <opastin id="4"  minvih="5" maxvih="20"/>
+            <opastin id="5"  minvih="10" maxvih="35"/>
+            <opastin id="6"  minvih="9" maxvih="45"/>
+            <opastin id="7"  minvih="5" maxvih="20"/>
+            <opastin id="8"  minvih="5" maxvih="30"/>
+            <opastin id="9"  minvih="5" maxvih="30"/>
+            <opastin id="10" minvih="10" maxvih="33"/>
+            <opastin id="11" minvih="10" maxvih="33"/>
+            <opastin id="12" minvih="10" maxvih="33"/>
+            <opastin id="13" minvih="10" maxvih="33"/>
+            <opastin id="14" minvih="10" maxvih="33"/>
+            <opastin id="15" minvih="10" maxvih="33"/>            
+        </ohjelma>
+        
+        <ohjelma id="7" vaiheohjelma="A" tyyppi="VOIMLAIVA" KP="5,6,8,9,10,11,12">
+            <opastin id="1"  minvih="8" maxvih="25"/>
+            <opastin id="2"  minvih="8" maxvih="15"/>
+            <opastin id="3"  minvih="5" maxvih="20"/>
+            <opastin id="4"  minvih="5" maxvih="20"/>
+            <opastin id="5"  minvih="10" maxvih="40"/>
+            <opastin id="6"  minvih="9" maxvih="60"/>
+            <opastin id="7"  minvih="5" maxvih="20"/>
+            <opastin id="8"  minvih="5" maxvih="30"/>
+            <opastin id="9"  minvih="5" maxvih="30"/>
+            <opastin id="10" minvih="10" maxvih="33"/>
+            <opastin id="11" minvih="10" maxvih="33"/>
+            <opastin id="12" minvih="10" maxvih="33"/>
+            <opastin id="13" minvih="10" maxvih="33"/>
+            <opastin id="14" minvih="10" maxvih="33"/>
+            <opastin id="15" minvih="10" maxvih="33"/>            
+        </ohjelma>
+        
+        <ohjelma id="9" vaiheohjelma="A" tyyppi="LAIVA" KP="5,6,8,9,10,11,12">
+            <opastin id="1"  minvih="8" maxvih="25"/>
+            <opastin id="2"  minvih="8" maxvih="15"/>
+            <opastin id="3"  minvih="5" maxvih="20"/>
+            <opastin id="4"  minvih="5" maxvih="20"/>
+            <opastin id="5"  minvih="10" maxvih="40"/>
+            <opastin id="6"  minvih="9" maxvih="60"/>
+            <opastin id="7"  minvih="5" maxvih="20"/>
+            <opastin id="8"  minvih="5" maxvih="30"/>
+            <opastin id="9"  minvih="5" maxvih="30"/>
+            <opastin id="10" minvih="10" maxvih="33"/>
+            <opastin id="11" minvih="10" maxvih="33"/>
+            <opastin id="12" minvih="10" maxvih="33"/>
+            <opastin id="13" minvih="10" maxvih="33"/>
+            <opastin id="14" minvih="10" maxvih="33"/>
+            <opastin id="15" minvih="10" maxvih="33"/>            
+        </ohjelma>
+        
+        <ohjelma id="11" vaiheohjelma="A" tyyppi="LAIVA" KP="5,6,8,9,10,11,12">
+            <opastin id="1"  minvih="8" maxvih="25"/>
+            <opastin id="2"  minvih="8" maxvih="15"/>
+            <opastin id="3"  minvih="5" maxvih="20"/>
+            <opastin id="4"  minvih="5" maxvih="20"/>
+            <opastin id="5"  minvih="10" maxvih="40"/>
+            <opastin id="6"  minvih="9" maxvih="60"/>
+            <opastin id="7"  minvih="5" maxvih="20"/>
+            <opastin id="8"  minvih="5" maxvih="30"/>
+            <opastin id="9"  minvih="5" maxvih="30"/>
+            <opastin id="10" minvih="10" maxvih="33"/>
+            <opastin id="11" minvih="10" maxvih="33"/>
+            <opastin id="12" minvih="10" maxvih="33"/>
+            <opastin id="13" minvih="10" maxvih="33"/>
+            <opastin id="14" minvih="10" maxvih="33"/>
+            <opastin id="15" minvih="10" maxvih="33"/>            
+        </ohjelma>        
+        
+        <ohjelma id="12" vaiheohjelma="A" tyyppi="PIMEA"/>
+    </opastinasetukset>
+        
+            
+</risteys>
+
