@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The stand alone clockwrk module for running the traffic indicators.
 
 This component will connect to gieven data sources and calculate the traffic indicators.
@@ -16,9 +15,16 @@ CONF_FILE = "models/testmodel/indicators.json"
 
 import asyncio
 from nats.aio.client import Client as NATS
+import argparse
+from confread import GlobalConf
 
 
 async def main():
+    command_line_params = read_command_line()
+    config = GlobalConf(command_line_params=command_line_params, conf=command_line_params.conf)
+    print("Config:")
+    print(config)
+    exit(0)
     nats = NATS()
     await nats.connect("nats://localhost:4222")
 
@@ -32,6 +38,36 @@ async def main():
         await asyncio.sleep(1)
 
 
+def read_command_line():
+    """Returns parsed command line arguments
+    """
+
+    operation_description = """
+    Runs the sumo in real time and relays the detector and group states
+    to a nats-server
+    """
+    parser = argparse.ArgumentParser(
+        description=operation_description)
+
+    vers = SOFTWARE_NAME + " v. " + IMPL_VERSION
+    parser.add_argument('--version', action='version', version=vers)
+
+    parser.add_argument('--conf',
+                                help='Configuration parameters '
+                                    '(default: default.json)',
+                                required=False)
+
+   
+    parser.add_argument('--nats-server',
+                                help='Nats server address ',
+                                required=False)
+    parser.add_argument('--nats-port',
+                                help='Nats server port ',
+                                required=False)
+    
+    args = parser.parse_args()
+
+    return args
 
 if __name__ == "__main__":
     asyncio.run(main())
