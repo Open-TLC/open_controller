@@ -108,15 +108,28 @@ class GlobalConf:
 
     def get_nats_params(self):
         """Returns the nats parameters (host:port)"""
-        return str(self.conf['connectivity']['nats']['ip']) + ':' + str(self.conf['connectivity']['nats']['port'])
+        if 'connectivity' not in self.conf:
+            return None
+        if 'nats' not in self.conf['connectivity']:
+            return None
+        nats_params = self.conf['connectivity']['nats']
+
+        return str(nats_params['server']) + ':' + str(nats_params['port'])
 
     
     def get_input_params(self):
         """Returns inputs sections"""
         return self.conf['inputs']
 
+    def get_radar_input_params(self):
+        """Returns parameters for the radars as a dictionary"""
+        radars = {}
+        input_params = self.conf['inputs']
+        for input_name, params in input_params.items():
+            if params['type'] == 'radar':
+                radars[input_name] = params
+        return radars
     
-
 if __name__ == '__main__':
     print("testing for the confread")
     test_cnf = GlobalConf()

@@ -2,11 +2,11 @@
 "connectivity":{
 	"notes": "This is for accessing the data",
 	"nats": {
-		"ip": "localhost",
+		"server": "localhost",
 		"port": 4222
     },
     "hsl": {
-        "ip": "to be defined",
+        "server": "to be defined",
         "port": 8080
     }
 	},
@@ -16,35 +16,35 @@
         "source": "nats",
         "type": "groups",
         "subtype": "sumo",
-        "topic": "group.status.*.*",
+        "nats_subject": "group.status.*.*",
         "notes": "Will subscribe to all groups sent by sumo"
     },
     "det_inputs": {
         "source": "nats",
         "type": "detectors",
         "subtype": "sumo",
-        "topic": "detector.status.*",
+        "nats_subject": "detector.status.*",
         "notes": "Will subscribe to all detectors sent by sumo"
         },
     "radar270.1": {
         "source": "nats",
         "type": "radar",
         "subtype": "sumo",
-        "topic": "radar.270.1.objects_port.json",
+        "nats_subject": "radar.270.1.objects_port.json",
         "notes": "Will subscribe to radar pointing north"
         },
     "radar270.2": {
         "source": "nats",
         "type": "radar",
         "subtype": "sumo",
-        "topic": "radar.270.2.objects_port.json",
+        "nats_subject": "radar.270.2.objects_port.json",
         "notes": "Will subscribe to radar pointing west"
         },
-    "radar270.2": {
+    "radar270.3": {
         "source": "nats",
         "type": "radar",
         "subtype": "sumo",
-        "topic": "radar.270.2.objects_port.json",
+        "nats_subject": "radar.270.3.objects_port.json",
         "notes": "Will subscribe to radar pointing soutsh"
         }
     },

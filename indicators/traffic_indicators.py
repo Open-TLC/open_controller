@@ -17,23 +17,94 @@ import asyncio
 from nats.aio.client import Client as NATS
 import argparse
 from confread import GlobalConf
+from radar import Radar
 
+class SensorTwin:
+    """A class for containing copy of the sensor data"""
+
+    def __init__(self):
+        self.radars = {}
+        self.detectors = {}
+        self.groups = {}
+        self.inputs = []
+
+    def __str__(self):
+        ret_str = "Sensor twin:\n"
+        ret_str += "   Radars: {}\n".format(len(self.radars))
+        ret_str += "   Detectors: {}\n".format(len(self.detectors))
+        ret_str += "   Groups: {}\n".format(len(self.groups))
+        return ret_str
+    
+    
+    def add_radars(self, radar_dict):
+        """Adds a radar to the twin"""
+    
+        for name, params in radar_dict.items():
+            radar = Radar(name, params)
+            self.radars[name] = radar
+
+    def get_all_configured_nats_subs(self):
+        """Returns all nats subscriptions"""
+        subs = []
+        for radar in self.radars.values():
+            sub_params = radar.get_nats_sub_params()
+            if sub_params:
+                subs.append(sub_params)
+        return subs
+
+    def get_cleanup_tasks(self):
+        """Returns cleanup tasks for each sensor"""
+        tasks = []
+        for radar in self.radars.values():
+            tasks.append(radar.cleanup_old_data)
+        return tasks
+    
+    def get_send_queues_tasks(self):
+        """Returns the send queue tasks"""
+        tasks = []
+        for radar in self.radars.values():
+            tasks.append(radar.send_queues)
+        return tasks
 
 async def main():
     command_line_params = read_command_line()
     config = GlobalConf(command_line_params=command_line_params, conf=command_line_params.conf)
-    print("Config:")
-    print(config)
-    exit(0)
-    nats = NATS()
-    await nats.connect("nats://localhost:4222")
+    #print("Config:")
+    #print(config)
+    #print("Nats params:")
+    #print(config.get_nats_params())
+    #print("radar params:")
+    radar_params = config.get_radar_input_params()
+    #print(radar_params)
+    #print("Creating the sensor twin")
+    sensor_twin = SensorTwin()
+    sensor_twin.add_radars(radar_params)
+    #print("Sensor twin:")
+    #print(sensor_twin)
+    #print("All nats subscriptions:")
+    #print(sensor_twin.get_all_configured_nats_subs())
 
-    async def message_handler(msg):
-        subject = msg.subject
-        reply = msg.reply
-        data = msg.data.decode()
-        print(f"Received a message on '{subject} {reply}': {data}")
-    await nats.subscribe(RADAR_TEST_TOPIC, cb=message_handler)
+    # Nats connection
+    nats_connection_params = config.get_nats_params()
+    nats = NATS()
+    await nats.connect(nats_connection_params)
+
+    # Sub to all subjects in config
+    all_subs = sensor_twin.get_all_configured_nats_subs()
+    print("All subs:", all_subs)
+    for sub in all_subs:
+        await nats.subscribe(sub['subject'], cb=sub['callback'])
+
+    # Add cleanup tast into asuncio loop for each sensor
+    tasks = sensor_twin.get_cleanup_tasks()
+    for task in tasks:
+        asyncio.create_task(task())
+
+    # For sending the queues
+    tasks = sensor_twin.get_send_queues_tasks()
+    for task in tasks:
+        asyncio.create_task(task(nats))
+
     while True:
         await asyncio.sleep(1)
 
