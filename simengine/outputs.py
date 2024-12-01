@@ -28,13 +28,14 @@ CLENUP_TIME_LIMIT = 0.5 # seconds
 
 class Radar:
     "This class is for handling the virtual radars"
-    def __init__(self, aoi):
+    def __init__(self, aoi, lane_map=None):
         # aoi = area of interest
         poly_coords = []
         for point in aoi:
             poly_coords.append(tuple(point))
         
         self.aoi = Polygon(poly_coords)
+        self.lane_map = lane_map
         self.vehicles = {}
         self.id_counter = 0
 
@@ -72,7 +73,7 @@ class Radar:
         veh['acceleration'] = traci.vehicle.getAcceleration(vehicle_id)
         veh['sumo_angle'] = angle
         veh['len'] = traci.vehicle.getLength(vehicle_id)
-        veh['lane'] = traci.vehicle.getLaneIndex(vehicle_id)
+        veh['lane'] = self.get_veh_lane(vehicle_id)
         veh['cyc_ago'] = 0
 
         sumo_class = traci.vehicle.getTypeID(vehicle_id)           
@@ -90,6 +91,21 @@ class Radar:
         veh['lastupdate'] = datetime.now()
         # Finally we add/replace the vehicle data
         self.vehicles[veh['sumo_id']] = veh
+
+
+    def get_veh_lane(self, vehicle_id):
+        "Returns the lane of the vehicle"
+        if not self.lane_map:
+            sumo_lane = traci.vehicle.getLaneIndex(vehicle_id)
+            return sumo_lane
+        
+        #Mapping is defined
+        sumo_lane_id = traci.vehicle.getLaneID(vehicle_id)
+        if sumo_lane_id in self.lane_map:
+            return self.lane_map[sumo_lane_id]
+        else:
+            #print("Lane not found in the lane map:", sumo_lane_id)            
+            return -1 # TODO: Should be handled better, maybe omit these vehicles?
 
 
     def remove_old_data(self):
@@ -259,9 +275,14 @@ class RadarStorage:
     def __init__(self, conf):
         self.statuses = {}
         self.conf = conf
+
         for rad_id, rad_conf in self.conf['radars'].items():
+            if 'lane_map' in rad_conf:
+                lane_map = rad_conf['lane_map']
+            else:
+                lane_map = None
             aoi = rad_conf['area_of_interest']
-            self.conf['radars'][rad_id]['radar_object'] = Radar(aoi)
+            self.conf['radars'][rad_id]['radar_object'] = Radar(aoi, lane_map=lane_map)
         
     def get_messages_current(self):
         """Returns a dict (keys are channels, values are json-strings) with data to be send to NATS"""
