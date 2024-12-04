@@ -543,7 +543,7 @@ class PhaseRingController:
 
         # e3Out  = 'e3vehCnt'
         e3Out  = 'e3confCnt'
-        e3Out  = 'e3crit2'
+        # e3Out  = 'e3crit2'
 
         sigstat = str(self.get_grp_states())
 
