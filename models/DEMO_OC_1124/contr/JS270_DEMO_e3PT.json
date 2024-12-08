@@ -17,7 +17,7 @@
 
 "sumo":{
     "graph" : true,
-    "file_name": "../models/DEMO_OC_1124/cfgFiles/JS270_DEMO.sumocfg",
+    "file_name": "models/DEMO_OC_1124/cfgFiles/JS270_DEMO.sumocfg",
     "print_status": true,
         "group_outputs": ["group1", "group1", "group2", "group3", "group4", "group5", "group6", "group7", "group8", "group9", "group10", 
         "group11", "group12", "group13", "group14", "group15"]
