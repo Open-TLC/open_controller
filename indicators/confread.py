@@ -176,7 +176,8 @@ class GlobalConf:
         return outputs
 
     def get_view_outputs(self):
-        """Returns outputs for group view"""
+        """Returns outputs for group view, note that this not only rerutns the
+        outputs but also searches params for lanes, radar outputs and etc"""
         outputs = self.conf['outputs']
         view_outputs = {}
         for output_name, params in outputs.items():
@@ -184,16 +185,16 @@ class GlobalConf:
                 if params["type"] == "grp_view":
                     view_outputs[output_name] = params
                     lanes = params.get('lanes', [])
-                    lane_params = [] # Filled with actual conf
+                    lane_params = [] # Will be filled with actual conf
                     for l in lanes:
-                        l_params = self.get_lane_params(l)
+                        l_params = self.get_lane_params(l) # this reads "lanes section"
                         if l_params:
                             lane_params.append(l_params)
                     view_outputs[output_name]['lanes'] = lane_params
         return view_outputs
 
     def get_lane_params(self, lane_name):
-        """Returns the lane parameters"""
+        """Returns the lane parameters (from the lanes section)"""
         lane_params = None
         for param_lane_name, params in self.conf['lanes'].items():
             if param_lane_name == lane_name:
@@ -201,6 +202,7 @@ class GlobalConf:
                 rad_lanes = params.get('radar_lanes', [])
                 radar_lane_params = {}
                 for r_lane in rad_lanes:
+                    # This reads the params from the inputs section
                     radar_lane_params[r_lane] = self.get_radar_input_params(r_lane)
                 lane_params['radar_lanes'] = radar_lane_params
         return lane_params
@@ -212,11 +214,12 @@ class GlobalConf:
         for param_radar_name, params in radars.items():
             if param_radar_name == radar_name:
                 radar_params = params
-                if 'stream' in params:
-                    radar_params['stream'] = self.get_input_stream_params(params['stream'])
+                #if 'stream' in params:
+                    # This reads the params from the input_streams section
+                #    radar_params['stream'] = self.get_input_stream_params(params['stream'])
         return radar_params
 
-
+    # Note: currently not used
     def get_input_stream_params(self, input_name):
         """Returns the input stream parameters"""
         input_params = self.conf['input_streams']

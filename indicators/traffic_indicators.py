@@ -18,6 +18,7 @@ from nats.aio.client import Client as NATS
 import argparse
 from confread import GlobalConf
 from radar import Radar
+from fusion import FieldOfView
 
 class SensorTwin:
     """A class for containing copy of the sensor data"""
@@ -28,6 +29,7 @@ class SensorTwin:
         self.groups = {}
         self.inputs = []
         self.outputs = []
+        self.fovs = {} # Fields of View
         
 
     def __str__(self):
@@ -40,11 +42,25 @@ class SensorTwin:
     
     def add_radars(self, radar_dict):
         """Adds a radar to the twin"""
-    
+        # This creates the radar objects
         for name, params in radar_dict.items():
             radar = Radar(name, params)
             self.radars[name] = radar
 
+        # This assigns the radars to the field of view
+        # For generating the outputs
+        for fov in self.fovs.values():
+            fov.assign_radars(self.radars)
+
+
+
+    def add_field_of_view(self, fov_dict):
+        """Adds a field of view to the twin"""
+        for name, params in fov_dict.items():
+            fov = FieldOfView(name, params)
+            self.fovs[name] = fov
+    
+    
     def get_all_configured_nats_subs(self):
         """Returns all nats subscriptions"""
         subs = []
@@ -64,8 +80,11 @@ class SensorTwin:
     def get_send_queues_tasks(self):
         """Returns the send queue tasks"""
         tasks = []
-        for radar in self.radars.values():
-            tasks.append(radar.send_queues)
+        for fov in self.fovs.values():
+            tasks.append(fov.send_queues)
+
+        #for radar in self.radars.values():
+        #    tasks.append(radar.send_queues)
         return tasks
 
 async def main():
@@ -74,10 +93,12 @@ async def main():
 
     radar_params = config.get_radar_input_params_basic()
     sensor_twin = SensorTwin()
+    
+    fov_params = config.get_view_outputs()
+    sensor_twin.add_field_of_view(fov_params)
     sensor_twin.add_radars(radar_params)
     #print(config.get_outputs())
-    print(config.get_view_outputs())
-    exit()
+    #exit()
 
     # Nats connection
     nats_connection_params = config.get_nats_params()

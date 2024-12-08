@@ -57,7 +57,12 @@ class Radar:
             return None
         return self.data[-1]
 
-
+    def get_object_list(self):
+        """Returns the list of objects"""
+        last_data = self.get_last_data()
+        if last_data:
+            return last_data['objects']
+        return []
     
     def get_nats_sub_params(self):
         """
