@@ -9,46 +9,67 @@
         "server": "to be defined",
         "port": 8080
     }
-	},
+},
 
 "inputs":{
     "sig_inputs": {
-        "source": "nats",
+        "connection": "nats",
         "type": "groups",
         "subtype": "sumo",
         "nats_subject": "group.status.*.*",
         "notes": "Will subscribe to all groups sent by sumo"
     },
     "det_inputs": {
-        "source": "nats",
+        "connection": "nats",
         "type": "detectors",
         "subtype": "sumo",
         "nats_subject": "detector.status.*",
         "notes": "Will subscribe to all detectors sent by sumo"
-        },
+        },    
     "radar270.1": {
-        "source": "nats",
+        "connection": "nats",
         "type": "radar",
         "subtype": "sumo",
         "nats_subject": "radar.270.1.objects_port.json",
         "notes": "Will subscribe to radar pointing north"
         },
     "radar270.2": {
-        "source": "nats",
+        "connection": "nats",        
         "type": "radar",
         "subtype": "sumo",
         "nats_subject": "radar.270.2.objects_port.json",
         "notes": "Will subscribe to radar pointing west"
         },
     "radar270.3": {
-        "source": "nats",
+        "connection": "nats",
         "type": "radar",
         "subtype": "sumo",
         "nats_subject": "radar.270.3.objects_port.json",
-        "notes": "Will subscribe to radar pointing soutsh"
+        "notes": "Will subscribe to radar pointing south"
+        }
+    },
+
+"detlogics":{
+    "tram9_request_detlogic":{
+        "type": "two_det_switch",
+        "notes": "One detector swithces the request on, another off",
+        "detectors": {
+            "request": "4-002R9",
+            "clear": "4-00CA9"
+        },
+        "request_trigger": "rising_edge",
+        "clear_trigger": "falling_edge"
         }
     },
 
 "outputs":{
+    "tram9_request":{
+        "connection": "nats",
+        "type": "detlogic",
+        "nats_output_subject": "group.request.270.9",
+        "trigger": "change",
+        "function": "tram9_request_detlogic",
+        "notes": "Will output the request for tram for group 9"
     }
-}   
+    }
+}

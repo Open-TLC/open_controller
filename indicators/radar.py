@@ -16,7 +16,7 @@ class Radar:
     def __init__(self, radar_id, radar_params):
         self.radar_id = radar_id
         self.radar_params = radar_params
-        if radar_params['source'] == 'nats':
+        if radar_params['connection'] == 'nats':
             if 'nats_subject' in radar_params:
                 self.nats_subject = radar_params['nats_subject']
                 self.nats = True

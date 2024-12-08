@@ -27,6 +27,8 @@ class SensorTwin:
         self.detectors = {}
         self.groups = {}
         self.inputs = []
+        self.outputs = []
+        
 
     def __str__(self):
         ret_str = "Sensor twin:\n"
@@ -48,7 +50,7 @@ class SensorTwin:
         subs = []
         for radar in self.radars.values():
             sub_params = radar.get_nats_sub_params()
-            if sub_params:
+            if sub_params:  
                 subs.append(sub_params)
         return subs
 
@@ -69,20 +71,12 @@ class SensorTwin:
 async def main():
     command_line_params = read_command_line()
     config = GlobalConf(command_line_params=command_line_params, conf=command_line_params.conf)
-    #print("Config:")
-    #print(config)
-    #print("Nats params:")
-    #print(config.get_nats_params())
-    #print("radar params:")
+
     radar_params = config.get_radar_input_params()
-    #print(radar_params)
-    #print("Creating the sensor twin")
     sensor_twin = SensorTwin()
     sensor_twin.add_radars(radar_params)
-    #print("Sensor twin:")
-    #print(sensor_twin)
-    #print("All nats subscriptions:")
-    #print(sensor_twin.get_all_configured_nats_subs())
+    print(config.get_outputs())
+    #exit()
 
     # Nats connection
     nats_connection_params = config.get_nats_params()

@@ -71,6 +71,15 @@ class GlobalConf:
         inputs = {}
         self.conf['inputs'] = inputs
 
+        # Outputs
+        outputs = {}
+        self.conf['outputs'] = outputs
+
+        # Detlogics
+        detlogics = {}
+        self.conf['detlogics'] = detlogics
+
+
        
     def set_vals_from_conf(self, filename):
         """Opens the conf-file and update the self.conf"""
@@ -94,7 +103,12 @@ class GlobalConf:
         if 'inputs' in config_from_file:
             self.conf['inputs'].update(config_from_file['inputs'])
 
-     
+        if 'outputs' in config_from_file:
+            self.conf['outputs'].update(config_from_file['outputs'])
+
+        if 'detlogics' in config_from_file:
+            self.conf['detlogics'].update(config_from_file['detlogics'])
+
 
     def set_vals_from_command(self, command_line_params):
         """Sets the values from the command line"""
@@ -130,6 +144,21 @@ class GlobalConf:
                 radars[input_name] = params
         return radars
     
+    def get_outputs(self):
+        """Returns the outputs defined in the configuration"""
+        outputs = dict(self.conf['outputs'])
+        
+        # We replace the detlogic function with the params int the detlogics
+        for output_name, params in self.conf['outputs'].items():
+            if "type" in params:
+                if params["type"] == "detlogic":
+                    detlogic_function_name = None
+                    if "function" in params:
+                        detlogic_function_name = params["function"]
+                        if detlogic_function_name in self.conf["detlogics"]:
+                            outputs[output_name]["function"] = self.conf["detlogics"][detlogic_function_name]
+        return outputs
+
 if __name__ == '__main__':
     print("testing for the confread")
     test_cnf = GlobalConf()
