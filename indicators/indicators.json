@@ -11,7 +11,7 @@
     }
 },
 
-"inputs":{
+"input_streams":{
     "sig_inputs": {
         "connection": "nats",
         "type": "groups",
@@ -62,6 +62,59 @@
         }
     },
 
+"inputs":{
+    "dets":{
+        "2-002": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "2-002"
+        },
+        "2-040": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "2-040"
+        },
+        "5-002": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "5-002"
+        },
+        "5-040": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "5-040"
+        }
+
+    },
+    "rad_lanes":{
+        "270_1_1": {
+            "type": "simple",
+            "stream": "radar270.1",
+            "lane": "0"
+        },
+        "270_1_2": {
+            "type": "simple",
+            "stream": "radar270.1",
+            "lane": "1"
+        }
+    }
+},
+
+"lanes":{
+    "grp2_1":{
+        "input_dets": ["2-040"],
+        "output_dets": ["2-002"],
+        "radar_lanes":["270_1_1"],
+        "notes": "Approach from north"
+    },
+    "grp5_1":{
+        "input_dets": ["5-040"],
+        "output_dets": ["5-002"],
+        "radar_lanes":["270_1_2"],
+        "notes": "Approach from north"
+    }
+},
+
 "outputs":{
     "tram9_request":{
         "connection": "nats",
@@ -70,6 +123,16 @@
         "trigger": "change",
         "function": "tram9_request_detlogic",
         "notes": "Will output the request for tram for group 9"
-    }
+        },
+    "group2_view":{
+        "connection": "nats",
+        "type": "grp_view",
+        "nats_output_subject": "group.view.270.1",
+        "trigger": "time",
+        "update_period": 2.0,
+        "lanes": ["grp2_1"],
+        "notes": "Will send queue request"
+        
+        }
     }
 }

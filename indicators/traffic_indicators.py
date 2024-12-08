@@ -72,11 +72,12 @@ async def main():
     command_line_params = read_command_line()
     config = GlobalConf(command_line_params=command_line_params, conf=command_line_params.conf)
 
-    radar_params = config.get_radar_input_params()
+    radar_params = config.get_radar_input_params_basic()
     sensor_twin = SensorTwin()
     sensor_twin.add_radars(radar_params)
-    print(config.get_outputs())
-    #exit()
+    #print(config.get_outputs())
+    print(config.get_view_outputs())
+    exit()
 
     # Nats connection
     nats_connection_params = config.get_nats_params()

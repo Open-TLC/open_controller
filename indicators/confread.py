@@ -68,16 +68,25 @@ class GlobalConf:
         self.conf['connectivity'] = connectivity
 
         # No default inputs
+        inputs_streams = {}
+        self.conf['input_streams'] = inputs_streams
+
+        # Detlogics
+        detlogics = {}
+        self.conf['detlogics'] = detlogics
+
+        # Inputs
         inputs = {}
         self.conf['inputs'] = inputs
+
+        # Lanes
+        lanes = {}
+        self.conf['lanes'] = lanes
 
         # Outputs
         outputs = {}
         self.conf['outputs'] = outputs
 
-        # Detlogics
-        detlogics = {}
-        self.conf['detlogics'] = detlogics
 
 
        
@@ -100,14 +109,21 @@ class GlobalConf:
             if 'nats' in config_from_file['connectivity']:
                 self.conf['connectivity']['nats'].update(config_from_file['connectivity']['nats'])
 
+        if 'input_streams' in config_from_file:
+            self.conf['input_streams'].update(config_from_file['input_streams'])
+
+        if 'detlogics' in config_from_file:
+            self.conf['detlogics'].update(config_from_file['detlogics'])
+
         if 'inputs' in config_from_file:
             self.conf['inputs'].update(config_from_file['inputs'])
+
+        if 'lanes' in config_from_file:
+            self.conf['lanes'].update(config_from_file['lanes'])
 
         if 'outputs' in config_from_file:
             self.conf['outputs'].update(config_from_file['outputs'])
 
-        if 'detlogics' in config_from_file:
-            self.conf['detlogics'].update(config_from_file['detlogics'])
 
 
     def set_vals_from_command(self, command_line_params):
@@ -135,10 +151,10 @@ class GlobalConf:
         """Returns inputs sections"""
         return self.conf['inputs']
 
-    def get_radar_input_params(self):
+    def get_radar_input_params_basic(self):
         """Returns parameters for the radars as a dictionary"""
         radars = {}
-        input_params = self.conf['inputs']
+        input_params = self.conf['input_streams']
         for input_name, params in input_params.items():
             if params['type'] == 'radar':
                 radars[input_name] = params
@@ -158,6 +174,56 @@ class GlobalConf:
                         if detlogic_function_name in self.conf["detlogics"]:
                             outputs[output_name]["function"] = self.conf["detlogics"][detlogic_function_name]
         return outputs
+
+    def get_view_outputs(self):
+        """Returns outputs for group view"""
+        outputs = self.conf['outputs']
+        view_outputs = {}
+        for output_name, params in outputs.items():
+            if "type" in params:
+                if params["type"] == "grp_view":
+                    view_outputs[output_name] = params
+                    lanes = params.get('lanes', [])
+                    lane_params = [] # Filled with actual conf
+                    for l in lanes:
+                        l_params = self.get_lane_params(l)
+                        if l_params:
+                            lane_params.append(l_params)
+                    view_outputs[output_name]['lanes'] = lane_params
+        return view_outputs
+
+    def get_lane_params(self, lane_name):
+        """Returns the lane parameters"""
+        lane_params = None
+        for param_lane_name, params in self.conf['lanes'].items():
+            if param_lane_name == lane_name:
+                lane_params = params
+                rad_lanes = params.get('radar_lanes', [])
+                radar_lane_params = {}
+                for r_lane in rad_lanes:
+                    radar_lane_params[r_lane] = self.get_radar_input_params(r_lane)
+                lane_params['radar_lanes'] = radar_lane_params
+        return lane_params
+
+    def get_radar_input_params(self, radar_name):
+        """Returns parameters for the radars as a dictionary"""
+        radars = self.conf['inputs'].get('rad_lanes', {})
+        radar_params = {}
+        for param_radar_name, params in radars.items():
+            if param_radar_name == radar_name:
+                radar_params = params
+                if 'stream' in params:
+                    radar_params['stream'] = self.get_input_stream_params(params['stream'])
+        return radar_params
+
+
+    def get_input_stream_params(self, input_name):
+        """Returns the input stream parameters"""
+        input_params = self.conf['input_streams']
+        for param_input_name, params in input_params.items():
+            if param_input_name == input_name:
+                return params
+        return None
 
 if __name__ == '__main__':
     print("testing for the confread")
