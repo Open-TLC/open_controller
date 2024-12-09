@@ -52,8 +52,7 @@ class LaneRadar:
         objects = self.radar.get_object_list()
         objects_in_lane = []
         for obj in objects:
-            if str(obj['lane'])
-            == self.lane:
+            if str(obj['lane']) == self.lane:
                 objects_in_lane.append(obj)
         return objects_in_lane
 
