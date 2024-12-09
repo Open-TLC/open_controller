@@ -129,7 +129,7 @@
         "type": "grp_view",
         "nats_output_subject": "group.view.270.1",
         "trigger": "time",
-        "update_period": 2.0,
+        "trigger_time": 2.0,
         "lanes": ["grp2_1"],
         "notes": "Will send queue request"
         

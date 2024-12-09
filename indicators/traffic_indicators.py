@@ -19,6 +19,7 @@ import argparse
 from confread import GlobalConf
 from radar import Radar
 from fusion import FieldOfView
+from detector import Detector
 
 class SensorTwin:
     """A class for containing copy of the sensor data"""
@@ -40,8 +41,8 @@ class SensorTwin:
         return ret_str
     
     
-    def add_radars(self, radar_dict):
-        """Adds a radar to the twin"""
+    def add_radar_streams(self, radar_dict):
+        """Adds a radar streams to the twin"""
         # This creates the radar objects
         for name, params in radar_dict.items():
             radar = Radar(name, params)
@@ -53,8 +54,13 @@ class SensorTwin:
             fov.assign_radars(self.radars)
 
 
+    def add_detector_streams(self, detector_dict):
+        """Adds a detector streams to the twin"""
+        for name, params in detector_dict.items():
+            detector = Detector(name, params)
+            self.detectors[name] = detector
 
-    def add_field_of_view(self, fov_dict):
+    def add_field_of_views(self, fov_dict):
         """Adds a field of view to the twin"""
         for name, params in fov_dict.items():
             fov = FieldOfView(name, params)
@@ -64,25 +70,41 @@ class SensorTwin:
     def get_all_configured_nats_subs(self):
         """Returns all nats subscriptions"""
         subs = []
+        # RADARS
         for radar in self.radars.values():
             sub_params = radar.get_nats_sub_params()
             if sub_params:  
                 subs.append(sub_params)
+        # DETS
+        for detector in self.detectors.values():
+            sub_params = detector.get_nats_sub_params()
+            if sub_params:  
+                subs.append(sub_params)
+        
         return subs
 
     def get_cleanup_tasks(self):
         """Returns cleanup tasks for each sensor"""
         tasks = []
+        # RADARS
         for radar in self.radars.values():
             tasks.append(radar.cleanup_old_data)
+        # DETS
+        for detector in self.detectors.values():
+            tasks.append(detector.cleanup_old_data)
+        
         return tasks
     
-    def get_send_queues_tasks(self):
+    def get_send_messages_tasks(self):
         """Returns the send queue tasks"""
         tasks = []
+        # Fields of view
         for fov in self.fovs.values():
             tasks.append(fov.send_queues)
 
+        # Detectors (testing)
+        for detector in self.detectors.values():
+            tasks.append(detector.send_data) 
         #for radar in self.radars.values():
         #    tasks.append(radar.send_queues)
         return tasks
@@ -91,13 +113,24 @@ async def main():
     command_line_params = read_command_line()
     config = GlobalConf(command_line_params=command_line_params, conf=command_line_params.conf)
 
-    radar_params = config.get_radar_input_params_basic()
+    radar_stream_params = config.get_radar_stream_params()
     sensor_twin = SensorTwin()
     
     fov_params = config.get_view_outputs()
-    sensor_twin.add_field_of_view(fov_params)
-    sensor_twin.add_radars(radar_params)
-    #print(config.get_outputs())
+    sensor_twin.add_field_of_views(fov_params)
+    sensor_twin.add_radar_streams(radar_stream_params)
+    
+    det_stream_params = config.get_det_stream_params()
+    sensor_twin.add_detector_streams(det_stream_params)
+
+    # Deubug
+    print("STREAM   PARAMS")
+    print(det_stream_params)
+    print("RADAR STEAMS")
+    print(config.get_radar_stream_params())
+
+    print("Logic OUTPUTS")
+    print(config.get_detlogic_outputs())
     #exit()
 
     # Nats connection
@@ -117,7 +150,7 @@ async def main():
         asyncio.create_task(task())
 
     # For sending the queues
-    tasks = sensor_twin.get_send_queues_tasks()
+    tasks = sensor_twin.get_send_messages_tasks()
     for task in tasks:
         asyncio.create_task(task(nats))
 

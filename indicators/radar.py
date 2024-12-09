@@ -127,4 +127,4 @@ class Radar:
             data['queue_lengths'] = queue_lengths
             data['tstamp'] = datetime.datetime.now().timestamp() * 1000
             await nats.publish(self.queue_subject, json.dumps(data).encode())
-            print(f"Sent queue data from {self.radar_id}: {queue_lengths}")
+            #print(f"Sent queue data from {self.radar_id}: {queue_lengths}")

@@ -28,7 +28,6 @@ class GlobalConf:
         # We will 1) set default values, 2) read conf file, 3) read command line
         # Each step will overwrite the previous one (if params are set)
         
-        print(command_line_params)        
         # Step 1: Set default values
         self.set_default_values()
         # Step 2: Read conf file
@@ -151,8 +150,8 @@ class GlobalConf:
         """Returns inputs sections"""
         return self.conf['inputs']
 
-    def get_radar_input_params_basic(self):
-        """Returns parameters for the radars as a dictionary"""
+    def get_radar_stream_params(self):
+        """Returns parameters for the input radars stream as a dictionary"""
         radars = {}
         input_params = self.conf['input_streams']
         for input_name, params in input_params.items():
@@ -160,6 +159,37 @@ class GlobalConf:
                 radars[input_name] = params
         return radars
     
+    # TODO: this fails if reading is done more than once
+    def get_det_stream_params(self):
+        """Returns parameters for the detector input streams as a dictionary"""
+        # In this case we have to first find all the detector names that are defined
+        # in the inputs section
+        if 'dets' not in self.conf['inputs']:
+            return {}
+        input_dets = self.conf['inputs']['dets']
+        for det_name, params in input_dets.items():
+            stream_name = params.get('stream', None)
+            if stream_name:
+                if stream_name in self.conf['input_streams']:
+                    input_dets[det_name]['stream'] = self.conf['input_streams'][stream_name]
+                    # We combine stream channes from the input name
+                    # and the stream name (prefix)
+                    channel = self.conf['input_streams'][stream_name]['nats_subject']
+                    det_subject_name = input_dets[det_name]['name']
+                    if channel[-1] == '*':
+                        channel = channel[:-1] # Remove star
+                    channel = channel + det_subject_name
+                    # deep copy the values and not change the original
+                    new_dict = dict(input_dets[det_name]['stream'])
+                    new_dict['nats_subject'] = channel
+                    input_dets[det_name]['stream'] = new_dict
+                    #input_dets[det_name]['stream']['nats_subject'] = channel
+                else:
+                    print(f"Error: stream {stream_name} not found in input_streams")
+        return input_dets
+        
+
+    # NOTE: not correct
     def get_outputs(self):
         """Returns the outputs defined in the configuration"""
         outputs = dict(self.conf['outputs'])
@@ -174,6 +204,25 @@ class GlobalConf:
                         if detlogic_function_name in self.conf["detlogics"]:
                             outputs[output_name]["function"] = self.conf["detlogics"][detlogic_function_name]
         return outputs
+
+    #
+    # Detlogic outputs
+    #
+
+    def get_detlogic_outputs(self):
+        """Returns the detlogic outputs"""
+        outputs = self.conf['outputs']
+        detlogic_outputs = {}
+        for output_name, params in outputs.items():
+            if "type" in params:
+                if params["type"] == "detlogic":
+                    detlogic_outputs[output_name] = params
+        return detlogic_outputs
+
+
+    # 
+    # Wiew output functions, these handle the group views (sensor fusion in the future)
+    #
 
     def get_view_outputs(self):
         """Returns outputs for group view, note that this not only rerutns the

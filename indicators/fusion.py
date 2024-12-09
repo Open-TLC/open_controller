@@ -15,7 +15,6 @@ class Lane:
         self.output_dets = [] 
         self.input_radars = {}
         self.input_radars_params = params.get('radar_lanes', {})
-        print(f"radar lanes: {self.input_radars_params}")
         
     def assign_radars(self, radars):
         """Assigns a radar to the lane"""
@@ -26,7 +25,7 @@ class Lane:
                 #self.input_radars[radar_name] = radars[radar_params['stream']]
                 self.input_radars[radar_name] = LaneRadar(lane, radar)
 
-        print(f"assigned radars: {self.input_radars}")
+        #print(f"assigned radars: {self.input_radars}")
 
     # Note: currently doesn't handle multiple radars
     def get_approaching_objects(self):
@@ -80,7 +79,6 @@ class FieldOfView:
         for lane_param in lane_params:
             lane = Lane(lane_param)
             self.lanes.append(lane)
-        print(f"lanes: {lane_params}") 
     
     def assign_radars(self, radars):
         """Assigns radars to the field of view"""
