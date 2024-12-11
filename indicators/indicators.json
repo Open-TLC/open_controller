@@ -65,7 +65,7 @@
 "inputs":{
     "dets":{
         "2-002": {
-            "type": "rising_edge",
+            "type": "falling_edge",
             "stream": "det_inputs",
             "name": "2-002"
         },
@@ -75,7 +75,7 @@
             "name": "2-040"
         },
         "5-002": {
-            "type": "rising_edge",
+            "type": "falling_edge",
             "stream": "det_inputs",
             "name": "5-002"
         },
@@ -83,34 +83,60 @@
             "type": "rising_edge",
             "stream": "det_inputs",
             "name": "5-040"
+        },
+        "1-001": {
+            "type": "falling_edge",
+            "stream": "det_inputs",
+            "name": "1-010"
+        },
+        "1-040": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "1-040"
         }
+
+
 
     },
     "rad_lanes":{
-        "270_1_1": {
+        "270_1_0": {
             "type": "simple",
             "stream": "radar270.1",
             "lane": "0"
         },
-        "270_1_2": {
+        "270_1_1": {
             "type": "simple",
             "stream": "radar270.1",
+            "lane": "1"
+        },
+        "270_3_0": {
+            "type": "simple",
+            "stream": "radar270.3",
             "lane": "1"
         }
     }
 },
 
 "lanes":{
+    "grp1_1":{
+        "name": "Group 2 lane 1",
+        "in_dets": ["1-040"],
+        "out_dets": ["1-001"],
+        "radar_lanes":["270_3_0"],
+        "notes": "Approach from north"
+    },
     "grp2_1":{
-        "input_dets": ["2-040"],
-        "output_dets": ["2-002"],
-        "radar_lanes":["270_1_1"],
+        "name": "Group 2 lane 1",
+        "in_dets": ["2-040"],
+        "out_dets": ["2-002"],
+        "radar_lanes":["270_1_0"],
         "notes": "Approach from north"
     },
     "grp5_1":{
-        "input_dets": ["5-040"],
-        "output_dets": ["5-002"],
-        "radar_lanes":["270_1_2"],
+        "name": "Group 5 lane 1",
+        "in_dets": ["5-040"],
+        "out_dets": ["5-002"],
+        "radar_lanes":["270_1_1"],
         "notes": "Approach from north"
     }
 },
@@ -124,15 +150,32 @@
         "function": "tram9_request_detlogic",
         "notes": "Will output the request for tram for group 9"
         },
+    "group1_view":{
+        "connection": "nats",
+        "type": "grp_view",
+        "nats_output_subject": "group.view.270.2",
+        "trigger": "time",
+        "trigger_time": 2.0,
+        "lanes": ["grp1_1"],
+        "notes": "Will send queue request"
+        },    
     "group2_view":{
         "connection": "nats",
         "type": "grp_view",
-        "nats_output_subject": "group.view.270.1",
+        "nats_output_subject": "group.view.270.2",
         "trigger": "time",
         "trigger_time": 2.0,
         "lanes": ["grp2_1"],
         "notes": "Will send queue request"
-        
+        },
+    "group5_view":{
+        "connection": "nats",
+        "type": "grp_view",
+        "nats_output_subject": "group.view.270.5",
+        "trigger": "time",
+        "trigger_time": 2.0,
+        "lanes": ["grp5_1"],
+        "notes": "Will send queue request"
         }
     }
 }

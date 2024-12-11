@@ -34,6 +34,15 @@ class Detector:
             self.nats = False
         self.data = []
         self.data_subject = "detector.data." + self.det_id
+        # Detector stats
+        self.rising_edge_cnt = 0
+        self.falling_edge_cnt = 0
+        if det_params.get('type', False) == 'falling_edge':
+            self.type = 'falling_edge'
+        elif det_params.get('type', False) == 'rising_edge':
+            self.type = 'rising_edge'
+        else:
+            print(f"Detector {det_id} is missing type".format(det_id))
 
     def __str__(self):
         return "Detector: {} - {}".format(self.det_id, self.status)
@@ -42,7 +51,13 @@ class Detector:
     def add_data(self, data):
         """Adds data to the radar"""
         self.data.append(data)
-       
+        # updat the status
+        if len(self.data) > 1:
+            if self.data[-1]['loop_on'] and not self.data[-2]['loop_on']:
+                self.rising_edge_cnt += 1
+            if not self.data[-1]['loop_on'] and self.data[-2]['loop_on']:
+                self.falling_edge_cnt += 1
+            
     def remove_old_data(self, treshold=DEFAULT_OLD_DATA_TRESHOLD):
         "Removes all data with sent timestamp older than treshold"
         now = datetime.datetime.now()
@@ -59,6 +74,15 @@ class Detector:
             return None
         return self.data[-1]
     
+    def get_vehicle_count(self):
+        """Returns the number of passed, based on edge setup"""
+        if self.type == 'falling_edge':
+            return self.falling_edge_cnt
+        elif self.type == 'rising_edge':
+            return self.rising_edge_cnt
+        else:
+            return None        
+
     # Not used at the moment
     def set_status(self, status):
         """Sets the status of the detector"""

@@ -11,12 +11,16 @@ import json
 class Lane:
     """Lane indicators contained"""
     def __init__(self, params):
+        self.name = params.get('name', "No name")
         self.in_dets = {} # detectors for incoming traffic
         self.out_dets = {} # detectors for outgoing traffic
         self.input_radars = {}
         self.input_radars_params = params.get('radar_lanes', {})
         self.in_dets_params = params.get('in_dets', {})
         self.out_dets_params = params.get('out_dets', {})
+        # These will be updated based on detector values
+        self.indet_count = 0
+        self.outdet_count = 0
 
     def assign_radars(self, radars):
         """Assigns a radar to the lane"""
@@ -35,11 +39,15 @@ class Lane:
         for det_name, det_params in self.in_dets_params.items():
             if det_params['name'] in detectors:
                 self.in_dets[det_name] = detectors[det_params['name']]
-
+                
         # Out dets
         for det_name, det_params in self.out_dets_params.items():
+            if not det_params:
+                print("Warning: Det params missing for: ", det_name)
+                continue
             if det_params['name'] in detectors:
                 self.out_dets[det_name] = detectors[det_params['name']]
+ 
 
     # Note: currently doesn't handle multiple radars
     def get_approaching_objects(self):
@@ -48,6 +56,17 @@ class Lane:
         for radar in self.input_radars.values():
             approaching_objs.extend(radar.get_approaching_objects())
         return approaching_objs
+
+    def get_detector_based_vehcount(self):
+        """Returns the vehicle count based on detectors"""
+        in_count = 0
+        out_count = 0
+        for det in self.in_dets.values():
+            in_count += det.get_vehicle_count()
+        for det in self.out_dets.values():
+            out_count += det.get_vehicle_count()
+        return in_count - out_count
+    
 
 # This is basically only a container for the lane and radar pair
 class LaneRadar:
@@ -110,7 +129,10 @@ class FieldOfView:
         """Returns the number of approaching vehicles"""
         approaching_objs = []
         for lane in self.lanes:
-            approaching_objs.extend(lane.get_approaching_objects())
+            new_lane = {}
+            new_lane['lane'] = lane.name
+            new_lane['approaching'] = lane.get_detector_based_vehcount()
+            approaching_objs.append(new_lane)
         return approaching_objs
 
 
