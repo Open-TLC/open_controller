@@ -248,25 +248,50 @@ class GlobalConf:
         for param_lane_name, params in self.conf['lanes'].items():
             if param_lane_name == lane_name:
                 lane_params = params
+                # These read the params from the inputs section
+                # For radars
                 rad_lanes = params.get('radar_lanes', [])
                 radar_lane_params = {}
                 for r_lane in rad_lanes:
-                    # This reads the params from the inputs section
                     radar_lane_params[r_lane] = self.get_radar_input_params(r_lane)
                 lane_params['radar_lanes'] = radar_lane_params
+                # For in dets
+                in_dets = params.get('in_dets', [])
+                in_det_params = {}
+                for in_det in in_dets:
+                    in_det_params[in_det] = self.get_detector_input_params(in_det)
+                lane_params['in_dets'] = in_det_params
+                # For out dets
+                out_dets = params.get('out_dets', [])
+                out_det_params = {}
+                for out_det in out_dets:
+                    out_det_params[out_det] = self.get_detector_input_params(out_det)
+                lane_params['out_dets'] = out_det_params
+
         return lane_params
 
+    # read from "inputs section"
     def get_radar_input_params(self, radar_name):
         """Returns parameters for the radars as a dictionary"""
-        radars = self.conf['inputs'].get('rad_lanes', {})
+        radars_section = self.conf['inputs'].get('rad_lanes', {})
         radar_params = {}
-        for param_radar_name, params in radars.items():
+        for param_radar_name, params in radars_section.items():
             if param_radar_name == radar_name:
                 radar_params = params
                 #if 'stream' in params:
                     # This reads the params from the input_streams section
                 #    radar_params['stream'] = self.get_input_stream_params(params['stream'])
         return radar_params
+
+    # read from "inputs section"
+    def get_detector_input_params(self, detector_name):
+        """Returns parameters for the detectors as a dictionary"""
+        detectors_section = self.conf['inputs'].get('dets', {})
+        detector_params = {}
+        for param_detector_name, params in detectors_section.items():
+            if param_detector_name == detector_name:
+                detector_params = params
+        return detector_params
 
     # Note: currently not used
     def get_input_stream_params(self, input_name):

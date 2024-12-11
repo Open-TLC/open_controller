@@ -21,6 +21,7 @@ from radar import Radar
 from fusion import FieldOfView
 from detector import Detector
 
+# Note: should be in a separate file in the end
 class SensorTwin:
     """A class for containing copy of the sensor data"""
 
@@ -43,22 +44,29 @@ class SensorTwin:
     
     def add_radar_streams(self, radar_dict):
         """Adds a radar streams to the twin"""
-        # This creates the radar objects
+        # For tewin, this creates the radar objects
         for name, params in radar_dict.items():
             radar = Radar(name, params)
             self.radars[name] = radar
 
         # This assigns the radars to the field of view
-        # For generating the outputs
+        # For generating the outputs and manipulationg the data
         for fov in self.fovs.values():
             fov.assign_radars(self.radars)
 
 
     def add_detector_streams(self, detector_dict):
         """Adds a detector streams to the twin"""
+        # For twin, this creates the Detector objects
         for name, params in detector_dict.items():
             detector = Detector(name, params)
             self.detectors[name] = detector
+
+        # This assigns the detectors to the field of view
+        # For generating the outputs and manipulationg the data
+        for fov in self.fovs.values():
+            fov.assign_detectors(self.detectors)
+
 
     def add_field_of_views(self, fov_dict):
         """Adds a field of view to the twin"""
@@ -113,24 +121,31 @@ async def main():
     command_line_params = read_command_line()
     config = GlobalConf(command_line_params=command_line_params, conf=command_line_params.conf)
 
-    radar_stream_params = config.get_radar_stream_params()
     sensor_twin = SensorTwin()
     
+    # Adds the field of views
+    # Note: this has to be done _before_ adding the streams
+    # Adding the streams also assigns them to the field of views
     fov_params = config.get_view_outputs()
     sensor_twin.add_field_of_views(fov_params)
+    
+    # Adds the radar and detector streams
+    # These are used for subscribing to the data
+    # And sroting it to the Radar and Detector objects
+    radar_stream_params = config.get_radar_stream_params()
     sensor_twin.add_radar_streams(radar_stream_params)
     
     det_stream_params = config.get_det_stream_params()
     sensor_twin.add_detector_streams(det_stream_params)
 
     # Deubug
-    print("STREAM   PARAMS")
-    print(det_stream_params)
-    print("RADAR STEAMS")
-    print(config.get_radar_stream_params())
+    #print("STREAM   PARAMS")
+    #print(det_stream_params)
+    #print("RADAR STEAMS")
+    #print(config.get_radar_stream_params())
 
-    print("Logic OUTPUTS")
-    print(config.get_detlogic_outputs())
+    #print("Logic OUTPUTS")
+    #print(config.get_detlogic_outputs())
     #exit()
 
     # Nats connection

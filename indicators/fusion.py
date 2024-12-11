@@ -11,11 +11,13 @@ import json
 class Lane:
     """Lane indicators contained"""
     def __init__(self, params):
-        self.input_dets = []
-        self.output_dets = [] 
+        self.in_dets = {} # detectors for incoming traffic
+        self.out_dets = {} # detectors for outgoing traffic
         self.input_radars = {}
         self.input_radars_params = params.get('radar_lanes', {})
-        
+        self.in_dets_params = params.get('in_dets', {})
+        self.out_dets_params = params.get('out_dets', {})
+
     def assign_radars(self, radars):
         """Assigns a radar to the lane"""
         for radar_name, radar_params in self.input_radars_params.items():
@@ -27,6 +29,18 @@ class Lane:
 
         #print(f"assigned radars: {self.input_radars}")
 
+    def assign_detectors(self, detectors):
+        """Assigns in and out detectors to the lane"""
+        # In dets
+        for det_name, det_params in self.in_dets_params.items():
+            if det_params['name'] in detectors:
+                self.in_dets[det_name] = detectors[det_params['name']]
+
+        # Out dets
+        for det_name, det_params in self.out_dets_params.items():
+            if det_params['name'] in detectors:
+                self.out_dets[det_name] = detectors[det_params['name']]
+
     # Note: currently doesn't handle multiple radars
     def get_approaching_objects(self):
         """Returns the number of approaching v"""
@@ -35,6 +49,7 @@ class Lane:
             approaching_objs.extend(radar.get_approaching_objects())
         return approaching_objs
 
+# This is basically only a container for the lane and radar pair
 class LaneRadar:
     """Container for lane and radar pair"""
 
@@ -46,7 +61,7 @@ class LaneRadar:
         return f"lane: {self.lane}, radar: {self.radar}"
     
     def get_approaching_objects(self):
-        """Returns the number of approaching vehicles"""
+        """Returns the number of approaching vehicles in the lane dedicated to this object"""
         # Old simle implementation
         objects = self.radar.get_object_list()
         objects_in_lane = []
@@ -54,7 +69,6 @@ class LaneRadar:
             if str(obj['lane']) == self.lane:
                 objects_in_lane.append(obj)
         return objects_in_lane
-
 
 
 
@@ -82,9 +96,15 @@ class FieldOfView:
     
     def assign_radars(self, radars):
         """Assigns radars to the field of view"""
-        # Note: lane will make sure onlu the correct ones are assigned
+        # Note: lane will make sure only the correct ones are assigned
         for lane in self.lanes:
             lane.assign_radars(radars)
+
+    def assign_detectors(self, detectors):
+        """Assigns detectors to the field of view"""
+        # Note: lane will make sure onlu the correct ones are assigned
+        for lane in self.lanes:
+            lane.assign_detectors(detectors)
 
     def get_approaching_objects(self):
         """Returns the number of approaching vehicles"""
