@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2024-12-11 12:30:59 by Eclipse SUMO GUI Version 1.19.0
+<!-- generated on 2024-12-11 16:22:17 by Eclipse SUMO GUI Version 1.19.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
         <net-file value="models/DEMO_OC_1124/cfgFiles/../net/JS270_def.net.xml"/>
-        <route-files value="models/DEMO_OC_1124/cfgFiles/../rou/JS270_cars_trucks.rou.xml,models/DEMO_OC_1124/cfgFiles/ ../rou/JS270_trams2.rou.xml,models/DEMO_OC_1124/cfgFiles/ ../rou/JS270_bikes.rou.xml"/>
+        <route-files value="models/DEMO_OC_1124/cfgFiles/../rou/JS270_cars_trucks.rou.xml,models/DEMO_OC_1124/cfgFiles/ ../rou/JS270_trams.rou.xml,models/DEMO_OC_1124/cfgFiles/ ../rou/JS270_bikes.rou.xml"/>
         <additional-files value="models/DEMO_OC_1124/cfgFiles/../add/JR_vehicletypes.add.xml,models/DEMO_OC_1124/cfgFiles/ ../tll/ft270_1.tll.xml,models/DEMO_OC_1124/cfgFiles/ ../add/JS270_stations.add.xml,models/DEMO_OC_1124/cfgFiles/         ../add/JS270_e1_dets.add.xml,models/DEMO_OC_1124/cfgFiles/ ../add/JS270_e3_dets.add.xml"/>
     </input>
 
@@ -25,6 +25,7 @@
         <collision.action value="warn"/>
         <scale value="1.0"/>
         <time-to-teleport value="300"/>
+        <random-depart-offset value="60"/>
         <parking.maneuver value="false"/>
     </processing>
 
@@ -35,7 +36,7 @@
     </report>
 
     <traci_server>
-        <remote-port value="54469"/>
+        <remote-port value="60270"/>
     </traci_server>
 
     <gui_only>

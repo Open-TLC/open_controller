@@ -5,7 +5,7 @@
     <input>
        <net-file value="../net/JS270_def.net.xml"/>
        
-       <route-files value="../rou/JS270_cars_trucks.rou.xml, ../rou/JS270_trams2.rou.xml, ../rou/JS270_bikes.rou.xml"/>
+       <route-files value="../rou/JS270_cars_trucks.rou.xml, ../rou/JS270_trams.rou.xml, ../rou/JS270_bikes.rou.xml"/>
        
        <additional-files v="../add/JR_vehicletypes.add.xml, ../tll/ft270_1.tll.xml, ../add/JS270_stations.add.xml, 
        ../add/JS270_e1_dets.add.xml, ../add/JS270_e3_dets.add.xml"/>
@@ -43,7 +43,7 @@
         <time-to-teleport/>
         
         <delay v="300"/>
-        
+        <random-depart-offset v="60"/>. 
         
         <collision.action v="warn"/>
         <collision.stoptime/>

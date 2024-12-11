@@ -3,6 +3,8 @@
 <!-- generated on 06/18/20 13:57:57 by Eclipse SUMO netedit Version 1.6.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
 
+    <flow id="-7" begin="0"   end="3600"  type="ratikka" route="-R7" period="exp(0.02)"> </flow>
+
 -->
 
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
@@ -11,26 +13,26 @@
 <vType id="tram_R9" vClass="tram" length="27.60" height="3.83" maxSpeed="15" personCapacity="200"/>
 
     <route edges="-Jatk_R01 -Tyyn_R14 -Tyyn_R13 -Tyyn_R11 -Tyyn_R10" color="0,255,0" id="R7">
-        <stop busStop="H0296" duration="10.00" extension="50.00"/>
+        <stop busStop="H0296" duration="1.00" extension="50.00"/>
     </route>
     
     <route edges="Tyyn_R09 Tyyn_R10 Tyyn_R11 Tyyn_R13 Tyyn_R14 Jatk_R01" color="0,255,0" id="-R7">
-        <stop busStop="H0297" duration="10.00" extension="50.00"/>
+        <stop busStop="H0297" duration="1.00" extension="50.00"/>
     </route>
 
     <route edges="-Jatk_R01 -Vali_R13 -Vali_R12 -Vali_R10" color="85,148,0" id="R9">
-        <stop busStop="H0287" duration="10.00" extension="50.00"/>
+        <stop busStop="H0287" duration="1.00" extension="50.00"/>
     </route>
 
     <route edges="Vali_R10 Vali_R12 Vali_R13 Jatk_R01" color="85,148,0" id="-R9">
-        <stop busStop="H0286" duration="0.00" extension="50.00"/>
+        <stop busStop="H0286" duration="1.00" extension="50.00"/>
     </route>
     
-    <flow id="-7" begin="0"  end="3600"  type="ratikka" route="-R7" number = "1"> </flow>
-    <flow id="-9" begin="0"  end="3600"  type="ratikka" route="-R9" number = "15"> </flow>
+    <flow id="-7" begin="0"   end="3600"  type="ratikka" route="-R7" number = "12"> </flow>
+    <flow id="-9" begin="20"  end="3600"  type="ratikka" route="-R9" number = "12"> </flow>
     
-    <flow id="7"  begin="0"  end="3600"  type="tram_R7" route="R7"  number = "11"> </flow>
-    <flow id="9"  begin="60" end="3600"  type="tram_R9" route="R9"  number = "19"> </flow>
+    <flow id="7"  begin="40"  end="3600"  type="tram_R7" route="R7"  number = "12"> </flow>
+    <flow id="9"  begin="60"  end="3600"  type="tram_R9" route="R9"  number = "12"> </flow>
 
     
 </routes>
