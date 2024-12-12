@@ -187,7 +187,33 @@ class GlobalConf:
                 else:
                     print(f"Error: stream {stream_name} not found in input_streams")
         return input_dets
-        
+
+
+    def get_group_stream_params(self):
+        """Returns the group stream parameters"""
+        if 'groups' not in self.conf['inputs']:
+            return {}
+        input_groups = self.conf['inputs']['groups']
+        for group_name, params in input_groups.items():
+            stream_name = params.get('stream', None)
+            if stream_name:
+                if stream_name in self.conf['input_streams']:
+                    input_groups[group_name]['stream'] = self.conf['input_streams'][stream_name]
+                    # We combine stream channes from the input name
+                    # and the stream name (prefix)
+                    channel = self.conf['input_streams'][stream_name]['nats_subject']
+                    group_subject_name = input_groups[group_name]['group']
+                    if channel[-1] == '*':
+                        channel = channel[:-1]
+                    channel = channel + group_subject_name
+                    # deep copy the values and not change the original
+                    new_dict = dict(input_groups[group_name]['stream'])
+                    new_dict['nats_subject'] = channel
+                    input_groups[group_name]['stream'] = new_dict
+                else:
+                    print(f"Error: stream {stream_name} not found in input_streams")
+        return input_groups
+   
 
     # NOTE: not correct
     def get_outputs(self):
@@ -205,6 +231,9 @@ class GlobalConf:
                             outputs[output_name]["function"] = self.conf["detlogics"][detlogic_function_name]
         return outputs
 
+
+    
+    
     #
     # Detlogic outputs
     #
@@ -217,8 +246,42 @@ class GlobalConf:
             if "type" in params:
                 if params["type"] == "detlogic":
                     detlogic_outputs[output_name] = params
+        # Get the detlogic function
+        for output_name, params in detlogic_outputs.items():
+            if "function" in params:
+                detlogic_outputs[output_name]["function"] = self.get_detlogc_function(params["function"])   
         return detlogic_outputs
 
+
+    def get_detlogc_function(self, function_name):
+        """Returns the detlogic function from detlogics section"""
+        # Handling the missing params
+        if not 'detlogics' in self.conf:
+            print ("Error: detlogics not found in conf")
+            return None
+        if function_name in self.conf['detlogics']:
+            detlogic_function_params = self.conf['detlogics'][function_name]
+        else:
+            print(f"Error: detlogic function {function_name} not found in detlogics")
+            return None
+        # Return according to the type
+        if "type" in detlogic_function_params:
+            if detlogic_function_params["type"] == "two_det_switch":
+                return self.get_twodet_switch_params(detlogic_function_params)        
+        return None
+
+    def get_twodet_switch_params(self, params):
+        """Returns the two detector switch parameters"""
+        detectors = params.get('detectors', {})
+        if not detectors:
+            print("Error: detectors not found in two_det_switch")
+            return None
+        if "request" in detectors:
+            detectors["request"] = self.get_detector_input_params(detectors["request"])
+        if "clear" in detectors:
+            detectors["clear"] = self.get_detector_input_params(detectors["clear"])
+        params['detectors'] = detectors
+        return params
 
     # 
     # Wiew output functions, these handle the group views (sensor fusion in the future)

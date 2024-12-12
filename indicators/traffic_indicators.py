@@ -20,6 +20,7 @@ from confread import GlobalConf
 from radar import Radar
 from fusion import FieldOfView
 from detector import Detector
+from group import Group
 
 # Note: should be in a separate file in the end
 class SensorTwin:
@@ -41,7 +42,11 @@ class SensorTwin:
         ret_str += "   Groups: {}\n".format(len(self.groups))
         return ret_str
     
+    #
+    # Adding the streams
+    #
     
+    # RADARS
     def add_radar_streams(self, radar_dict):
         """Adds a radar streams to the twin"""
         # For tewin, this creates the radar objects
@@ -54,7 +59,7 @@ class SensorTwin:
         for fov in self.fovs.values():
             fov.assign_radars(self.radars)
 
-
+    #DETECTORS
     def add_detector_streams(self, detector_dict):
         """Adds a detector streams to the twin"""
         # For twin, this creates the Detector objects
@@ -66,6 +71,18 @@ class SensorTwin:
         # For generating the outputs and manipulationg the data
         for fov in self.fovs.values():
             fov.assign_detectors(self.detectors)
+
+    # GROUPS
+    def add_group_streams(self, group_dict):
+        """Adds a group streams to the twin"""
+        for name, params in group_dict.items():
+            group = Group(name, params)
+            self.groups[name] = group
+        
+        # This assigns the detectors to the field of view
+        # For generating the outputs and manipulationg the data
+        for fov in self.fovs.values():
+            fov.assign_groups(self.groups)
 
 
     def add_field_of_views(self, fov_dict):
@@ -89,6 +106,12 @@ class SensorTwin:
             if sub_params:  
                 subs.append(sub_params)
         
+        # GROUPS
+        for group in self.groups.values():
+            sub_params = group.get_nats_sub_params()
+            if sub_params:  
+                subs.append(sub_params)
+
         return subs
 
     def get_cleanup_tasks(self):
@@ -129,7 +152,7 @@ async def main():
     fov_params = config.get_view_outputs()
     sensor_twin.add_field_of_views(fov_params)
     
-    # Adds the radar and detector streams
+    # Adds the radar, detector and group streams
     # These are used for subscribing to the data
     # And sroting it to the Radar and Detector objects
     radar_stream_params = config.get_radar_stream_params()
@@ -137,6 +160,9 @@ async def main():
     
     det_stream_params = config.get_det_stream_params()
     sensor_twin.add_detector_streams(det_stream_params)
+
+    group_stream_params = config.get_group_stream_params()
+    sensor_twin.add_group_streams(group_stream_params)
 
     # Deubug
     #print("STREAM   PARAMS")
@@ -155,7 +181,7 @@ async def main():
 
     # Sub to all subjects in config
     all_subs = sensor_twin.get_all_configured_nats_subs()
-    print("All subs:", all_subs)
+    #print("All subs:", all_subs)
     for sub in all_subs:
         await nats.subscribe(sub['subject'], cb=sub['callback'])
 

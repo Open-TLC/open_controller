@@ -112,7 +112,10 @@ class FieldOfView:
         for lane_param in lane_params:
             lane = Lane(lane_param)
             self.lanes.append(lane)
-    
+        self.group_name = params.get('group', None)
+        self.group = None
+
+
     def assign_radars(self, radars):
         """Assigns radars to the field of view"""
         # Note: lane will make sure only the correct ones are assigned
@@ -121,10 +124,21 @@ class FieldOfView:
 
     def assign_detectors(self, detectors):
         """Assigns detectors to the field of view"""
-        # Note: lane will make sure onlu the correct ones are assigned
+        # Note: lane will make sure only the correct ones are assigned
         for lane in self.lanes:
             lane.assign_detectors(detectors)
 
+    def assign_groups(self, groups):
+        """Assigns groups to the field of view"""
+        if not self.group_name:
+            print("Warning: No group assigned to field of view: ", self.name)
+            return
+        for group in groups.values():
+            if group.group_id == self.group_name:
+                self.group = group
+        return
+    
+    
     def get_approaching_objects(self):
         """Returns the number of approaching vehicles"""
         approaching_objs = []
@@ -148,6 +162,6 @@ class FieldOfView:
             data['tstamp'] = datetime.datetime.now().timestamp() * 1000
             if self.nats_output_subject:
                 await nats.publish(self.nats_output_subject, json.dumps(data).encode())
-                print(f"Sent queue data from {self.name}: {queue_lengths}")
+                #print(f"Sent queue data from {self.name}: {queue_lengths}")
 
 
