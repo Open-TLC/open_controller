@@ -536,14 +536,15 @@ class PhaseRingController:
         maxstr = 25
         # ExtOut = 'group'
         ExtOut = 'group'
-        DetOut = 'reqprio'
+        DetOut = 'req'
         PermOut = 'perm_'
         CutOut ='cut_'
-        CutOut ='prio2'
+        CutOut ='prio2_'
 
-        # e3Out  = 'e3vehCnt'
-        e3Out  = 'e3confCnt'
-        # e3Out  = 'e3crit2'
+        e3Cnt  = 'e3Cnt'
+        e3Conf  = 'e3confCnt_'
+        e3Ext  = 'e3crit2'
+
 
         sigstat = str(self.get_grp_states())
 
@@ -694,19 +695,19 @@ class PhaseRingController:
         if self.status == 'Hold':
             controller_stat += ' H'
 
-        if e3Out  == 'e3confCnt':
+        if e3Cnt  == 'e3Cnt':
             for e3det in self.e3detectors:
                 val = e3det.veh_count()
                 e3det_stat += str(val) + ','
-            controller_stat += " e3veh: " + e3det_stat[0:maxstr] + ' '
+            controller_stat += " vehs: " + e3det_stat[0:maxstr] + ' '
 
-        if e3Out  == 'e3confCnt':
+        if e3Conf  == 'e3confCnt':
             for e3ext in self.e3extenders:
                 val = e3ext.conf_sum
                 e3ext_stat += str(val) + ','
-            controller_stat += " e3conf: " + e3ext_stat[0:maxstr] + ' '
+            controller_stat += " conf: " + e3ext_stat[0:maxstr] + ' '
 
-        if e3Out  == 'e3crit':
+        if e3Ext  == 'e3crit':
             for e3ext in self.e3extenders:
                 if e3ext.extend:
                     val1 = e3ext.vehcount
@@ -719,19 +720,22 @@ class PhaseRingController:
             controller_stat += " e3rel: " + e3ext_stat + ' '
 
         grpno =0
-        if e3Out  == 'e3crit2':
+        if e3Ext  == 'e3crit2':
             for grp in self.groups:
                 grpno += 1
                 if grp.e3extender:                   
                     if grp.get_grp_state() in ['5']:
                         val1 = grp.e3extender.vehcount
-                        val2 = grp.e3extender.conf_sum
+                        if grp.e3extender.ext_mode == 1:
+                            val2 = 1.0
+                        else:
+                            val2 = grp.e3extender.conf_sum
                         val3 = round(grp.e3extender.threshold,1)
                         if val2 > 0:
                             val = round(val1/val2,1)
                         else: 
                             val = 10.0
-                        e3ext_stat += str(grpno) + ':'
+                        e3ext_stat += str(grpno) + ': '
                         e3ext_stat += str(val)
                         if val > val3:
                             ch = '>'
@@ -740,7 +744,7 @@ class PhaseRingController:
                         e3ext_stat += ch
                         e3ext_stat += str(val3) + '|'
 
-            controller_stat += " E3: " + e3ext_stat + ' '
+            controller_stat += " SE: |" + e3ext_stat + ' '
 
         return controller_stat
 

@@ -114,6 +114,8 @@ class Detector:
             self.pulse_up()
             for grp in self.request_groups:
                 grp.request_green = True  # DBIK231213 Note: req turned ON by pulse up only, to be reseted by group after served
+                
+                # DBIK202411 Set priority request by detector logic
                 grp.own_request_level = self.priolevel # DBIK241029 pass the request priority level to the signal group
                 for confgrp in grp.conflicting_groups:  # DBIK241101 pass the request priority level to the conflicting signal groups
                     other_req_level = confgrp['group'].other_request_level
