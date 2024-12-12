@@ -157,6 +157,10 @@ class FieldOfView:
             await asyncio.sleep(self.trigger_time)
             queue_lengths = self.get_approaching_objects()
             data = {}
+            if self.group:
+                data['group_status'] = self.group.substate
+            else:
+                data['group_status'] = "NO group defined"
             data['radar_id'] = self.name
             data['queue_lengths'] = queue_lengths
             data['tstamp'] = datetime.datetime.now().timestamp() * 1000

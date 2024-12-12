@@ -3,6 +3,7 @@
 # maybe we should inherit these
 
 import datetime
+import json
 
 
 # Note: should be configureable
@@ -18,7 +19,7 @@ class Group:
         self.group_params = group_params
         self.data = []
         self.substate = ""
-        self.is_green = None
+        self.is_red_b = None
 
         #NATS STREAM
         stream_params = group_params.get('stream', {})
@@ -42,7 +43,7 @@ class Group:
     
     def add_data(self, data):
         """Adds data to the group"""
-        print(f"Group {self.group_id} got data: {data}")
+        #print(f"Group {self.group_id} got data: {data}")
         self.data.append(data)
 
     def remove_old_data(self, treshold=DEFAULT_OLD_DATA_TRESHOLD):
@@ -95,3 +96,8 @@ class Group:
             data_dict['data_received'] = tstamp_now
         self.add_data(data_dict)
 
+        self.substate = data_dict['substate']
+        if self.substate in ['r']:
+            self.is_red_b = True
+        else:
+            self.is_red_b = False
