@@ -16,7 +16,7 @@
         "connection": "nats",
         "type": "groups",
         "subtype": "sumo",
-        "nats_subject": "group.status.*.*",
+        "nats_subject": "group.status.270.*",
         "notes": "Will subscribe to all groups sent by sumo"
     },
     "det_inputs": {
@@ -54,8 +54,8 @@
         "type": "two_det_switch",
         "notes": "One detector swithces the request on, another off",
         "detectors": {
-            "request": "4-002R9",
-            "clear": "4-00CA9"
+            "request": "5-040",
+            "clear": "5-002"
         },
         "request_trigger": "rising_edge",
         "clear_trigger": "falling_edge"
@@ -87,15 +87,33 @@
         "1-001": {
             "type": "falling_edge",
             "stream": "det_inputs",
-            "name": "1-010"
+            "name": "1-001"
         },
         "1-040": {
             "type": "rising_edge",
             "stream": "det_inputs",
             "name": "1-040"
+        },
+        "6-002A": {
+            "type": "falling_edge",
+            "stream": "det_inputs",
+            "name": "6-002A"
+        },
+        "6-040": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "6-040"
+        },
+        "6-002B": {
+            "type": "falling_edge",
+            "stream": "det_inputs",
+            "name": "6-002B"
+        },
+        "6-030": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "6-030"
         }
-
-
 
     },
     "rad_lanes":{
@@ -113,13 +131,45 @@
             "type": "simple",
             "stream": "radar270.3",
             "lane": "1"
+        },
+        "270_2_1": {
+            "type": "simple",
+            "stream": "radar270.2",
+            "lane": "0"
+        },
+        "270_2_2": {
+            "type": "simple",
+            "stream": "radar270.2",
+            "lane": "1"
+        }
+    },
+    "groups": {
+        "group1": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "1"
+        },
+        "group2": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "2"
+        },
+        "group5": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "5"
+        },
+        "group6": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "6"
         }
     }
 },
 
 "lanes":{
     "grp1_1":{
-        "name": "Group 2 lane 1",
+        "name": "Group 1 lane 1",
         "in_dets": ["1-040"],
         "out_dets": ["1-001"],
         "radar_lanes":["270_3_0"],
@@ -138,7 +188,22 @@
         "out_dets": ["5-002"],
         "radar_lanes":["270_1_1"],
         "notes": "Approach from north"
+    },
+    "grp6_1":{
+        "name": "Group 6 lane 1",
+        "in_dets": ["6-040"],
+        "out_dets": ["6-002A"],
+        "radar_lanes":["270_2_1"],
+        "notes": "Approach from north"
+    },
+    "grp6_2":{
+        "name": "Group 6 lane 2",
+        "in_dets": ["6-030"],
+        "out_dets": ["6-002B"],
+        "radar_lanes":["270_2_2"],
+        "notes": "Approach from north"
     }
+
 },
 
 "outputs":{
@@ -153,10 +218,11 @@
     "group1_view":{
         "connection": "nats",
         "type": "grp_view",
-        "nats_output_subject": "group.view.270.2",
+        "nats_output_subject": "group.view.270.1",
         "trigger": "time",
         "trigger_time": 2.0,
         "lanes": ["grp1_1"],
+        "group": "group1",
         "notes": "Will send queue request"
         },    
     "group2_view":{
@@ -166,6 +232,7 @@
         "trigger": "time",
         "trigger_time": 2.0,
         "lanes": ["grp2_1"],
+        "group": "group2",
         "notes": "Will send queue request"
         },
     "group5_view":{
@@ -175,6 +242,17 @@
         "trigger": "time",
         "trigger_time": 2.0,
         "lanes": ["grp5_1"],
+        "group": "group5",
+        "notes": "Will send queue request"
+        },
+    "group6_view":{
+        "connection": "nats",
+        "type": "grp_view",
+        "nats_output_subject": "group.view.270.6",
+        "trigger": "time",
+        "trigger_time": 2.0,
+        "lanes": ["grp6_1", "grp6_2"],
+        "group": "group6",
         "notes": "Will send queue request"
         }
     }

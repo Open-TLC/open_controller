@@ -1,4 +1,4 @@
-"This Unit containd handlers for the traditional detector inputs and outputs."
+"This Unit contains handlers for the detector inputs and outputs."
 
 import datetime
 import json
@@ -18,6 +18,8 @@ class Detector:
         self.status = status # Will be true or false
         # This is not yet functional
         self.trigger_functions = [] # Functions to trigger if status changes
+        
+        # NATS STREAM
         stream_params = det_params.get('stream', {})
         if not stream_params:
             print(f"Detector {det_id} is missing stream params".format(det_id))
@@ -148,7 +150,7 @@ class Detector:
             data['stored_data'] = stored_data
             data['tstamp'] = datetime.datetime.now().timestamp() * 1000
             await nats.publish(self.data_subject, json.dumps(data).encode())
-            print(f"Sent det data from {self.det_id}: {data}")
+            #print(f"Sent det data from {self.det_id}: {data}")
 
 
 class DetectorLogic(Detector):

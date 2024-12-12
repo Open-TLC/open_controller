@@ -99,7 +99,7 @@ class Radar:
         """Removes old data, this should be a separate task running at alla times"""
         while True:
             await asyncio.sleep(DEFAULT_CLEANUP_INTERVAL)
-            print(self.radar_id, ":", self.get_queue_lengths_by_lane())
+            #print(self.radar_id, ":", self.get_queue_lengths_by_lane())
             self.remove_old_data()
 
     async def nats_callback(self, msg):
