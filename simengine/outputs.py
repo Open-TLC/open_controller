@@ -232,8 +232,11 @@ class GroupStorage:
             id = 0
             for status in statuses:
                 light_status = {}
-                light_id = light_id_sumo + "." + str(id)
+                # This is temproray fix for replicating the reality
+                controller_id = light_id_sumo.split("_")[0]
+                light_id = controller_id + "." + str(id)
                 light_status["id"] = self.topic_prefix + "." + light_id
+
                 light_status["tstamp"] = str(current_time)
                 light_status["substate"] = status
                 id += 1
