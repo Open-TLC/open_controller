@@ -127,19 +127,19 @@
             "stream": "radar270.1",
             "lane": "1"
         },
-        "270_3_0": {
-            "type": "simple",
-            "stream": "radar270.3",
-            "lane": "1"
-        },
-        "270_2_1": {
+        "270_2_0": {
             "type": "simple",
             "stream": "radar270.2",
             "lane": "0"
         },
-        "270_2_2": {
+        "270_3_1": {
             "type": "simple",
-            "stream": "radar270.2",
+            "stream": "radar270.3",
+            "lane": "0"
+        },
+        "270_3_2": {
+            "type": "simple",
+            "stream": "radar270.3",
             "lane": "1"
         }
     },
@@ -172,7 +172,7 @@
         "name": "Group 1 lane 1",
         "in_dets": ["1-040"],
         "out_dets": ["1-001"],
-        "radar_lanes":["270_3_0"],
+        "radar_lanes":["270_2_0"],
         "notes": "Approach from north"
     },
     "grp2_1":{
@@ -193,14 +193,14 @@
         "name": "Group 6 lane 1",
         "in_dets": ["6-040"],
         "out_dets": ["6-002A"],
-        "radar_lanes":["270_2_1"],
+        "radar_lanes":["270_3_1"],
         "notes": "Approach from north"
     },
     "grp6_2":{
         "name": "Group 6 lane 2",
         "in_dets": ["6-030"],
         "out_dets": ["6-002B"],
-        "radar_lanes":["270_2_2"],
+        "radar_lanes":["270_3_2"],
         "notes": "Approach from north"
     }
 
@@ -217,8 +217,8 @@
         },
     "group1_view":{
         "connection": "nats",
-        "type": "grp_view",
-        "nats_output_subject": "group.view.270.1",
+        "type": "e3",
+        "nats_output_subject": "group.e3.270.1",
         "trigger": "time",
         "trigger_time": 2.0,
         "lanes": ["grp1_1"],
