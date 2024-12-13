@@ -84,7 +84,7 @@ class Radar:
         elif sumo_class == 'truck_type':
             veh['class'] = 4
         else:
-            veh['class'] = 0
+            veh['class'] = sumo_class
 
         
         veh['quality'] = 100        

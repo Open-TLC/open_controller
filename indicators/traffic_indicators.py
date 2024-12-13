@@ -131,7 +131,7 @@ class SensorTwin:
         tasks = []
         # Fields of view
         for fov in self.fovs.values():
-            tasks.append(fov.send_queues)
+            tasks.append(fov.send_nats_messages)
 
         # Detectors (testing)
         for detector in self.detectors.values():
