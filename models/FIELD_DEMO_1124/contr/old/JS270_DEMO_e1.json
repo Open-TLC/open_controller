@@ -1,0 +1,591 @@
+{
+
+"timer":{
+    "timer_mode": "fixed",
+    "time_step":0.1,
+    "real_time_multiplier":1
+},
+
+// Modes will be: sumo, test, realtime
+"operation_mode":"test",
+
+"nats":{
+    "server": "localhost",
+    "port": "4222",
+    "mode": "change"
+},
+
+"sumo":{
+    "graph" : true,
+    "file_name": "../models/DEMO_OC_1124/cfgFiles/JS270_DEMO.sumocfg",
+    "print_status": true,
+        "group_outputs": ["group1", "group1", "group2", "group3", "group4", "group5", "group6", "group7", "group8", "group9", "group10", 
+        "group11", "group12", "group13", "group14", "group15"]
+
+},
+
+// Controller operations
+"controller":{
+
+    "name": "JS270",
+        
+    "sumo_name": "270_Tyyn_Vali",
+    
+    "group_outputs": ["group1", "group1", "group2", "group3", "group4", "group5", "group6", "group7", "group8", "group9", "group10", "group11", "group12", "group13", "group14", "group15"],
+
+    // Signal groups, controller object has a list value "groups"
+    // defining which ones are used
+    
+    "signal_groups":{
+    
+        //Values used, id not specified later
+        // request_type can be:
+        //      "fixed" - always on
+        //      "detector" - defined by detectors (see detectors section)
+        // green_end can be:
+        //      "after_ext" - green terminates after own extensions end
+        //      "remain" - remains green until other extensions out
+
+        "default":{
+            "min_green": 3,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "after-ext"
+            },
+
+        "group1":{
+            "min_green": 15,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "delaying_groups": 
+                {
+                "group15": 5.0
+                }          ,
+            "channel": "group.control.270.1"
+
+            },
+ 
+        "group2":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"   ,
+            "channel": "group.control.270.2"
+
+        },
+
+        "group3":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 20,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.3"
+
+        },
+
+        "group4":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 20,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.4"
+
+        },
+
+        "group5":{
+            "min_green": 10,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.5"
+
+        },
+
+        "group6":{
+            "min_green": 9,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.6"
+
+        },
+
+        "group7":{
+            "min_green": 10,
+            "min_amber_red": 1,
+            "min_red": 15,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "delaying_groups": 
+               {
+                "group12": 5.0
+                }      ,
+            "channel": "group.control.270.7"
+
+            },
+
+        "group8":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 30,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.8"
+
+        },
+
+        "group9":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 30,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.9"
+
+        },
+
+        "group10":{
+            "min_green": 20,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 33,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.10"
+
+        },
+        
+        "group11":{
+            "min_green": 20,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 33,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.11"
+
+        },
+
+        "group12":{
+            "min_green": 20,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 33,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.12"
+
+        },
+
+        "group13":{
+            "min_green": 20,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 33,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.13"
+
+        },
+
+        "group14":{
+            "min_green": 20,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 33,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.14"
+
+        },
+
+        "group15":{
+            "min_green": 20,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 33,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.270.15"
+            }
+        },
+
+        "detectors":{
+            "req1m01":{
+                "type": "request",
+                "sumo_id": "1-001",
+                "channel": "detector.status.1-001",
+                "request_groups": ["group1"]
+            },
+
+            "req1m40":{
+                "type": "request",
+                "sumo_id": "1-040",
+                "channel": "detector.status.1-040",
+                "request_groups": ["group1"]
+            },
+
+            "req2m01":{
+                "type": "request",
+                "sumo_id": "2-001",
+                "channel": "detector.status.2-001",
+                "request_groups": ["group2"]
+            },
+
+            "req2m40":{
+                "type": "request",
+                "sumo_id": "2-040",
+                "channel": "detector.status.2-040",
+                "request_groups": ["group2"]
+            },
+
+            "req3m02":{
+                "type": "request",
+                "sumo_id": "3-002",
+                "channel": "detector.status.3-002",
+                "request_groups": ["group3"]
+            },
+
+            "req4m02":{
+                "type": "request",
+                "sumo_id": "4-002",
+                "channel": "detector.status.4-002",
+                "request_groups": ["group4"]
+            },
+
+            "req5m02":{
+                "type": "request",
+                "sumo_id": "5-002",
+                "channel": "detector.status.5-002",
+                "request_groups": ["group5"]
+            },
+
+            "req5m40":{
+                "type": "request",
+                "sumo_id": "5-040",
+                "channel": "detector.status.5-040",
+                "request_groups": ["group5"]
+            },
+
+            "req6m02A":{
+                "type": "request",
+                "sumo_id": "6-002A",
+                "channel": "detector.status.6-002A",
+                "request_groups": ["group6"]
+            },
+
+            "req6m02B":{
+                "type": "request",
+                "sumo_id": "6-002B",
+                "channel": "detector.status.6-002B",
+                "request_groups": ["group6"]
+            },
+
+            "req6m30":{
+                "type": "request",
+                "sumo_id": "6-030",
+                "channel": "detector.status.6-030",
+                "request_groups": ["group6"]
+            },
+
+            "req6m40":{
+                "type": "request",
+                "sumo_id": "6-040",
+                "channel": "detector.status.6-040",
+                "request_groups": ["group6"]
+            },
+
+            "req7m01":{
+                "type": "request",
+                "sumo_id": "7-001",
+                "channel": "detector.status.7-001",
+                "request_groups": ["group7"]
+            },
+
+            "req7m20":{
+                "type": "request",
+                "sumo_id": "7-020",
+                "channel": "detector.status.7-020",
+                "request_groups": ["group7"]
+            },
+
+
+            "req9m02R":{
+                "type": "request",
+                "sumo_id": "9-002R",
+                "channel": "detector.status.9-002R",
+                "request_groups": ["group9"]
+            },
+
+            "req4m02R9":{
+                "type": "request",
+                "sumo_id": "4-002R9",
+                "channel": "detector.status.4-002R9",
+                "request_groups": ["group4"]
+            },
+
+            "req8m08R7":{
+                "type": "request",
+                "sumo_id": "8-008R7",
+                "channel": "detector.status.8-008R7",
+                "request_groups": ["group8"]
+            },
+
+            "req3m02R":{
+                "type": "request",
+                "sumo_id": "3-002R",
+                "channel": "detector.status.3-002R",
+                "request_groups": ["group3"]
+            },
+
+            
+            "req10m01P":{
+                "type": "request",
+                "sumo_id": "10-001P",
+                "channel": "detector.status.10-001P",
+                "request_groups": ["group10", "group11", "group12"]
+            },
+            
+            "req13m01P":{
+                "type": "request",
+                "sumo_id": "13-001P",
+                "channel": "detector.status.13-001P",
+                "request_groups": ["group13", "group14", "group15"]
+            },
+
+            "req15m01P":{
+                "type": "request",
+                "sumo_id": "15-001P",
+                "channel": "detector.status.15-001P",
+                "request_groups": ["group13", "group14", "group15"]
+            },
+
+            "ext1m01":{
+                "type": "extender",
+                "sumo_id": "1-001",
+                "channel": "detector.status.1-001",
+                "group": "group1",
+                "ext_time": 2.0
+            },
+
+            "ext2m02":{
+                "type": "extender",
+                "sumo_id": "2-002",
+                "channel": "detector.status.2-002",
+                "group": "group2",
+                "ext_time": 2.0
+            },
+
+            "ext5m02":{
+                "type": "extender",
+                "sumo_id": "5-002",
+                "channel": "detector.status.5-002",
+                "group": "group5",
+                "ext_time": 2.0
+            },
+
+            "ext6m02A":{
+                "type": "extender",
+                "sumo_id": "6-002A",
+                "channel": "detector.status.6-002A",
+                "group": "group6",
+                "ext_time": 2.0
+            },
+
+            "ext6m02B":{
+                "type": "extender",
+                "sumo_id": "6-002B",
+                "channel": "detector.status.6-002B",
+                "group": "group6",
+                "ext_time": 2.0
+            },
+
+            "ext7m02":{
+                "type": "extender",
+                "sumo_id": "7-001",
+                "channel": "detector.status.7-001",
+                "group": "group7",
+                "ext_time": 2.0
+            },
+
+            "ext1m40":{
+                "type": "extender",
+                "sumo_id": "1-040",
+                "channel": "detector.status.1-040",
+                "group": "group1",
+                "ext_time": 3.0
+            },
+
+            "ext2m40":{
+                "type": "extender",
+                "sumo_id": "2-040",
+                "channel": "detector.status.2-040",
+                "group": "group2",
+                "ext_time": 3.0
+            },
+
+            "ext5m40":{
+                "type": "extender",
+                "sumo_id": "5-040",
+                "channel": "detector.status.5-040",
+                "group": "group5",
+                "ext_time": 3.0
+            },
+
+            "ext6m40":{
+                "type": "extender",
+                "sumo_id": "6-040",
+                "channel": "detector.status.6-040",
+                "group": "group6",
+                "ext_time": 3.0
+            },
+
+            "ext6m30":{
+                "type": "extender",
+                "sumo_id": "6-030",
+                "channel": "detector.status.6-030",
+                "group": "group6",
+                "ext_time": 3.0
+            },
+
+            "ext7m20":{
+                "type": "extender",
+                "sumo_id": "7-020",
+                "channel": "detector.status.7-020",
+                "group": "group7",
+                "ext_time": 3.0
+            }
+
+        },   
+
+    // This defines groups used in each phase
+    // (see phases matrix to see which ones are on)
+    "group_list": ["group1", "group2", "group3", "group4", "group5", "group6", "group7", "group8", "group9", "group10", "group11", "group12", "group13", "group14", "group15"],
+
+    // Each row is a phase and index is the group
+    //          1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
+    "phases":[ [0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0 ],
+               [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 ],
+               [0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1 ,1, 0, 0, 0 ]
+        ],
+
+    // each row refers to starting group and column the end group
+    //                 1   2    3    4    5    6    7    8    9    10   11   12   13   14  15
+    "intergreens":[ [0.0, 0.0, 0.0, 0.0, 5.0, 7.0, 6.0, 6.0, 6.0, 4.0, 4.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 4.0, 8.0, 8.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 9.0, 0.0, 8.0, 9.0, 8.0, 1.0, 5.0, 1.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 7.0, 4.0, 0.0, 6.0, 10.0, 6.0, 0.0, 0.0, 0.0],
+                    [7.0, 0.0, 5.0, 5.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 8.0, 8.0],
+                    [5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.5, 4.5, 0.5],
+                    [6.0, 8.0, 8.0, 7.0, 7.0, 0.0, 0.0, 6.0, 6.0, 0.0, 0.0, 0.0, 4.5, 4.5, 0.5],
+                    [8.0, 8.0, 8.0, 4.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 10.0, 6.0],
+                    [7.0, 0.0, 7.0, 0.0, 0.0, 0.0, 7.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 5.0, 1.0],
+                    [5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [5.0, 4.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [1.0, 4.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 1.0, 9.0, 9.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 2.0, 6.0, 6.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 5.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        ]
+
+    }
+}
+

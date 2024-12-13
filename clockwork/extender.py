@@ -40,7 +40,8 @@ class Extender:
         self.conf_groups = [] # List of conflicting signal grooups
         self.vehcount = 0
         self.conf_sum = 0
-        self.threshold = 0.25
+        self.threshold = 0.3
+        self.ext_mode = 2
         
         for grp in self.group.conflicting_groups:
             self.conf_groups.append(grp) 
@@ -108,13 +109,11 @@ class e3Extender(Extender):
     def update_extension(self):
         """Function updates the extension status to the group"""
         Threshold1 = 0
-        Threshold2 = 0.25
-        Threshold3 = 0.25
-        Threshold3start = 2.0
-        MaxGreen = 60 # 120
+        Threshold2 = 0.5
+        Threshold3 = 0.3
+        MaxGreen = 60 
         self.conf_sum = 0
-        eMode = 3
-
+    
         # Calculate the Red-side pressure 
         for grp in self.conf_groups:
             if grp['group'].e3extender:
@@ -126,14 +125,20 @@ class e3Extender(Extender):
              vc += e3det.veh_count()
         self.vehcount = vc
 
+        if (self.conf_sum == 0) and (self.vehcount == 0):
+            e3det.extend_on = False
+            self.extend = False # No det extends
+            return
+
         # Decide about green extension
-        if eMode == 1:
+        if self.ext_mode == 1:
+            self.threshold = Threshold1
             if self.vehcount > Threshold1:
                 self.extend = True 
                 e3det.extend_on = True
                 return
             
-        elif eMode == 2:
+        elif self.ext_mode == 2:
             if self.conf_sum > 0:   
                 traffic_ratio = self.vehcount/self.conf_sum
                 self.threshold = Threshold2
@@ -146,7 +151,7 @@ class e3Extender(Extender):
                 e3det.extend_on = True
                 return
 
-        elif eMode == 3:
+        elif self.ext_mode == 3:
             if self.conf_sum > 0:   
                 GreenTimeUsed = self.system_timer.seconds - self.group.green_started_at
                 TimeDiscount = 1.0 + (GreenTimeUsed/MaxGreen)
