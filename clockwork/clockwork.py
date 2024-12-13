@@ -70,7 +70,7 @@ class DataDistributor:
         self.group_status_mapping = self.get_group_status_channel_mapping(conf['signal_groups'], controller)
         self.group_status_storage = ControllerGroupStatusRequests()
         
-        print("Group mapping:", self.group_mapping)
+        #print("Group mapping:", self.group_mapping)
         # We store these for the case we want to trigger message sending based on the change of the status
         # I.e. "change" mode under nats -section in the conf file
         self.group_states = {}
@@ -92,7 +92,7 @@ class DataDistributor:
         "Returns a dictionary of all the channels and their corresponding detectors (as list)"
         mapping = {}
         #all_dets = controller.get_all_detectors()
-        all_dets = controller.ext_dets + controller.req_dets
+        all_dets = controller.ext_dets + controller.req_dets + controller.e3detectors
         for det in detector_conf:
             if "channel" in detector_conf[det]:
                 channel = detector_conf[det]["channel"]
@@ -153,13 +153,16 @@ class DataDistributor:
 
     def detector_message_to_controller(self, msg, channel):
         msg_dict = json.loads(msg)
-        det_list = []
+        #det_list = []
+
         if channel in self.det_mapping:
             for det in self.det_mapping[channel]:
-                #print("Det:", det, "loop_on", msg_dict["loop_on"])
-                det.loop_on = msg_dict["loop_on"]
-                #print("Channel:", channel, "Det:", det)
-                det_list.append(self.det_mapping[channel])
+                if not det.type=="e3detector": 
+                    det.loop_on = msg_dict["loop_on"]
+                else:
+                    det.update_e3_vehicles(msg_dict)
+
+                #det_list.append(self.det_mapping[channel])
         #print("Setting detectors", det_list, " with message:", msg_dict)
 
     def group_request_message_to_controller(self, msg, channel):
@@ -311,10 +314,15 @@ async def main(conf_filename=None, set_controller_requests=False):
 
     
     channels = distributor.get_det_channels()
+    
     #We subscribe all the DET channels defined in the conf
     for channel in channels:
         await nats.subscribe(channel, cb=det_message_handler)
         print("Subscribed to det channel", channel)
+    
+    # We subscribe to the e3 detectors (i.e. vehicle list per group)
+    # ADD CORRECT CODE HERE
+
     
     # We subscribe to the group request channels
     async def group_request_message_handler(msg):
@@ -389,8 +397,8 @@ async def main(conf_filename=None, set_controller_requests=False):
         traffic_controller.tick()
         system_timer.tick()
         # For printing the status of the controller if requested in conf
-        #if sys_cnf['sumo']['print_status']:
-        #    print(traffic_controller.get_control_status())
+        if sys_cnf['sumo']['print_status']:
+            print(traffic_controller.get_control_status())
         
         # status will be sent to its own channer every time step
         controller_stat = traffic_controller.get_status_as_dict()
@@ -416,7 +424,7 @@ async def main(conf_filename=None, set_controller_requests=False):
                 stat = group_status_from_msg(group_message)
                 if distributor.group_state_has_changed(stat, channel):
                     await nats.publish(channel, json.dumps(group_message).encode())
-                    print("Published group status:", group_message, " to channel:", channel)
+                    #print("Published group status:", group_message, " to channel:", channel)
 
         # Debugging the time drift remove later
         # print(system_timer.aggregate_time_drift)        

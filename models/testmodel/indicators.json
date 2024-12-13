@@ -113,6 +113,16 @@
             "type": "rising_edge",
             "stream": "det_inputs",
             "name": "6-030"
+        },
+        "7-020": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "7-020"
+        },
+        "7-001": {
+            "type": "falling_edge",
+            "stream": "det_inputs",
+            "name": "7-001"
         }
 
     },
@@ -130,17 +140,22 @@
         "270_2_0": {
             "type": "simple",
             "stream": "radar270.2",
-            "lane": "0"
+            "lane": "3"
         },
         "270_3_1": {
             "type": "simple",
             "stream": "radar270.3",
-            "lane": "0"
+            "lane": "1"
         },
         "270_3_2": {
             "type": "simple",
             "stream": "radar270.3",
-            "lane": "1"
+            "lane": "0"
+        },
+        "270_3_3": {
+            "type": "simple",
+            "stream": "radar270.3",
+            "lane": "5"
         }
     },
     "groups": {
@@ -163,6 +178,11 @@
             "type": "simple",
             "stream": "sig_inputs",
             "group": "6"
+        },
+        "group7": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "7"
         }
     }
 },
@@ -202,6 +222,13 @@
         "out_dets": ["6-002B"],
         "radar_lanes":["270_3_2"],
         "notes": "Approach from north"
+    },
+    "grp7_1":{
+        "name": "Group 7 lane 1",
+        "in_dets": ["7-020"],
+        "out_dets": ["7-001"],
+        "radar_lanes":["270_3_3"],
+        "notes": "Approach from north"
     }
 
 },
@@ -220,40 +247,50 @@
         "type": "e3",
         "nats_output_subject": "group.e3.270.1",
         "trigger": "time",
-        "trigger_time": 2.0,
+        "trigger_time": 1.0,
         "lanes": ["grp1_1"],
         "group": "group1",
         "notes": "Will send queue request"
         },    
     "group2_view":{
         "connection": "nats",
-        "type": "grp_view",
-        "nats_output_subject": "group.view.270.2",
+        "type": "e3",
+        "nats_output_subject": "group.e3.270.2",
         "trigger": "time",
-        "trigger_time": 2.0,
+        "trigger_time": 1.0,
         "lanes": ["grp2_1"],
         "group": "group2",
         "notes": "Will send queue request"
         },
     "group5_view":{
         "connection": "nats",
-        "type": "grp_view",
-        "nats_output_subject": "group.view.270.5",
+        "type": "e3",
+        "nats_output_subject": "group.e3.270.5",
         "trigger": "time",
-        "trigger_time": 2.0,
+        "trigger_time": 1.0,
         "lanes": ["grp5_1"],
         "group": "group5",
         "notes": "Will send queue request"
         },
     "group6_view":{
         "connection": "nats",
-        "type": "grp_view",
-        "nats_output_subject": "group.view.270.6",
+        "type": "e3",
+        "nats_output_subject": "group.e3.270.6",
         "trigger": "time",
-        "trigger_time": 2.0,
+        "trigger_time": 1.0,
         "lanes": ["grp6_1", "grp6_2"],
         "group": "group6",
-        "notes": "Will send queue request"
+        "notes": "From port to the north"
+        },
+    "group7_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.270.7",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["grp7_1"],
+        "group": "group7",
+        "notes": "From port to the north"
         }
     }
 }

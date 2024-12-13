@@ -181,7 +181,6 @@ class e3Detector(Detector):
         # self.group = conf['group']
         self.vehcount = 0
         self.errorcount = 0
-    
         
     def is_extending(self):
         """Returns true if vehicle count is more than zero"""
@@ -208,7 +207,12 @@ class e3Detector(Detector):
             if (vtype == 'tram_R7'):
                 if (self.owngroup_name == 'group8'):
                     self.vehcount +=100
-        
+
+    # We update the vehlist from e3 message
+    def update_e3_vehicles(self, msg_dict):
+        """updates the vehlist from e3 message"""
+        self.det_vehicles_dict = msg_dict['objects']
+        self.vehcount = len(self.det_vehicles_dict)
 
        
     def veh_count(self):

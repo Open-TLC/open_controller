@@ -461,19 +461,22 @@
             "e3d1m50":{
                 "type": "e3detector",
                 "sumo_id": "e3Det_270_Vali",
+                "channel": "group.e3.270.1",
                 "group": "group1"
                 },
 
             "e3d2m70":{
                 "type": "e3detector",
                 "sumo_id": "e3Det_270_Jatk_Right",
+                "channel": "group.e3.270.2",
                 "group": "group2"
-                },
+            },
  
 
             "e3d5m70":{
                 "type": "e3detector",
                 "sumo_id": "e3Det_270_Jatk",
+                "channel": "group.e3.270.5",
                 "group": "group5"
                 },
 
@@ -481,12 +484,14 @@
             "e3d6m70":{
                 "type": "e3detector",
                 "sumo_id": "e3Det_270_Tyyn",
+                "channel": "group.e3.270.6",
                 "group": "group6"
                 },
             
             "e3d7m30":{
                 "type": "e3detector",
                 "sumo_id": "e3Det_270_Tyyn_Left",
+                "channel": "group.e3.270.2",
                 "group": "group7"
                 }
                 
