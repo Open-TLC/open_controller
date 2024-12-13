@@ -222,6 +222,7 @@ class FieldOfView:
             if vehclass_sumo:
                 det_obj_dict[obj_id] = new_obj
         data = {}
+        data['count'] = len(det_obj_dict)
         data['view_name'] = self.name
         data['objects'] = det_obj_dict
         data['tstamp'] = datetime.datetime.now().timestamp() * 1000
