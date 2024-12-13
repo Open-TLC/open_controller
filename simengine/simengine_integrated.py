@@ -298,6 +298,7 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode): #DBIK241
             e3det.vehcount = vehcount
             e3det.det_vehicles_dict = vehiclesdict
             visgroup = e3det.owngroup_obj
+            # print('grp: ',e3det.owngroup_obj.group_name, 'veh dict: ',e3det.det_vehicles_dict)
 
             # DBIK201118 Visualize signal states with vehicle colors
             if vismode == 'main_states':  
