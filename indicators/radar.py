@@ -46,7 +46,7 @@ class Radar:
         now = datetime.datetime.now()
         for data in self.data:
             if 'data_sent' in data:
-                data_sent = data['data_sent']
+                data_sent = data['data_received']
                 diff = now - data_sent
                 if diff.total_seconds() > treshold:
                     self.data.remove(data)

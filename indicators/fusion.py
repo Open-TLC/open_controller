@@ -7,6 +7,13 @@
 import asyncio
 import datetime
 import json
+import uuid
+
+# Maybe configurable in the future, done for demo
+VECLASS_FROM_RADAR_TO_SUMO = {
+    2: "car_type",
+    4: "truck_type"
+}
 
 class Lane:
     """Lane indicators contained"""
@@ -57,6 +64,13 @@ class Lane:
             approaching_objs.extend(radar.get_approaching_objects())
         return approaching_objs
 
+    def get_detected_objects_e3(self):
+        """Returns the number of approaching v"""
+        detected_objects = []
+        for radar in self.input_radars.values():
+            detected_objects += radar.get_approaching_objects()
+        return detected_objects
+
     def get_detector_based_vehcount(self):
         """Returns the vehicle count based on detectors"""
         in_count = 0
@@ -100,6 +114,7 @@ class FieldOfView:
     def __init__(self, name, params):
         self.name = name
         self.params = params
+        self.view_type = params.get('type', "")
         if params.get('trigger', False) == 'time':
             self.trigger_time = params.get('trigger_time', None)
         self.nats_output_subject = params.get('nats_output_subject', None)
@@ -149,23 +164,65 @@ class FieldOfView:
             approaching_objs.append(new_lane)
         return approaching_objs
 
+    def get_objects_in_all_lanes(self):
+        """Returns the number of approaching vehicles"""
+        detected_objects = []
+        for lane in self.lanes:
+            detected_objects += lane.get_detected_objects_e3()
+        return detected_objects
+
 
     # Async function for sending the data out
-    async def send_queues(self, nats):
+    async def send_nats_messages(self, nats):
         """Send the queue lengths to the nats"""
         while True:
             await asyncio.sleep(self.trigger_time)
-            queue_lengths = self.get_approaching_objects()
-            data = {}
-            if self.group:
-                data['group_status'] = self.group.substate
+            if self.view_type == "grp_view":
+                out_data = self.get_linewise_ouptut()
+            elif self.view_type == "e3":
+                out_data = self.get_e3_area_output()
             else:
-                data['group_status'] = "NO group defined"
-            data['radar_id'] = self.name
-            data['queue_lengths'] = queue_lengths
-            data['tstamp'] = datetime.datetime.now().timestamp() * 1000
+                print("Type: {} not supported".format(self.view_type))
+                continue
             if self.nats_output_subject:
-                await nats.publish(self.nats_output_subject, json.dumps(data).encode())
+                await nats.publish(self.nats_output_subject, json.dumps(out_data).encode())
                 #print(f"Sent queue data from {self.name}: {queue_lengths}")
 
 
+    def get_linewise_ouptut(self):
+        """Returns a dictionary for the queue output type"""
+        queue_lengths = self.get_approaching_objects()
+        data = {}
+        if self.group:
+            data['group_status'] = self.group.substate
+        else:
+            data['group_status'] = "NO group defined"
+        data['radar_id'] = self.name
+        data['queue_lengths'] = queue_lengths
+        data['tstamp'] = datetime.datetime.now().timestamp() * 1000
+        return data
+    
+    def get_e3_area_output(self):
+        """Returns the output for the E3 area"""
+        detected_objects = self.get_objects_in_all_lanes()
+        det_obj_dict = {}
+        for obj in detected_objects:
+            new_obj = {}
+            obj_id = obj.get('id', uuid.uuid4())
+            new_obj['speed'] = obj.get('speed', None)
+            
+            vehclass_radar = obj.get('class', None)
+            vehclass_sumo = VECLASS_FROM_RADAR_TO_SUMO.get(vehclass_radar, None)
+            if not vehclass_sumo:
+                print(f"Warning: Vehicle class not found for radar class: {vehclass_radar}")
+            new_obj['vtype'] = vehclass_sumo
+            new_obj['sumo_id'] = obj.get('sumo_id', None)
+            # Note: we only add the types of objects we know, this is a temporary solution
+            # Sumo simengine does not map types and lanes correctly (yet)
+            if vehclass_sumo:
+                det_obj_dict[obj_id] = new_obj
+        data = {}
+        data['view_name'] = self.name
+        data['objects'] = det_obj_dict
+        data['tstamp'] = datetime.datetime.now().timestamp() * 1000
+        return data
