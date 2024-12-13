@@ -129,7 +129,7 @@ class GlobalConf:
         """Sets the values from the command line"""
         # NATS servers
         if command_line_params.nats_server:
-            self.conf['connectivity']['nats']['ip'] = command_line_params.nats_server
+            self.conf['connectivity']['nats']['server'] = command_line_params.nats_server
         if command_line_params.nats_port:
             self.conf['connectivity']['nats']['port'] = command_line_params.nats_port
 
@@ -294,7 +294,7 @@ class GlobalConf:
         view_outputs = {}
         for output_name, params in outputs.items():
             if "type" in params:
-                if params["type"] == "grp_view":
+                if params["type"] in ["grp_view", "e3"]:
                     view_outputs[output_name] = params
                     lanes = params.get('lanes', [])
                     lane_params = [] # Will be filled with actual conf
@@ -303,6 +303,8 @@ class GlobalConf:
                         if l_params:
                             lane_params.append(l_params)
                     view_outputs[output_name]['lanes'] = lane_params
+                else:
+                    print(f"Error: output type {params['type']} not supported")
         return view_outputs
 
     def get_lane_params(self, lane_name):
