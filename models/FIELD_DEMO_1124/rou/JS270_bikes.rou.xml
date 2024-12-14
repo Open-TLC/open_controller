@@ -4,9 +4,9 @@
 
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
 
-<vType id="bike" vClass="bicycle"/>
+<vType id="bike_type" vClass="bicycle"/>
 
-<vType id="ped" vClass="pedestrian"/>
+<vType id="ped_type" vClass="pedestrian"/>
 
 <route id="Jatk2Tyyn_bike"  edges="Jatk_p02b Jatk_jp01b Tyyn_ylitVali65 -Tyyn_p13 -Tyyn12"/>
 
@@ -16,11 +16,11 @@
 
 
 
-<flow id="F_Jatk2Tyyn_bike" from="Jatk_p02b"  to="Vali_p10" route="Jatk2Tyyn_bike"   begin="0" end="3600" type="bike" color="0,255,0" number="0"> </flow>
+<flow id="F_Jatk2Tyyn_bike" from="Jatk_p02b"  to="Vali_p10" route="Jatk2Tyyn_bike"   begin="0" end="3600" type="bike_type" color="0,255,0" number="0"> </flow>
 
-<flow id="F_Vali2Jatk_bike" from="Vali_p12"   to="Jatk_p02" route="Vali2Jatk_bike"   begin="0" end="3600" type="bike" color="0,255,0" probability="0.01"> </flow>
+<flow id="F_Vali2Jatk_bike" from="Vali_p12"   to="Jatk_p02" route="Vali2Jatk_bike"   begin="0" end="3600" type="bike_type" color="0,255,0" probability="0.01"> </flow>
 
-<flow id="F_Jatk2Vali_bike" from="Jatk_p02b"  to="-Vali_p10" route="Jatk2Vali_bike"  begin="0" end="3600" type="bike" color="0,255,0" probability="0.01"> </flow>
+<flow id="F_Jatk2Vali_bike" from="Jatk_p02b"  to="-Vali_p10" route="Jatk2Vali_bike"  begin="0" end="3600" type="bike_type" color="0,255,0" probability="0.01"> </flow>
 
 <!---
 
