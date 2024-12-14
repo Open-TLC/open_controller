@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2024-12-14 14:23:04 by Eclipse SUMO GUI Version 1.19.0
+<!-- generated on 2024-12-14 14:39:44 by Eclipse SUMO GUI Version 1.19.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
@@ -23,7 +23,7 @@
         <lateral-resolution value="0.5"/>
         <ignore-route-errors value="0"/>
         <collision.action value="warn"/>
-        <scale value="0.5"/>
+        <scale value="1.0"/>
         <time-to-teleport value="300"/>
         <random-depart-offset value="60"/>
         <parking.maneuver value="false"/>
@@ -36,7 +36,7 @@
     </report>
 
     <traci_server>
-        <remote-port value="53017"/>
+        <remote-port value="53198"/>
     </traci_server>
 
     <gui_only>
