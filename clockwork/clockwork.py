@@ -19,6 +19,8 @@ IMPL_VERSION = "0.2"
 DEFAULT_NATS_SERVER = "nats"
 DEFAULT_NATS_PORT = 4222
 
+# This should bne read from the conf file
+SEND_SUBSTATES = True
 
 DEFAULT_CHANNEL = "detector.*.*"
 
@@ -199,12 +201,19 @@ class DataDistributor:
         if self.group_states[channel] == None:
             self.group_states[channel] = status
 
-
-        if self.group_states[channel]['green'] == status['green']:
-            return False
+        # Currently a hardcoded mode for testing
+        if SEND_SUBSTATES:
+            if self.group_states[channel]['substate'] == status['substate']:
+                return False
+            else:
+                self.group_states[channel] = status
+                return True
         else:
-            self.group_states[channel] = status
-            return True
+            if self.group_states[channel]['green'] == status['green']:
+                return False
+            else:
+                self.group_states[channel] = status
+                return True
 
     # Note: the commands are currently strings, this should me transformed to json
     async def handle_command(self, msg):
