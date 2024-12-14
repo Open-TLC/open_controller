@@ -84,10 +84,10 @@
             "stream": "det_inputs",
             "name": "5-040"
         },
-        "1-001": {
+        "1-002": {
             "type": "falling_edge",
             "stream": "det_inputs",
-            "name": "1-001"
+            "name": "1-002"
         },
         "1-040": {
             "type": "rising_edge",
@@ -191,7 +191,7 @@
     "grp1_1":{
         "name": "Group 1 lane 1",
         "in_dets": ["1-040"],
-        "out_dets": ["1-001"],
+        "out_dets": ["1-002"],
         "radar_lanes":["270_2_0"],
         "notes": "Approach from north"
     },
