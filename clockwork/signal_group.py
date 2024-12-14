@@ -302,10 +302,10 @@ class SignalGroup(Machine):
         status = grp_statuses.get(self.state, '*')
 
         # Should be own state
-        if status in ['b'] and self.request_green:
-            status = 'c'
         if status in ['b'] and self.grp_conf['request_type'] == 'fixed':
             status = 'C' # FIX ME
+        if status in ['b'] and self.request_green:
+            status = 'c'
         if status in ['b'] and self.permit_green:
             status = 'e' 
 
