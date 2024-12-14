@@ -102,6 +102,10 @@ class Group:
         if 'tstamp' in data_dict:
             tstamp = data_dict['tstamp']
             #tstamp_in_datetime = datetime.datetime.fromtimestamp(tstamp/1000)
+            if '.' in tstamp:
+                split_by_dot = tstamp.split(".")
+                tstamp = split_by_dot[0] + "." + split_by_dot[1][:6] # Remove the last digits
+            
             tstamp_in_datetime = datetime.datetime.fromisoformat(tstamp) # Note: this id different from radar
             tstamp_now = datetime.datetime.now()
             data_dict['data_sent'] = tstamp_in_datetime

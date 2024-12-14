@@ -130,10 +130,16 @@ class Detector:
         data = msg.data.decode()
         #print(f"Received a message on '{subject} {reply}': {data}")
         data_dict = json.loads(data)
+        #if data_dict['id'] == 'detector.status.R8KU':
+        #print(f"Received a message on '{subject} {reply}': {data}")
+        
         if 'tstamp' in data_dict:
             tstamp = data_dict['tstamp']
             #tstamp_in_datetime = datetime.datetime.fromtimestamp(tstamp/1000)
-            tstamp_in_datetime = datetime.datetime.fromisoformat(tstamp) # Note: this id different from radar
+            if '.' in tstamp:
+                split_by_dot = tstamp.split(".")
+                tstamp = split_by_dot[0] + "." + split_by_dot[1][:6] # Remove the last digits
+            tstamp_in_datetime = datetime.datetime.fromisoformat(tstamp) # Note: this is different from radar
             tstamp_now = datetime.datetime.now()
             data_dict['data_sent'] = tstamp_in_datetime
             data_dict['data_received'] = tstamp_now
@@ -157,7 +163,7 @@ class Detector:
             data['det_id'] = self.det_id
             data['stored_data'] = stored_data
             data['tstamp'] = datetime.datetime.now().timestamp() * 1000
-            await nats.publish(self.data_subject, json.dumps(data).encode())
+            #await nats.publish(self.data_subject, json.dumps(data).encode())
             #print(f"Sent det data from {self.det_id}: {data}")
 
 
