@@ -20,7 +20,7 @@ class Group:
         self.data = []
         self.substate = ""
         self.is_red_b = None
-
+        self.reset_counter_functions = [] # Functions to trigger counter reset
         #NATS STREAM
         stream_params = group_params.get('stream', {})
         if not stream_params:
@@ -73,7 +73,19 @@ class Group:
         params['subject'] = self.nats_subject
         params['callback'] = self.nats_callback
         return params    
+    
+    def add_reset_counter_function(self, func):
+        """Adds a function to the reset counter functions"""
+        self.reset_counter_functions.append(func)
+
+    def trigger_reset_counter_functions(self):
+        """Triggers the reset counter functions"""
+        for func in self.reset_counter_functions:
+            func()
+
+    #
     # ASYNC functions
+    #
     async def cleanup_old_data(self):
         """Removes old data, this should be a separate task running at alla times"""
         while True:
@@ -96,6 +108,11 @@ class Group:
             data_dict['data_received'] = tstamp_now
         self.add_data(data_dict)
 
+        # Reset counters for views 
+        if data_dict['substate'] in ['b','B', 'C']:
+            self.trigger_reset_counter_functions()
+
+        # Strore values for future use
         self.substate = data_dict['substate']
         if self.substate in ['r']:
             self.is_red_b = True

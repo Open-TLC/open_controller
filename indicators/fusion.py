@@ -28,6 +28,7 @@ class Lane:
         # These will be updated based on detector values
         self.indet_count = 0
         self.outdet_count = 0
+        self.vehcount_offset = 0 # For correctiong the drifting of the detcunt
 
     def assign_radars(self, radars):
         """Assigns a radar to the lane"""
@@ -79,8 +80,12 @@ class Lane:
             in_count += det.get_vehicle_count()
         for det in self.out_dets.values():
             out_count += det.get_vehicle_count()
-        return in_count - out_count
-    
+        return in_count - out_count + self.vehcount_offset
+
+    def reset_detector_based_vehcount(self):
+        """Resets the vehcount to zero"""
+        self.vehcount_offset = -1 * self.get_detector_based_vehcount()
+
 
 # This is basically only a container for the lane and radar pair
 class LaneRadar:
@@ -130,6 +135,9 @@ class FieldOfView:
         self.group_name = params.get('group', None)
         self.group = None
 
+    #
+    # Assigning functions (maps the input streams to the view)
+    # 
 
     def assign_radars(self, radars):
         """Assigns radars to the field of view"""
@@ -151,9 +159,20 @@ class FieldOfView:
         for group in groups.values():
             if group.group_id == self.group_name:
                 self.group = group
-        return
-    
-    
+                self.group.add_reset_counter_function(self.reset_lane_detector_vehcounters)
+
+        
+    #
+    # Calculating outputs
+    #
+
+    def get_detector_based_vehcount(self):
+        """Returns the vehicle count based on detectors"""
+        vehcount = 0
+        for lane in self.lanes:
+            vehcount += lane.get_detector_based_vehcount()
+        return vehcount
+
     def get_approaching_objects(self):
         """Returns the number of approaching vehicles"""
         approaching_objs = []
@@ -171,6 +190,10 @@ class FieldOfView:
             detected_objects += lane.get_detected_objects_e3()
         return detected_objects
 
+    def reset_lane_detector_vehcounters(self):
+        """Resets the vehcounts to zero for all the lanes"""
+        for lane in self.lanes:
+            lane.reset_detector_based_vehcount()
 
     # Async function for sending the data out
     async def send_nats_messages(self, nats):
@@ -223,6 +246,12 @@ class FieldOfView:
                 det_obj_dict[obj_id] = new_obj
         data = {}
         data['count'] = len(det_obj_dict)
+        det_vehcount = self.get_detector_based_vehcount()
+        if det_vehcount < 0:
+            self.reset_lane_detector_vehcounters()
+            det_vehcount = 0
+        data['det_vehcount'] = det_vehcount
+        data['group_substate'] = self.group.substate
         data['view_name'] = self.name
         data['objects'] = det_obj_dict
         data['tstamp'] = datetime.datetime.now().timestamp() * 1000
