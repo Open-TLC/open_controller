@@ -10,7 +10,7 @@
        <additional-files v="../add/JR_vehicletypes.add.xml, ../tll/ft270_1.tll.xml, ../add/JS270_stations.add.xml, 
        ../add/JS270_e1_dets.add.xml, ../add/JS270_e3s_dets.add.xml"/>
        
-       <scale v="0.5"/>
+       <scale v="1.0"/>
        
     </input>
     

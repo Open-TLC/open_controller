@@ -13,6 +13,7 @@
 
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
 
+<vType id="tram_type" vClass="tram" length="27.60" height="3.83" maxSpeed="15" personCapacity="200"/>
 <vType id="tram_R7" vClass="tram" length="27.60" height="3.83" maxSpeed="15" personCapacity="200"/>
 <vType id="tram_R9" vClass="tram" length="27.60" height="3.83" maxSpeed="15" personCapacity="200"/>
 
@@ -32,14 +33,14 @@
         <stop busStop="H0286" duration="0.00" extension="50.00"/>
     </route>
     
-    <vehicle id="T-9_1" type="ratikka" route="-R9" depart="60" departSpeed="13"/>
+    <vehicle id="T-9_1" type="tram_type" route="-R9" depart="80" departSpeed="13"/>
 
-    <vehicle id="T_9_1" type="tram_R9" route="R9" depart="140" departSpeed="13"/>
+    <vehicle id="T_9_1" type="tram_R9" route="R9" depart="150" departSpeed="13"/>
     
     
-    <vehicle id="T-7_1" type="ratikka" route="-R7" depart="180" departSpeed="13"/>
+    <vehicle id="T-7_1" type="tram_type" route="-R7" depart="200" departSpeed="13"/>
     
-    <vehicle id="T_7_1" type="tram_R7" route="R7"  depart="220" departSpeed="13"/>
+    <vehicle id="T_7_1" type="tram_R7" route="R7"  depart="240" departSpeed="13"/>
         
 </routes>
 
