@@ -194,10 +194,10 @@ class e3Detector(Detector):
 
             vtype = self.det_vehicles_dict[vehid]['vtype']
 
-            if vtype == 'truck':
+            if vtype == 'truck_type':
                 self.vehcount +=2 # DBIK240923 Add extra weight for trucks 1 truck = 3 vehs
                 # print('vehtype : ', type)
-            if  vtype == 'ratikka':
+            if  vtype == 'tram_type':
                 self.vehcount +=100
 
             # Special setting for JS270T, should be configured in init-file DBIK20241025
