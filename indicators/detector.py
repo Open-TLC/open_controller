@@ -59,7 +59,15 @@ class Detector:
                 self.rising_edge_cnt += 1
             if not self.data[-1]['loop_on'] and self.data[-2]['loop_on']:
                 self.falling_edge_cnt += 1
+        elif len(self.data) == 1:
+            if self.data[-1]['loop_on']:
+                self.rising_edge_cnt += 1
             
+            # I believe that this is misleading, because the 
+            # simulator sends loop down for all in the beginning
+            #else:
+            #    self.falling_edge_cnt += 1
+
     def remove_old_data(self, treshold=DEFAULT_OLD_DATA_TRESHOLD):
         "Removes all data with sent timestamp older than treshold"
         now = datetime.datetime.now()
