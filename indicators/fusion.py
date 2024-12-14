@@ -9,6 +9,9 @@ import datetime
 import json
 import uuid
 
+DEFAULT_TRAM_SPEED = 10 # m/s
+DEFAULT_LANE_VEHTYPE = "car_type"
+
 # Maybe configurable in the future, done for demo
 VECLASS_FROM_RADAR_TO_SUMO = {
     2: "car_type",
@@ -29,6 +32,8 @@ class Lane:
         self.indet_count = 0
         self.outdet_count = 0
         self.vehcount_offset = 0 # For correctiong the drifting of the detcunt
+        self.lane_main_type = params.get('lane_main_type', DEFAULT_LANE_VEHTYPE)
+
 
     def assign_radars(self, radars):
         """Assigns a radar to the lane"""
@@ -85,6 +90,22 @@ class Lane:
     def reset_detector_based_vehcount(self):
         """Resets the vehcount to zero"""
         self.vehcount_offset = -1 * self.get_detector_based_vehcount()
+
+
+    def get_objects_detected_by_detectors(self):
+        """Returns all the objects detected by the detectors"""
+        objs_counted = self.get_detector_based_vehcount()
+        obj_dict = {}
+        for obj in range(objs_counted):
+            new_obj = {}
+            id = str(uuid.uuid4())
+            new_obj['speed'] = DEFAULT_TRAM_SPEED
+            new_obj['vtype'] = self.lane_main_type
+            new_obj['sumo_id'] = None
+            new_obj['source'] = "detector_count"
+            new_obj['notes'] = "Speed and types are default values"
+            obj_dict[id] = new_obj
+        return obj_dict
 
 
 # This is basically only a container for the lane and radar pair
@@ -225,15 +246,15 @@ class FieldOfView:
         data['tstamp'] = datetime.datetime.now().timestamp() * 1000
         return data
     
-    def get_e3_area_output(self):
-        """Returns the output for the E3 area"""
+    def get_objects_detected_by_radars(self):
+        """Returns all the objects detected by the radars"""
         detected_objects = self.get_objects_in_all_lanes()
         det_obj_dict = {}
         for obj in detected_objects:
             new_obj = {}
             obj_id = obj.get('id', uuid.uuid4())
             new_obj['speed'] = obj.get('speed', None)
-            
+            new_obj['quality'] = obj.get('quality', 99)
             vehclass_radar = obj.get('class', None)
             vehclass_sumo = VECLASS_FROM_RADAR_TO_SUMO.get(vehclass_radar, None)
             if not vehclass_sumo:
@@ -244,7 +265,49 @@ class FieldOfView:
             # Sumo simengine does not map types and lanes correctly (yet)
             if vehclass_sumo:
                 det_obj_dict[obj_id] = new_obj
+        return det_obj_dict
+    
+    def get_objects_detected_by_detectors(self):
+        """Returns all the objects detected by the detectors"""
+        det_obj_dict = {}
+        for lane in self.lanes:
+            det_obj_dict.update(lane.get_objects_detected_by_detectors())
+        return det_obj_dict
+
+    def get_objects_combined_from_radar_and_detectors(self):
+        """Returns the combined objects from radar and detectors"""
+        radar_objs = self.get_objects_detected_by_radars()
+        detector_objs = self.get_objects_detected_by_detectors()
+        obj_count_diff = len(radar_objs) - len(detector_objs)
+        # More detector objects than radar objects
+        if obj_count_diff < 0:
+            # We add the missing objects to the radar objects
+            added_objects = 0
+            for obj_id, obj in detector_objs.items():
+                if added_objects >= abs(obj_count_diff):
+                    break
+                if obj_id not in radar_objs:
+                    radar_objs[obj_id] = obj
+                    added_objects += 1
+        # More radar objects than detector objects
+        elif obj_count_diff > 0:
+            # We sort the radar objects by the quality parameter
+            sorted_radar_objs = sorted(radar_objs.items(), key=lambda x: x[1].get('quality', 0), reverse=True)
+            # We add the missing objects to the detector objects
+            # but for now we return the radar objects
+            # This is a temporary solution
+        return radar_objs
+        
+
+
+    def get_e3_area_output(self):
+        """Returns the output for the E3 area"""
         data = {}
+        
+        #det_obj_dict = self.get_objects_detected_by_radars()
+        #det_obj_dict = self.get_objects_detected_by_detectors()
+        det_obj_dict = self.get_objects_combined_from_radar_and_detectors()
+
         data['count'] = len(det_obj_dict)
         det_vehcount = self.get_detector_based_vehcount()
         if det_vehcount < 0:
