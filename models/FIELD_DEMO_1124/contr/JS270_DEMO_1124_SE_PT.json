@@ -414,11 +414,25 @@
                 "channel": "detector.status.9-002R",
                 "request_groups": ["group9"]
             },
+            
+            "req9m25R":{
+                "type": "request",
+                "sumo_id": "R9PY",
+                "channel": "detector.status.R9PY",
+                "request_groups": ["group9"]
+            },
 
             "req4m02R9":{
                 "type": "request",
                 "sumo_id": "4-002R9",
                 "channel": "detector.status.4-002R9",
+                "request_groups": ["group4"]
+            },
+            
+            "req4m180R9":{
+                "type": "request",
+                "sumo_id": "R4PY",
+                "channel": "detector.status.R4PY",
                 "request_groups": ["group4"]
             },
 
@@ -428,6 +442,13 @@
                 "channel": "detector.status.8-008R7",
                 "request_groups": ["group8"]
             },
+            
+            "req8m180R7":{
+                "type": "request",
+                "sumo_id": "R8PY",
+                "channel": "detector.status.R8PY",
+                "request_groups": ["group8"]
+            },
 
             "req3m02R":{
                 "type": "request",
@@ -435,8 +456,14 @@
                 "channel": "detector.status.3-002R",
                 "request_groups": ["group3"]
             },
-
             
+            "req3m25R":{
+                "type": "request",
+                "sumo_id": "R3PY",
+                "channel": "detector.status.R3PY",
+                "request_groups": ["group3"]
+            },
+
             "req10m01P":{
                 "type": "request",
                 "sumo_id": "10-001P",
