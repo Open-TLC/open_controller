@@ -16,7 +16,7 @@
         "connection": "nats",
         "type": "groups",
         "subtype": "sumo",
-        "nats_subject": "group.status.270.*",
+        "nats_subject": "group.control.270.*",
         "notes": "Will subscribe to all groups sent by sumo"
     },
     "det_inputs": {
@@ -54,8 +54,8 @@
         "type": "two_det_switch",
         "notes": "One detector swithces the request on, another off",
         "detectors": {
-            "request": "5-040",
-            "clear": "5-002"
+            "request": "J8PY",
+            "clear": "J8KU"
         },
         "request_trigger": "rising_edge",
         "clear_trigger": "falling_edge"
