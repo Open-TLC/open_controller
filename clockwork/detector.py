@@ -189,7 +189,7 @@ class e3Detector(Detector):
   
     def tick(self):  # DBIK240801 tick for e3 detector
         """ Updating of e3-detector"""
-        
+        return  
         for vehid in self.det_vehicles_dict:
 
             vtype = self.det_vehicles_dict[vehid]['vtype']
@@ -209,12 +209,32 @@ class e3Detector(Detector):
                     self.vehcount +=100
 
     # We update the vehlist from e3 message
-    def update_e3_vehicles(self, msg_dict):
+    def update_e3_vehicles(self, obj_list):
         """updates the vehlist from e3 message"""
-        self.det_vehicles_dict = msg_dict['objects']
+        self.det_vehicles_dict = obj_list
         self.vehcount = len(self.det_vehicles_dict)
+        for vehid in self.det_vehicles_dict:
 
-       
+            vtype = self.det_vehicles_dict[vehid]['vtype']
+
+            if vtype == 'truck_type':
+                self.vehcount +=2 # DBIK240923 Add extra weight for trucks 1 truck = 3 vehs
+                # print('vehtype : ', type)
+            elif  vtype == 'tram_type':
+                self.vehcount +=100
+
+            # Special setting for JS270T, should be configured in init-file DBIK20241025
+            elif (vtype == 'tram_R9'):
+                if (self.owngroup_name == 'group4'):
+                    self.vehcount +=100            
+            elif (vtype == 'tram_R7'):
+                if (self.owngroup_name == 'group8'):
+                    self.vehcount +=100
+            elif (vtype == 'car_type'):
+                pass
+            else:
+                print('**************** Error in vehicle type: ', vtype)
+
     def veh_count(self):
         # self.tick()
         return self.vehcount

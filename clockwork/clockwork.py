@@ -162,7 +162,7 @@ class DataDistributor:
                 if not det.type=="e3detector": 
                     det.loop_on = msg_dict["loop_on"]
                 else:
-                    det.update_e3_vehicles(msg_dict)
+                    det.update_e3_vehicles(msg_dict['objects'])
 
                 #det_list.append(self.det_mapping[channel])
         #print("Setting detectors", det_list, " with message:", msg_dict)
