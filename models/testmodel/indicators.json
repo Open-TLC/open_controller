@@ -16,7 +16,7 @@
         "connection": "nats",
         "type": "groups",
         "subtype": "sumo",
-        "nats_subject": "group.control.270.*",
+        "nats_subject": "group.status.270.*",
         "notes": "Will subscribe to all groups sent by sumo"
     },
     "det_inputs": {
