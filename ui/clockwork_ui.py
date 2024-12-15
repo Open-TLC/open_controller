@@ -192,10 +192,17 @@ def build_tabs():
                     dcc.Tab(
                         id="Messages-tab",
                         label="Messages",
-                        value="tab4",
+                        value="tab5",
                         className="custom-tab",
                         selected_className="custom-tab--selected",
-                    )#,
+                    ),
+                    dcc.Tab(
+                        id="Indicators-tab",
+                        label="Indicators",
+                        value="tab_indicators",
+                        className="custom-tab",
+                        selected_className="custom-tab--selected",
+                    )
                     #dcc.Tab(
                     #    id="Map-tab",
                     #    label="Map",
@@ -332,6 +339,33 @@ def serve_layout_tab4():
         )
         ])
 
+def serve_layout_indicators():
+    return html.Div([
+        html.H1("Indicators module"),
+        html.H2("Estimated traffic flows"),
+        dash_table.DataTable(
+            id='indicators-table',
+            editable=False),
+        #html.H2("Groups"),
+        #dash_table.DataTable(
+        #    id='group-messages-table',
+        #    editable=False),
+
+        #html.H2("control_messages"),
+        #html.Button('Group 1 On', id='group-1-on', n_clicks=0),    
+        #html.Button('Group 1 Off', id='group-1-off', n_clicks=0),
+        #html.Div(id='group-1-on-output', style={'whiteSpace': 'pre-line'}),
+        #html.Div(id='group-1-off-output', style={'whiteSpace': 'pre-line'}),
+        #html.H2("Raw messages"),
+        #html.Div(id='nats-messages', style={'whiteSpace': 'pre-line'}),
+        dcc.Interval(
+            id='e3-messages',
+            interval=UPDATE_INTERVAL, # in milliseconds
+            n_intervals=0
+        )
+        ])
+
+
 
 
 app.layout = serve_layout()
@@ -354,6 +388,7 @@ async def update_message_container():
         message_storage.add_message(channel, message)
     await nats.subscribe("detector.status.*", cb=handle_messages)
     await nats.subscribe("group.status.*.*", cb=handle_messages)
+    await nats.subscribe("group.e3.*.*", cb=handle_messages)
     while True:
         await asyncio.sleep(1)
         #print(message_storage.get_detector_messages())
@@ -369,6 +404,8 @@ def render_tab_content(tab_switch):
         return [serve_layout_tab2()]
     elif tab_switch == "tab3":
         return [serve_layout_tab3()]
+    elif tab_switch == "tab_indicators":
+        return [serve_layout_indicators()]
     else:
         return [serve_layout_tab4()]
 
@@ -416,7 +453,20 @@ def update_output_messages(value):
             group_messages_df.to_dict('records'),
             group_messages_cols
             ]
-        
+
+
+@callback(
+    Output('indicators-table', 'data'),
+    Input('e3-messages', 'n_intervals')
+)
+def update_e3_messages(value):
+    global message_storage
+    if message_storage is None:
+        return "No messages yet"
+    else:
+        e3_messages_df = message_storage.get_e3_messages_as_df()
+        return e3_messages_df.to_dict('records')
+
 #Input('refresh', 'n_clicks'),
 @callback(
     Output('button-output', 'children'),
