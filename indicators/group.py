@@ -21,6 +21,7 @@ class Group:
         self.substate = ""
         self.is_red_b = None
         self.reset_counter_functions = [] # Functions to trigger counter reset
+        self.counter_block_functions = [] # Functions to trigger counter block
         #NATS STREAM
         stream_params = group_params.get('stream', {})
         if not stream_params:
@@ -83,6 +84,15 @@ class Group:
         for func in self.reset_counter_functions:
             func()
 
+    def add_counter_block_function(self, func):
+        """Adds a function to the counter block functions"""
+        self.counter_block_functions.append(func)
+
+    def trigger_counter_block_functions(self, blocking=False):
+        """Triggers the counter block functions"""
+        for func in self.counter_block_functions:
+            func(blocking)
+
     #
     # ASYNC functions
     #
@@ -115,6 +125,12 @@ class Group:
         # Reset counters for views 
         if data_dict['substate'] in ['b','B', 'C']:
             self.trigger_reset_counter_functions()
+
+        # Block counters when we are in the green phase
+        if data_dict['substate'] in ['F', 'a']:
+            self.trigger_counter_block_functions(True)
+        elif data_dict['substate'] in ['1', '0']:
+            self.trigger_counter_block_functions(False)
 
         # Strore values for future use
         self.substate = data_dict['substate']

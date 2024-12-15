@@ -45,13 +45,23 @@ class Detector:
             self.type = 'rising_edge'
         else:
             print(f"Detector {det_id} is missing type".format(det_id))
+        # For temporarily blocking counting
+        # e.g. we might want no to count outgoing vehicles when signal is red
+        # (likely an error in the detector)
+        self.counting_blocked = False
 
     def __str__(self):
         return "Detector: {} - {}".format(self.det_id, self.status)
     
+    def set_counting_blocked(self, blocked):
+        """Sets the counting blocked status"""
+        self.counting_blocked = blocked
+    
     # Basic data access functions
     def add_data(self, data):
         """Adds data to the radar"""
+        if self.counting_blocked:
+            return
         self.data.append(data)
         # updat the status
         if len(self.data) > 1:

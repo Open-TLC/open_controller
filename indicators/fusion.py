@@ -89,7 +89,13 @@ class Lane:
 
     def reset_detector_based_vehcount(self):
         """Resets the vehcount to zero"""
-        self.vehcount_offset = -1 * self.get_detector_based_vehcount()
+        in_count = 0
+        out_count = 0
+        for det in self.in_dets.values():
+            in_count += det.get_vehicle_count()
+        for det in self.out_dets.values():
+            out_count += det.get_vehicle_count()
+        self.vehcount_offset = -1 * (in_count - out_count)
 
 
     def get_objects_detected_by_detectors(self):
@@ -182,10 +188,46 @@ class FieldOfView:
                 self.group = group
                 self.group.add_reset_counter_function(self.reset_lane_detector_vehcounters)
 
-        
+    def get_output_detectors(self):
+        """Returns the output detectors"""
+        output_detectors = []
+        for lane in self.lanes:
+            output_detectors += lane.out_dets.values()
+        return output_detectors
+
+    def assign_counting_blocks(self):
+        """Assigns functions to the counting block"""
+        output_detectors = self.get_output_detectors()
+        if self.group:
+            for det in output_detectors:
+                self.group.add_counter_block_function(det.set_counting_blocked)
+        else:
+            print("Warning: No group assigned to field of view: ", self.name)
+
+
+    # 
+    # Functions for debugging and testing
+    #
+
+    def get_lane_offsets_as_dict(self):
+        """Returns the lane offsets as a dictionary"""
+        lane_offsets = {}
+        for lane in self.lanes:
+            lane_offsets[lane.name] = lane.vehcount_offset
+        return lane_offsets
+
+
     #
     # Calculating outputs
     #
+
+    def radar_object_count(self):
+        """Returns the number of radar objects"""
+        radar_objects = 0
+        for lane in self.lanes:
+            for radar in lane.input_radars.values():
+                radar_objects += len(radar.get_approaching_objects())
+        return radar_objects
 
     def get_detector_based_vehcount(self):
         """Returns the vehicle count based on detectors"""
@@ -310,12 +352,22 @@ class FieldOfView:
 
         data['count'] = len(det_obj_dict)
         det_vehcount = self.get_detector_based_vehcount()
+        if det_vehcount < -10:
+            print(f"Warning: Negative vehcount: {det_vehcount}")
+            self.reset_lane_detector_vehcounters()
+            #det_vehcount = 0
+            det_vehcount = self.get_detector_based_vehcount()
+            print(f"Resetting vehcount to: {det_vehcount}")
+
         if det_vehcount < 0:
             self.reset_lane_detector_vehcounters()
-            det_vehcount = 0
+            #det_vehcount = 0
+        
+        data['radar_count'] = self.radar_object_count()
         data['det_vehcount'] = det_vehcount
         data['group_substate'] = self.group.substate
         data['view_name'] = self.name
         data['objects'] = det_obj_dict
+        data['offsets'] = self.get_lane_offsets_as_dict()
         data['tstamp'] = datetime.datetime.now().timestamp() * 1000
         return data

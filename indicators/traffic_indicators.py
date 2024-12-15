@@ -85,6 +85,11 @@ class SensorTwin:
             fov.assign_groups(self.groups)
 
 
+    def assign_counting_blocks(self):
+        """Assigns the counting blocks to the detectors"""
+        for fov in self.fovs.values():
+            fov.assign_counting_blocks()
+
     def add_field_of_views(self, fov_dict):
         """Adds a field of view to the twin"""
         for name, params in fov_dict.items():
@@ -163,6 +168,8 @@ async def main():
 
     group_stream_params = config.get_group_stream_params()
     sensor_twin.add_group_streams(group_stream_params)
+
+    sensor_twin.assign_counting_blocks()
 
     # Deubug
     #print("STREAM   PARAMS")
