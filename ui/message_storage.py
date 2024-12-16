@@ -17,6 +17,7 @@ import json
 
 DETECTOR_MESSAGE_PREFIX = "detector"
 GROUP_MESSAGE_PREFIX = "group"
+E3_DETECTOR_MESSAGE_IDENTIFIER = "e3"
 NATS_SERVER = "localhost:4222"
 
 async def test():
@@ -32,6 +33,7 @@ async def test():
 
     await nats.subscribe("detector.status.*", cb=cb)
     await nats.subscribe("group.status.*.*", cb=cb)
+   
 
     while True:
         await asyncio.sleep(1)
@@ -44,7 +46,7 @@ class MessageStorage:
     def __init__(self):
         self.detector_messages = {}
         self.group_messages = {}
-
+        self.e3_messages = {}
 
     def add_message(self, channel, message):
         #print(f"MessageStorage.add_message: channel={channel}, message={message}")
@@ -53,8 +55,12 @@ class MessageStorage:
         if channel_prefix == DETECTOR_MESSAGE_PREFIX:
             self.add_detector_message(channel, message)
         elif channel_prefix == GROUP_MESSAGE_PREFIX:
-            self.add_group_message(channel, message)
-
+            second_part = channel.split(".")[1]
+            if second_part == E3_DETECTOR_MESSAGE_IDENTIFIER:
+                self.add_e3_det_message(channel, message)
+            else:
+                self.add_group_message(channel, message)
+        
     def add_detector_message(self, channel, message):
         det_id = channel.split(".")[2]
         msg_dict = json.loads(message)
@@ -66,6 +72,25 @@ class MessageStorage:
         msg_dict = json.loads(message)
         msg_dict["raw_message"] = message
         self.group_messages[group_id] = GroupMessage(**msg_dict)
+
+#3719] Received on "group.e3.270.1"
+#{"count": 1, "radar_count": 0, "det_vehcount": 1, "group_substate": "G", "view_name": "group1_view", 
+# "objects": {"38e7299a-f2b0-4185-ae14-ddcbc7abf99c": 
+# {"speed": 10, "vtype": "car_type", "sumo_id": null, "source": "detector_count", "notes": "Speed and types are default values"}}, 
+# "offsets": {"Group 1 lane 1": -7}, "tstamp": 1734278972620.2341}
+
+
+    def add_e3_det_message(self, channel, message):
+        """Adds a message from the E3 detector"""
+        msg_dict = json.loads(message)
+        new_dict = {}
+        new_dict['view_name'] = msg_dict['view_name']
+        new_dict['count'] = msg_dict['count']
+        new_dict['radar_count'] = msg_dict['radar_count']
+        new_dict['det_vehcount'] = msg_dict['det_vehcount']
+        new_dict['group_substate'] = msg_dict['group_substate']
+        #new_dict['raw_message'] = msg_dict
+        self.e3_messages[new_dict['view_name']] = E3Message(**new_dict)
 
 
     def get_detector_messages(self):
@@ -95,8 +120,11 @@ class MessageStorage:
             all_messages[det] = self.detector_messages[det].__dict__
         df = pd.DataFrame.from_dict(all_messages)
         df = df.transpose()
+        df = df.sort_values(by=['view_name'], ascending=True)
         #cols = df.columns.tolist()
         return df
+
+
 
     def get_group_messages_as_df(self):
         "Returns all group messages as a dataframe (for table in UI)"
@@ -110,6 +138,19 @@ class MessageStorage:
         df = pd.DataFrame.from_dict(all_messages)
         df = df.transpose()
         df = df.sort_values(by=['id_number'], ascending=True) 
+        #cols = df.columns.tolist()
+        return df
+
+    def get_e3_messages_as_df(self):
+        "Returns all E3 messages as a dataframe (for table in UI)"
+        all_messages = {}
+        if self.e3_messages == {}: 
+            return pd.DataFrame()
+        
+        for e3 in self.e3_messages:
+            all_messages[e3] = self.e3_messages[e3].__dict__
+        df = pd.DataFrame.from_dict(all_messages)
+        df = df.transpose()
         #cols = df.columns.tolist()
         return df
 
@@ -140,7 +181,19 @@ class GroupMessage:
     
     def get_raw_message(self):
         return self.raw_message
+class E3Message:
+    def __init__(self, view_name=None, count=None, radar_count=None, det_vehcount=None, group_substate=None):
+        self.view_name = view_name
+        self.count = count
+        self.radar_count = radar_count
+        self.det_vehcount = det_vehcount
+        self.group_substate = group_substate
 
+    def __str__(self):
+        return f"E3Message: view_name={self.view_name}, radar_count={self.radar_count}, det_count={self.det_count}, group_substate={self.group_substate}"
+    
+    def get_raw_message(self):
+        return self.raw_message
 
 if __name__ == "__main__":
     print("MessageStorage test")

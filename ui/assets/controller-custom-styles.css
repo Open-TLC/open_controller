@@ -43,6 +43,7 @@ body {
 #Ops-tab.custom-tab,
 #Settings-tab.custom-tab,
 #Messages-tab.custom-tab,
+#Indicators-tab.custom-tab,
 #Map-tab.custom-tab{
   background-color: #B2B4B3;
   letter-spacing: 1px;
@@ -60,6 +61,7 @@ body {
 #Ops-tab.custom-tab--selected,
 #Settings-tab.custom-tab--selected,
 #Messages-tab.custom-tab--selected,
+#Indicators-tab.custom-tab--selected,
 #Map-tab.custom-tab--selected {
   border-bottom: #F0F0F0 solid 8px !important;
   background-color: #F0F0F0;

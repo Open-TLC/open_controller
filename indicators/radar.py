@@ -55,15 +55,47 @@ class Radar:
         """Returns the last data item"""
         if len(self.data) == 0:
             return None
+        # If there is an empty dataset, we should return the one before that
+        # This fixes radar error, should be fixed elswhere and this to be removed
+        if len(self.data[-1]['objects']) == 0:
+            if len(self.data) > 1:
+                return self.data[-2]
         return self.data[-1]
 
-    def get_object_list(self):
+    def get_object_list(self, measurements = 1):
         """Returns the list of objects"""
         last_data = self.get_last_data()
-        if last_data:
+        if len(self.data) <= 0:
+            return []
+        if measurements == 1:
             return last_data['objects']
-        return []
-    
+        else:
+            return self.get_object_list_for_n_measurements(measurements)
+
+    def get_object_list_for_n_measurements(self, number_of_measurements):
+        """
+            Returns the list of objects for the last n measurements
+            This should filter out totally empty messages
+        """
+        past_objects = {}
+        data_available = len(self.data)
+        if data_available >= number_of_measurements:
+            n = number_of_measurements
+        else:
+            n = data_available
+        last_data = self.data[:-n]
+        for data in last_data:
+            for obj in data['objects']:
+                id = obj['id']
+                past_objects[id] = obj
+            
+        ret_list = []
+        for obj in past_objects.values():
+            ret_list.append(obj)
+        return ret_list
+
+
+
     def get_nats_sub_params(self):
         """
             Returns the nats subscription parameters 
