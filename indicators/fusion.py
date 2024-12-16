@@ -11,12 +11,22 @@ import uuid
 
 DEFAULT_TRAM_SPEED = 10 # m/s
 DEFAULT_LANE_VEHTYPE = "car_type"
+RADAR_PAST_MEASUREMENTS = 1
 
 # Maybe configurable in the future, done for demo
+# Note, as for testinf, we only send cars and trucks
+# It is assumed that the other road users cannot be seen in the area
 VECLASS_FROM_RADAR_TO_SUMO = {
+    0: "car_type",
+    1: "car_type",
+    #1: "ped_type",
     2: "car_type",
-    4: "truck_type"
-}
+    # 2: "bike_type",
+    3: "car_type",
+    4: "car_type",
+    6: "car_type",
+    7: "truck_type",
+    8: "truck_type",}
 
 class Lane:
     """Lane indicators contained"""
@@ -66,15 +76,15 @@ class Lane:
     def get_approaching_objects(self):
         """Returns the number of approaching v"""
         approaching_objs = []
-        for radar in self.input_radars.values():
-            approaching_objs.extend(radar.get_approaching_objects())
+        for lane_radar in self.input_radars.values():
+            approaching_objs.extend(lane_radar.get_approaching_objects(measurements = RADAR_PAST_MEASUREMENTS))
         return approaching_objs
 
     def get_detected_objects_e3(self):
         """Returns the number of approaching v"""
         detected_objects = []
         for radar in self.input_radars.values():
-            detected_objects += radar.get_approaching_objects()
+            detected_objects += radar.get_approaching_objects(measurements = RADAR_PAST_MEASUREMENTS)
         return detected_objects
 
     def get_detector_based_vehcount(self):
@@ -125,10 +135,10 @@ class LaneRadar:
     def __str__(self):
         return f"lane: {self.lane}, radar: {self.radar}"
     
-    def get_approaching_objects(self):
+    def get_approaching_objects(self, measurements = 1):
         """Returns the number of approaching vehicles in the lane dedicated to this object"""
         # Old simle implementation
-        objects = self.radar.get_object_list()
+        objects = self.radar.get_object_list(measurements= measurements)
         objects_in_lane = []
         for obj in objects:
             if str(obj['lane']) == self.lane:
@@ -161,6 +171,12 @@ class FieldOfView:
             self.lanes.append(lane)
         self.group_name = params.get('group', None)
         self.group = None
+        # Omit the dets if told so in the config
+        # If not set, we assume they are working
+        self.detectors_broken = False
+        if 'detectors_broken' in params:
+            if params['detectors_broken']:
+                self.detectors_broken = True
 
     #
     # Assigning functions (maps the input streams to the view)
@@ -306,7 +322,9 @@ class FieldOfView:
             # Note: we only add the types of objects we know, this is a temporary solution
             # Sumo simengine does not map types and lanes correctly (yet)
             if vehclass_sumo:
-                det_obj_dict[obj_id] = new_obj
+                # At this stage, we only send cars and trucs. Also unknown types are not sent
+                if vehclass_sumo in ['car_type', 'truck_type']:
+                    det_obj_dict[obj_id] = new_obj
         return det_obj_dict
     
     def get_objects_detected_by_detectors(self):
@@ -318,19 +336,37 @@ class FieldOfView:
 
     def get_objects_combined_from_radar_and_detectors(self):
         """Returns the combined objects from radar and detectors"""
+        vehcounts = {
+            'radar': None,
+            'det': None,
+            'combined': None
+        }
+        
         radar_objs = self.get_objects_detected_by_radars()
         detector_objs = self.get_objects_detected_by_detectors()
+        vehcounts['radar'] = radar_objs
+        vehcounts['det'] = detector_objs
+
+        # No dets, no need to combine
+        if self.detectors_broken:
+            vehcounts['combined'] = radar_objs
+            return vehcounts
+            
         obj_count_diff = len(radar_objs) - len(detector_objs)
         # More detector objects than radar objects
         if obj_count_diff < 0:
             # We add the missing objects to the radar objects
             added_objects = 0
+            all_objects = radar_objs.copy()
+
             for obj_id, obj in detector_objs.items():
                 if added_objects >= abs(obj_count_diff):
                     break
                 if obj_id not in radar_objs:
-                    radar_objs[obj_id] = obj
+                    all_objects[obj_id] = obj
                     added_objects += 1
+            vehcounts['combined'] = all_objects 
+            return vehcounts
         # More radar objects than detector objects
         elif obj_count_diff > 0:
             # We sort the radar objects by the quality parameter
@@ -338,7 +374,8 @@ class FieldOfView:
             # We add the missing objects to the detector objects
             # but for now we return the radar objects
             # This is a temporary solution
-        return radar_objs
+        vehcounts['combined'] = radar_objs # Tmp
+        return vehcounts
         
 
 
@@ -349,8 +386,8 @@ class FieldOfView:
         #det_obj_dict = self.get_objects_detected_by_radars()
         #det_obj_dict = self.get_objects_detected_by_detectors()
         det_obj_dict = self.get_objects_combined_from_radar_and_detectors()
+        data['count'] = len(det_obj_dict['combined'])
 
-        data['count'] = len(det_obj_dict)
         det_vehcount = self.get_detector_based_vehcount()
         if det_vehcount < -10:
             print(f"Warning: Negative vehcount: {det_vehcount}")
@@ -363,11 +400,11 @@ class FieldOfView:
             self.reset_lane_detector_vehcounters()
             #det_vehcount = 0
         
-        data['radar_count'] = self.radar_object_count()
+        data['radar_count'] = len(det_obj_dict['radar'])
         data['det_vehcount'] = det_vehcount
         data['group_substate'] = self.group.substate
         data['view_name'] = self.name
-        data['objects'] = det_obj_dict
+        data['objects'] = det_obj_dict['combined']
         data['offsets'] = self.get_lane_offsets_as_dict()
         data['tstamp'] = datetime.datetime.now().timestamp() * 1000
         return data
