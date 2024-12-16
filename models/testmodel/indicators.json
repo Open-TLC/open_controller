@@ -131,7 +131,7 @@
             "vtype": "tram_type"
         },
         "R8KU": {
-            "type": "falling_edge",
+            "type": "rising_edge",
             "stream": "det_inputs",
             "name": "R8KU",
             "vtype": "tram_type"
