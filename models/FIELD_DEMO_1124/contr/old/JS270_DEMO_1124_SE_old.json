@@ -61,11 +61,11 @@
             },
 
         "group1":{
-            "min_green": 5,
+            "min_green": 15,
             "min_amber_red": 1,
             "min_red": 5,
             "min_amber": 3,
-            "max_green": 25,
+            "max_green": 1000,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -85,7 +85,7 @@
             "min_amber_red": 1,
             "min_red": 5,
             "min_amber": 3,
-            "max_green": 15,
+            "max_green": 1000,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -133,11 +133,11 @@
             "min_amber_red": 1,
             "min_red": 5,
             "min_amber": 3,
-            "max_green": 35,
+            "max_green": 1000,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
-            "request_type": "detector",
+            "request_type": "fixed",
             "phase_request": false,
             "green_end": "remain",
             "channel": "group.control.270.5"
@@ -149,11 +149,11 @@
             "min_amber_red": 1,
             "min_red": 5,
             "min_amber": 3,
-            "max_green": 45,
+            "max_green": 1000,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
-            "request_type": "detector",
+            "request_type": "fixed",
             "phase_request": false,
             "green_end": "remain",
             "channel": "group.control.270.6"
@@ -161,11 +161,11 @@
         },
 
         "group7":{
-            "min_green": 5,
+            "min_green": 10,
             "min_amber_red": 1,
             "min_red": 15,
             "min_amber": 3,
-            "max_green": 20,
+            "max_green": 1000,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -189,7 +189,7 @@
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
-            "request_type": "detector",
+            "request_type": "fixed",
             "phase_request": false,
             "green_end": "remain",
             "channel": "group.control.270.8"
@@ -205,7 +205,7 @@
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
-            "request_type": "detector",
+            "request_type": "fixed",
             "phase_request": false,
             "green_end": "remain",
             "channel": "group.control.270.9"
@@ -414,25 +414,11 @@
                 "channel": "detector.status.9-002R",
                 "request_groups": ["group9"]
             },
-            
-            "req9m25R":{
-                "type": "request",
-                "sumo_id": "R9PY",
-                "channel": "detector.status.R9PY",
-                "request_groups": ["group9"]
-            },
 
             "req4m02R9":{
                 "type": "request",
                 "sumo_id": "4-002R9",
                 "channel": "detector.status.4-002R9",
-                "request_groups": ["group4"]
-            },
-            
-            "req4m180R9":{
-                "type": "request",
-                "sumo_id": "R4PY",
-                "channel": "detector.status.R4PY",
                 "request_groups": ["group4"]
             },
 
@@ -442,13 +428,6 @@
                 "channel": "detector.status.8-008R7",
                 "request_groups": ["group8"]
             },
-            
-            "req8m180R7":{
-                "type": "request",
-                "sumo_id": "R8PY",
-                "channel": "detector.status.R8PY",
-                "request_groups": ["group8"]
-            },
 
             "req3m02R":{
                 "type": "request",
@@ -456,14 +435,8 @@
                 "channel": "detector.status.3-002R",
                 "request_groups": ["group3"]
             },
-            
-            "req3m25R":{
-                "type": "request",
-                "sumo_id": "R3PY",
-                "channel": "detector.status.R3PY",
-                "request_groups": ["group3"]
-            },
 
+            
             "req10m01P":{
                 "type": "request",
                 "sumo_id": "10-001P",
@@ -497,7 +470,7 @@
                 "sumo_id": "e3Det_270_Jatk_Right",
                 "channel": "group.e3.270.2",
                 "group": "group2"
-                },
+            },
  
 
             "e3d5m70":{
@@ -518,10 +491,10 @@
             "e3d7m30":{
                 "type": "e3detector",
                 "sumo_id": "e3Det_270_Tyyn_Left",
-                "channel": "group.e3.270.7",
+                "channel": "group.e3.270.2",
                 "group": "group7"
                 }
-                 
+                
         },   
 
     // This defines groups used in each phase
