@@ -63,7 +63,10 @@ class Detector:
         if self.counting_blocked:
             return
         self.data.append(data)
-        # updat the status
+        # Sort the data by received timestamp
+        data_sorted = sorted(self.data, key=lambda x: x['data_received'])
+        self.data = data_sorted
+        # update the status
         if len(self.data) > 1:
             if self.data[-1]['loop_on'] and not self.data[-2]['loop_on']:
                 self.rising_edge_cnt += 1
