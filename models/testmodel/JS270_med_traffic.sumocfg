@@ -7,9 +7,11 @@
     <input>
        <net-file value="net/JS270_def.net.xml"/>
        
-       <route-files value="rou/JS270_cars_medium.rou.xml, rou/JS270_trams.rou.xml, rou/JS270_bikes.rou.xml"/>
+       <route-files value="rou/JS270_cars_medium.rou.xml, rou/JS270_trams2.rou.xml, rou/JS270_bikes.rou.xml"/>
        
        <additional-files v="add/JR_vehicletypes.add.xml, tll/ft270_1.tll.xml, add/JS270_15det_4ped_12tr_e1.add.xml, add/JS270_stations.add.xml"/>
+       
+       <scale v="0.5"/>
        
     </input>
     
