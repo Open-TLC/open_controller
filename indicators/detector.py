@@ -72,7 +72,7 @@ class Detector:
             if not data['loop_on'] and self.data[-1]['loop_on']:
                 self.falling_edge_cnt += 1
         elif len(self.data) == 0:
-            if self.data[-1]['loop_on']:
+            if data['loop_on']:
                 self.rising_edge_cnt += 1
             
         self.data.append(data)
