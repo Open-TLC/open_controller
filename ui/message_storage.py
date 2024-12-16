@@ -60,8 +60,7 @@ class MessageStorage:
                 self.add_e3_det_message(channel, message)
             else:
                 self.add_group_message(channel, message)
-        print(E3_DETECTOR_MESSAGE_IDENTIFIER)
-
+        
     def add_detector_message(self, channel, message):
         det_id = channel.split(".")[2]
         msg_dict = json.loads(message)
@@ -86,6 +85,7 @@ class MessageStorage:
         msg_dict = json.loads(message)
         new_dict = {}
         new_dict['view_name'] = msg_dict['view_name']
+        new_dict['count'] = msg_dict['count']
         new_dict['radar_count'] = msg_dict['radar_count']
         new_dict['det_vehcount'] = msg_dict['det_vehcount']
         new_dict['group_substate'] = msg_dict['group_substate']
@@ -120,6 +120,7 @@ class MessageStorage:
             all_messages[det] = self.detector_messages[det].__dict__
         df = pd.DataFrame.from_dict(all_messages)
         df = df.transpose()
+        df = df.sort_values(by=['view_name'], ascending=True)
         #cols = df.columns.tolist()
         return df
 
@@ -181,8 +182,9 @@ class GroupMessage:
     def get_raw_message(self):
         return self.raw_message
 class E3Message:
-    def __init__(self, view_name=None, radar_count=None, det_vehcount=None, group_substate=None):
+    def __init__(self, view_name=None, count=None, radar_count=None, det_vehcount=None, group_substate=None):
         self.view_name = view_name
+        self.count = count
         self.radar_count = radar_count
         self.det_vehcount = det_vehcount
         self.group_substate = group_substate
