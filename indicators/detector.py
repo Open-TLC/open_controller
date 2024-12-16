@@ -62,17 +62,20 @@ class Detector:
         """Adds data to the radar"""
         if self.counting_blocked:
             return
-        self.data.append(data)
-        # updat the status
-        if len(self.data) > 1:
-            if self.data[-1]['loop_on'] and not self.data[-2]['loop_on']:
+        # Sort the data by received timestamp
+        data_sorted = sorted(self.data, key=lambda x: x['data_received'])
+        self.data = data_sorted
+        # update the status
+        if len(self.data) > 0:
+            if data['loop_on'] and not self.data[-1]['loop_on']:
                 self.rising_edge_cnt += 1
-            if not self.data[-1]['loop_on'] and self.data[-2]['loop_on']:
+            if not data['loop_on'] and self.data[-1]['loop_on']:
                 self.falling_edge_cnt += 1
-        elif len(self.data) == 1:
-            if self.data[-1]['loop_on']:
+        elif len(self.data) == 0:
+            if data['loop_on']:
                 self.rising_edge_cnt += 1
             
+        self.data.append(data)
             # I believe that this is misleading, because the 
             # simulator sends loop down for all in the beginning
             #else:
