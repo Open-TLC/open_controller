@@ -60,17 +60,17 @@ class Lane:
         """Assigns in and out detectors to the lane"""
         # In dets
         for det_name, det_params in self.in_dets_params.items():
-            if det_params['name'] in detectors:
-                self.in_dets[det_name] = detectors[det_params['name']]
+            if det_name in detectors:
+                self.in_dets[det_name] = detectors[det_name]
                 
         # Out dets
         for det_name, det_params in self.out_dets_params.items():
             if not det_params:
                 print("Warning: Det params missing for: ", det_name)
                 continue
-            if det_params['name'] in detectors:
-                self.out_dets[det_name] = detectors[det_params['name']]
- 
+            if det_name in detectors:
+                self.out_dets[det_name] = detectors[det_name]
+
 
     # Note: currently doesn't handle multiple radars
     def get_approaching_objects(self):
