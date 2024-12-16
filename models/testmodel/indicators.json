@@ -143,7 +143,7 @@
             "vtype": "tram_type"
         },
         "R9KU": {
-            "type": "falling_edge",
+            "type": "rising_edge",
             "stream": "det_inputs",
             "name": "R9KU",
             "vtype": "tram_type"
@@ -155,7 +155,7 @@
             "vtype": "tram_type"
         },
         "R3KU": {
-            "type": "falling_edge",
+            "type": "rising_edge",
             "stream": "det_inputs",
             "name": "R3KU",
             "vtype": "tram_type"
@@ -167,7 +167,7 @@
             "vtype": "tram_type"
         },
         "R4KU": {
-            "type": "falling_edge",
+            "type": "rising_edge",
             "stream": "det_inputs",
             "name": "R4KU",
             "vtype": "tram_type"
