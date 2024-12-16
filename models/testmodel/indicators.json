@@ -171,6 +171,18 @@
             "stream": "det_inputs",
             "name": "R4KU",
             "vtype": "tram_type"
+        },
+        "test_request": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "3-002R",
+            "vtype": "tram_type"
+        },
+        "test_clear": {
+            "type": "falling_edge",
+            "stream": "det_inputs",
+            "name": "3-002R",
+            "vtype": "tram_type"
         }
 
     },
@@ -329,6 +341,14 @@
         "radar_lanes":[],
         "lane_main_type": "tram_type",
         "notes": "Special lane for tram"
+    },
+    "tramtest": {
+        "name": "Tram test lane",
+        "in_dets": ["test_request"],
+        "out_dets": ["test_clear"],
+        "radar_lanes":[],
+        "lane_main_type": "tram_type",
+        "notes": "Special lane for tram, test"
     }
 },
 
@@ -359,7 +379,8 @@
         "trigger_time": 1.0,
         "lanes": ["grp2_1"],
         "group": "group2",
-        "notes": "Will send queue request"
+        "detectors_broken": true, 
+        "notes": "Detectors broken"
         },
     "group3_view":{
         "connection": "nats",
@@ -389,6 +410,7 @@
         "trigger_time": 1.0,
         "lanes": ["grp5_1"],
         "group": "group5",
+        "detectors_broken": true,
         "notes": "Will send queue request"
         },
     "group6_view":{
@@ -430,6 +452,16 @@
         "lanes": ["grp9_1"],
         "group": "group9",
         "notes": "Tram line from north using group 9"
+        },
+    "tramtest_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.270.10",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["tramtest"],
+        "group": "group3",
+        "notes": "Testing the closeup tram"
         }
     }
 }
