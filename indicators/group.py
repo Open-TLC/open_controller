@@ -123,7 +123,7 @@ class Group:
         self.add_data(data_dict)
 
         # Reset counters for views 
-        if data_dict['substate'] in ['b','B', 'C']:
+        if data_dict['substate'] in ['b','B']:
             self.trigger_reset_counter_functions()
 
         # Block counters when we are in the green phase

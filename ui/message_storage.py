@@ -120,7 +120,6 @@ class MessageStorage:
             all_messages[det] = self.detector_messages[det].__dict__
         df = pd.DataFrame.from_dict(all_messages)
         df = df.transpose()
-        df = df.sort_values(by=['view_name'], ascending=True)
         #cols = df.columns.tolist()
         return df
 
@@ -151,6 +150,7 @@ class MessageStorage:
             all_messages[e3] = self.e3_messages[e3].__dict__
         df = pd.DataFrame.from_dict(all_messages)
         df = df.transpose()
+        df = df.sort_values(by=['view_name'], ascending=True)
         #cols = df.columns.tolist()
         return df
 
