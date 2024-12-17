@@ -421,6 +421,7 @@
         "trigger_time": 1.0,
         "lanes": ["grp6_1", "grp6_2"],
         "group": "group6",
+        "detectors_broken": true,
         "notes": "From port to the north"
         },
     "group7_view":{
