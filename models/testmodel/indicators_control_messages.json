@@ -379,7 +379,7 @@
         "trigger_time": 1.0,
         "lanes": ["grp2_1"],
         "group": "group2",
-        "detectors_broken": false, 
+        "detectors_broken": true, 
         "notes": "Detectors broken"
         },
     "group3_view":{
@@ -410,7 +410,7 @@
         "trigger_time": 1.0,
         "lanes": ["grp5_1"],
         "group": "group5",
-        "detectors_broken": false,
+        "detectors_broken": true,
         "notes": "Will send queue request"
         },
     "group6_view":{
