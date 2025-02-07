@@ -31,6 +31,9 @@ import argparse
 
 # Maybe this should be set as module in the future?
 sys.path.insert(0, 'clockwork/')
+# We have to find the module from a clockwork
+import sys
+sys.path.append('src/clockwork/')
 from signal_group_controller import PhaseRingController
 
 

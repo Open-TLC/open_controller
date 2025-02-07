@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r docker/indicators/requirements.txt
 
 
 
-ENTRYPOINT ["sh", "docker/indicators/start.sh"]
+ENTRYPOINT ["sh", "docker/indicators/run_indicators.sh"]

@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r docker/simengine/requirements.txt
 # setup the SUMO_HOME environment variable
 ENV SUMO_HOME=/usr/share/sumo
 
-ENTRYPOINT ["sh", "docker/simengine/sim_start.sh"]
+ENTRYPOINT ["sh", "docker/simengine/run_simengine.sh"]
