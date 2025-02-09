@@ -28,7 +28,7 @@ CLENUP_TIME_LIMIT = 0.5 # seconds
 
 class Radar:
     "This class is for handling the virtual radars"
-    def __init__(self, aoi, lane_map=None):
+    def __init__(self, aoi, lane_map=None, vehicle_types=None):
         # aoi = area of interest
         poly_coords = []
         if aoi:
@@ -39,6 +39,7 @@ class Radar:
             self.aoi = None
         
         self.lane_map = lane_map
+        self.vehicle_types = vehicle_types
         self.vehicles = {}
         self.id_counter = 0
 
@@ -52,6 +53,11 @@ class Radar:
 
     def add_vehicle(self, new_veh):
         "Adds the vehicel to the radar if it is in the area of interest"
+        # filter out the vehicles that are not of pre-defined type
+        if self.vehicle_types:
+            if not new_veh['sumo_type'] in self.vehicle_types:
+                return
+        
         # Filter out all the vehs outside aoi, if it is defined
         if self.aoi:
             if not self.aoi.contains(new_veh['sumo_loc']):
@@ -285,15 +291,25 @@ class RadarStorage:
         self.conf = conf
 
         for rad_id, rad_conf in self.conf['radars'].items():
+            # Lane map, if defined
             if 'lane_map' in rad_conf:
                 lane_map = rad_conf['lane_map']
             else:
                 lane_map = None
+            
+            # Area of interest, if defined
             if 'area_of_interest' in rad_conf:
                 aoi = rad_conf['area_of_interest']
             else:
-                aoi = [] # same as empty list
-            self.conf['radars'][rad_id]['radar_object'] = Radar(aoi, lane_map=lane_map)
+                aoi = [] # same as empty list, if it is set in the conf
+            
+            # Vehicle type list, if defined
+            if 'vehicle_types' in rad_conf:
+                vehicle_types = rad_conf['vehicle_types']
+            else:
+                vehicle_types = None
+
+            self.conf['radars'][rad_id]['radar_object'] = Radar(aoi, lane_map=lane_map, vehicle_types=vehicle_types)
         
     def get_messages_current(self):
         """Returns a dict (keys are channels, values are json-strings) with data to be send to NATS"""
@@ -318,6 +334,9 @@ class RadarStorage:
             # whether the vehicle is within radar beam (in the area of interest)
             pos_x, pos_y = traci.vehicle.getPosition(vehicle_id)
             lon, lat = traci.simulation.convertGeo(pos_x, pos_y)
-            new_vehicle['sumo_loc'] = Point(lat, lon) 
+            new_vehicle['sumo_loc'] = Point(lat, lon)
+            # We also need the vehicle type, in case we want to filter the vehicles
+            # based on the type
+            new_vehicle['sumo_type'] = traci.vehicle.getTypeID(vehicle_id) 
             for radar_conf in self.conf['radars'].values():
                 radar_conf['radar_object'].add_vehicle(new_vehicle)
