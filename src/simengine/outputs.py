@@ -31,10 +31,13 @@ class Radar:
     def __init__(self, aoi, lane_map=None):
         # aoi = area of interest
         poly_coords = []
-        for point in aoi:
-            poly_coords.append(tuple(point))
+        if aoi:
+            for point in aoi:
+                poly_coords.append(tuple(point))
+            self.aoi = Polygon(poly_coords)
+        else:
+            self.aoi = None
         
-        self.aoi = Polygon(poly_coords)
         self.lane_map = lane_map
         self.vehicles = {}
         self.id_counter = 0
@@ -49,10 +52,12 @@ class Radar:
 
     def add_vehicle(self, new_veh):
         "Adds the vehicel to the radar if it is in the area of interest"
-        # Filter out all the vehs outside aoi
-        if not self.aoi.contains(new_veh['sumo_loc']):
-            return
+        # Filter out all the vehs outside aoi, if it is defined
+        if self.aoi:
+            if not self.aoi.contains(new_veh['sumo_loc']):
+                return
         
+        # If no aoi or veh within it, we add the vehicle
         veh = dict(new_veh)
         if not veh['sumo_id'] in self.vehicles:
             # We need to generate an id for the vehicle
@@ -284,7 +289,10 @@ class RadarStorage:
                 lane_map = rad_conf['lane_map']
             else:
                 lane_map = None
-            aoi = rad_conf['area_of_interest']
+            if 'area_of_interest' in rad_conf:
+                aoi = rad_conf['area_of_interest']
+            else:
+                aoi = [] # same as empty list
             self.conf['radars'][rad_id]['radar_object'] = Radar(aoi, lane_map=lane_map)
         
     def get_messages_current(self):

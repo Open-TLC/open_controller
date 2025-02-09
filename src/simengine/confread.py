@@ -209,7 +209,8 @@ class GlobalConf:
         """Returns the radar polygons"""
         radars = {}
         for rad_id, rad_vals in self.conf['outputs']['rad_outputs']['radars'].items():
-            radars[rad_id] = rad_vals['area_of_interest']
+            if 'area_of_interest' in rad_vals:
+                radars[rad_id] = rad_vals['area_of_interest']
         return radars
 
 if __name__ == '__main__':
