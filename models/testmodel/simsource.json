@@ -34,7 +34,7 @@
     "rad_outputs":{
         "type": "radar",
         "trigger": "update",
-        "radars": ["int_270_1", "int_270_2", "int_270_3"]
+        "radars": ["int_270_1", "int_270_2", "int_270_3", "all_vehs"]
     }
 },
 
@@ -55,6 +55,16 @@
 },
 
 "radars":{
+    "all_vehs":{
+        "sink_id": 0,
+        "service": "nats_server",
+        "topic": "radar.all.vehicles.json",
+        "data_type": "geo",
+        "source": "sumo_radar",
+        "trigger": "update",
+        "vehicle_types": ["v2x_car"],
+        "description": "Testing for all vehicles"
+    },
     "int_270_1":{
         "sink_id": 1,
         "service": "nats_server",

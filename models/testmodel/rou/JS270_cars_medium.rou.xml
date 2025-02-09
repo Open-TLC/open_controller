@@ -6,6 +6,7 @@
 
 <vType id="truck" accel="0.8" decel="4.5" sigma="0.5" length="18"  minGap="2.5" maxSpeed="16" guiShape="passenger"/>
 <vType id="car_type"   accel="4.6" decel="4.5" sigma="0.1" length="5"  minGap="0.5" maxSpeed="30" guiShape="passenger"/>
+<vType id="v2x_car"   accel="4.6" decel="4.5" sigma="0.1" length="5"  minGap="0.5" maxSpeed="30" guiShape="passenger" color="0,0,255"/>
 <vType id="bus_type"   accel="9.6" decel="4.5" sigma="0.5" length="7"  minGap="3"   maxSpeed="25" guiShape="bus"/>
 <vType id="truck_type" accel="2.6" decel="4.5" sigma="0.1" length="15" minGap="0.5"   maxSpeed="25" guiShape="truck"/>
 
@@ -18,11 +19,11 @@
 <route id="Jatk2Sat"  edges="-Jatk01 -Tyyn14 -Tyyn13 -Tyyn12 -Tyyn11 -Tyyn10 -Tyyn09" />
 <route id="Jatk2Vali"  edges="-Jatk01 -Vali13 -Vali12 -Vali11 -Vali10" />
 
-<vehicle id="sat1"  depart="3"   route="Sat2Jatk"  departPos="25"  departLane="2"/>
-
-<vehicle id="sat2"  depart="6"   route="Sat2Vali"  departPos="25"  departLane="2"/>
+<vehicle id="v2x_car_1"  depart="1"   route="Jatk2Sat"  type="v2x_car" departPos="25"  departLane="0"/>
 
 <vehicle id="jatk1" depart="9"   route="Jatk2Sat"  departPos="25"  departLane="0"/>
+
+<vehicle id="v2x_car_2"  depart="83"   route="Sat2Jatk"  type="v2x_car" departPos="25"  departLane="2"/>
 
 <vehicle id="jatk2" depart="12"  route="Jatk2Vali" departPos="25"  departLane="0"/>
 
@@ -53,6 +54,9 @@
 <vehicle id="cla5" depart="25"   route="clarion_east" departLane="0"/>
 <vehicle id="cla6" depart="35"  route="clarion_east" departLane="1"/>
 
+<vehicle id="sat1"  depart="3"   route="Sat2Jatk"  departPos="25"  departLane="2"/>
+<vehicle id="sat2"  depart="6"   route="Sat2Vali"  departPos="25"  departLane="2"/>
+<vehicle id="v2x_car_2"  depart="10"   route="Sat2Jatk"  type="v2x_car" departPos="25"  departLane="2"/>
 
 <flow id="Lv2Sat_truck1"  from="-KT51_01" to="-Tyyn08" route="Lv2Sat"     begin="0" end="3600" type="truck"   color="27,191,221"  number="100"> </flow>
 <flow id="Lv2Sat_car1"    from="-KT51_01" to="-Tyyn08" route="Lv2Sat"     begin="0" end="3600" type="auto"    color="27,191,221"  number="100"> </flow>
