@@ -34,7 +34,7 @@
     "rad_outputs":{
         "type": "radar",
         "trigger": "update",
-        "radars": ["int_270_1", "int_270_2", "int_270_3", "all_vehs"]
+        "radars": ["int_270_1", "int_270_2", "int_270_3", "v2x_vehs"]
     }
 },
 
@@ -55,7 +55,7 @@
 },
 
 "radars":{
-    "all_vehs":{
+    "v2x_vehs":{
         "sink_id": 0,
         "service": "nats_server",
         "topic": "radar.all.vehicles.json",
