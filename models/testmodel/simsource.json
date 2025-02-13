@@ -58,7 +58,7 @@
     "v2x_vehs":{
         "sink_id": 0,
         "service": "nats_server",
-        "topic": "radar.all.vehicles.json",
+        "topic": "radar.v2x.vehicles.json",
         "data_type": "geo",
         "source": "sumo_radar",
         "trigger": "update",
