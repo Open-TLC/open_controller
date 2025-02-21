@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """The sumo interface module
 
-This module operates Sumo simulator and applies controller to it
+This module operates Sumo simulator and applies controller to it 
+This is an integrated version that doesn't use NATS
 """
 # 
 # Open Controller, an open source traffic signal control platform
