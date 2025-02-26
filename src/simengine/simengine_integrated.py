@@ -17,7 +17,7 @@ import os
 import time
 from confread_integrated import GlobalConf
 from timer import Timer
-sys.path.append('clockwork')
+sys.path.append('src/clockwork')
 from signal_group_controller import PhaseRingController
 from extender import StaticExtender
 
@@ -140,7 +140,7 @@ def run_sumo(conf_filename=None, runlog=None):
     last_print = 0
     BP2 = False
     SUMOSIM = True
-    sumovismode = 'main_states'
+    sumovismode = 'main_states_'
     
 
     print(system_timer.steps, real_time, next_update_time, sleep_count )
@@ -192,6 +192,8 @@ def run_sumo(conf_filename=None, runlog=None):
                 runlog.add_line(statusstring)
 
             states = traffic_controller.get_sumo_states()
+            strlen = len(states)
+            states = 'r' + states  # DBIK20250129 add group 0 ?
             traci.trafficlight.setRedYellowGreenState(sumo_name, states)
 
             
@@ -291,7 +293,7 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode): #DBIK241
                 vspeed   = traci.vehicle.getSpeed(vehid)
                 vehdict = {}
                 vehdict['vtype'] = vehtype               
-                vehdict['speed'] = vspeed
+                vehdict['vspeed'] = vspeed
                 vehdict['maxspeed'] = vspeed
                 vehdict['vcolor'] = 'gray'
                 # DBIK20250211 Get extra info from V2X vehicles
@@ -328,7 +330,7 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode): #DBIK241
         for e3det in sumo_to_dets[e3det_id_sumo]:     
             #e3det.vehcount = vehcount
 
-            SafetyExtMode = False
+            SafetyExtMode = True
             if SafetyExtMode:
             
                 for veh in e3det.det_vehicles_dict:
@@ -339,12 +341,13 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode): #DBIK241
                         print('Vehcolor error: ', veh)
 
                     if vehcolor == 'red':
-                        vehspeed = e3det.det_vehicles_dict[veh]['vspeed']
+                        vehspeed = round(e3det.det_vehicles_dict[veh]['vspeed'],1)
                         # vehspeed = 5.0
                         try:
                             traci.vehicle.setSpeed(veh,vehspeed)
-                            curspeed = traci.vehicle.getSpeed(veh)
-                            print('Vehicle: ',veh,' Speed now: ', curspeed,' Set speed to :',vehspeed )
+                            curspeed = round(traci.vehicle.getSpeed(veh),1)
+                            vehdist = round(e3det.det_vehicles_dict[veh]['leaderDist'],1)
+                            print('Vehicle: ',veh,' Speed now: ', curspeed,' Set speed to: ',vehspeed, ' Distance:', vehdist)
                         except:
                             print('Veh speed error: ', veh)
                     else:
@@ -481,7 +484,7 @@ def set_req_perm_to_vehice_color(vehid,sigstate,visgroup):
 
 
 def set_vehicle_color(vehid,vcolor):
-
+        
         if vcolor == "red":
             traci.vehicle.setColor(vehid,(255,0,0))
         elif vcolor == "darkred":
@@ -490,6 +493,12 @@ def set_vehicle_color(vehid,vcolor):
             traci.vehicle.setColor(vehid,(0,102,0))
         elif vcolor == "green":
             traci.vehicle.setColor(vehid,(0,255,0))
+        elif vcolor == "yellow":
+            traci.vehicle.setColor(vehid,(255,255,0))
+        elif vcolor == "blue":
+            traci.vehicle.setColor(vehid,(0,128,255)) 
+        elif vcolor == "pink":
+            traci.vehicle.setColor(vehid,(255,0,255))
         elif vcolor == "gray":
             traci.vehicle.setColor(vehid,(220,220,220))
 

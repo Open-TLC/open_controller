@@ -133,7 +133,7 @@ class e3Extender(Extender):
         if (self.conf_sum == 0) and (self.vehcount == 0):
             e3det.extend_on = False
             self.extend = False # No det extends
-            return
+            return 0
 
         # Decide about green extension
         if self.ext_mode == 1:
@@ -141,7 +141,7 @@ class e3Extender(Extender):
             if self.vehcount > Threshold1:
                 self.extend = True 
                 e3det.extend_on = True
-                return
+                return 1
             
         elif self.ext_mode == 2:
             if self.conf_sum > 0:   
@@ -150,11 +150,11 @@ class e3Extender(Extender):
                 if traffic_ratio > self.threshold:
                     self.extend = True 
                     e3det.extend_on = True
-                    return
+                    return 1
             else: 
                 self.extend = True 
                 e3det.extend_on = True
-                return
+                return 1
 
         elif self.ext_mode == 3:
             if self.conf_sum > 0:   
@@ -165,14 +165,15 @@ class e3Extender(Extender):
                 if traffic_ratio > self.threshold:
                     self.extend = True 
                     e3det.extend_on = True
-                    return
+                    return 1
             else: 
                 self.extend = True 
                 e3det.extend_on = True
-                return
+                return 1
         
         e3det.extend_on = False
         self.extend = False # No det extends
+        return 0
 
 
     def update_safety_extension(self):
@@ -189,7 +190,7 @@ class e3Extender(Extender):
         else:
             for e3det in self.e3dets:
                 e3det.SafeExtOn = False
-            print('Signal 11: Safety ext ended at: ',round(self.system_timer.seconds,1))
+            print('Signal 11: Safety extension of ', round(safety_ext_time,1), ' seconds ended at: ',round(self.system_timer.seconds,1))
             return 4
 
 
@@ -215,7 +216,7 @@ class e3Extender(Extender):
         self.extend = (self.ext3_status in [1,2,3])
         for e3det in self.e3dets:
             e3det.extend_on = self.extend
-            
+
         # self.update_extension()
 
     
