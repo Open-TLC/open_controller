@@ -17,7 +17,7 @@ import os
 import time
 from confread_integrated import GlobalConf
 from timer import Timer
-sys.path.append('clockwork')
+sys.path.append('src/clockwork')
 from signal_group_controller import PhaseRingController
 from extender import StaticExtender
 
