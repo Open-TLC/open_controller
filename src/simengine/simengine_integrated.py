@@ -292,14 +292,72 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode): #DBIK241
                 vehdict = {}
                 vehdict['vtype'] = vehtype               
                 vehdict['speed'] = vspeed
+                vehdict['maxspeed'] = vspeed
+                vehdict['vcolor'] = 'gray'
+                # DBIK20250211 Get extra info from V2X vehicles
+                if (vehtype == 'v2x_type'):
+                    TLSinfo = traci.vehicle.getNextTLS(vehid)
+                    leaderInfo = traci.vehicle.getLeader(vehid, dist=30.0)
+                    leaderSpeed = traci.vehicle.getSpeed(vehid)
+                    
+                    try:
+                        vehdict['TLSno'] = TLSinfo[0][1]
+                        vehdict['TLSdist'] = round(TLSinfo[0][2],1)
+                    except: 
+                        # print('Error: No TLS info')
+                        vehdict['TLSno'] = 'NoSig'
+                        vehdict['TLSdist'] = -1
+                        
+                    try:
+                        vehdict['leaderId'] = leaderInfo[0]
+                        vehdict['leaderDist'] = round(leaderInfo[1],1)
+                        vehdict['leaderSpeed'] = round(leaderSpeed)
+                    except: 
+                        # print('Error: No leader info')
+                        vehdict['leaderId'] = 'NoVeh'
+                        vehdict['leaderDist'] = -1
+                    
+                    # if prt:
+                        # print("V2X-data:", vehid, ", TLSno:", vehdict['TLSno'], ", TLSdist:", vehdict['TLSdist'],", LeaderId:", vehdict['leaderId'], ", LeaderDist:", vehdict['leaderDist'] )
+
                 vehiclesdict[vehid] = vehdict
                 testdict = vehdict
 
+                
+
         for e3det in sumo_to_dets[e3det_id_sumo]:     
             #e3det.vehcount = vehcount
-            e3det.update_e3_vehicles(vehiclesdict)
+
+            SafetyExtMode = False
+            if SafetyExtMode:
+            
+                for veh in e3det.det_vehicles_dict:
+                    vehcolor = e3det.det_vehicles_dict[veh]['vcolor']
+                    try:
+                        set_vehicle_color(veh,vehcolor)
+                    except:
+                        print('Vehcolor error: ', veh)
+
+                    if vehcolor == 'red':
+                        vehspeed = e3det.det_vehicles_dict[veh]['vspeed']
+                        # vehspeed = 5.0
+                        try:
+                            traci.vehicle.setSpeed(veh,vehspeed)
+                            curspeed = traci.vehicle.getSpeed(veh)
+                            print('Vehicle: ',veh,' Speed now: ', curspeed,' Set speed to :',vehspeed )
+                        except:
+                            print('Veh speed error: ', veh)
+                    else:
+                        try:
+                            traci.vehicle.setSpeed(veh,-1)
+                        except:
+                            print('Veh speed error -1: ', veh)
+
+            e3det.update_e3_vehicles(vehiclesdict) # DBIK20250225 Check this !!
+
             e3det.det_vehicles_dict = vehiclesdict
             visgroup = e3det.owngroup_obj
+
             # print('grp: ',e3det.owngroup_obj.group_name, 'veh dict: ',e3det.det_vehicles_dict)
 
             # DBIK201118 Visualize signal states with vehicle colors

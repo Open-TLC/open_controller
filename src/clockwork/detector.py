@@ -58,6 +58,16 @@ class Detector:
         self.det_vehicles_dict = {}
         self.last_vehicles_dict = {}
 
+         # DBIK202502 Variables for safety green extension
+        self.MinOZ = 40.0
+        self.MaxOZ = 120.0
+        self.SafeDist = 30.0
+        self.SafeExtOn = False
+        self.ShortGapFound = False
+
+
+
+
     def __str__(self):
         return "Det:{}, conf:{}".format(self.name, self.conf)
 
@@ -230,6 +240,28 @@ class e3Detector(Detector):
             elif (vtype == 'tram_R7'):
                 if (self.owngroup_name == 'group8'):
                     self.vehcount +=100
+
+            elif (vtype == 'v2x_type'):
+                self.det_vehicles_dict[vehid]['vcolor'] = 'blue'  # V2X vehicle detected                
+                TLSdist = self.det_vehicles_dict[vehid]['TLSdist']
+                TLSno = self.det_vehicles_dict[vehid]['TLSno']
+                if (TLSno == 11) and (TLSdist < self.MaxOZ) and (TLSdist > self.MinOZ):  
+                    self.det_vehicles_dict[vehid]['vcolor'] = 'green'  # V2X veh at option-zone
+
+                    leaderDist = self.det_vehicles_dict[vehid]['leaderDist']
+                    if (leaderDist < self.SafeDist) and (leaderDist > 0):
+                        self.det_vehicles_dict[vehid]['vcolor'] = 'yellow'   # V2X veh too close to vehicle in front
+                        self.ShortGapFound = True
+        
+                        if self.SafeExtOn:
+                            self.det_vehicles_dict[vehid]['vcolor'] = 'red'    # Safety extension ON for V2X veh
+                            curspeed = self.det_vehicles_dict[vehid]['vspeed']
+                            
+                            leaderSpeed = self.det_vehicles_dict[vehid]['leaderSpeed']
+                            VX2newSpeed = leaderSpeed - 5.0
+                            if VX2newSpeed > 4.0:
+                                self.det_vehicles_dict[vehid]['vspeed'] = VX2newSpeed   # V2X vehicle slow down
+
             elif (vtype == 'car_type'):
                 pass
             else:

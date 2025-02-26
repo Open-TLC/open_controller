@@ -42,6 +42,11 @@ class Extender:
         self.conf_sum = 0
         self.threshold = 0.3
         self.ext_mode = 2
+        # DBIK202502 Safety extender variables
+        self.safety_mode = 1
+        self.ext_ended_at = 0
+        self.ext3_status = 0
+        self.prev_status = 0
         
         for grp in self.group.conflicting_groups:
             self.conf_groups.append(grp) 
@@ -170,8 +175,48 @@ class e3Extender(Extender):
         self.extend = False # No det extends
 
 
+    def update_safety_extension(self):
+        safety_ext_time = self.system_timer.seconds - self.ext_ended_at
+        ShortGap = False
+        for e3det in self.e3dets:      
+            if e3det.ShortGapFound:
+                ShortGap = True
+
+        if (safety_ext_time < 8.0) and ShortGap: 
+            for e3det in self.e3dets:
+                e3det.SafeExtOn = True
+            return 3
+        else:
+            for e3det in self.e3dets:
+                e3det.SafeExtOn = False
+            print('Signal 11: Safety ext ended at: ',round(self.system_timer.seconds,1))
+            return 4
+
+
     def tick(self):
-        self.update_extension()
+
+        # DBIK20250213 Safety extension update added
+        self.prev_status = self.ext3_status
+        
+        if (self.group.name == 'group11: '):
+            DB1 = 1 
+        
+        if self.ext3_status in [0,1,4]:
+            self.ext3_status = self.update_extension()
+        else:
+            self.ext3_status = self.update_safety_extension()
+        
+        if (self.safety_mode != 0) and (self.group.name == 'group11: ') and (self.group.state=='Green_Extending'):  
+            if (self.prev_status==1) and (self.ext3_status==0): 
+                self.ext_ended_at = self.system_timer.seconds
+                self.ext3_status=2     
+                print('Signal 11: Basic ext ended at: ',round(self.ext_ended_at,1))
+            
+        self.extend = (self.ext3_status in [1,2,3])
+        for e3det in self.e3dets:
+            e3det.extend_on = self.extend
+            
+        # self.update_extension()
 
     
     @property
