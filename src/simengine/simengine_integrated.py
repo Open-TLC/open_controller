@@ -101,8 +101,6 @@ def run_sumo(conf_filename: str):
         print("Traci closed failed:", e)
     sys.stdout.flush()
 
-<<<<<<< HEAD
-=======
     print("exit  ")
 
     
