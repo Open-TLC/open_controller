@@ -41,7 +41,7 @@ class Extender:
         self.vehcount = 0
         self.conf_sum = 0
         self.threshold = 0.3
-        self.ext_mode = 2
+        self.ext_mode = 3
         # DBIK202502 Safety extender variables
         self.safety_mode = 1
         self.ext_ended_at = 0
@@ -116,7 +116,7 @@ class e3Extender(Extender):
         Threshold1 = 0
         Threshold2 = 0.5
         Threshold3 = 0.3
-        MaxGreen = 60 
+        MaxGreen = 40 
         self.conf_sum = 0
     
         # Calculate the Red-side pressure 

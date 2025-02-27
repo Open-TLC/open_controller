@@ -140,7 +140,7 @@ def run_sumo(conf_filename=None, runlog=None):
     last_print = 0
     BP2 = False
     SUMOSIM = True
-    sumovismode = 'main_states_'
+    sumovismode = 'sub_states'
     
 
     print(system_timer.steps, real_time, next_update_time, sleep_count )
@@ -192,9 +192,18 @@ def run_sumo(conf_filename=None, runlog=None):
                 runlog.add_line(statusstring)
 
             states = traffic_controller.get_sumo_states()
-            strlen = len(states)
-            states = 'r' + states  # DBIK20250129 add group 0 ?
-            traci.trafficlight.setRedYellowGreenState(sumo_name, states)
+            ocTLScount = len(states)
+            sumo_tls = traci.trafficlight.getControlledLinks(sumo_name)
+            SumoTLScount = len(sumo_tls)
+            if ocTLScount < SumoTLScount:
+                states = 'r' + states  # DBIK20250129 add group 0 ?
+            try:
+                traci.trafficlight.setRedYellowGreenState(sumo_name, states)
+            except:
+                print('Error in signal counts: OC count: ',ocTLScount, 'Sumo TLS: ', SumoTLScount)                
+                # for index, value in enumerate(sumo_tls):
+                #     print('Sumo TLS info: ', index, value)
+                #     DB1 = 1
 
             
             try:
@@ -330,7 +339,7 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode): #DBIK241
         for e3det in sumo_to_dets[e3det_id_sumo]:     
             #e3det.vehcount = vehcount
 
-            SafetyExtMode = True
+            SafetyExtMode = False
             if SafetyExtMode:
             
                 for veh in e3det.det_vehicles_dict:
