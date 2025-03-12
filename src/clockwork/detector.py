@@ -223,6 +223,8 @@ class e3Detector(Detector):
         """updates the vehlist from e3 message"""
         self.det_vehicles_dict = obj_list
         self.vehcount = len(self.det_vehicles_dict)
+        self.ShortGapFound = False  # DBIK20250312
+
         for vehid in self.det_vehicles_dict:
 
             vtype = self.det_vehicles_dict[vehid]['vtype']
@@ -259,10 +261,11 @@ class e3Detector(Detector):
                             
                             leaderSpeed = self.det_vehicles_dict[vehid]['leaderSpeed']
                             VX2newSpeed = leaderSpeed - 5.0
+                            VX2newSpeed = 10.0
                             if VX2newSpeed > 4.0:
                                 self.det_vehicles_dict[vehid]['vspeed'] = VX2newSpeed   # V2X vehicle slow down
                                 
-                    else: self.ShortGapFound = False
+                    else: pass 
 
             elif (vtype == 'car_type'):
                 pass

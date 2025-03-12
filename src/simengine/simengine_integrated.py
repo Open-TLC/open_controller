@@ -140,7 +140,7 @@ def run_sumo(conf_filename=None, runlog=None):
     last_print = 0
     BP2 = False
     SUMOSIM = True
-    sumovismode = 'sub_states'
+    sumovismode = 'sub_states_'
     
 
     print(system_timer.steps, real_time, next_update_time, sleep_count )
@@ -339,7 +339,7 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode): #DBIK241
         for e3det in sumo_to_dets[e3det_id_sumo]:     
             #e3det.vehcount = vehcount
 
-            SafetyExtMode = False
+            SafetyExtMode = True
             if SafetyExtMode:
             
                 for veh in e3det.det_vehicles_dict:

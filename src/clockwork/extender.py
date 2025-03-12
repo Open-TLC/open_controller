@@ -11,6 +11,7 @@ it easier to implement external control schemes
 #
 
 from signal_group import SignalGroup
+import keyboard, time
 
 
 def main():
@@ -186,6 +187,13 @@ class e3Extender(Extender):
         if (safety_ext_time < 8.0) and ShortGap: 
             for e3det in self.e3dets:
                 e3det.SafeExtOn = True
+
+            kb = 0
+            while not(keyboard.is_pressed('g')):
+                time.sleep(0.01)
+                kb += 1
+            print('Demo continued: ', kb)
+
             return 3
         else:
             for e3det in self.e3dets:
