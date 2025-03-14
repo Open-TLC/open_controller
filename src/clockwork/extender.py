@@ -19,6 +19,11 @@ def main():
     #ext = Extender('det0', conf)
     #print(det)
 
+def keyboard_break(ch):
+    while not(keyboard.is_pressed('g')):
+        time.sleep(0.01)        
+    print('Demo continued: ')
+
 
 class StaticExtender:
     """This creates an extender that is always on or always on/off"""
@@ -184,15 +189,15 @@ class e3Extender(Extender):
             if e3det.ShortGapFound:
                 ShortGap = True
 
-        if (safety_ext_time < 8.0) and ShortGap: 
+        if (safety_ext_time < 10.0) and ShortGap: 
             for e3det in self.e3dets:
                 e3det.SafeExtOn = True
 
-            kb = 0
+            # keyboard_break('g')
+
             while not(keyboard.is_pressed('g')):
-                time.sleep(0.01)
-                kb += 1
-            print('Demo continued: ', kb)
+                time.sleep(0.01)        
+            print('Demo continued: ')
 
             return 3
         else:
