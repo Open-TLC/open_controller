@@ -195,8 +195,8 @@ class e3Extender(Extender):
 
             # keyboard_break('g')
 
-            while not(keyboard.is_pressed('g')):
-                time.sleep(0.01)        
+            # while not(keyboard.is_pressed('g')):
+            time.sleep(1.00)        
             print('Demo continued: ')
 
             return 3
@@ -204,6 +204,7 @@ class e3Extender(Extender):
             for e3det in self.e3dets:
                 e3det.SafeExtOn = False
             print('Signal 11: Safety extension of ', round(safety_ext_time,1), ' seconds ended at: ',round(self.system_timer.seconds,1))
+            time.sleep(2.00) 
             return 4
 
 

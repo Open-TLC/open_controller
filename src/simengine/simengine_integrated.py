@@ -140,7 +140,7 @@ def run_sumo(conf_filename=None, runlog=None):
     last_print = 0
     BP2 = False
     SUMOSIM = True
-    sumovismode = 'sub_states_'
+    sumovismode = 'main_states_'
     
 
     print(system_timer.steps, real_time, next_update_time, sleep_count )
