@@ -47,6 +47,12 @@ class Detector:
             print('Priority detector: ', name,' Priority level: ', self.priolevel)
         else:
             self.priolevel = 2
+        if 'v2x-on' in conf: 
+            self.v2x_ON = conf['v2x-on']
+            print('V2X-detector: ', name,' V2X-ON: ', self.v2x_ON)
+            BP = 1
+        else:
+            self.v2x_ON = False
         
         self.owngroup_obj = None
 
@@ -64,6 +70,7 @@ class Detector:
         self.SafeDist = 30.0
         self.SafeExtOn = False
         self.ShortGapFound = False
+        
 
 
 
@@ -200,23 +207,7 @@ class e3Detector(Detector):
     def tick(self):  # DBIK240801 tick for e3 detector
         """ Updating of e3-detector"""
         return  
-        for vehid in self.det_vehicles_dict:
 
-            vtype = self.det_vehicles_dict[vehid]['vtype']
-
-            if vtype == 'truck_type':
-                self.vehcount +=2 # DBIK240923 Add extra weight for trucks 1 truck = 3 vehs
-                # print('vehtype : ', type)
-            if  vtype == 'tram_type':
-                self.vehcount +=100
-
-            # Special setting for JS270T, should be configured in init-file DBIK20241025
-            if (vtype == 'tram_R9'):
-                if (self.owngroup_name == 'group4'):
-                    self.vehcount +=100            
-            if (vtype == 'tram_R7'):
-                if (self.owngroup_name == 'group8'):
-                    self.vehcount +=100
 
     # We update the vehlist from e3 message
     def update_e3_vehicles(self, obj_list):
@@ -229,7 +220,9 @@ class e3Detector(Detector):
 
             vtype = self.det_vehicles_dict[vehid]['vtype']
 
-            if vtype == 'truck_type':
+            if (vtype == 'car_type'):
+                    pass
+            elif vtype == 'truck_type':
                 self.vehcount +=2 # DBIK240923 Add extra weight for trucks 1 truck = 3 vehs
                 # print('vehtype : ', type)
             elif  vtype == 'tram_type':
@@ -244,31 +237,30 @@ class e3Detector(Detector):
                     self.vehcount +=100
 
             elif (vtype == 'v2x_type'):
-                self.det_vehicles_dict[vehid]['vcolor'] = 'blue'  # V2X vehicle detected                
-                TLSdist = self.det_vehicles_dict[vehid]['TLSdist']
-                TLSno = self.det_vehicles_dict[vehid]['TLSno']
-                if (TLSno == 11) and (TLSdist < self.MaxOZ) and (TLSdist > self.MinOZ):  
-                    self.det_vehicles_dict[vehid]['vcolor'] = 'green'  # V2X veh at option-zone
+                if self.v2x_ON:                 
+                    self.det_vehicles_dict[vehid]['vcolor'] = 'blue'  # V2X vehicle detected                
+                    TLSdist = self.det_vehicles_dict[vehid]['TLSdist']
+                    TLSno = self.det_vehicles_dict[vehid]['TLSno']
+                    if (TLSno == 11) and (TLSdist < self.MaxOZ) and (TLSdist > self.MinOZ):  
+                        self.det_vehicles_dict[vehid]['vcolor'] = 'green'  # V2X veh at option-zone
 
-                    leaderDist = self.det_vehicles_dict[vehid]['leaderDist']
-                    if (leaderDist < self.SafeDist) and (leaderDist > 0):
-                        self.det_vehicles_dict[vehid]['vcolor'] = 'yellow'   # V2X veh too close to vehicle in front
-                        self.ShortGapFound = True
-        
-                        if self.SafeExtOn:
-                            self.det_vehicles_dict[vehid]['vcolor'] = 'red'    # Safety extension ON for V2X veh
-                            curspeed = self.det_vehicles_dict[vehid]['vspeed']
-                            
-                            leaderSpeed = self.det_vehicles_dict[vehid]['leaderSpeed']
-                            VX2newSpeed = leaderSpeed - 5.0
-                            VX2newSpeed = 10.0
-                            if VX2newSpeed > 4.0:
-                                self.det_vehicles_dict[vehid]['vspeed'] = VX2newSpeed   # V2X vehicle slow down
+                        leaderDist = self.det_vehicles_dict[vehid]['leaderDist']
+                        if (leaderDist < self.SafeDist) and (leaderDist > 0):
+                            self.det_vehicles_dict[vehid]['vcolor'] = 'yellow'   # V2X veh too close to vehicle in front
+                            self.ShortGapFound = True
+            
+                            if self.SafeExtOn:
+                                self.det_vehicles_dict[vehid]['vcolor'] = 'red'    # Safety extension ON for V2X veh
+                                curspeed = self.det_vehicles_dict[vehid]['vspeed']
                                 
-                    else: pass 
+                                leaderSpeed = self.det_vehicles_dict[vehid]['leaderSpeed']
+                                VX2newSpeed = leaderSpeed - 5.0
+                                VX2newSpeed = 10.0
+                                if VX2newSpeed > 4.0:
+                                    self.det_vehicles_dict[vehid]['vspeed'] = VX2newSpeed   # V2X vehicle slow down
+                                    
+                        else: pass 
 
-            elif (vtype == 'car_type'):
-                pass
             else:
                 print('**************** Error in vehicle type: ', vtype)
 

@@ -314,7 +314,7 @@ class PhaseRingController:
             if det_cnf[det]['type'] == 'e3detector':  # DBIK240731 new detector type (e3) and extender types (e3)
                 new_det = e3Detector(self.timer, det, det_cnf[det]) # create e3 detector
                 self.e3detectors.append(new_det) # Add new detector type (e3)
-
+            
             new_det.owngroup_obj = self.get_signal_group_object(new_det.owngroup_name)
 
         # DBIK240802 Only create an extender for a signal group, if there are extending detectors of its own
