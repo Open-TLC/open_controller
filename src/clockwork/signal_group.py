@@ -149,8 +149,6 @@ class SignalGroup(Machine):
         self.e3extender = None # DBIK240803 added
         self._stat_logger = None # set outside
 
-        
-
         # Substates
         # For fixed we always use the min as time
         self.fixed_amber = FixedTime(self.system_timer, self, min_length=grp_conf['min_amber'])

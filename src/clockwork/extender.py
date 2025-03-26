@@ -49,10 +49,13 @@ class Extender:
         self.threshold = 0.3
         self.ext_mode = 3
         # DBIK202502 Safety extender variables
-        self.safety_mode = 1
         self.ext_ended_at = 0
         self.ext3_status = 0
         self.prev_status = 0
+
+        self.safety_ext = True
+        #if 'safety_ext' in grp_conf.keys():
+        #    self.safety_ext = sys_cnf['safety_ext']
         
         for grp in self.group.conflicting_groups:
             self.conf_groups.append(grp) 
@@ -203,7 +206,7 @@ class e3Extender(Extender):
         else:
             for e3det in self.e3dets:
                 e3det.SafeExtOn = False
-            print('Signal 11: Safety extension of ', round(safety_ext_time,1), ' seconds ended at: ',round(self.system_timer.seconds,1))
+            print('Signal X: Safety extension of ', round(safety_ext_time,1), ' seconds ended at: ',round(self.system_timer.seconds,1))
             # Demo feature
             # time.sleep(2.00) 
             return 4
@@ -222,11 +225,11 @@ class e3Extender(Extender):
         else:
             self.ext3_status = self.update_safety_extension()
         
-        if (self.safety_mode != 0) and (self.group.name == 'group11: ') and (self.group.state=='Green_Extending'):  
+        if (self.safety_ext) and (self.group.state=='Green_Extending'):  
             if (self.prev_status==1) and (self.ext3_status==0): 
                 self.ext_ended_at = self.system_timer.seconds
                 self.ext3_status=2     
-                print('Signal 11: Basic ext ended at: ',round(self.ext_ended_at,1))
+                print('Signal X: Basic ext ended at: ',round(self.ext_ended_at,1))
             
         self.extend = (self.ext3_status in [1,2,3])
         for e3det in self.e3dets:
