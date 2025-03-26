@@ -60,6 +60,15 @@ def run_sumo(conf_filename=None, runlog=None):
         if 'sumo_name' in sys_cnf['controller'].keys():
             sumo_name = sys_cnf['controller']['sumo_name']
 
+    v2x_mode = False
+    if 'v2x_mode' in sys_cnf.keys():
+        if sys_cnf['v2x_mode'] == True:
+            v2x_mode = True
+
+    sumovismode = "No_visualization"
+    if 'vis_mode' in sys_cnf.keys():
+        sumovismode = sys_cnf['vis_mode']
+    
     # Init system timer from config file DBIK 24.7.23
     timer_mode = 'real'
     time_step = 0.1
@@ -140,9 +149,7 @@ def run_sumo(conf_filename=None, runlog=None):
     last_print = 0
     BP2 = False
     SUMOSIM = True
-    sumovismode = 'main_states__'
     
-
     print(system_timer.steps, real_time, next_update_time, sleep_count )
 
     # traci.vehicle.setLaneChangeMode(vehicleId,256) # Disable lane changing except from Traci
@@ -167,7 +174,7 @@ def run_sumo(conf_filename=None, runlog=None):
                
             if SUMOSIM:
                 Sumo_e1detections_to_controller(sumo_loops, sumo_to_e1dets)
-                Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_e3dets, sumovismode)
+                Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_e3dets, sumovismode, v2x_mode)
             else:
                 pass
                 # Read detections from NATS
@@ -291,7 +298,7 @@ def Sumo_e1detections_to_controller(sumo_loops, sumo_to_dets):
     # print("SUMO loops:", loop_stat, end='') 
 
 
-def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode): #DBIK241113  New function to pass e3 detector info
+def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode, v2x_mode): #DBIK241113  New function to pass e3 detector info
     """ Passes the Sumo e3-detector info to the controller detector objects"""
     for e3det_id_sumo in sumo_e3dets:
         vehcount = traci.multientryexit.getLastStepVehicleNumber(e3det_id_sumo) 
@@ -339,8 +346,8 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode): #DBIK241
         for e3det in sumo_to_dets[e3det_id_sumo]:     
             #e3det.vehcount = vehcount
 
-            SafetyExtMode = True
-            if SafetyExtMode:
+        
+            if v2x_mode:
             
                 for veh in e3det.det_vehicles_dict:
                     vehcolor = e3det.det_vehicles_dict[veh]['vcolor']
