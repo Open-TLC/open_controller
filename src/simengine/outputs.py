@@ -7,6 +7,7 @@ import sys
 import json
 from datetime import datetime
 from shapely.geometry import Polygon, Point
+from vehicle import Vehicle
 
 if 'SUMO_HOME' in os.environ:
     SUMO_TOOLS = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -17,6 +18,8 @@ else:
 
 
 CLENUP_TIME_LIMIT = 0.5 # seconds
+RSU_DATA_PREFIX = "v2x.rsu." #later from conf
+
 
 class Radar:
     "This class is for handling the virtual radars"
@@ -369,6 +372,7 @@ class VehStorage():
         if "rsus" in conf:
             # deep copy the parameters
             conf["radars"] = conf["rsus"].copy()
+
         self.radar_storage = RadarStorage(conf)
         self.vehs = {}    
     
@@ -376,8 +380,29 @@ class VehStorage():
     
     def get_messages_current(self):
         vehdata= self.radar_storage.get_vehicle_data_from_radars()
-        print(vehdata)
+        #print(vehdata)
         # Note, this updates, we have to add it when we change this
-        return self.radar_storage.get_messages_current()
+        self.radar_storage.update_radars()
+        for vehdict in vehdata:
+            veh_id = vehdict['sumo_id'] # Note, this should be prefix FIXME
+            if veh_id not in self.vehs:
+                self.vehs[veh_id] = Vehicle(veh_id) # New vehicle greated, if not available
+            self.vehs[veh_id].add_data(vehdict)
+
+        ret_messages = {}
+        for veh_id, veh in self.vehs.items():
+            # We get the message to send
+            message = veh.get_message_to_send()
+            if message:
+                message_json = json.dumps(message)
+                ret_messages[RSU_DATA_PREFIX + veh_id] = message_json.encode()
+
+        #print (ret_messages)
+        #ret_messages2 = self.radar_storage.get_messages_current()
+        #ret_messages={
+        #    'v2x.vehicles.1': "test".encode(),
+        #    'v2x.vehicles.2': "test2".encode(),
+        #}
+        return ret_messages
     
 
