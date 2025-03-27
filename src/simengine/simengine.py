@@ -17,7 +17,7 @@ from nats.aio.client import Client as NATS
 import json
 from timer import Timer
 from confread import GlobalConf
-from outputs import DetStorage, GroupStorage, RadarStorage
+from outputs import DetStorage, GroupStorage, RadarStorage, VehStorage
 
 
 SOFTWARE_NAME = "SUMO Simulation enngine"
@@ -27,7 +27,8 @@ IMPL_VERSION = "0.1"
 OUTPUT_TYPES = {
     "detector": DetStorage,
     "group": GroupStorage,
-    "radar": RadarStorage
+    "radar": RadarStorage,
+    "rsu": VehStorage
 }
 
 

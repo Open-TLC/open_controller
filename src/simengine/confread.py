@@ -119,6 +119,10 @@ class GlobalConf:
         if 'radars' in config_from_file:
             self.conf['radars'] = config_from_file['radars']
 
+        # RSU loaded to conf, if defined in the conf file
+        if 'rsus' in config_from_file:
+            self.conf['rsus'] = config_from_file['rsus']
+
         # outputs
         if 'outputs' in config_from_file:
             if 'det_outputs' in config_from_file['outputs']:
@@ -127,6 +131,8 @@ class GlobalConf:
                 self.conf['outputs']['sig_outputs'].update(config_from_file['outputs']['sig_outputs'])    
             if 'rad_outputs' in config_from_file['outputs']:
                 self.set_rad_outputs(config_from_file['outputs']['rad_outputs'])
+            if 'rsu_outputs' in config_from_file['outputs']:
+                self.set_rsu_outputs(config_from_file['outputs']['rsu_outputs'])
         # inputs
         if 'inputs' in config_from_file:
             if 'sig_inputs' in config_from_file['inputs']:
@@ -146,6 +152,22 @@ class GlobalConf:
                 print("No radar with tag ", rad_tag, " in the radar configuration")
         rad_config['radars'] = radars
         self.conf['outputs']['rad_outputs'] = rad_config      
+
+
+    def set_rsu_outputs(self, rsu_config):
+        """This function will fetch the rsu values in separate structure and add them to the outputs"""
+        if not 'rsus' in self.conf:
+            print("No rsu values in the configuration")
+            return
+        rsus = {}
+        for rsu_tag in rsu_config['rsus']:
+            if rsu_tag in self.conf['rsus']:
+                rsus[rsu_tag] = self.conf['rsus'][rsu_tag]
+            else:
+                print("No rsu with tag ", rsu_tag, " in the rsu configuration")
+        rsu_config['rsus'] = rsus
+        self.conf['outputs']['rsu_outputs'] = rsu_config
+    
 
     def set_vals_from_command(self, command_line_params):
         """Sets the values from the command line"""

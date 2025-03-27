@@ -1,15 +1,7 @@
 # -*- coding: utf-8 -*-
 """ Output storage and handling
 """
-# Copyright 2024 by Conveqs Oy and Kari Koskinen
-# All Rights Reserved
-#
 
-# This will need:
-# export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
-
-# Alternatively:
-# we need to import python modules from the $SUMO_HOME/tools directory
 import os
 import sys
 import json
@@ -151,8 +143,16 @@ class Radar:
             data['objects'].append(out_vehicle)
         return data
 
+    def get_all_vehicle_data(self):
+        """Returns all the vehicle data for vehicles within the radar"""
+        vehlist = []
+        for veh in self.vehicles.values():
+            out_vehicle = dict(veh)
+            vehlist.append(out_vehicle)
+        return vehlist
 
-    
+
+
 
 class DetStorage:
     "This is a class for storing the detector states and indicating any change"
@@ -285,7 +285,11 @@ class GroupStorage:
         return messages
 
 class RadarStorage:
-    """This is a class for string the radar detections"""
+    """
+        This is a class for storing the radar detections we use Radar objects for storing the data
+        This storage thus covers all the radars defined in the configuration as outputs and 
+        functions for receiving the data from the SUMO and updating the radar objects
+    """
     def __init__(self, conf):
         self.statuses = {}
         self.conf = conf
@@ -340,3 +344,40 @@ class RadarStorage:
             new_vehicle['sumo_type'] = traci.vehicle.getTypeID(vehicle_id) 
             for radar_conf in self.conf['radars'].values():
                 radar_conf['radar_object'].add_vehicle(new_vehicle)
+
+
+    def get_vehicle_data_from_radars(self):
+        "Returns the vehicle data from the radars"
+        vehicle_data = []
+        for radar_conf in self.conf['radars'].values():
+            vehicle_data += radar_conf['radar_object'].get_all_vehicle_data()
+        return vehicle_data
+
+# This is for storing the vehicles inside a given RSU
+
+class VehStorage():
+    "This is a class for storing the vehicles with V2X capabilities"
+
+    # In essence this unit contains a "radar" that is functionality for accessing 
+    # The vehicles in given area and of given type
+    # in addition to this, we create a copy of each vehicle "digital twin" that is used
+    # For 1) handling the messages from individual vehicles and 2) for coping with signing and such
+    def __init__(self, conf):
+        # map rsus as radars
+        # RSU setup is similar to radar setup, but with some additional parameters
+        # We add the "radar" setup in order to use the radar storage
+        if "rsus" in conf:
+            # deep copy the parameters
+            conf["radars"] = conf["rsus"].copy()
+        self.radar_storage = RadarStorage(conf)
+        self.vehs = {}    
+    
+    
+    
+    def get_messages_current(self):
+        vehdata= self.radar_storage.get_vehicle_data_from_radars()
+        print(vehdata)
+        # Note, this updates, we have to add it when we change this
+        return self.radar_storage.get_messages_current()
+    
+
