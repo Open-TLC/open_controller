@@ -24,8 +24,11 @@ import json
 import os
 from nats.aio.client import Client as NATS
 
-NATS_DEFAULT_SIGN_REQUEST = "ra.sign.request"
-NATS_DEFAULT_SIGN_RESPONSE = "ra.sign.response"
+#NATS_DEFAULT_SIGN_REQUEST = "ra.sign.request"
+NATS_DEFAULT_SIGN_REQUEST = "v2x.rsu.*"
+#NATS_DEFAULT_SIGN_RESPONSE = "ra.sign.response"
+NATS_DEFAULT_SIGN_RESPONSE = "v2x.rsu.certs"
+
 NATS_DEFAULT_SERVER = "localhost:4222"
 
 class RegistrationAuthority:
@@ -39,38 +42,54 @@ class RegistrationAuthority:
             self.response_channel = conf["response_channel"]
             self.nats_server = conf["nats_server"]
         
+
     async def run(self):
         # Connett to nats server:
-        self.nats = await self.connect_nats() # Exits if fails
+        self.nats = NATS()
+        await self.connect_nats() # Exits if fails
 
         # Subscribe to the listen channel
+        print(f"Listening on channel: {self.listen_channel}")
         await self.nats.subscribe(self.listen_channel, cb=self.on_message)
+
+        # infinite loop
+        while True:
+            await asyncio.sleep(1)
 
     async def on_message(self, msg):
         # Parse the message
         data = json.loads(msg.data.decode())
         print(f"Received a message: {data}")
 
-        # Check if the coupon is valid
-        valid_coupon = self.get_signature_message(data["coupon"])
+        # Check if there is a coupon to sign
+        if not "coupon" in data:
+            #   print("No coupon in message")
+            return
 
-        if not valid_coupon:
+        # Check if the coupon is valid
+        valid_cert = self.get_cert(data["coupon"])
+
+        if not valid_cert:
             print("Invalid coupon:", data["coupon"])
             return
         else:
             # Publish response
-            self.nats.publish(self.response_channel, json.dumps(valid_coupon))
+            ret_message = {
+                "id": data["id"],
+                "certificate": valid_cert
+            }
+            await self.nats.publish(self.response_channel, json.dumps(ret_message).encode())
         
-    def get_signature_message(self, coupon):
-        # Check if the coupon is valid
-        # If it is, returns the sicnature message
-        # Else, returns None
-        return None
+
     
+
+    def get_cert(self, coupon):
+        return "VALID_CERTIFICATE"
+
 
     async def connect_nats(self):
         try:
-            return self.nats.connect(self.nats_server)
+            await self.nats.connect(self.nats_server)
         except Exception as e:
             print("Error connecting to NATS server: ", self.nats_server)
             print(e)
