@@ -36,7 +36,7 @@ class StaticExtender:
 
 class Extender:
     """docstring for Detector"""
-    def __init__(self, timer, group, dets, grpdets, e3dets): # DBIK200803, add e3dets
+    def __init__(self, timer, group, dets, grpdets, e3dets, ext_params): # DBIK200803, add e3dets
         self.system_timer = timer
         self.group = group
         self.grpdets = []
@@ -53,10 +53,11 @@ class Extender:
         self.ext3_status = 0
         self.prev_status = 0
 
-        self.safety_ext = True
-        #if 'safety_ext' in grp_conf.keys():
-        #    self.safety_ext = sys_cnf['safety_ext']
-        
+        self.safety_ext = False
+        if 'safety_ext' in ext_params:
+            self.safety_ext = ext_params['safety_ext']
+            BP = 1
+                
         for grp in self.group.conflicting_groups:
             self.conf_groups.append(grp) 
             print('conf group added: ',grp)

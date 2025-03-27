@@ -318,6 +318,8 @@ class PhaseRingController:
             new_det.owngroup_obj = self.get_signal_group_object(new_det.owngroup_name)
 
         # DBIK240802 Only create an extender for a signal group, if there are extending detectors of its own
+        ext_params = {}
+
         for group in self.groups:
             dets = []
             e3dets = []
@@ -325,21 +327,32 @@ class PhaseRingController:
                 if det.owngroup_name == group.group_name:
                     dets.append(det)
             if (dets != []):   
-                new_ext = Extender(self.timer, group, dets, self.ext_groups, e3dets)
+                new_ext = Extender(self.timer, group, dets, self.ext_groups, e3dets, ext_params)
                 self.extenders.append(new_ext)
         
+        ext_cnf = conf['extenders']
+        DB = 1
         # DBIK240803 Create e3extenders based on e3detectors
         for group in self.groups:
             dets = []
             qdets = []
             e3dets = []
+            ext_params = {}
+            for key in ext_cnf:
+                grp = ext_cnf[key]['group']
+                if grp == group.group_name:
+                    ext_params = ext_cnf[key]
+                    DB = 1
+
             for e3det in self.e3detectors:               
                 dgr = e3det.owngroup_name
                 grn = group.group_name
                 if e3det.owngroup_name == group.group_name:
                     e3dets.append(e3det)
+
+
             if (e3dets != []):   
-                new_ext = e3Extender(self.timer, group, dets, qdets, e3dets)
+                new_ext = e3Extender(self.timer, group, dets, qdets, e3dets, ext_params)
                 self.e3extenders.append(new_ext)
 
         DB = 2
