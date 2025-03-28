@@ -18,7 +18,7 @@ else:
 
 
 CLENUP_TIME_LIMIT = 0.5 # seconds
-RSU_DATA_PREFIX = "v2x.rsu." #later from conf
+RSU_DATA_PREFIX = "v2x.rsu" #later from conf
 
 
 class Radar:
@@ -375,7 +375,11 @@ class VehStorage():
 
         self.radar_storage = RadarStorage(conf)
         self.vehs = {}    
-    
+        if "channel_prefix" in conf:
+            self.channel_prefix = conf["channel_prefix"]
+        else:
+            self.channel_prefix = RSU_DATA_PREFIX
+
     
     
     def get_messages_current(self):
@@ -395,7 +399,7 @@ class VehStorage():
             message = veh.get_message_to_send()
             if message:
                 message_json = json.dumps(message)
-                ret_messages[RSU_DATA_PREFIX + veh_id] = message_json.encode()
+                ret_messages[RSU_DATA_PREFIX + '.' + veh_id] = message_json.encode()
 
         #print (ret_messages)
         #ret_messages2 = self.radar_storage.get_messages_current()

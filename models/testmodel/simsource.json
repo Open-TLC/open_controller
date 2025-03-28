@@ -35,6 +35,13 @@
         "type": "radar",
         "trigger": "update",
         "radars": ["int_270_1", "int_270_2", "int_270_3", "v2x_vehs"]
+    },
+    "rsu_outputs":{
+        "type": "rsu",
+        "trigger": "update",
+        "rsus": ["rsu1"],
+        "channel_prefix": "v2x.rsu",
+        "notes": "This is a two way connection"   
     }
 },
 
@@ -63,7 +70,7 @@
         "source": "sumo_radar",
         "trigger": "update",
         "vehicle_types": ["v2x_car"],
-        "description": "Testing for all vehicles"
+        "description": "Testing for v2x vehicles"
     },
     "int_270_1":{
         "sink_id": 1,
@@ -137,5 +144,16 @@
         },
         "description": ""
         }
-    }
+    },
+"rsus":{
+    "rsu1":{
+        "service": "nats_server",
+        "topic": "v2x.vehicles",
+        "data_type": "v2x",
+        "source": "rsu1",
+        "trigger": "update",
+        "vehicle_types": ["v2x_car"],
+        "description": "This is for sending individual veh messages"
+        }
+}
 }

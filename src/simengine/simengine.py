@@ -102,10 +102,18 @@ class SumoNatsInterface:
         self.ds_each_update = []
         self.ds_change_update = []
 
+        # RSU needs an input as well
+        self.rsu_input = None
+
         # Setting up the outputs
         all_outputs = self.config.get_output_params()
         for configuration in all_outputs.values():
             output_storage = OUTPUT_TYPES[configuration["type"]](configuration)
+            if configuration["type"] == "rsu":
+                # This will handle incoming messages
+                self.rsu_input = output_storage
+
+            
             if configuration["trigger"] == "update":
                 self.ds_each_update.append(output_storage)
             elif configuration["trigger"] == "change":
@@ -122,8 +130,8 @@ class SumoNatsInterface:
                 self.group_input = all_inputs["sig_inputs"]
             else:
                 print("Unknown input type:", all_inputs["type"])
-        print("Inputs:", all_inputs)
 
+        
     def start_sumo(self):
         """Starts the sumo"""
         try:
@@ -193,6 +201,18 @@ class SumoNatsInterface:
             await asyncio.sleep(5)
             # And now we subscribe to the control messages
             await self.nats.subscribe(group_control_channel, cb=sig_group_message_handler)
+
+        if self.rsu_input:
+            rsu_channel = self.rsu_input.channel_prefix + ".*"
+            async def rsu_message_handler(msg):
+                subject = msg.subject
+                reply = msg.reply
+                data = msg.data.decode()
+                #print("Received a message on '{subject} {reply}': {data}".format(
+                #    subject=subject, reply=reply, data=dat a))
+                msg_dict = json.loads(data)
+                print("RSU message:", msg_dict)
+            await self.nats.subscribe(rsu_channel, cb=rsu_message_handler)
 
         self.draw_radars()
         while traci.simulation.getMinExpectedNumber() > 0:

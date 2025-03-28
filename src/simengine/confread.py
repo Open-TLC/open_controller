@@ -137,6 +137,8 @@ class GlobalConf:
         if 'inputs' in config_from_file:
             if 'sig_inputs' in config_from_file['inputs']:
                 self.conf['inputs']['sig_inputs'] = config_from_file['inputs']['sig_inputs']
+            if 'rsu_inputs' in config_from_file['inputs']:
+                self.conf['inputs']['rsu_inputs'] = config_from_file['inputs']['rsu_inputs']
 
 
     def set_rad_outputs(self, rad_config):
