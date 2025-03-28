@@ -47,15 +47,35 @@ class Extender:
         self.vehcount = 0
         self.conf_sum = 0
         self.threshold = 0.3
-        self.ext_mode = 3
+        
         # DBIK202502 Safety extender variables
         self.ext_ended_at = 0
         self.ext3_status = 0
         self.prev_status = 0
 
+        self.ext_mode = 3
+        if 'ext_mode' in ext_params:
+            self.ext_mode = ext_params['ext_mode']
+            BP = 1
+
+        self.ext_threshold = 0.5
+        if 'ext_threshold' in ext_params:
+            self.ext_threshold = ext_params['ext_threshold']
+            BP = 1
+
+        self.time_discount = 60
+        if 'time_discount' in ext_params:
+            self.time_discount = ext_params['time_discount']
+            BP = 1
+
+
         self.safety_ext = False
         if 'safety_ext' in ext_params:
             self.safety_ext = ext_params['safety_ext']
+            BP = 1
+        self.safety_time = 0
+        if 'safety_time' in ext_params:
+            self.safety_time = ext_params['safety_time']
             BP = 1
                 
         for grp in self.group.conflicting_groups:
@@ -123,10 +143,7 @@ class e3Extender(Extender):
 
     def update_extension(self):
         """Function updates the extension status to the group"""
-        Threshold1 = 0
-        Threshold2 = 0.5
-        Threshold3 = 0.3
-        MaxGreen = 40 
+        
         self.conf_sum = 0
     
         # Calculate the Red-side pressure 
@@ -147,8 +164,8 @@ class e3Extender(Extender):
 
         # Decide about green extension
         if self.ext_mode == 1:
-            self.threshold = Threshold1
-            if self.vehcount > Threshold1:
+            self.threshold = self.ext_threshold
+            if self.vehcount > self.threshold:
                 self.extend = True 
                 e3det.extend_on = True
                 return 1
@@ -156,7 +173,7 @@ class e3Extender(Extender):
         elif self.ext_mode == 2:
             if self.conf_sum > 0:   
                 traffic_ratio = self.vehcount/self.conf_sum
-                self.threshold = Threshold2
+                self.threshold = self.ext_threshold
                 if traffic_ratio > self.threshold:
                     self.extend = True 
                     e3det.extend_on = True
@@ -169,9 +186,9 @@ class e3Extender(Extender):
         elif self.ext_mode == 3:
             if self.conf_sum > 0:   
                 GreenTimeUsed = self.system_timer.seconds - self.group.green_started_at
-                TimeDiscount = 1.0 + (GreenTimeUsed/MaxGreen)
+                TimeDiscount = 1.0 + (GreenTimeUsed/self.time_discount)
                 traffic_ratio = self.vehcount/self.conf_sum
-                self.threshold = Threshold3 * TimeDiscount
+                self.threshold = self.ext_threshold * TimeDiscount
                 if traffic_ratio > self.threshold:
                     self.extend = True 
                     e3det.extend_on = True
@@ -200,7 +217,7 @@ class e3Extender(Extender):
             # Demo features
             # keyboard_break('g')
             # while not(keyboard.is_pressed('g')):
-            # time.sleep(1.00)        
+            # time.sleep(0.2)        
             # print('Demo continued: ')
 
             return 3
@@ -209,7 +226,7 @@ class e3Extender(Extender):
                 e3det.SafeExtOn = False
             print('Signal X: Safety extension of ', round(safety_ext_time,1), ' seconds ended at: ',round(self.system_timer.seconds,1))
             # Demo feature
-            # time.sleep(2.00) 
+            # time.sleep(1.00) 
             return 4
 
 

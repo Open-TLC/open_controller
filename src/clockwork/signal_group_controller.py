@@ -330,19 +330,24 @@ class PhaseRingController:
                 new_ext = Extender(self.timer, group, dets, self.ext_groups, e3dets, ext_params)
                 self.extenders.append(new_ext)
         
-        ext_cnf = conf['extenders']
-        DB = 1
+        extprm = False
+        if 'extenders' in conf:
+            ext_cnf = conf['extenders']
+            extprm = True
+
         # DBIK240803 Create e3extenders based on e3detectors
         for group in self.groups:
             dets = []
             qdets = []
             e3dets = []
             ext_params = {}
-            for key in ext_cnf:
-                grp = ext_cnf[key]['group']
-                if grp == group.group_name:
-                    ext_params = ext_cnf[key]
-                    DB = 1
+
+            if extprm:
+                for key in ext_cnf:
+                    grp = ext_cnf[key]['group']
+                    if grp == group.group_name:
+                        ext_params = ext_cnf[key]
+                        DB = 1
 
             for e3det in self.e3detectors:               
                 dgr = e3det.owngroup_name
