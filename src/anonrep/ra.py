@@ -32,7 +32,18 @@ NATS_DEFAULT_SIGN_RESPONSE = "v2x.rsu.certs"
 NATS_DEFAULT_SERVER = "localhost:4222"
 
 class RegistrationAuthority:
+
+
     def __init__(self, conf=None):
+        # Valid input message types
+        self.message_handler = {
+            "requesting_ra_receipt": self.get_ra_receipt_message,
+            "requesting_ra_certificate": self.get_ra_certificate_message,
+            "requesting_rs_receipt": self.get_rs_receipt_message,
+            "rs_coupon": self.get_rs_coupon_message
+        }
+
+
         if not conf:
             self.listen_channel = NATS_DEFAULT_SIGN_REQUEST
             self.response_channel = NATS_DEFAULT_SIGN_RESPONSE
@@ -58,30 +69,81 @@ class RegistrationAuthority:
 
     async def on_message(self, msg):
         # Parse the message
-        data = json.loads(msg.data.decode())
-        print(f"Received a message: {data}")
+        message_dict = json.loads(msg.data.decode())
+        print(f"Received a message: {message_dict}")
 
-        # Check if there is a coupon to sign
-        if not "coupon" in data:
-            #   print("No coupon in message")
+        # Select return function in dict
+        # And print message type not found if not detines
+        if "type" not in message_dict:
+            print(f"Message type not found: {message_dict}")
             return
-
-        # Check if the coupon is valid
-        valid_cert = self.get_cert(data["coupon"])
-
-        if not valid_cert:
-            print("Invalid coupon:", data["coupon"])
-            return
-        else:
-            # Publish response
-            ret_message = {
-                "id": data["id"],
-                "certificate": valid_cert
-            }
+        mt = message_dict["type"]
+        ret_funct = self.message_handler.get(mt, None)
+        if ret_funct:
+            ret_message = ret_funct(message_dict)
             await self.nats.publish(self.response_channel, json.dumps(ret_message).encode())
         
 
-    
+    #
+    # Message types. these are dictonaries containing the message to send
+    # The functions are listed in the same order as they are executed in
+    # Normal operation: ra_receipt->ra_certificate->rs_receipt->rs_coupon
+    # 
+    def get_ra_receipt_message(self, request_message):
+        """
+        Returns the request message that RA returns to the vehicle"
+        """
+        # Will be used until we get the certificate
+        veh_id = request_message["id"]
+        receipt_message = {}
+        receipt_message["id"] = veh_id
+        receipt_message["type"] = "ra_receipt"
+        receipt_message["receipt_sign"] = "RECEIPT_SIGN"
+        return receipt_message
+
+    def get_ra_certificate_message(self, request_message):
+        """
+        Returns the cert message that RA returns to the vehicle"
+        """
+        # Will be used until we get the certificate
+        veh_id = request_message["id"]
+        cert_message = {}
+        cert_message["id"] = veh_id
+        cert_message["type"] = "ra_certificate"
+        cert_message["certificate"] = "CERTIFICATE"
+        return cert_message
+
+
+    # For testing purposes only
+    # FIXME: this should be in rs
+    def get_rs_receipt_message(self, request_message):
+        """
+        Returns the request message that RS returns to the vehicle"
+        """
+        # Will be used until we get the certificate
+        veh_id = request_message["id"]
+        receipt_message = {}
+        receipt_message["id"] = veh_id
+        receipt_message["type"] = "rs_receipt"
+        receipt_message["receipt_sign"] = "RECEIPT_SIGN"
+        return receipt_message
+
+    # For testing purposes only
+    # FIXME: this should be in rs
+    def get_rs_coupon_message(self, request_message):
+        """
+        Returns the coupong message that RS returns to the vehicle"
+        """
+        # Will be used until we get the certificate
+        veh_id = request_message["id"]
+        coupon_message = {}
+        coupon_message["id"] = veh_id
+        coupon_message["type"] = "rs_coupon"
+        coupon_message["coupon"] = "COUPON"
+        return coupon_message
+
+
+
 
     def get_cert(self, coupon):
         return "VALID_CERTIFICATE"

@@ -205,13 +205,14 @@ class SumoNatsInterface:
         if self.rsu_input:
             rsu_channel = self.rsu_input.channel_prefix + ".*"
             async def rsu_message_handler(msg):
-                subject = msg.subject
-                reply = msg.reply
-                data = msg.data.decode()
-                #print("Received a message on '{subject} {reply}': {data}".format(
-                #    subject=subject, reply=reply, data=dat a))
-                msg_dict = json.loads(data)
-                print("RSU message:", msg_dict)
+                self.rsu_input.process_incoming_message(msg)
+            #     subject = msg.subject
+            #     reply = msg.reply
+            #     data = msg.data.decode()
+            #     #print("Received a message on '{subject} {reply}': {data}".format(
+            #     #    subject=subject, reply=reply, data=dat a))
+            #     msg_dict = json.loads(data)
+            #     print("RSU message:", msg_dict)
             await self.nats.subscribe(rsu_channel, cb=rsu_message_handler)
 
         self.draw_radars()

@@ -81,7 +81,7 @@ class Vehicle:
         """
         Processes the certificate from the RA
         """
-        self.rurrent_ra_receipt = response
+        self.current_ra_receipt = response
 
     def process_ra_certificate(self, response):
         """
@@ -196,7 +196,9 @@ class Vehicle:
         Processes the incoming message note that the caller should ensure
         thet the messages are actually intented for this vehicle
         """
-        if not id in message:
+        print("Processing incoming message")
+        print(message)
+        if not "id" in message:
             raise ValueError("Message does not contain id")
         
         if message["id"] != self.temp_id:

@@ -409,4 +409,20 @@ class VehStorage():
         #}
         return ret_messages
     
+    def process_incoming_message(self, msg):
+        """"
+            The RSU also handles incoming messages from the RA and RS"
+            These messages are in eessence only passed to the vehicle objects
+        """
+        message_types_for_vehicles = ["ra_receipt", "ra_certificate", "rs_receipt", "rs_coupon"]
+        msg_json = msg.data.decode()
+        msg_dict = json.loads(msg_json)
+        if "type" in msg_dict:
+            if msg_dict["type"] in message_types_for_vehicles:
+                # We pass all messages to all vehicles
+                # This is not the mose effective way, but in any case
+                # The messages should be broadcast to all and vehs have to know if
+                # they are the target
+                for veh in self.vehs.values():
+                    veh.process_incoming_message(msg_dict)
 
