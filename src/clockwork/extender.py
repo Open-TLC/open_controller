@@ -58,7 +58,7 @@ class Extender:
             self.ext_mode = ext_params['ext_mode']
             BP = 1
 
-        self.ext_threshold = 0.5
+        self.ext_threshold = 0.25
         if 'ext_threshold' in ext_params:
             self.ext_threshold = ext_params['ext_threshold']
             BP = 1
