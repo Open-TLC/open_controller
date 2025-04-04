@@ -551,7 +551,7 @@ class PhaseRingController:
 
         """Returns status info (time, phase, group states, requests)"""
 
-        maxstr = 25
+        maxstr = 40
         # ExtOut = 'group'
         ExtOut = 'group'
         DetOut = 'req'
