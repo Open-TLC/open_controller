@@ -47,6 +47,7 @@ class Extender:
         self.vehcount = 0
         self.conf_sum = 0
         self.threshold = 0.3
+        self.momentum = 0
         
         # DBIK202502 Safety extender variables
         self.ext_ended_at = 0
@@ -105,6 +106,8 @@ class Extender:
         if e3dets != []:
             group.e3extender = self
 
+
+
     def __str__(self):
         return "Ext for group:{}, dets:{}".format(self.group.group_name, self.dets)
 
@@ -151,11 +154,17 @@ class e3Extender(Extender):
             if grp['group'].e3extender:
                 self.conf_sum += grp['group'].e3extender.vehcount
         
-        # Calculate the Green-side Momentum
+        # Calculate the Green-side Momentum, old version
         vc = 0
         for e3det in self.e3dets:
              vc += e3det.veh_count()
         self.vehcount = vc
+
+        # DBIK20250409 Calculate the Green-side Momentum, take signal state in account
+        mm = 0
+        for e3det in self.e3dets:
+             mm += e3det.momentum()
+        self.momentum = mm
 
         if (self.conf_sum == 0) and (self.vehcount == 0):
             e3det.extend_on = False
@@ -187,7 +196,7 @@ class e3Extender(Extender):
             if self.conf_sum > 0:   
                 GreenTimeUsed = self.system_timer.seconds - self.group.green_started_at
                 TimeDiscount = 1.0 + (GreenTimeUsed/self.time_discount)
-                traffic_ratio = self.vehcount/self.conf_sum
+                traffic_ratio = self.momentum/self.conf_sum  # DBIK20250409 replace vehcount with momentum
                 self.threshold = self.ext_threshold * TimeDiscount
                 if traffic_ratio > self.threshold:
                     self.extend = True 

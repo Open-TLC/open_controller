@@ -754,6 +754,10 @@ class PhaseRingController:
                         else: 
                             val = 10.0
                         e3ext_stat += str(grpno) + ': '
+                        
+                        e3ext_stat += str(val1) + '/'
+                        e3ext_stat += str(val2) + ' '
+
                         e3ext_stat += str(val)
                         if val > val3:
                             ch = '>'

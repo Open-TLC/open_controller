@@ -218,8 +218,10 @@ class e3Detector(Detector):
 
         for vehid in self.det_vehicles_dict:
 
-            vtype = self.det_vehicles_dict[vehid]['vtype']
-
+            vtype = self.det_vehicles_dict[vehid]['vtype']                       
+            TLSdist = self.det_vehicles_dict[vehid]['TLSdist']
+            TLSno = self.det_vehicles_dict[vehid]['TLSno']
+            
             if (vtype == 'car_type'):
                     pass
             elif vtype == 'truck_type':
@@ -238,9 +240,7 @@ class e3Detector(Detector):
 
             elif (vtype == 'v2x_type'):
                 if self.v2x_ON:                 
-                    self.det_vehicles_dict[vehid]['vcolor'] = 'blue'  # V2X vehicle detected                
-                    TLSdist = self.det_vehicles_dict[vehid]['TLSdist']
-                    TLSno = self.det_vehicles_dict[vehid]['TLSno']
+                    self.det_vehicles_dict[vehid]['vcolor'] = 'blue'  # V2X vehicle detected   
                     if (TLSno == 11) and (TLSdist < self.MaxOZ) and (TLSdist > self.MinOZ):  
                         self.det_vehicles_dict[vehid]['vcolor'] = 'green'  # V2X veh at option-zone
 
@@ -265,8 +265,15 @@ class e3Detector(Detector):
                 print('**************** Error in vehicle type: ', vtype)
 
     def veh_count(self):
-        # self.tick()
         return self.vehcount
+    
+    def momentum(self):
+        if self.owngroup_obj.group_on():
+            mm = self.vehcount
+        else: mm = 0
+        return mm
+    
+
         
 
 if __name__ == "__main__":
