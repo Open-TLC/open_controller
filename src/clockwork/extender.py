@@ -196,6 +196,21 @@ class e3Extender(Extender):
             if self.conf_sum > 0:   
                 GreenTimeUsed = self.system_timer.seconds - self.group.green_started_at
                 TimeDiscount = 1.0 + (GreenTimeUsed/self.time_discount)
+                traffic_ratio = self.vehcount/self.conf_sum  # DBIK20250409 replace vehcount with momentum
+                self.threshold = self.ext_threshold * TimeDiscount
+                if traffic_ratio > self.threshold:
+                    self.extend = True 
+                    e3det.extend_on = True
+                    return 1
+            else: 
+                self.extend = True 
+                e3det.extend_on = True
+                return 1
+            
+        elif self.ext_mode == 4:
+            if self.conf_sum > 0:   
+                GreenTimeUsed = self.system_timer.seconds - self.group.green_started_at
+                TimeDiscount = 1.0 + (GreenTimeUsed/self.time_discount)
                 traffic_ratio = self.momentum/self.conf_sum  # DBIK20250409 replace vehcount with momentum
                 self.threshold = self.ext_threshold * TimeDiscount
                 if traffic_ratio > self.threshold:
