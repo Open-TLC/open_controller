@@ -46,7 +46,7 @@ class Extender:
         self.conf_groups = [] # List of conflicting signal grooups
         self.vehcount = 0
         self.conf_sum = 0
-        self.threshold = 0.3
+        self.threshold = 0.25
         self.momentum = 0
         
         # DBIK202502 Safety extender variables
@@ -163,7 +163,7 @@ class e3Extender(Extender):
         # DBIK20250409 Calculate the Green-side Momentum, take signal state in account
         mm = 0
         for e3det in self.e3dets:
-             mm += e3det.momentum()
+             mm += e3det.momentum2()
         self.momentum = mm
 
         if (self.conf_sum == 0) and (self.vehcount == 0):

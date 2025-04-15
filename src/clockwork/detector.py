@@ -198,6 +198,7 @@ class e3Detector(Detector):
         # self.group = conf['group']
         self.vehcount = 0
         self.errorcount = 0
+        self.speedsum = 0
         
     def is_extending(self):
         """Returns true if vehicle count is more than zero"""
@@ -215,10 +216,13 @@ class e3Detector(Detector):
         self.det_vehicles_dict = obj_list
         self.vehcount = len(self.det_vehicles_dict)
         self.ShortGapFound = False  # DBIK20250312
+        self.speedsum = 0
 
         for vehid in self.det_vehicles_dict:
 
-            vtype = self.det_vehicles_dict[vehid]['vtype']                       
+            vtype = self.det_vehicles_dict[vehid]['vtype']
+            speed = self.det_vehicles_dict[vehid]['vspeed'] 
+            self.speedsum += speed                      
             TLSdist = self.det_vehicles_dict[vehid]['TLSdist']
             TLSno = self.det_vehicles_dict[vehid]['TLSno']
             
@@ -267,11 +271,21 @@ class e3Detector(Detector):
     def veh_count(self):
         return self.vehcount
     
-    def momentum(self):
+    def momentum1(self):
         if self.owngroup_obj.group_on():
             mm = self.vehcount
         else: mm = 0
         return mm
+    
+    def momentum2(self):
+        if self.vehcount > 0:
+            avr_speed = self.speedsum/self.vehcount
+            if avr_speed < 0.2:
+                return 0
+            else:
+                return self.vehcount
+        else: 
+            return 0
     
 
         
