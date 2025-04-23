@@ -40,7 +40,7 @@ class RegistrationAuthority:
             "requesting_ra_receipt": self.get_ra_receipt_message,
             "requesting_ra_certificate": self.get_ra_certificate_message,
             "requesting_rs_receipt": self.get_rs_receipt_message,
-            "rs_coupon": self.get_rs_coupon_message
+            "measurement": self.get_rs_coupon_message
         }
 
 
