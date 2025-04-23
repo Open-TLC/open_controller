@@ -37,8 +37,8 @@ class RegistrationAuthority:
     def __init__(self, conf=None):
         # Valid input message types
         self.message_handler = {
-            "client_coupon": self.get_ra_receipt_message,
-            "requesting_ra_certificate": self.get_ra_certificate_message,
+            "requesting_rs_receipt": self.get_rs_receipt_message,
+            "measurement": self.get_rs_coupon_message
         }
 
 
@@ -58,9 +58,10 @@ class RegistrationAuthority:
         await self.connect_nats() # Exits if fails
 
         # Print init informantion
-        print("This is Registration Authority (RA)")
+        print("This is the Reputation Server (RS)")
         print("Listening on message types:", self.message_handler.keys())
         print(f"On channel: {self.listen_channel}")
+
         # Subscribe to the listen channel
         await self.nats.subscribe(self.listen_channel, cb=self.on_message)
 
@@ -69,6 +70,10 @@ class RegistrationAuthority:
             await asyncio.sleep(1)
 
     async def on_message(self, msg):
+        """
+        Callback function for handling the  NATS message
+        """
+
         # Parse the message
         message_dict = json.loads(msg.data.decode())
         #print(f"Received a message: {message_dict}")
@@ -83,53 +88,101 @@ class RegistrationAuthority:
         if ret_funct:
             ret_message = ret_funct(message_dict)
             await self.nats.publish(self.response_channel, json.dumps(ret_message).encode())
-        
-
-    #
-    # Message types. these are dictonaries containing the message to send
-    # The functions are listed in the same order as they are executed in
-    # Normal operation: ra_receipt->ra_certificate
-    # 
-    def get_ra_receipt_message(self, request_message):
-        """
-        Returns the request message that RA returns to the vehicle"
-        """
-        # Will be used until we get the certificate
-        print("Received a request for RA receipt")
-        veh_id = request_message["id"]
-        receipt_message = {}
-        receipt_message["id"] = veh_id
-        receipt_message["type"] = "ra_receipt"
-        receipt_message["receipt_sign"] = "RECEIPT_SIGN"
-        print("Sending RA receipt:", receipt_message)
-        return receipt_message
-
-    def get_ra_certificate_message(self, request_message):
-        """
-        Returns the cert message that RA returns to the vehicle"
-        """
-        # Will be used until we get the certificate
-        print("Received a request for RA certificate")
-        veh_id = request_message["id"]
-        cert_message = {}
-        cert_message["id"] = veh_id
-        cert_message["type"] = "ra_certificate"
-        cert_message["certificate"] = "CERTIFICATE"
-        print("Sending RA certificate:", cert_message)
-        return cert_message
-
-
-    def get_cert(self, coupon):
-        return "VALID_CERTIFICATE"
 
 
     async def connect_nats(self):
+        "Subfunction to connect to the NATS server"
         try:
             await self.nats.connect(self.nats_server)
         except Exception as e:
             print("Error connecting to NATS server: ", self.nats_server)
             print(e)
-            exit(1)
+            exit(1)        
+
+
+
+    #
+    # Message types. these are dictonaries containing the message to send
+    # The functions are listed in the same order as they are executed in
+    # Normal operation: rs_receipt->rs_coupon
+    # 
+
+
+    def get_rs_receipt_message(self, request_message):
+        """
+        Returns the request message that RS returns to the vehicle"
+        """
+        print("Received a request for RS receipt")
+        veh_id = request_message["id"]
+        receipt_message = {}
+        receipt_message["id"] = veh_id
+        receipt_message["type"] = "rs_receipt"
+        receipt_message["receipt_sign"] = "RECEIPT_SIGN"
+        print("Sending RS receipt:", receipt_message)
+        return receipt_message
+
+ 
+    def get_rs_coupon_message(self, msg):
+        """
+        Returns the coupong message that RS returns to the vehicle basedon the report
+
+        """
+        print("Received a request for RS coupon with measurement data:" + str(msg))
+        if not self.report_message_format_correct(msg):
+            print("Message format incorrect")
+            return None
+        if not self.report_certificate_correct(msg["certificate"]):
+            print("Certificate incorrect")
+            return None
+
+        veh_id = msg["id"]
+        coupon_message = {}
+        coupon_message["id"] = veh_id
+        coupon_message["type"] = "rs_coupon"
+        coupon_message["coupon"] = self.get_coupon(msg['report'])
+        print("Sending RS coupon:", coupon_message)
+        return coupon_message
+
+
+    #
+    #   Sanity check and signature check functions
+    # 
+    def report_message_format_correct(self, msg):
+        """
+        Check the sanity of the report
+        """
+        # Check if the report is valid
+        if "report" not in msg:
+            #print("Report not found")
+            return False
+        if "id" not in msg:
+            #print("ID not found")
+            return False
+        if "type" not in msg:
+            #print("Type not found")
+            return False
+        if "certificate" not in msg:
+            #print("Certificate not found")
+            return False
+        return True
+
+
+    def report_certificate_correct(self, certificate):
+        """
+        Check the certificate, returns True if valid
+        """
+        # FIXME: We call proper function here
+        return True
+    
+
+    #
+    # Reputation calculation functions
+    #
+
+    def get_coupon(self, report_data):
+        return "COUPON_TEST"
+
+
         
 
 

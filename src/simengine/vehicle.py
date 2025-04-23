@@ -32,10 +32,10 @@ class Vehicle:
         # Triggered by new data (from sumo)
         self.machine.add_transition(trigger='got_data', source='waiting_for_data', dest='data_to_send')
         
-        # Reguesting the ra receipt (Step 1)
-        self.machine.add_transition(trigger='requested_ra_receipt', source='data_to_send', dest='waiting_ra_receipt')
+        # Sending coupon, waiting to get the receipt (Step 1)
+        self.machine.add_transition(trigger='send_coupon', source='data_to_send', dest='waiting_ra_receipt')
         # Got the ra receipt, after confirming, request the certificate (step 3)
-        self.machine.add_transition(trigger='request_ra_certificate', source='waiting_ra_receipt', dest='waiting_for_ra_certificate')
+        self.machine.add_transition(trigger='sent_identity_to_ra', source='waiting_ra_receipt', dest='waiting_for_ra_certificate')
         # Got the certificate, we start data sending process 
         # First we rquest a receipt from RS (step 5)
         self.machine.add_transition(trigger='request_rs_receipt', source='waiting_for_ra_certificate', dest='waiting_for_rs_receipt')
@@ -118,25 +118,25 @@ class Vehicle:
     # The functions are listed in the same order as they are executed in
     # Normal operation: ra_receipt->ra_certificate->rs_receipt->rs_coupon
     # 
-    def get_request_ra_receipt_message(self):
+    def get_request_ra_cert_message(self):
         """
         Returns the request message for the registration authority (ra)
         """
         # Will be used untill we get the certificate
-        self.temp_id = self.id_generator.generate_id()
         request_message = {}
         request_message["id"] = self.temp_id
-        request_message["type"] = "requesting_ra_receipt"
+        request_message["type"] = "requesting_ra_certificate"
         return request_message
 
-    def get_request_ra_certificate_message(self):
+    def get_coupon_message(self):
         """
         Returns the sign request message for the vehicle
         This is to be send to the RA for (blind) signing
         """
         request_message = {}
+        self.temp_id = self.id_generator.generate_id()
         request_message["id"] = self.temp_id # Defined in previous state
-        request_message["type"] = "requesting_ra_certificate"
+        request_message["type"] = "client_coupon"
         coupon = self.coupon_generator.get_coupon()
         request_message["coupon"] = coupon
         return request_message
@@ -150,7 +150,7 @@ class Vehicle:
         self.temp_id = self.id_generator.generate_id()
         request_message = {}
         request_message["id"] = self.temp_id
-        request_message["type"] = "requesting_rs_receipt"
+        request_message["type"] = "requesting_ra_certificate"
         return request_message
 
 
@@ -177,14 +177,14 @@ class Vehicle:
         # We are in step 1 and want to send some data, first we establish a session 
         # with the RA
         if self.is_data_to_send():
-            self.requested_ra_receipt() # state change
-            return self.get_request_ra_receipt_message()
+            self.send_coupon() # state change
+            return self.get_coupon_message()
 
         # We have established a connection to the RA, now we can request the certificate
         if self.current_ra_receipt:
-            self.request_ra_certificate()
+            self.sent_identity_to_ra()
             self.current_ra_receipt = None
-            return self.get_request_ra_certificate_message()
+            return self.get_request_ra_cert_message()
         
         # We have the certificate, now we can start sending the data to the RS
         if self.is_waiting_for_ra_certificate():
@@ -192,7 +192,6 @@ class Vehicle:
             if self.certificate:
                 self.request_rs_receipt()
                 return self.get_request_rs_receipt_message()
-            
         # We have the receipt from the RS, now we can send the data
         if self.is_waiting_for_rs_receipt():
             self.send_data_to_rs()
@@ -217,6 +216,7 @@ class Vehicle:
         if message["type"] == "ra_receipt":
             if self.is_waiting_ra_receipt():
                 # FIXME: Check the receipt function should be here
+                print("Processing RA receipt")
                 self.process_ra_receipt(message)
         elif message["type"] == "ra_certificate":
             if self.is_waiting_for_ra_certificate():
