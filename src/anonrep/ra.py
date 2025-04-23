@@ -72,6 +72,10 @@ class RegistrationAuthority:
         # Parse the message
         message_dict = json.loads(msg.data.decode())
         #print(f"Received a message: {message_dict}")
+        if message_dict is None:
+            print("Received a message: None")
+            return
+
 
         # Select return function in dict
         # And print message type not found if not detines

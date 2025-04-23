@@ -417,6 +417,9 @@ class VehStorage():
         message_types_for_vehicles = ["ra_receipt", "ra_certificate", "rs_receipt", "rs_coupon"]
         msg_json = msg.data.decode()
         msg_dict = json.loads(msg_json)
+        if msg_dict is None:
+            print("Message is None")
+            return
         if "type" in msg_dict:
             if msg_dict["type"] in message_types_for_vehicles:
                 # We pass all messages to all vehicles

@@ -37,11 +37,11 @@ class Vehicle:
         # Got the ra receipt, after confirming, request the certificate (step 3)
         self.machine.add_transition(trigger='sent_identity_to_ra', source='waiting_ra_receipt', dest='waiting_for_ra_certificate')
         # Got the certificate, we start data sending process 
-        # First we rquest a receipt from RS (step 5)
-        self.machine.add_transition(trigger='request_rs_receipt', source='waiting_for_ra_certificate', dest='waiting_for_rs_receipt')
+        # We send the CERT to the RS (step 5)
+        self.machine.add_transition(trigger='send_cert_to_rs', source='waiting_for_ra_certificate', dest='waiting_for_rs_receipt')
         # Then we send the measurement data to RS and expect to get back the coupon 
         # for the prooposed new reputation (step 7)
-        self.machine.add_transition(trigger='send_data_to_rs', source='waiting_for_rs_receipt', dest='wait_rs_coupon')
+        self.machine.add_transition(trigger='sent_identity_to_rs', source='waiting_for_rs_receipt', dest='wait_rs_coupon')
         # Get back to the initial state after we got the coupon
         self.machine.add_transition(trigger='got_coupon', source='wait_rs_coupon', dest='waiting_for_data')
 
@@ -142,15 +142,14 @@ class Vehicle:
         return request_message
 
 
-    def get_request_rs_receipt_message(self):
+    def get_request_rs_coupon_message(self):
         """
-        Returns the request message for the reputation server (rr)
+        Returns the request message for the reputation server (rs)
         """
         # Will be used untill we get the certificate
-        self.temp_id = self.id_generator.generate_id()
         request_message = {}
         request_message["id"] = self.temp_id
-        request_message["type"] = "requesting_ra_certificate"
+        request_message["type"] = "requesting_rs_coupon"
         return request_message
 
 
@@ -161,11 +160,15 @@ class Vehicle:
         """
         if self.certificate is None:
             raise ValueError("Certificate is not signed yet")
-        
-        measurement_message = self.get_latest_mearurement_data()
+        measurement_message = {}
+
+        self.temp_id = self.id_generator.generate_id()
         measurement_message["id"] = self.temp_id
         measurement_message["type"] = "measurement"
         measurement_message["certificate"] = self.certificate
+        
+        report = self.get_latest_mearurement_data()
+        measurement_message["report"] = report
         return measurement_message
 
     def get_message_to_send(self):
@@ -190,12 +193,12 @@ class Vehicle:
         if self.is_waiting_for_ra_certificate():
             # The self certificate is set if we have gotten it from the RA
             if self.certificate:
-                self.request_rs_receipt()
-                return self.get_request_rs_receipt_message()
+                self.send_cert_to_rs()
+                return self.get_measurement_message()
         # We have the receipt from the RS, now we can send the data
         if self.is_waiting_for_rs_receipt():
-            self.send_data_to_rs()
-            return self.get_measurement_message()
+            self.sent_identity_to_rs()
+            return self.get_request_rs_coupon_message()
 
         # No messages to send
         return None

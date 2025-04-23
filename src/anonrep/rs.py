@@ -37,8 +37,8 @@ class RegistrationAuthority:
     def __init__(self, conf=None):
         # Valid input message types
         self.message_handler = {
-            "requesting_rs_receipt": self.get_rs_receipt_message,
-            "measurement": self.get_rs_coupon_message
+            "measurement": self.get_rs_receipt_message,
+            "requesting_rs_coupon": self.get_rs_coupon_message
         }
 
 
@@ -51,6 +51,9 @@ class RegistrationAuthority:
             self.response_channel = conf["response_channel"]
             self.nats_server = conf["nats_server"]
         
+        # We store the unprocessed measurement data here
+        self.measurement_reports = {}
+
 
     async def run(self):
         # Connett to nats server:
@@ -74,9 +77,13 @@ class RegistrationAuthority:
         Callback function for handling the  NATS message
         """
 
+        print(f"Received message")
         # Parse the message
         message_dict = json.loads(msg.data.decode())
-        #print(f"Received a message: {message_dict}")
+        if message_dict is None:
+            print("Message is None")
+            return
+
 
         # Select return function in dict
         # And print message type not found if not detines
@@ -87,7 +94,9 @@ class RegistrationAuthority:
         ret_funct = self.message_handler.get(mt, None)
         if ret_funct:
             ret_message = ret_funct(message_dict)
-            await self.nats.publish(self.response_channel, json.dumps(ret_message).encode())
+            # Skip the message if there is an error (function returns none in that case)
+            if ret_message:
+                await self.nats.publish(self.response_channel, json.dumps(ret_message).encode())
 
 
     async def connect_nats(self):
@@ -108,12 +117,21 @@ class RegistrationAuthority:
     # 
 
 
-    def get_rs_receipt_message(self, request_message):
+    def get_rs_receipt_message(self, msg):
         """
         Returns the request message that RS returns to the vehicle"
         """
-        print("Received a request for RS receipt")
-        veh_id = request_message["id"]
+        print("Received cert and measurement")
+        if not self.report_message_format_correct(msg):
+            print("Message format incorrect")
+            return None
+        if not self.report_certificate_correct(msg["certificate"]):
+            print("Certificate incorrect")
+            return None
+
+        veh_id = msg["id"]
+        self.measurement_reports[veh_id] = msg["report"]
+
         receipt_message = {}
         receipt_message["id"] = veh_id
         receipt_message["type"] = "rs_receipt"
@@ -127,19 +145,18 @@ class RegistrationAuthority:
         Returns the coupong message that RS returns to the vehicle basedon the report
 
         """
-        print("Received a request for RS coupon with measurement data:" + str(msg))
-        if not self.report_message_format_correct(msg):
-            print("Message format incorrect")
-            return None
-        if not self.report_certificate_correct(msg["certificate"]):
-            print("Certificate incorrect")
-            return None
 
         veh_id = msg["id"]
+        if veh_id not in self.measurement_reports:
+            print("No measurement report found for this vehicle")
+            return None
+        else:
+            report = self.measurement_reports[veh_id]
+
         coupon_message = {}
         coupon_message["id"] = veh_id
         coupon_message["type"] = "rs_coupon"
-        coupon_message["coupon"] = self.get_coupon(msg['report'])
+        coupon_message["coupon"] = self.get_coupon(report)
         print("Sending RS coupon:", coupon_message)
         return coupon_message
 
