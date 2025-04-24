@@ -247,8 +247,8 @@ class SignalGroup(Machine):
 
     def start_green_cb(self):
         self.green_started_at = self.system_timer.seconds
-        if self.group_name == 'group1':
-            print('Veh group: ', self.group_name,' Time of green start', self.system_timer.seconds)
+        # if self.group_name == 'group1':
+            # print('Veh group: ', self.group_name,' Time of green start', self.system_timer.seconds)
         
     def start_red_cb(self):
         # Note: this is imitted if the unit is used as an web interface template, might find a better way

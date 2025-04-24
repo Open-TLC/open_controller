@@ -68,18 +68,19 @@ class Timer():
             next_corrected_time_step = 0.0
         return next_corrected_time_step
     
-
-    @property
-    def real_seconds(self):
-        """Returns real time in seconds from simulation start"""
-        return(round(self.cur_rtime,5))
-        
-
+    def str_seconds(self):
+        """Returns real time in seconds in string format"""
+        return str(round(self.steps/10,1))
+       
     @property
     def seconds(self):
         """Returns time in seconds, rounded up to three decimals"""
         return round(self.steps * self.time_step, 5)
-      
+
+    @property
+    def real_seconds(self):
+        """Returns real time in seconds from simulation start"""
+        return(round(self.cur_rtime,5))  
     
     @seconds.setter
     def seconds(self, new_seconds):

@@ -68,6 +68,9 @@ class Timer():
             next_corrected_time_step = 0.0
         return next_corrected_time_step
     
+    def str_seconds(self):
+        """Returns real time in seconds in string format"""
+        return str(round(self.steps/10,1))
 
     @property
     def real_seconds(self):

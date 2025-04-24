@@ -76,7 +76,7 @@ def main():
 
 
 class SimplePhase():
-    def __init__(self, name, groups):
+    def __init__(self, name, groups, timer):
         self.groups = groups
         self.name = name
 
@@ -121,8 +121,8 @@ class SimplePhase():
         MinGreensEnded = True
         for grp in self.groups:
             if grp.is_in_min_green():            
-                return False
-        print("All min greens have ended")
+                return False        
+        # print("All min greens have ended")
         return MinGreensEnded  
     
     def phase_min_time_reached(self):
@@ -217,6 +217,11 @@ class PhaseRingController:
             self.name = conf['name']
         else:
             self.name = "unnamed"
+
+        if conf['print_status']:
+            self.print_status = True
+        else:
+            self.print_status = False
 
         #print("Initializing a controller:", self.name)
 
@@ -451,7 +456,7 @@ class PhaseRingController:
         phase_order = mph_current + mph_after + mph_before # DBIK241002 Current phase first in the phase order
         # phase_order = mph_after + mph_before + mph_current # DBIK241002 Current phase last in the phase order
 
-        phase_order_str = 'phase order: '
+        phase_order_str = self.name + ' phase order: '
         for mps in phase_order:
             phase_order_str = phase_order_str + str(mps) + ' '
 
@@ -461,11 +466,13 @@ class PhaseRingController:
                 nextPH = mph
                 break
             
-        phase_order_str = phase_order_str + ', curPH: ' + str(self.current_main_phase) + ', nextPH: ' + str(nextPH)
+        phase_order_str = self.timer.str_seconds() + ' ' + phase_order_str + ', curPH: ' + str(self.current_main_phase) + ', nextPH: ' + str(nextPH)
 
         if phase_order_str != self.prev_phase_order_str:
-            print(phase_order_str)
-            self.prev_phase_order_str = phase_order_str
+            if self.print_status:
+                pass
+                # print(phase_order_str)
+        self.prev_phase_order_str = phase_order_str
 
         return nextPH # No requests -> No main phase
   
@@ -489,15 +496,21 @@ class PhaseRingController:
             if self.next_main_phase.phase_has_started(): 
                 self.current_main_phase = self.next_main_phase
                 self.next_main_phase = None
-                print("NEW PHASE STARTED:", self.current_main_phase)
+                if self.print_status:
+                    strout = self.timer.str_seconds() + ' ' + self.name + ' NEW PHASE STARTED: ' + str(self.current_main_phase)
+                    print(strout)
                 self.status = 'Hold'
         
         if self.status == 'Hold':
             if self.current_main_phase:
                 self.current_main_phase.set_signalgroup_green_permissions(do_permit=True)
-                if self.current_main_phase.all_min_greens_have_ended():  
+                if self.current_main_phase.all_min_greens_have_ended():
                 # if self.current_main_phase.phase_min_time_reached():  #DBIK 20240926 One group reached the phase min  
-                        self.status = 'Scan'
+                    self.status = 'Scan'
+                    if self.print_status:
+                        strout = self.timer.str_seconds() + ' ' + self.name + ' ALL MIN TIMES ENDED: ' + str(self.current_main_phase)      
+                        print(strout) 
+                
              
 
 
@@ -908,7 +921,7 @@ class PhaseRingController:
             for grp, ph_stat in zip(self.groups, row):
                 if ph_stat==1:
                     groups_in_mp.append(grp)
-            new_main_phase = SimplePhase(ph_index, groups_in_mp)
+            new_main_phase = SimplePhase(ph_index, groups_in_mp, self.timer)
             print("Phase: ",ph_index," ",groups_in_mp)
             ph_index += 1
             self.main_phases.append(new_main_phase)

@@ -116,7 +116,14 @@ def run_sumo(conf_filename=None, runlog=None):
             sumo_name = controller_params['sumo_name']
             print('Controller Sumo name:', sumo_name)
 
+            print_status = controller_params['print_status']
+            print('Controller print status:', print_status)
+
+            controller_params['name'] = key
+
+
             controllers_dict[key]['sumo_name'] = sumo_name
+            controllers_dict[key]['print_status'] = print_status
 
             controllers_dict[key]['controller'] = PhaseRingController(controller_params, system_timer)
             
@@ -157,8 +164,7 @@ def run_sumo(conf_filename=None, runlog=None):
     try:
         traci.start([sumo_bin, "-c", sumo_file,
                 "--start",
-                "--quit-on-end",
-                "--tripinfo-output", "tripinfo.xml"])
+                "--quit-on-end"])
     except Exception as e:
         print("Sumo start failed:", e)
         return
@@ -221,18 +227,19 @@ def run_sumo(conf_filename=None, runlog=None):
                 traci.trafficlight.setRedYellowGreenState(sumo_name, states)
 
                 # Run-time outputs DBIK 20240411          
-                if sumo_name == "269_Mech_Jatk":
-                # if sumo_name == "270_Tyyn_Vali":
+
+                if controllers_dict[key]['print_status']:
+                
                     prevstatusstring = statusstring
                     statusstring = controllers_dict[key]['controller'].get_control_status()
-                    # if sys_cnf['controllers'][key]['group_outputs']:
+                    clk = system_timer.str_seconds()
                     
                     if ChangesOnly: 
                         if (prevstatusstring != statusstring) or ((system_timer.steps - last_print) > 10):
-                            print(str(system_timer.steps) + ' ' + key + ' ' + statusstring)
+                            print(clk + ' ' + key + ' ' + statusstring)
                             last_print = system_timer.steps
                     else: 
-                        print(str(system_timer.steps) + ' ' + key + ' ' + statusstring)
+                        print(clk + ' ' + key + ' ' + statusstring)
                     if runlog:
                         runlog.add_line(statusstring)                        
 

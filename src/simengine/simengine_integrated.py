@@ -78,7 +78,13 @@ def run_sumo(conf_filename=None, runlog=None):
     timer_mode = timer_prm['timer_mode']
     time_step = timer_prm['time_step']
     time_multiplier = timer_prm['real_time_multiplier']
-    print("Timer mode:", timer_mode,", Time step:", time_step, ", Multiplier:", time_multiplier)
+
+    end_time = -1
+    if 'max_time' in timer_prm:
+        end_time = timer_prm['max_time']
+
+    print('Timer parameters: ', timer_prm)
+    
 
     system_timer = Timer(timer_prm)
     next_update_time = 0
@@ -154,7 +160,7 @@ def run_sumo(conf_filename=None, runlog=None):
 
     # traci.vehicle.setLaneChangeMode(vehicleId,256) # Disable lane changing except from Traci
 
-    while traci.simulation.getMinExpectedNumber() > 0:
+    while (traci.simulation.getMinExpectedNumber() > 0) and ((system_timer.steps/10 <= end_time) or (end_time < 0)):
 
         for vehicleId in traci.vehicle.getIDList():
             traci.vehicle.setSpeedMode(vehicleId,55) # disable right of way check, vehicles can enter the junction, despite queue end
@@ -183,17 +189,17 @@ def run_sumo(conf_filename=None, runlog=None):
 
             prevstatusstring = statusstring
             statusstring = traffic_controller.get_control_status()
-            clk = system_timer.steps/10
-            clk = round(clk, 1)
+            # clk = str(round(system_timer.steps/10,1))
+            clk = system_timer.str_seconds()
 
             if sys_cnf['sumo']['print_status']:
                
                 if ChangesOnly: 
                     if (prevstatusstring != statusstring) or ((system_timer.steps - last_print) > 10):
-                        print(str(clk) + ' ' + statusstring)
+                        print(clk + ' ' + statusstring)
                         last_print = system_timer.steps
 
-                else: print(str(clk) + ' ' + statusstring)
+                else: print(clk + ' ' + statusstring)
 
             if runlog:
                 runlog.add_line(statusstring)
