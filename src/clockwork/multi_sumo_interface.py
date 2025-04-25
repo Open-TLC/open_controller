@@ -124,11 +124,13 @@ def run_sumo(conf_filename=None, runlog=None):
 
             controllers_dict[key]['sumo_name'] = sumo_name
             controllers_dict[key]['print_status'] = print_status
-
+            
             controllers_dict[key]['controller'] = PhaseRingController(controller_params, system_timer)
             
             controllers_dict[key]['controller'].name = key
             cont_name = controllers_dict[key]['controller'].name
+            controllers_dict[key]['controller'].prev_status_string = 'start'
+
             print('Controller Object Name: ',cont_name, 'Initialized')
             print("____")
 
@@ -230,14 +232,16 @@ def run_sumo(conf_filename=None, runlog=None):
 
                 if controllers_dict[key]['print_status']:
                 
-                    prevstatusstring = statusstring
-                    statusstring = controllers_dict[key]['controller'].get_control_status()
+                    controllers_dict[key]['controller'].prev_status_string = controllers_dict[key]['controller'].cur_status_string 
+                    controllers_dict[key]['controller'].cur_status_string = controllers_dict[key]['controller'].get_control_status()
                     clk = system_timer.str_seconds()
                     
                     if ChangesOnly: 
-                        if (prevstatusstring != statusstring) or ((system_timer.steps - last_print) > 10):
-                            print(clk + ' ' + key + ' ' + statusstring)
-                            last_print = system_timer.steps
+                        prev_stat = controllers_dict[key]['controller'].prev_status_string 
+                        cur_stat = controllers_dict[key]['controller'].cur_status_string
+                        if (prev_stat != cur_stat) or (system_timer.steps - controllers_dict[key]['controller'].last_print) > 10:
+                            print(clk + ' ' + key + ' ' + cur_stat)
+                            controllers_dict[key]['controller'].last_print = system_timer.steps
                     else: 
                         print(clk + ' ' + key + ' ' + statusstring)
                     if runlog:

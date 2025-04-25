@@ -223,6 +223,10 @@ class PhaseRingController:
         else:
             self.print_status = False
 
+        self.prev_status_string = 'start'
+        self.cur_status_string = 'start'
+        self.last_print = 0
+
         #print("Initializing a controller:", self.name)
 
         # This timer will be relayed to all the objects
