@@ -118,16 +118,9 @@ class Vehicle:
     # The functions are listed in the same order as they are executed in
     # Normal operation: ra_receipt->ra_certificate->rs_receipt->rs_coupon
     # 
-    def get_request_ra_cert_message(self):
-        """
-        Returns the request message for the registration authority (ra)
-        """
-        # Will be used untill we get the certificate
-        request_message = {}
-        request_message["id"] = self.temp_id
-        request_message["type"] = "requesting_ra_certificate"
-        return request_message
 
+
+    #Message in STEP 1
     def get_coupon_message(self):
         """
         Returns the sign request message for the vehicle
@@ -141,18 +134,19 @@ class Vehicle:
         request_message["coupon"] = coupon
         return request_message
 
-
-    def get_request_rs_coupon_message(self):
+    # Message in STEP 3
+    def get_request_ra_cert_message(self):
         """
-        Returns the request message for the reputation server (rs)
+        Returns the request message for the registration authority (ra)
         """
         # Will be used untill we get the certificate
         request_message = {}
         request_message["id"] = self.temp_id
-        request_message["type"] = "requesting_rs_coupon"
+        request_message["type"] = "requesting_ra_certificate"
         return request_message
 
 
+    #Message in STEP 5
     def get_measurement_message(self):
         """
         Returns the measurement message for the vehicle
@@ -171,31 +165,48 @@ class Vehicle:
         measurement_message["report"] = report
         return measurement_message
 
+
+    #Message in STEP 7
+    def get_request_rs_coupon_message(self):
+        """
+        Returns the request message for the reputation server (rs)
+        """
+        # Will be used untill we get the certificate
+        request_message = {}
+        request_message["id"] = self.temp_id
+        request_message["type"] = "requesting_rs_coupon"
+        return request_message
+
+
+
     def get_message_to_send(self):
         """
         Returns the message to send depending on the status of the vehicle
         """
         # these ifs are processed in order and each returns if true
 
-        # We are in step 1 and want to send some data, first we establish a session 
-        # with the RA
+        # We are in STEP 1 and are sending the message (coiupon) to the RA
         if self.is_data_to_send():
             self.send_coupon() # state change
             return self.get_coupon_message()
 
-        # We have established a connection to the RA, now we can request the certificate
+        # We are in STEP 3 and have received a receipt from the RA
+        # Now we send indentity message to the RA
         if self.current_ra_receipt:
             self.sent_identity_to_ra()
             self.current_ra_receipt = None
             return self.get_request_ra_cert_message()
         
-        # We have the certificate, now we can start sending the data to the RS
+        # We are in STEP 5
+        # 'We have the certificate, now we can start sending the data to the RS
         if self.is_waiting_for_ra_certificate():
             # The self certificate is set if we have gotten it from the RA
             if self.certificate:
                 self.send_cert_to_rs()
                 return self.get_measurement_message()
-        # We have the receipt from the RS, now we can send the data
+        
+        # We are in STEP 7
+        # We have gotten the receipt from the RS and are seding the identity message
         if self.is_waiting_for_rs_receipt():
             self.sent_identity_to_rs()
             return self.get_request_rs_coupon_message()
