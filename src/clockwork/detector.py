@@ -205,8 +205,10 @@ class e3Detector(Detector):
         return self.veh_count(self) > 0
     
   
-    def tick(self):  # DBIK240801 tick for e3 detector
+    def tick(self):  # DBIK250428 This should not be called unless multi-sumo mode
         """ Updating of e3-detector"""
+        # e3vehlist = traci.multientryexit.getLastStepVehicleIDs(self.sumo_id) 
+        # self.update_e3_vehicles(e3vehlist)
         return  
 
 

@@ -60,6 +60,10 @@ def run_sumo(conf_filename=None, runlog=None):
         if 'sumo_name' in sys_cnf['controller'].keys():
             sumo_name = sys_cnf['controller']['sumo_name']
 
+    operating_mode = 'basic'
+    if 'operating_mode' in sys_cnf.keys():
+        operating_mode = sys_cnf['operating_mode']
+        
     v2x_mode = False
     if 'v2x_mode' in sys_cnf.keys():
         if sys_cnf['v2x_mode'] == True:

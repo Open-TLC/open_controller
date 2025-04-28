@@ -218,10 +218,10 @@ class PhaseRingController:
         else:
             self.name = "unnamed"
 
-        if conf['print_status']:
-            self.print_status = True
+        if 'print_status' in conf:
+            self.print_status = conf['print_status']
         else:
-            self.print_status = False
+            self.print_status = True
 
         self.prev_status_string = 'start'
         self.cur_status_string = 'start'
@@ -419,8 +419,7 @@ class PhaseRingController:
                 grp.extender.tick() # DBIK230331 The extender update moved here
             if grp.e3extender:     
                 grp.e3extender.tick() # DBIK240803 The e3extender update added
-            if grp.group_name == 'group3':
-               DB = 1
+            
             grp.tick()
            
     
