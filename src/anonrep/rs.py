@@ -1,22 +1,8 @@
-# This is a microseervice providing the Registration Authority (RA) functionality.
+# This is a microseervice providing the Reputation Server (RS) functionality.
 # It is responsible for registering users and issuing certificates.
 # All communication with the RA is done through the NATS message broker.
 # The RA listens for messages on the following subjects:
-# - ra.register: Register a new user.
-# - ra.sign.request: Sign a (blindly) certificate from the user
-# - ra.sign.response: Response to the sign request
 
-# The messages coming in are expected to be JSON objects with the following fields:
-# {
-# 	"source": UNIQUE_ONE_TIME_ID_1,
-# 	"coupon": "REPUTATION_COUPON_STRING" 
-# }
-
-# The RA will respond to the source with a JSON object with the following fields:
-# {
-#	"source": UNIQUE_ONE_TIME_ID_1,
-#	"certificate": "CERTIFICATE_STRING" 
-#}
 
 
 import asyncio
@@ -129,11 +115,11 @@ class RegistrationAuthority:
             print("Certificate incorrect")
             return None
 
-        veh_id = msg["id"]
+        veh_id = msg["tag"]
         self.measurement_reports[veh_id] = msg["report"]
 
         receipt_message = {}
-        receipt_message["id"] = veh_id
+        receipt_message["tag"] = veh_id
         receipt_message["type"] = "rs_receipt"
         receipt_message["receipt_sign"] = "RECEIPT_SIGN"
         print("Sending RS receipt:", receipt_message)
@@ -146,7 +132,7 @@ class RegistrationAuthority:
 
         """
 
-        veh_id = msg["id"]
+        veh_id = msg["tag"]
         if veh_id not in self.measurement_reports:
             print("No measurement report found for this vehicle")
             return None
@@ -154,7 +140,7 @@ class RegistrationAuthority:
             report = self.measurement_reports[veh_id]
 
         coupon_message = {}
-        coupon_message["id"] = veh_id
+        coupon_message["tag"] = veh_id
         coupon_message["type"] = "rs_coupon"
         coupon_message["coupon"] = self.get_coupon(report)
         print("Sending RS coupon:", coupon_message)
@@ -172,7 +158,7 @@ class RegistrationAuthority:
         if "report" not in msg:
             #print("Report not found")
             return False
-        if "id" not in msg:
+        if "tag" not in msg:
             #print("ID not found")
             return False
         if "type" not in msg:

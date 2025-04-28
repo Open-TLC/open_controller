@@ -100,9 +100,9 @@ class RegistrationAuthority:
         """
         # Will be used until we get the certificate
         print("Received a request for RA receipt")
-        veh_id = request_message["id"]
+        veh_id = request_message["tag"]
         receipt_message = {}
-        receipt_message["id"] = veh_id
+        receipt_message["tag"] = veh_id
         receipt_message["type"] = "ra_receipt"
         receipt_message["receipt_sign"] = "RECEIPT_SIGN"
         print("Sending RA receipt:", receipt_message)
@@ -114,9 +114,9 @@ class RegistrationAuthority:
         """
         # Will be used until we get the certificate
         print("Received a request for RA certificate")
-        veh_id = request_message["id"]
+        veh_id = request_message["tag"]
         cert_message = {}
-        cert_message["id"] = veh_id
+        cert_message["tag"] = veh_id
         cert_message["type"] = "ra_certificate"
         cert_message["certificate"] = "CERTIFICATE"
         print("Sending RA certificate:", cert_message)

@@ -17,7 +17,6 @@ class Vehicle:
     states = ['waiting_for_data', 'data_to_send', 'waiting_ra_receipt', 'waiting_for_ra_certificate', 'waiting_for_rs_receipt', 'wait_rs_coupon']
 
     def __init__(self, id):
-        self.id = id
         self.temp_id = None
         self.current_ra_receipt = None
         self.current_rs_receipt = None
@@ -128,7 +127,7 @@ class Vehicle:
         """
         request_message = {}
         self.temp_id = self.id_generator.generate_id()
-        request_message["id"] = self.temp_id # Defined in previous state
+        request_message["tag"] = self.temp_id # Defined in previous state
         request_message["type"] = "client_coupon"
         coupon = self.coupon_generator.get_coupon()
         request_message["coupon"] = coupon
@@ -141,7 +140,7 @@ class Vehicle:
         """
         # Will be used untill we get the certificate
         request_message = {}
-        request_message["id"] = self.temp_id
+        request_message["tag"] = self.temp_id
         request_message["type"] = "requesting_ra_certificate"
         return request_message
 
@@ -157,7 +156,7 @@ class Vehicle:
         measurement_message = {}
 
         self.temp_id = self.id_generator.generate_id()
-        measurement_message["id"] = self.temp_id
+        measurement_message["tag"] = self.temp_id
         measurement_message["type"] = "measurement"
         measurement_message["certificate"] = self.certificate
         
@@ -173,7 +172,7 @@ class Vehicle:
         """
         # Will be used untill we get the certificate
         request_message = {}
-        request_message["id"] = self.temp_id
+        request_message["tag"] = self.temp_id
         request_message["type"] = "requesting_rs_coupon"
         return request_message
 
@@ -221,10 +220,10 @@ class Vehicle:
         """
         print("Processing incoming message")
         print(message)
-        if not "id" in message:
-            raise ValueError("Message does not contain id")
+        if not "tag" in message:
+            raise ValueError("Message does not contain tag")
         
-        if message["id"] != self.temp_id:
+        if message["tag"] != self.temp_id:
             return # Not for us
         
         if message["type"] == "ra_receipt":
