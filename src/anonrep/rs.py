@@ -7,8 +7,38 @@
 
 import asyncio
 import json
-import os
 from nats.aio.client import Client as NATS
+# We use the Radar class from the indicators module
+import sys
+sys.path.append('src/indicators')
+from radar import Radar
+
+
+# We degine temporary variable for subscribing the Radar messages.
+# The conf is as follows (indicators.json):
+#    "radar270.1": {
+#        "connection": "nats",
+#        "type": "radar",
+#        "subtype": "sumo",
+#        "nats_subject": "radar.270.1.objects_port.json",
+#        "notes": "Will subscribe to radar pointing north"
+#        }
+# This will be defined as dictionary:
+RADAR_CONF_270_1 = {
+    "connection": "nats",
+    "type": "radar",
+    "subtype": "sumo",
+    "nats_subject": "radar.270.1.objects_port.json",
+    "notes": "Will subscribe to radar pointing north"
+}
+
+# Parameters for the reputation calculation, these should be read from the config file
+MAX_REPUTATION = 4
+MIN_REPUTATION = 0
+
+
+# For the radar, this calculates the position 
+#from shapely.geometry import Polygon, Point
 
 #NATS_DEFAULT_SIGN_REQUEST = "ra.sign.request"
 NATS_DEFAULT_SIGN_REQUEST = "v2x.rsu.*"
@@ -17,7 +47,7 @@ NATS_DEFAULT_SIGN_RESPONSE = "v2x.rsu.certs"
 
 NATS_DEFAULT_SERVER = "localhost:4222"
 
-class RegistrationAuthority:
+class ReputationServer:
 
 
     def __init__(self, conf=None):
@@ -39,6 +69,11 @@ class RegistrationAuthority:
         
         # We store the unprocessed measurement data here
         self.measurement_reports = {}
+        
+        # Note: in this implemnation we only use one radar
+        # FIXME: this should be configurable
+        self.radar = Radar("radar270.1", RADAR_CONF_270_1)
+
 
 
     async def run(self):
@@ -46,24 +81,48 @@ class RegistrationAuthority:
         self.nats = NATS()
         await self.connect_nats() # Exits if fails
 
+ 
         # Print init informantion
         print("This is the Reputation Server (RS)")
         print("Listening on message types:", self.message_handler.keys())
         print(f"On channel: {self.listen_channel}")
 
-        # Subscribe to the listen channel
-        await self.nats.subscribe(self.listen_channel, cb=self.on_message)
+        # Subscribe to the radar channel
+        if self.radar.nats:
+            print("Radar available")
+            print("Subcribing to radar channel:", self.radar.nats_subject)
+            await self.nats.subscribe(self.radar.nats_subject, cb=self.on_radar_message)
+        
+
+        # Add the clean up task to the event loop
+        asyncio.create_task(self.radar.cleanup_old_data())
+
+        # Subscribe to the v2x channel
+        await self.nats.subscribe(self.listen_channel, cb=self.on_veh_message)
 
         # infinite loop
         while True:
             await asyncio.sleep(1)
 
-    async def on_message(self, msg):
+    # Radar messages
+    async def on_radar_message(self, msg):
+        """
+        Callback function for handling the radar message
+        """
+        #print("Received radar message")
+        # Parse the message
+        message_dict = json.loads(msg.data.decode())
+        if message_dict is None:
+            print("Message is None")
+            return
+        #print("Received radar message:", message_dict)
+        # Add the data to radar
+        self.radar.add_data(message_dict)
+
+    async def on_veh_message(self, msg):
         """
         Callback function for handling the  NATS message
         """
-
-        print(f"Received message")
         # Parse the message
         message_dict = json.loads(msg.data.decode())
         if message_dict is None:
@@ -182,18 +241,57 @@ class RegistrationAuthority:
     # Reputation calculation functions
     #
 
-    def get_coupon(self, report_data):
-        return "COUPON_TEST"
+    def get_coupon(self, report_data, previous_reputation=None):
+        """
+        Calculates and returns a coupon based on the provided report data.
+
+        Args:
+            report_data (dict): A dictionary containing the data required to calculate the coupon.
+
+        Returns:
+            dict: A dictionary representing the calculated reputation data.
+        """
+        print("Calculating coupon")
+        print("Report data:", report_data)
+        if previous_reputation is None:
+            previous_reputation = 0
+        new_reputation = self.calculate_reputation_dict(report_data, previous_reputation)
+        ret_value = {}
+        ret_value["reputation"] = new_reputation
+        ret_value["previous_reputation"] = previous_reputation
+        return ret_value
+
+    def calculate_reputation_dict(self, report_data, previous_reputation):
+        """
+        Calculate the reputation based on the report data
+        """        
+
+        # Calculate the reputation based on the report data
+        v2x_location = (report_data["lat"], report_data["lon"])
+        closest_object = self.radar.get_closest_object(v2x_location)
+        if closest_object is None:
+            print("No object found")
+            return previous_reputation
+        # Chose the new reputation values based on the distance to the closest object
+        # In radar
+        # Note: this is a very simple implementation, we should use a better algorithm
+        if closest_object["distance_to_v2x"] < 0.5:
+            # Increase the reputation if it is possoble
+            new_reputation = max(previous_repitation +1, MAX_REPUTATION)
+        elif closest_object["distance_to_v2x"] > 2.0:
+            # Decrease the reputation if it is possoble
+            new_reputation = max(previous_repitation -1, 0)
+        else:
+            # No change in reputation
+            new_reputation = previous_reputation
 
 
-        
-
-
+        return ret_value
 
 
 
 if __name__ == '__main__':
     # Init the service
-    ra = RegistrationAuthority()
+    ra = ReputationServer()
     asyncio.run(ra.run())
     
