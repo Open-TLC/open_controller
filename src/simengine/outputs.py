@@ -20,7 +20,7 @@ else:
 CLENUP_TIME_LIMIT = 0.5 # seconds
 RSU_DATA_PREFIX = "v2x.rsu" #later from conf
 
-
+# Note this is different from the one in the radar.py
 class Radar:
     "This class is for handling the virtual radars"
     def __init__(self, aoi, lane_map=None, vehicle_types=None):

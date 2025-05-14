@@ -3,6 +3,8 @@
 import datetime
 import json
 import asyncio
+from geopy import distance as geopy_distance
+from geopy import Point, Polygon
 
 # Note: should be configureable
 DEFAULT_CLEANUP_INTERVAL = 10 # seconds
@@ -29,6 +31,14 @@ class Radar:
                 print(f"Radar {radar_id} is missing nats_subject".format(radar_id))
         else:
             self.nats = False
+        
+        # This is needed for detemining if the radar covers the area whrere the V2X is
+        # This is used for teputation caliculation
+        if 'aoi' in radar_params:
+            self.aoi = Polygon(radar_params['aoi'])
+        else:
+            self.aoi = None
+
         self.data = []
         
 
@@ -125,8 +135,60 @@ class Radar:
             queue_lengths[lane] += 1
                 
         return queue_lengths
-    
+
+#
+#    Functions for hangling the V2X to radar comparisions
+#
+
+    # Function for finding the closest object in the last radar data
+    # We use geopy functions to for finding the closest ones
+    # Note: this 1) only wirks for latest data, 2) only for one radar
+    # Expansieions should be done in the future
+    # Wa give trashold as a parameters, and return None if the object is not found
+    # or it is too far away
+    def get_closest_object(self, point, treshold=0.5):
+        """Returns the closest object to the given point
+        point: point (lat, lon) in degrees
+        treshold: distance treshold (in meters)
+        returns: closest object (dictionary) or None if not found
+        """
+        last_data = self.get_last_data()
+        if not last_data:
+            return None
+        
+        objects = last_data['objects']
+        if len(objects) == 0:
+            return None
+        closest_object = None
+        closest_distance = None
+        for obj in objects:
+            obj_point = (obj['lat'], obj['lon'])
+            dist = geopy_distance.distance(point, obj_point).m
+            if closest_distance is None or dist < closest_distance:
+                closest_distance = dist
+                closest_object = obj
+        if closest_distance is None or closest_distance > treshold:
+            return None
+        # Add the distance to the object
+        closest_object['distance_to_v2x'] = closest_distance
+        return closest_object
+
+    def is_point_in_aoi(self, latlon):
+        """Checks if the latlon is in the area of interest (aoi)"""
+        # No area defined -> wa assume the whole world is the aoi
+        if self.aoi is None:
+            return True
+        # Check if the latlon is in the aoi, we use the geopy library for this
+        p = Point(latlon[0], latlon[1])
+        if self.aoi.contains(p):
+            return True
+        else:
+            return False
+
+
+#    
 # ASYNC functions
+#
     async def cleanup_old_data(self):
         """Removes old data, this should be a separate task running at alla times"""
         while True:
