@@ -6,6 +6,12 @@
 
 from transitions import Machine
 
+# Add the ARUP_kit tests folder to sys.path for imports
+# FIXME: Absolute path if for testing purposes only
+import sys
+sys.path.append('/Users/karikoskinen/Documents/work/conveqs/projects/smartedge/source/ARUP_kit/')
+from client import client as AnonRepCLient
+
 class Vehicle:
 
     # These states are for handling the anonymouse reputation messages
@@ -46,6 +52,10 @@ class Vehicle:
 
         # From all the states we can reset the state machine and start from the beginning
         self.machine.add_transition(trigger='reset', source='*', dest='waiting_for_data', before='reset_data')
+        
+        # Anon rep functionality is in it's own class
+        self.anon_rep_client = AnonRepCLient()
+
 
 
     def reset_data(self):
@@ -131,6 +141,10 @@ class Vehicle:
         request_message["type"] = "client_coupon"
         coupon = self.coupon_generator.get_coupon()
         request_message["coupon"] = coupon
+        encrypt_step1 = self.anon_rep_client.Step1(None)
+        print("Step 1 message")
+        print(encrypt_step1)
+        request_message["coupon"] = str(encrypt_step1)
         return request_message
 
     # Message in STEP 3
