@@ -4,7 +4,7 @@ import datetime
 import json
 import asyncio
 from geopy import distance as geopy_distance
-from geopy import Point, Polygon
+from shapely.geometry import Polygon, Point
 
 # Note: should be configureable
 DEFAULT_CLEANUP_INTERVAL = 10 # seconds

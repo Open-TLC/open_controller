@@ -33,9 +33,18 @@ RADAR_CONF_270_1 = {
 }
 
 # Parameters for the reputation calculation, these should be read from the config file
+# The reputation values are between 0 and 4
 MAX_REPUTATION = 4
 MIN_REPUTATION = 0
+AVERAGE_REPUTATION = 2
 
+# These are in meters
+GOOD_MEASUREMENT_THRESHOLD = 0.5
+BAD_MEASUREMENT_THRESHOLD = 5.0
+
+# Probapility for changing the reputation value, two directions
+CHANGE_PROBABILITY_UP = 1.0
+CHANGE_PROBABILITY_DOWN = 1.0
 
 # For the radar, this calculates the position 
 #from shapely.geometry import Polygon, Point
@@ -255,11 +264,87 @@ class ReputationServer:
         print("Report data:", report_data)
         if previous_reputation is None:
             previous_reputation = 0
-        new_reputation = self.calculate_reputation_dict(report_data, previous_reputation)
+        #new_reputation = self.calculate_reputation_dict(report_data, previous_reputation)
+        new_reputation = self.new_reputation(report_data, previous_reputation)
         ret_value = {}
         ret_value["reputation"] = new_reputation
         ret_value["previous_reputation"] = previous_reputation
         return ret_value
+
+    
+    # From the documentation:
+    #1. If the error is less than GOOD_MEASUREMENT_TRESHOLD 
+    #   → increase the reputation, if not MAX_REPUTATION
+    #2. If the error is more than BAD_MEASUREMENT_TRESHOLD 
+    #   → decrease reputation, if not MIN_REPUTATION
+    # 3. If the measurement is between these valuest 
+    #   → propose the reputation towards the AVERAGE_REPUTATION (i.e. decrease if reputation is better and increase if worse)
+    # Note: the distance could in theory have more dimmensions, but distance in meters is enough for now
+    # We use the distance to the closest object in the radar data
+
+    def proposed_reputation(self, closest_dist, previous_reputation):
+        """
+            We propose the new reputation based on previous reputation and the measurement
+            Args:
+                closest_dist (float): The distance to the closest object in meters.
+                previous_reputation (int): The previous reputation value.
+            Returns:
+                int: The proposed reputation value.
+        """
+        # Check if the distance is less than the good measurement threshold
+        if closest_dist < GOOD_MEASUREMENT_THRESHOLD:
+            # Increase the reputation if it is possible
+            new_reputation = min(previous_reputation + 1, MAX_REPUTATION)
+        # Check if the distance is more than the bad measurement threshold
+        elif closest_dist > BAD_MEASUREMENT_THRESHOLD:
+            # Decrease the reputation if it is possible
+            new_reputation = max(previous_reputation - 1, MIN_REPUTATION)
+        else:
+            # Propose the reputation towards the average reputation
+            if previous_reputation < AVERAGE_REPUTATION:
+                new_reputation = min(previous_reputation + 1, AVERAGE_REPUTATION)
+            else:
+                new_reputation = max(previous_reputation - 1, AVERAGE_REPUTATION)
+
+        return new_reputation
+    
+
+    # We caclulate the proposed reputation with steps:
+    # 1, Check that the report data is within the radar coverage (aoi)
+    # 2. Get the distance to the closest object in the radar data
+    # 3. Calculate the proposed reputation based on the distance and previous reputation
+    # 4. Calculate the on propability for the new reputation 
+    def new_reputation(self, report_data, previous_reputation):
+        """
+        Calculate the new reputation based on the report data and previous reputation
+        """
+        v2x_location = (report_data["lat"], report_data["lon"])
+        if not self.radar.is_point_in_aoi(v2x_location):
+            #V2X location is not in the area of interest -> no change in reputation
+            return previous_reputation
+        # Get the closest object in the radar data
+        # Note: the radar also adds the distance to the object
+        # to the object dictionary ("distance_to_v2x")
+        closest_object = self.radar.get_closest_object(v2x_location)
+        dist = closest_object["distance_to_v2x"]
+        proposed_reputation = self.proposed_reputation(dist, previous_reputation)
+        
+        # We use the propability to change (or not) the reputation, 
+        # based on the direction of change
+        if proposed_reputation > previous_reputation:
+            # Increase reputation with a probability
+            if random.random() < CHANGE_PROBABILITY_UP:
+                return proposed_reputation
+        elif proposed_reputation < previous_reputation:
+            # Decrease reputation with a probability
+            if random.random() < CHANGE_PROBABILITY_DOWN:
+                return proposed_reputation
+        # If no change or probabilities don't allow change, return previous reputation
+        return previous_reputation
+
+
+
+    
 
     def calculate_reputation_dict(self, report_data, previous_reputation):
         """

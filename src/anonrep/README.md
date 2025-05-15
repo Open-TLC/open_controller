@@ -4,6 +4,21 @@ This directory contain services and components needed for anonoymous reputation 
 
 # Components
 
+
+## The simulation engine
+### About
+
+### Running the docker
+
+
+### Running the command line
+For test purposes we can run:
+
+    python simengine.py --nats-server localhost --conf ../../models/testmodel/simsource.json --sumo-conf ../../models/testmodel/JS270_med_traffic.sumocfg
+
+
+
+
 ## The Registration Authority
 ### About
 This rervice will sing (blindly) the messages it reveives from the vehicle(s)
