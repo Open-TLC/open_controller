@@ -11,6 +11,7 @@ This module provides a microservice for calculating traffic indicators, defined 
 The Traffic Indicators component is primarily intended to operate as part of a traffic management system, transforming raw input data into meaningful values for a controller, as shown in the diagram below.
 
 ![Traffic_indicators-Open Controller.drawio-3.svg](/doc/images/IND_overview.svg)
+<br>
 *Figure 1: Traffic indicators service as part of Open Controller software package*
 
 Although primarily designed to feed Open Controller, the component is implemented as a standalone service. It can operate independently to provide traffic data to other systems.
@@ -76,6 +77,7 @@ The configuration defines input and output behaviors through the following secti
 These sections are interdependent: `inputs` rely on `input_streams` to access message streams, which in turn connect to physical sources via the `connectivity` block. This relationship is illustrated below:
 
 ![Traffic_indicators-Input Configuration.drawio.svg](/doc/images/IND_inputs.svg)
+<br>
 *Figure 2: Input data configuration*
 
 Example configuration snippet:
@@ -159,6 +161,7 @@ The FoV inspects the traffic in pre-detemined lanes (that is the ones controlled
 Current set up uses two data types for determining the road users approaching: 1) loop detectors, that count vehicles passing them, and 2) radars detecting all vehicles within its beam. These data sources are mapped into “input detectors” and “ouptupd detectors” for each lane (that is: we count all the vehicles entering the lane and all the vehicles exiting it) as well as filtering out the relevant lanes from the list of road users provided by the radar. How these thins are connected is illustrated in the following diagram:
 
 ![Traffic_indicators-FOW Configuration.drawio-2.svg](/doc/images/IND_FoV.svg)
+<br>
 *Figure 3: Field of View configuration*
 
 We are not explaining the details of the algorithms operating in the calculation (for more details, see: XXX), however, it should be noted that these connections are reflected in the configuration. The field of view is determined as an output, and it is mapped to a lista of lanes and one signal group. Each lane is  then connected to a list of input detectors, list of output detectors as well as list of lanes detected by a radar. A simple example with one input detector, one ouptut detector and one “radar lane” looks like following:
