@@ -32,13 +32,32 @@ Note: These instructions have been tested on macOS 15.5 (Sequoia) but should app
 
 ## Running Natively
 
-To run the component without Docker, ensure a compatible Python 3.x installation (version XX or newer is recommended). Required dependencies include `nats-py`; a full list can be found in the Docker installation section [XXX].
+For more information on installing dependencies, see the [requirements.txt](/docker/indicators/requirements.txt) for the inticators service.
 
-Launch the system using:
+When using the system with default configuration (part of this package) it can be started simply by issuing:
 
 ```
+# In Open Controller root directory
 python src/indicators/traffic_indicators.py
 ```
+
+The service takes command line parameters, all parameters are printed out, if the user issues:
+```
+# In Open Controller root directory
+python src/indicators/traffic_indicators.py --help
+```
+
+The command line parameters one can issue are:
+
+| Parameter | Parameter value | Example | Notes |
+| --- | --- | --- | --- |
+| -h, --help | - |  | Prints usage instructions |
+| --version  | - |  | Prints the software version |
+| --nats-server  | URL  | --nats server localhost  | Server to connect to |
+| --nats-port | Port for nats service | --nats-port 4222 | 4222 is the default |
+| --conf  | configuration file name | --conf /models/testmode/indicators.json | JSON formated configuration file |
+
+
 
 # Data Interface
 
