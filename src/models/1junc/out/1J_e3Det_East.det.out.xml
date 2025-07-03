@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2025-06-14 17:51:24 by Eclipse SUMO GUI Version 1.23.1
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="/home/otso/kandi/testmodels/iisakki/1junc_DT/cfgFiles/../net/4leg_basic.net.xml"/>
+        <route-files value="/home/otso/kandi/testmodels/iisakki/1junc_DT/cfgFiles/../rou/4leg_flows300s.rou.xml"/>
+        <additional-files value="/home/otso/kandi/testmodels/iisakki/1junc_DT/cfgFiles/../add/4leg_e1dets.add.xml,/home/otso/kandi/testmodels/iisakki/1junc_DT/cfgFiles/ ../add/4leg_e3dets.add.xml,/home/otso/kandi/testmodels/iisakki/1junc_DT/cfgFiles/ ../tll/4leg_fix.tll.xml,/home/otso/kandi/testmodels/iisakki/1junc_DT/cfgFiles/ ../add/generate_lane_data.xml,/home/otso/kandi/testmodels/iisakki/1junc_DT/cfgFiles/ ../add/generate_edge_data.xml"/>
+    </input>
+
+    <output>
+        <output-prefix value="1J_"/>
+        <tripinfo-output value="/home/otso/kandi/testmodels/iisakki/1junc_DT/cfgFiles/../out/tripinfo.trip.xml"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="3600"/>
+        <step-length value="0.1"/>
+    </time>
+
+    <processing>
+        <scale value="1.0"/>
+    </processing>
+
+    <report>
+        <verbose value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <random_number>
+        <seed value="12732"/>
+    </random_number>
+
+    <gui_only>
+        <delay value="20.00"/>
+    </gui_only>
+
+</sumoConfiguration>
+-->
+
+<e3Detector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/det_e3_file.xsd">
+   <interval begin="0.00" end="900.00" id="e3Det_East" meanTravelTime="14.06" meanOverlapTravelTime="14.65" meanSpeed="11.63" meanHaltsPerVehicle="0.27" meanTimeLoss="5.71" vehicleSum="11" meanSpeedWithin="-1.00" meanHaltsPerVehicleWithin="-1.00" meanDurationWithin="-1.00" vehicleSumWithin="0" meanIntervalSpeedWithin="-1.00" meanIntervalHaltsPerVehicleWithin="-1.00" meanIntervalDurationWithin="-1.00" meanTimeLossWithin="-1.00"/>
+   <interval begin="900.00" end="1800.00" id="e3Det_East" meanTravelTime="-1.00" meanOverlapTravelTime="-1.00" meanSpeed="-1.00" meanHaltsPerVehicle="-1.00" meanTimeLoss="-1.00" vehicleSum="0" meanSpeedWithin="-1.00" meanHaltsPerVehicleWithin="-1.00" meanDurationWithin="-1.00" vehicleSumWithin="0" meanIntervalSpeedWithin="-1.00" meanIntervalHaltsPerVehicleWithin="-1.00" meanIntervalDurationWithin="-1.00" meanTimeLossWithin="-1.00"/>
+   <interval begin="1800.00" end="2700.00" id="e3Det_East" meanTravelTime="-1.00" meanOverlapTravelTime="-1.00" meanSpeed="-1.00" meanHaltsPerVehicle="-1.00" meanTimeLoss="-1.00" vehicleSum="0" meanSpeedWithin="-1.00" meanHaltsPerVehicleWithin="-1.00" meanDurationWithin="-1.00" vehicleSumWithin="0" meanIntervalSpeedWithin="-1.00" meanIntervalHaltsPerVehicleWithin="-1.00" meanIntervalDurationWithin="-1.00" meanTimeLossWithin="-1.00"/>
+   <interval begin="2700.00" end="3600.00" id="e3Det_East" meanTravelTime="-1.00" meanOverlapTravelTime="-1.00" meanSpeed="-1.00" meanHaltsPerVehicle="-1.00" meanTimeLoss="-1.00" vehicleSum="0" meanSpeedWithin="-1.00" meanHaltsPerVehicleWithin="-1.00" meanDurationWithin="-1.00" vehicleSumWithin="0" meanIntervalSpeedWithin="-1.00" meanIntervalHaltsPerVehicleWithin="-1.00" meanIntervalDurationWithin="-1.00" meanTimeLossWithin="-1.00"/>
+</e3Detector>

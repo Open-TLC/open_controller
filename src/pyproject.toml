@@ -1,0 +1,25 @@
+[project]
+name = "simengine"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "gymnasium>=1.2.0",
+    "jsmin>=3.0.1",
+    "keyboard>=0.13.5",
+    "nats-py>=2.10.0",
+    "pandas>=2.3.0",
+    "shapely>=2.1.1",
+    "transitions>=0.9.2",
+]
+
+[tool.pyright]
+venvPath="."
+venv=".venv"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.1",
+]
+
