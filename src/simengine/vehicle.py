@@ -10,7 +10,8 @@ from transitions import Machine
 # FIXME: Absolute path if for testing purposes only
 import sys
 sys.path.append('/Users/karikoskinen/Documents/work/conveqs/projects/smartedge/source/ARUP_kit/')
-from client import client as AnonRepCLient
+from client import client as AnonRepCLient # This is client for the ARUP protocol
+from ARUP_message import Message as ArupMessage 
 
 class Vehicle:
 
@@ -54,7 +55,7 @@ class Vehicle:
         self.machine.add_transition(trigger='reset', source='*', dest='waiting_for_data', before='reset_data')
         
         # Anon rep functionality is in it's own class
-        self.anon_rep_client = AnonRepCLient()
+        self.arup_client = AnonRepCLient()
 
 
 
@@ -99,7 +100,9 @@ class Vehicle:
         """
         Processes the certificate from the RA
         """
-        self.current_ra_receipt = response
+        receipt_str = response["receipt_sign"]
+        receipt_message = ArupMessage(receipt_str)
+        self.current_ra_receipt = self.arup_client.Step3(receipt_message)
 
     def process_ra_certificate(self, response):
         """
@@ -141,7 +144,7 @@ class Vehicle:
         request_message["type"] = "client_coupon"
         coupon = self.coupon_generator.get_coupon()
         request_message["coupon"] = coupon
-        encrypt_step1 = self.anon_rep_client.Step1(None)
+        encrypt_step1 = self.arup_client.Step1(None)
         print("Step 1 message")
         print(encrypt_step1)
         request_message["coupon"] = str(encrypt_step1)
@@ -156,6 +159,8 @@ class Vehicle:
         request_message = {}
         request_message["tag"] = self.temp_id
         request_message["type"] = "requesting_ra_certificate"
+        encrypt_step3 = self.current_ra_receipt # This is processsed when the message comes in
+        request_message["certificate"] = str(encrypt_step3)
         return request_message
 
 
@@ -206,9 +211,11 @@ class Vehicle:
         # We are in STEP 3 and have received a receipt from the RA
         # Now we send indentity message to the RA
         if self.current_ra_receipt:
-            self.sent_identity_to_ra()
+            self.sent_identity_to_ra() #State change ?
+            cert_request_message = self.get_request_ra_cert_message()
+            print("Current RA receipt:", self.current_ra_receipt)
             self.current_ra_receipt = None
-            return self.get_request_ra_cert_message()
+            return cert_request_message
         
         # We are in STEP 5
         # 'We have the certificate, now we can start sending the data to the RS
@@ -240,6 +247,7 @@ class Vehicle:
         if message["tag"] != self.temp_id:
             return # Not for us
         
+        # Step 2 (in RA) sends this receipt  
         if message["type"] == "ra_receipt":
             if self.is_waiting_ra_receipt():
                 # FIXME: Check the receipt function should be here

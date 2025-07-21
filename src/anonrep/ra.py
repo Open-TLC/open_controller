@@ -24,6 +24,12 @@ import json
 import os
 from nats.aio.client import Client as NATS
 
+# Alex's ARUP client
+import sys
+sys.path.append('/Users/karikoskinen/Documents/work/conveqs/projects/smartedge/source/ARUP_kit/')
+from RA import RA as ArupRA # Note this is caps
+from ARUP_message import Message as ArupMessage 
+
 #NATS_DEFAULT_SIGN_REQUEST = "ra.sign.request"
 NATS_DEFAULT_SIGN_REQUEST = "v2x.rsu.*"
 #NATS_DEFAULT_SIGN_RESPONSE = "ra.sign.response"
@@ -51,6 +57,7 @@ class RegistrationAuthority:
             self.response_channel = conf["response_channel"]
             self.nats_server = conf["nats_server"]
         
+        self.arup_ra = ArupRA()
 
     async def run(self):
         # Connett to nats server:
@@ -101,10 +108,15 @@ class RegistrationAuthority:
         # Will be used until we get the certificate
         print("Received a request for RA receipt")
         veh_id = request_message["tag"]
+        coupon_str = request_message["coupon"]
+        # ask the ARUP RA for the certificate (Step 2)
+        coupon = ArupMessage(coupon_str)
+        receipt_sign = str(self.arup_ra.Step2(coupon))
+
         receipt_message = {}
         receipt_message["tag"] = veh_id
         receipt_message["type"] = "ra_receipt"
-        receipt_message["receipt_sign"] = "RECEIPT_SIGN"
+        receipt_message["receipt_sign"] = receipt_sign
         print("Sending RA receipt:", receipt_message)
         return receipt_message
 
@@ -118,13 +130,21 @@ class RegistrationAuthority:
         cert_message = {}
         cert_message["tag"] = veh_id
         cert_message["type"] = "ra_certificate"
-        cert_message["certificate"] = "CERTIFICATE"
+        cert_to_be_signed = ArupMessage(request_message["certificate"])
+        print("Certificate to be signed:", cert_to_be_signed)
+        signed_cert = self.arup_ra.Step4(cert_to_be_signed)
+        cert_message["certificate"] = signed_cert
         print("Sending RA certificate:", cert_message)
         return cert_message
 
 
+    # Step 4 in the ARUP RA protocol
     def get_cert(self, coupon):
-        return "VALID_CERTIFICATE"
+        """ Returns the certificate for the given coupon
+        """
+        request_message = ArupMessage(coupon)
+        cert = str(self.arup_ra.Step4(request_message))
+        return cert
 
 
     async def connect_nats(self):

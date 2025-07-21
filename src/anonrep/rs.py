@@ -12,7 +12,7 @@ from nats.aio.client import Client as NATS
 import sys
 sys.path.append('src/indicators')
 from radar import Radar
-
+import random
 
 # We degine temporary variable for subscribing the Radar messages.
 # The conf is as follows (indicators.json):
@@ -326,6 +326,10 @@ class ReputationServer:
         # Note: the radar also adds the distance to the object
         # to the object dictionary ("distance_to_v2x")
         closest_object = self.radar.get_closest_object(v2x_location)
+        if closest_object is None:
+            print("No object found in the radar data")
+            return previous_reputation
+        
         dist = closest_object["distance_to_v2x"]
         proposed_reputation = self.proposed_reputation(dist, previous_reputation)
         
@@ -344,7 +348,6 @@ class ReputationServer:
 
 
 
-    
 
     def calculate_reputation_dict(self, report_data, previous_reputation):
         """
