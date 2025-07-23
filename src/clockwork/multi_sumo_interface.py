@@ -234,8 +234,8 @@ def run_sumo(conf_filename=None, runlog=None):
 
         for vehicleId in traci.vehicle.getIDList():
             traci.vehicle.setSpeedMode(vehicleId,55) # disable right of way check, vehicles can enter the junction, despite queue end
-            len = traci.vehicle.getLength(vehicleId)
-            if len > 10.0:
+            vehlen = traci.vehicle.getLength(vehicleId)
+            if vehlen > 10.0:
                 traci.vehicle.setLaneChangeMode(vehicleId,1) # Disable lane changing except from Traci
 
 
@@ -258,7 +258,20 @@ def run_sumo(conf_filename=None, runlog=None):
                 controllers_dict[key]['controller'].tick()  
                 states = controllers_dict[key]['controller'].get_sumo_states()
                 sumo_name = controllers_dict[key]['sumo_name']
-                traci.trafficlight.setRedYellowGreenState(sumo_name, states)
+
+                # Fixing the potential error in signal count
+                ocTLScount = len(states)
+                sumo_tls = traci.trafficlight.getControlledLinks(sumo_name)
+                SumoTLScount = len(sumo_tls)
+                if ocTLScount < SumoTLScount:
+                    states = 'r' + states  # DBIK20250129 add group 0 ?
+                try:
+                    traci.trafficlight.setRedYellowGreenState(sumo_name, states)
+                except:
+                    print('Error in signal counts: OC count: ',ocTLScount, 'Sumo TLS: ', SumoTLScount)    
+
+
+                # traci.trafficlight.setRedYellowGreenState(sumo_name, states)
 
                 # Run-time outputs DBIK 20240411          
 

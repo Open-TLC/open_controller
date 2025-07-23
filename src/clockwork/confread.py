@@ -121,6 +121,7 @@ class GlobalConf:
         config = {}
         try:
             with open(file_name) as json_cnf_file:
+                print('File found:', file_name)
                 config = json.loads(jsmin(json_cnf_file.read()))
         except FileNotFoundError:
             print('File does not exist:', file_name)
