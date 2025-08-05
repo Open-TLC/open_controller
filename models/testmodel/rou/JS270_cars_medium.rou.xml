@@ -23,7 +23,7 @@
 
 <vehicle id="jatk1" depart="9"   route="Jatk2Sat"  departPos="25"  departLane="0"/>
 
-<vehicle id="v2x_car_2"  depart="83"   route="Sat2Jatk"  type="v2x_car" departPos="25"  departLane="2"/>
+<vehicle id="v2x_car_2"  depart="11"   route="Sat2Jatk"  type="v2x_car" departPos="25"  departLane="2"/>
 
 <vehicle id="jatk2" depart="12"  route="Jatk2Vali" departPos="25"  departLane="0"/>
 

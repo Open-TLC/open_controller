@@ -19,7 +19,7 @@ DEFAULT_SUMO_CONFIG = "sumo_config.json"
 DEFAULT_SUBJECT_STAT_DETECTORS = "detector.status" # Prefix 
 DEFAULT_SUBJECT_STAT_GROUPS = "group.status" # Prefix 
 
-
+ 
 
 class GlobalConf:
     "Class for handling all the software configuration (read only)"
