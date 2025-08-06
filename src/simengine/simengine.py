@@ -377,7 +377,9 @@ def set_sumo_traffic_light_state(channel, message):
     #print("DEBUG:", channel, message)
     controller_id = channel.split(".")[-2]
     light_id = int(channel.split(".")[-1])
-    controller_id = "270_Tyyn_Vali" #Debug
+    # controller_id = "270_Tyyn_Vali" #Debug
+    controller_id = "266_Pork_Mech" # DBIK202508  Junction Sumo name hard coded ?
+
     if 'green' in message:
         # Control message
         if message['green'] == True:
@@ -400,7 +402,9 @@ def set_all_sumo_groups_to_red():
     for light_id_sumo in sumo_lights:
         cur_state = traci.trafficlight.getRedYellowGreenState(light_id_sumo)
         all_Red = len(cur_state) * "g" # DEBUG FIX ME
-        traci.trafficlight.setRedYellowGreenState(light_id_sumo, all_Red)
+        all_Red = len(cur_state) * "g" # DBIK2020508  Set all green ?
+        if light_id_sumo != "267_Mech_Itam":   # DBIK2020508  Not all red to 267
+            traci.trafficlight.setRedYellowGreenState(light_id_sumo, all_Red)
 
 def get_detector_statuses():
     "Returns dict of detector statuses"
