@@ -185,7 +185,7 @@ class SumoNatsInterface:
                 #print("Received a message on '{subject} {reply}': {data}".format(
                 #    subject=subject, reply=reply, data=dat a))
                 msg_dict = json.loads(data)
-                set_sumo_traffic_light_state(subject, msg_dict)
+                self.set_sumo_traffic_light_state(subject, msg_dict)
             # As an inital state we set all the lights to red
             self.set_all_sumo_groups_to_red()
             # Sleep for five seconds to get all to red
@@ -234,16 +234,26 @@ class SumoNatsInterface:
         sumo_lights = traci.trafficlight.getIDList()
         for light_id_sumo in sumo_lights:
             cur_state = traci.trafficlight.getRedYellowGreenState(light_id_sumo)
-            all_Red = len(cur_state) * "r"
+            if light_id_sumo == "267_Mech_Itam":   # DBIK2020508  DEBUG Not all red to junction 267
+                print("TEST")
+                all_Red = len(cur_state) * "g"
+            else: 
+                all_Red = len(cur_state) * "r" 
             traci.trafficlight.setRedYellowGreenState(light_id_sumo, all_Red)
         
     def set_sumo_traffic_light_state(self, channel, message):
         """Sets the traffic light state based on the message received from the nats server
             (This message is sent by the clockwork or other external controller)
         """
-        controller_id = channel.split(".")[-2]
+        controller_nats_id = channel.split(".")[-2]
         light_id = int(channel.split(".")[-1])
-        controller_id = "270_Tyyn_Vali" #Debug
+
+        # Find the the sumo controller that mathces with the NATS controller id DBIK202508
+        sumo_controllers = traci.trafficlight.getIDList()
+        for sumo_id in sumo_controllers:
+            if controller_nats_id in sumo_id:
+                controller_sumo_id = sumo_id
+
         if 'green' in message:
             # Control message
             if message['green'] == True:
@@ -258,7 +268,7 @@ class SumoNatsInterface:
             else:
                 sumo_group_state = "r"
 
-        traci.trafficlight.setLinkState(controller_id, light_id, sumo_group_state)
+        traci.trafficlight.setLinkState(controller_sumo_id, light_id, sumo_group_state)
 
 
 async def main():
@@ -319,7 +329,7 @@ async def main():
         #print("Received a message on '{subject} {reply}': {data}".format(
         #    subject=subject, reply=reply, data=dat a))
         msg_dict = json.loads(data)
-        set_sumo_traffic_light_state(subject, msg_dict)
+        self.set_sumo_traffic_light_state(subject, msg_dict)
     
     # All red and expecting messages
     if external_controller:
@@ -370,42 +380,7 @@ async def main():
             await nats.publish(light_id, light_status_json.encode())
         #print(system_timer.aggregate_time_drift)
 
-def set_sumo_traffic_light_state(channel, message):
-    """Sets the traffic light state based on the message received from the nats server
-        (This message is sent by the clockwork or other external controller)
-    """
-    #print("DEBUG:", channel, message)
-    controller_id = channel.split(".")[-2]
-    light_id = int(channel.split(".")[-1])
-    # controller_id = "270_Tyyn_Vali" #Debug
-    controller_id = "266_Pork_Mech" # DBIK202508  Junction Sumo name hard coded ?
-
-    if 'green' in message:
-        # Control message
-        if message['green'] == True:
-            sumo_group_state = "g"
-        else:
-            sumo_group_state = "r"
-    else:
-        # Status message contains no command for green
-        # We induce the state from the substate
-        if message['substate'] in GREEN_SUBSTATES:
-            sumo_group_state = "g"
-        else:
-            sumo_group_state = "r"
-
-    traci.trafficlight.setLinkState(controller_id, light_id, sumo_group_state)
-
-def set_all_sumo_groups_to_red():
-    "Initializes all traffic lights to red"
-    sumo_lights = traci.trafficlight.getIDList()
-    for light_id_sumo in sumo_lights:
-        cur_state = traci.trafficlight.getRedYellowGreenState(light_id_sumo)
-        all_Red = len(cur_state) * "g" # DEBUG FIX ME
-        all_Red = len(cur_state) * "g" # DBIK2020508  Set all green ?
-        if light_id_sumo != "267_Mech_Itam":   # DBIK2020508  Not all red to 267
-            traci.trafficlight.setRedYellowGreenState(light_id_sumo, all_Red)
-
+            
 def get_detector_statuses():
     "Returns dict of detector statuses"
     sumo_loops = traci.inductionloop.getIDList()

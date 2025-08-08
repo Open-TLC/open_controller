@@ -158,7 +158,7 @@ class Detector:
             data_dict['data_received'] = tstamp_now
         self.add_data(data_dict)
 
-    # Testing dunction for sending data
+    # Testing function for sending data
     async def send_data(self, nats):
         """Send the queue lengths to the nats"""
         while True:
@@ -181,7 +181,7 @@ class Detector:
 
 
 class DetectorLogic(Detector):
-    """A class for creating new detectors by combining imputs from existing detectors"""
+    """A class for creating new detectors by combining inputs from existing detectors"""
     def __init__(self, det_id, params, status = None):
         super().__init__(det_id, params, status)
     
