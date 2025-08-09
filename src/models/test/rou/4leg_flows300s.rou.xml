@@ -1,0 +1,16 @@
+<routes>
+        
+        <vType id="car_type"   accel="4.6" decel="4.5" sigma="0.1" length="5"  minGap="0.5" maxSpeed="20" guiShape="passenger"/>
+        <vType id="bus_type"   accel="9.6" decel="4.5" sigma="0.5" length="7"  minGap="3"   maxSpeed="20" guiShape="bus"/>
+        <vType id="truck_type" accel="2.6" decel="4.5" sigma="0.1" length="15" minGap="0.5" maxSpeed="20" guiShape="truck"/>
+        
+        <route id="RWE" edges="E_W0 E_W1 -E_E1 -E_E0" />
+        <route id="REW" edges="E_E0 E_E1 -E_W1 -E_W0" />
+        <route id="RNS" edges="E_N0 -E_S0" />
+        <route id="RSN" edges="E_S0 -E_N0" />
+                
+        <flow id="RWE"   from="E_W0"   to="-E_E0"  route="RWE"  begin="0" end="300" type="car_type" color="255,0,0" departSpeed="max" probability="0.10"> </flow>
+        <flow id="REW"   from="E_E0"   to="-E_W0"  route="REW"  begin="0" end="300" type="car_type" color="255,0,0" departSpeed="max" probability="0.05"> </flow>
+        <flow id="RNS"   from="E_N0"   to="-E_S0"  route="RNS"  begin="0" end="300" type="car_type" color="255,0,0" departSpeed="max" probability="0.15"> </flow>
+        <flow id="RSN"   from="E_S0"   to="-E_N0"  route="RSN"  begin="0" end="300" type="car_type" color="255,0,0" departSpeed="max" probability="0.03"> </flow>
+</routes>

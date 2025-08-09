@@ -1,0 +1,241 @@
+{
+    "timer": {
+        "timer_mode": "fixed",
+        "time_step": 0.1,
+        "real_time_multiplier": 1,
+        "max_time": 60
+    },
+    "operation_mode": "test",
+    "sumo": {
+        "graph": false,
+        "file_name": "./models/1junc/cfgFiles/1junc_4leg_DT.sumocfg",
+        "print_status": false,
+        "group_outputs": [
+            "group1",
+            "group2",
+            "group3",
+            "group4"
+        ]
+    },
+    "controller": {
+        "name": "test",
+        "sumo_name": "N_J1",
+        "signal_groups": {
+            "default": {
+                "min_green": 3926.9754815101624,
+                "min_amber_red": 1,
+                "min_red": 2335.4675418138504,
+                "min_amber": 3,
+                "max_green": 513.394185513258,
+                "max_amber_red": 1,
+                "max_red": -1,
+                "max_amber": 3,
+                "request_type": "detector",
+                "phase_request": false,
+                "green_end": "remain"
+            },
+            "group1": {
+                "min_green": 0,
+                "min_amber_red": 1,
+                "min_red": 645.6640265583992,
+                "min_amber": 3,
+                "max_green": 2467.02157227695,
+                "max_amber_red": 1,
+                "max_red": -1,
+                "max_amber": 3,
+                "request_type": "detector",
+                "phase_request": false,
+                "green_end": "remain"
+            },
+            "group2": {
+                "min_green": 39.88650953769684,
+                "min_amber_red": 1,
+                "min_red": 130.83171796798706,
+                "min_amber": 3,
+                "max_green": 1378.89334012568,
+                "max_amber_red": 1,
+                "max_red": -1,
+                "max_amber": 3,
+                "request_type": "detector",
+                "phase_request": false,
+                "green_end": "remain"
+            },
+            "group3": {
+                "min_green": 0,
+                "min_amber_red": 1,
+                "min_red": 171.59978723526,
+                "min_amber": 3,
+                "max_green": 1045.5816045091487,
+                "max_amber_red": 1,
+                "max_red": -1,
+                "max_amber": 3,
+                "request_type": "detector",
+                "phase_request": false,
+                "green_end": "remain"
+            },
+            "group4": {
+                "min_green": 0,
+                "min_amber_red": 1,
+                "min_red": 150.98071092367172,
+                "min_amber": 3,
+                "max_green": 3742.974635578692,
+                "max_amber_red": 1,
+                "max_red": -1,
+                "max_amber": 3,
+                "request_type": "detector",
+                "phase_request": false,
+                "green_end": "remain"
+            }
+        },
+        "detectors": {
+            "req1A": {
+                "type": "request",
+                "sumo_id": "e1_West1",
+                "request_groups": [
+                    "group1"
+                ]
+            },
+            "req1B": {
+                "type": "request",
+                "sumo_id": "e1_West2",
+                "request_groups": [
+                    "group1"
+                ]
+            },
+            "req2A": {
+                "type": "request",
+                "sumo_id": "e1_East1",
+                "request_groups": [
+                    "group2"
+                ]
+            },
+            "req2B": {
+                "type": "request",
+                "sumo_id": "e1_East2",
+                "request_groups": [
+                    "group2"
+                ]
+            },
+            "req3A": {
+                "type": "request",
+                "sumo_id": "e1_North1",
+                "request_groups": [
+                    "group3"
+                ]
+            },
+            "req3B": {
+                "type": "request",
+                "sumo_id": "e1_North2",
+                "request_groups": [
+                    "group3"
+                ]
+            },
+            "req4A": {
+                "type": "request",
+                "sumo_id": "e1_South1",
+                "request_groups": [
+                    "group4"
+                ]
+            },
+            "req4B": {
+                "type": "request",
+                "sumo_id": "e1_South2",
+                "request_groups": [
+                    "group4"
+                ]
+            },
+            "e3d1m60": {
+                "type": "e3detector",
+                "sumo_id": "e3Det_West",
+                "group": "group1"
+            },
+            "e3d2m60": {
+                "type": "e3detector",
+                "sumo_id": "e3Det_East",
+                "group": "group2"
+            },
+            "e3d3m60": {
+                "type": "e3detector",
+                "sumo_id": "e3Det_North",
+                "group": "group3"
+            },
+            "e3d4m60": {
+                "type": "e3detector",
+                "sumo_id": "e3Det_South",
+                "group": "group4"
+            }
+        },
+        "extenders": {
+            "ext1": {
+                "group": "group1",
+                "ext_mode": 4,
+                "ext_threshold": 0,
+                "time_discount": 0
+            },
+            "ext2": {
+                "group": "group2",
+                "ext_mode": 4,
+                "ext_threshold": 1013.1147839426994,
+                "time_discount": 10.735502660274506
+            },
+            "ext3": {
+                "group": "group3",
+                "ext_mode": 4,
+                "ext_threshold": 1359.435322523117,
+                "time_discount": 108.48410826921463
+            },
+            "ext4": {
+                "group": "group4",
+                "ext_mode": 4,
+                "ext_threshold": 901.8402223587036,
+                "time_discount": 0
+            }
+        },
+        "group_list": [
+            "group1",
+            "group2",
+            "group3",
+            "group4"
+        ],
+        "phases": [
+            [
+                1,
+                1,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                1,
+                1
+            ]
+        ],
+        "intergreens": [
+            [
+                0.0,
+                0.0,
+                3.0,
+                3.0
+            ],
+            [
+                0.0,
+                0.0,
+                3.0,
+                3.0
+            ],
+            [
+                3.0,
+                3.0,
+                0.0,
+                0.0
+            ],
+            [
+                3.0,
+                3.0,
+                0.0,
+                0.0
+            ]
+        ]
+    }
+}
