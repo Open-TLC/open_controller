@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 06/18/20 13:57:57 by Eclipse SUMO netedit Version 1.6.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+
+    <vType id="tram_type" vClass="tram" length="27.60" height="3.83" maxSpeed="15" personCapacity="200"/>
+
+    <route edges="-Mech08 -Mech07 -Mech06 -Mech05 -Mech_R03 -Itam_RB13 -Itam_RB12 -Itam_RB11 -Itam_RB10 -Itam_RB09" color="0,255,0" id="-tram_route_8">
+          <stop busStop="H0216" duration="10.00" extension="50.00"/>
+      </route>
+
+    <route edges="Itam_RB09 Itam_RB10 Itam_RB11 Itam_RB12 Itam_RB13  Mech_R04 Mech_R05 Mech_R06 Mech07 Mech08"      color="0,255,0" id="tram_route_8">
+          <stop busStop="H0215" duration="10.00" extension="50.00"/>
+      </route>
+    
+    <flow id="-F_R8" begin="0" end="3600"  type="tram_type" route="-tram_route_8" number="30"> </flow>
+
+    <flow id="F_R8"  begin="60" end="3600"  type="tram_type" route="tram_route_8"  number="30"> </flow>
+
+</routes>

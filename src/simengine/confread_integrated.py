@@ -1,15 +1,15 @@
-""" -*- coding: utf-8 -*-
+"""-*- coding: utf-8 -*-
 This unti handles the reading of configuration
 from file (client_conf.json by default)
 """
 
 # Copyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
-#
 
-import json
 import argparse
+import json
 import sys
+
 from jsmin import jsmin
 
 # Default values
@@ -22,7 +22,6 @@ class GlobalConf:
     "Class for handling all the software configuration (read only)"
 
     def __init__(self, filename=None):
-
         # To store command line settings
         self.command_line = {}
 
@@ -41,7 +40,6 @@ class GlobalConf:
             # Simply read the params from given file
             self.cnf = self.read_conf(filename)
 
-
     def set_conf_parameters(self):
         """Sets up all the conf in self.cnf
         This happens by reading both the command line
@@ -53,7 +51,7 @@ class GlobalConf:
         self.command_line = vars(command_line_params)
 
         # Add sumo params as subdictionary, an example
-        #self.command_line['sumo'] = {'graph': self.command_line['graph']}
+        # self.command_line['sumo'] = {'graph': self.command_line['graph']}
 
         # Step 2: read conf-file (as defined in command line, if defined)
         if command_line_params.conf_file:
@@ -87,62 +85,72 @@ class GlobalConf:
         and inserting the data into a db
         """
 
-        self.parser = argparse.ArgumentParser(
-            description=operation_description)
+        self.parser = argparse.ArgumentParser(description=operation_description)
 
         vers = SOFTWARE_NAME + " v. " + IMPL_VERSION
-        self.parser.add_argument('--version', action='version', version=vers)
+        self.parser.add_argument("--version", action="version", version=vers)
 
+        self.parser.add_argument(
+            "--conf-file",
+            help="Config file (default: client_conf.json)",
+            required=False,
+        )
 
-        self.parser.add_argument('--conf-file',
-                                 help='Config file '
-                                      '(default: client_conf.json)',
-                                 required=False)
+        self.parser.add_argument(
+            "--graph",
+            help="If set, run graphical version of sumo",
+            action="store_true",
+            required=False,
+        )
 
-        self.parser.add_argument('--graph',
-                                 help='If set, run graphical version of sumo',
-                                 action='store_true',
-                                 required=False)
-
-
-        self.parser.add_argument('--print-status',
-                                 help='If set, prints status info in every update',
-                                 action='store_true',
-                                 required=False)
-
+        self.parser.add_argument(
+            "--print-status",
+            help="If set, prints status info in every update",
+            action="store_true",
+            required=False,
+        )
 
         args = self.parser.parse_args()
 
         return args
 
-
-    def read_conf(self, file_name):
+    def read_conf(self, file_name) -> dict:
         """Opens the file and returns values as a dictionary"""
         config = {}
         try:
             with open(file_name) as json_cnf_file:
                 config = json.loads(jsmin(json_cnf_file.read()))
         except FileNotFoundError:
-            print('File does not exist:', file_name)
-            print('Exiting...')
+            print("File does not exist:", file_name)
+            print("Exiting...")
             sys.exit()
 
         # Should we add sanity check for input?
         return config
 
-    def get_controller_params(self):
-        print('controller params: ', self.cnf)
-        print('keys: ', self.cnf.keys())
-        controller_names = list(self.cnf.keys())
-        first_controller_name = controller_names[0]
-        controller_params = self.cnf[first_controller_name]
-        return controller_params
-    
+    def write_conf(self, file_name: str) -> None:
+        """Opens the file and writes configuration to it"""
+
+        with open(file_name, "w") as json_cnf_file:
+            json.dump(self.cnf, json_cnf_file, indent=4)
+
+    def get_param_count(self) -> int:
+        """
+        get_param_count returns the number of variable parameters in the configuration.
+        This value is used in Optimus to optimise the parameters
+
+        @return
+        int = number of parameters
+        """
+        signal_group_count: int = len(self.cnf["controller"]["signal_groups"].keys())
+        extender_count: int = len(self.cnf["controller"]["extenders"].keys())
+
+        return signal_group_count * 4 + extender_count * 2
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("testing for the confread")
     test_cnf = GlobalConf()
-#    test_cnf.set_conf_parameters()
+    #    test_cnf.set_conf_parameters()
 
     print(test_cnf.cnf)

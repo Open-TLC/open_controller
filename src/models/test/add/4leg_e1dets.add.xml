@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <e1Detector id="e1_North1" lane="E_N0_0" pos="10.00"  freq="900.00" name="N1" file="../out/e1det_North1.det.out.xml"/>
+    <e1Detector id="e1_North2" lane="E_N0_0" pos="-3.00"  freq="900.00" name="N1" file="../out/e1det_North2.det.out.xml"/>
+ 
+    <e1Detector id="e1_South1" lane="E_S0_0" pos="10.00"  freq="900.00" name="S1" file="../out/e1det_South1.det.out.xml"/>
+    <e1Detector id="e1_South2" lane="E_S0_0" pos="-3.00"  freq="900.00" name="S1" file="../out/e1det_South2.det.out.xml"/>
+       
+    <e1Detector id="e1_East1"  lane="E_E0_0" pos="-20.00" freq="900.00" name="E1" file="../out/e1det_East1.det.out.xml"/>    
+    <e1Detector id="e1_East2"  lane="E_E1_0" pos="-3.00"  freq="900.00" name="E1" file="../out/e1det_East2.det.out.xml"/>    
+    
+    <e1Detector id="e1_West1"  lane="E_W0_0" pos="-20.00" freq="900.00" name="W1" file="../out/e1det_West1.det.out.xml"/>
+    <e1Detector id="e1_West2"  lane="E_W1_0" pos="-3.00"  freq="900.00" name="W1" file="../out/e1det_West2.det.out.xml"/>
+
+</additional>

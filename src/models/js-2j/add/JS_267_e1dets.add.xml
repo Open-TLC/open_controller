@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    
+
+    <e1Detector id="267_105A"   lane="Mech01_0"     pos="-3.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="267_105B"   lane="Mech01_1"     pos="-3.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="267_105C"   lane="Mech01_2"     pos="-3.00"   freq="900.00" file="NUL"/>
+    
+    <e1Detector id="267_204A"   lane="-Mech03_0"    pos="-40.00"  freq="900.00" file="NUL"/>
+    <e1Detector id="267_204B"   lane="-Mech03_1"    pos="-40.00"  freq="900.00" file="NUL"/>
+    <e1Detector id="267_204C"   lane="-Mech03_2"    pos="-40.00"  freq="900.00" file="NUL"/>
+    <e1Detector id="267_205"    lane="-Mech03_1"    pos="-50.00"  freq="900.00" file="NUL"/>
+    
+    <e1Detector id="267_301R"   lane="-Mech_R03_0"  pos="-3.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="267_401R"   lane="Itam_RB13_1"  pos="-3.00"   freq="900.00" file="NUL"/>
+
+    <e1Detector id="267_501"    lane="Mech02_3"     pos="-3.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="267_502"    lane="Mech02_3"     pos="-20.00"  freq="900.00" file="NUL"/>
+        
+    <e1Detector id="267_701"    lane="Itam13_0"     pos="-3.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="267_703"    lane="Itam13_0"     pos="-30.00"  freq="900.00" file="NUL"/>
+    <e1Detector id="267_801"    lane="Itam13_1"     pos="-3.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="267_803"    lane="Itam13_1"     pos="-30.00"  freq="900.00" file="NUL"/>
+
+    <e1Detector id="267_1101"   lane="-Baana01.6_0"      pos="-2.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="267_1201"   lane="Itam_ylitMech_1"   pos="-2.00"   freq="900.00" file="NUL"/>
+
+    <e1Detector id="267_1301"   lane="Mech_ylitItam32_0" pos="-0.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="267_1501"   lane="-Mech_jp04_1"      pos="-2.00"   freq="900.00" file="NUL"/>
+
+</additional>

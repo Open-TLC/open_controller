@@ -10,7 +10,6 @@ signal group controller
 #
 
 import time
-import math
 #from transitions_gui import WebMachine
 #from transitions import Machine, State
 #from transitions import State
@@ -38,8 +37,8 @@ def value_is_number(input):
 
 def main():
     #TESTING
-    from timer import Timer
-    from confread import GlobalConf
+    from .timer import Timer
+    from .confread import GlobalConf
 
     timer = Timer(0.1)
     sys_cnf = GlobalConf().cnf
@@ -55,8 +54,8 @@ def main():
         print("Exiting")
 
 def draw_graphs():
-    from timer import Timer
-    from confread import GlobalConf
+    from .timer import Timer
+    from .confread import GlobalConf
 
     timer = Timer(0.1) # these should have defaults in group?
     sys_cnf = GlobalConf().cnf
