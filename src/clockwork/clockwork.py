@@ -43,9 +43,9 @@ import json
 from datetime import datetime, timezone
 import argparse
 
-from confread import GlobalConf
-from signal_group_controller import PhaseRingController
-from timer import Timer
+from .confread import GlobalConf
+from .signal_group_controller import PhaseRingController
+from .timer import Timer
 
 
 BEGININNG_ALL_RED_TIME = 10 # seconds
@@ -114,11 +114,12 @@ class DataDistributor:
     # Note: this channel is defined in the conf file
     # The following mappings (request and status mappings) are derived from this
     # FIXME likely we should onlu define the group number and use that instead of channel as string
-    def get_group_control_channel_mapping(self, group_conf, controller):
+    def get_group_control_channel_mapping(self, group_conf, controller, verbose: bool = False):
         "Returns a dictionary of all the channels and their corresponding groups (as list)"
         mapping = {}
         for group in group_conf:
-            print("Group:", group_conf[group])
+            if verbose:
+                print("Group:", group_conf[group])
             if "channel" in group_conf[group]:
                 channel = group_conf[group]["channel"]
                 for c_group in controller.groups:
@@ -263,7 +264,7 @@ class DataDistributor:
             await msg.respond("OK".encode())
 
 
-# FIX ME: the nats functions  should be in the DataDistributor class
+# FIXME: the nats functions  should be in the DataDistributor class
 async def main(conf_filename=None, set_controller_requests=False):
     command_line = read_command_line()
     print("Command line:", command_line)

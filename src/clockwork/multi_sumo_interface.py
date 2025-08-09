@@ -11,9 +11,9 @@ import os
 import time
 from confread import GlobalConf
 # from traffic_controller import TrafficController
-from signal_group_controller import PhaseRingController
-from timer import Timer
-from extender import StaticExtender
+from .signal_group_controller import PhaseRingController
+from .timer import Timer
+from .extender import StaticExtender
 
 
 

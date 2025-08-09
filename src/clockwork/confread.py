@@ -130,9 +130,10 @@ class GlobalConf:
         # Should we add sanity check for input?
         return config
 
-    def get_controller_params(self):
-        print('controller params: ', self.cnf)
-        print('keys: ', self.cnf.keys())
+    def get_controller_params(self, verbose: bool = False):
+        if verbose:
+            print('controller params: ', self.cnf)
+            print('keys: ', self.cnf.keys())
         controller_names = list(self.cnf.keys())
         first_controller_name = controller_names[0]
         controller_params = self.cnf[first_controller_name]
