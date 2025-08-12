@@ -223,10 +223,10 @@ class e3Detector(Detector):
         for vehid in self.det_vehicles_dict:
 
             vtype = self.det_vehicles_dict[vehid]['vtype']
-            speed = self.det_vehicles_dict[vehid]['vspeed'] 
+            speed = self.det_vehicles_dict[vehid]['speed']  # DBIK202508 Key error ?
             self.speedsum += speed                      
-            TLSdist = self.det_vehicles_dict[vehid]['TLSdist']
-            TLSno = self.det_vehicles_dict[vehid]['TLSno']
+            # TLSdist = self.det_vehicles_dict[vehid]['TLSdist']  # DBIK202508 Key error ?
+            # TLSno = self.det_vehicles_dict[vehid]['TLSno']
             
             if (vtype == 'car_type'):
                     pass
