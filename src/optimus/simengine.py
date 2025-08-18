@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Optional
+from typing import Any, Optional
 
 from clockwork.signal_group_controller import PhaseRingController
 from simengine.confread_integrated import GlobalConf as SystemConf
@@ -12,7 +12,7 @@ from simengine.detector import (
 from simengine.logger import SimLogger
 from simengine.timer import Timer, create_timer_from_conf
 
-from .sumo import simulation_is_finished, start_simulation
+from .sumo import Trip, TripReader, simulation_is_finished, start_simulation
 
 SUMO_HOME = os.environ.get("SUMO_HOME")
 if SUMO_HOME is None:
@@ -32,10 +32,13 @@ class SimEngine:
 
     def __init__(
         self,
-        conf: SystemConf,
+        model_root: str,
         logger: Optional[SimLogger] = None,
+        collect_time_loss: bool = False,
     ) -> None:
         self.traci = traci  # Open TraCI connection
+        self._model_root = model_root
+        conf = SystemConf(os.path.join(model_root, "contr", "e3.json"))
         self.conf = conf  # System configuration for simulation
         self.logger: Optional[SimLogger] = logger
 
@@ -44,9 +47,7 @@ class SimEngine:
         self._timer.reset()
 
         # Signal controller is created
-        self._controller: PhaseRingController = PhaseRingController(
-            conf.cnf, self._timer
-        )
+        self._controller = PhaseRingController(conf.cnf, self._timer)
         self._controller.set_sumo_outputs(self.conf.cnf["sumo"]["group_outputs"])
 
         if self.logger is not None:
@@ -55,11 +56,21 @@ class SimEngine:
         # Open TraCI connection is used to communicate with the simulation
         self._start_traci()
 
-        self._cur: int = 0  # Current step
         self.teleported: int = 0  # Number of teleported vehicles
 
         # Detector configuration for SUMO
         self._det_conf = DetectorConf(self._controller, self.traci)
+
+        # Parser used to read tripinfo from a file
+        self._init_tripinfo_parser()
+
+        # Should the simulation engine collect time losses when running simulation
+        self._collect_time_loss = collect_time_loss
+
+        # Dict of finished trips with vehicle ID as key
+        self._finished_vehicles: dict[str, Trip] = {}
+        # List of time losses from last running session
+        self.last_run_losses: list[float] = []
 
     def reset(self) -> None:
         """
@@ -69,6 +80,9 @@ class SimEngine:
         self._timer.reset()
         self.close()
         self._start_traci()
+        self.teleported = 0
+        self._controller = PhaseRingController(self.conf.cnf, self._timer)
+        self._init_tripinfo_parser()
 
     def close(self) -> None:
         if self.logger is not None:
@@ -97,6 +111,9 @@ class SimEngine:
             self.logger.log("Starting simulation...")
         sumo_name = self.conf.cnf["controller"]["sumo_name"]
         cur: int = 0
+
+        # This reset's the list of time lossses for the run
+        self.last_run_losses: list[float] = []
 
         while not self._is_simulation_finished(cur, steps):
             for vehicleId in self.traci.vehicle.getIDList():
@@ -131,13 +148,15 @@ class SimEngine:
                 print("Fatal error in sumo, exiting")
                 break
 
-            if self.traci.simulation.getStartingTeleportNumber():
-                self.teleported += 1
+            if self._collect_time_loss:
+                current_step_losses: list[float] = self._retrieve_arrived_time_losses()
+                self.last_run_losses.extend(current_step_losses)
+
+            self.teleported += self.traci.simulation.getStartingTeleportNumber()
 
             self._timer.tick()  # DBIK230711 timer tick only in the main loop
 
             cur += 1
-            self._cur += 1
 
         if self.logger is not None:
             self.logger.log("Simulation stopped")
@@ -156,8 +175,22 @@ class SimEngine:
             print("Sumo start failed:", e)
             return
 
-    def update_controller(self, new: SystemConf) -> None:
-        self._controller = PhaseRingController(new.cnf, self._timer)
+    def update_controller_extenders(self, new: SystemConf) -> None:
+        self.conf = new  # SimEngine's own configuration is updated
+
+        extender_conf: dict[str, Any] = new.cnf["controller"]["extenders"]
+        for extender_id in extender_conf.keys():
+            extender_group = extender_conf[extender_id]["group"]
+            for extender in self._controller.e3extenders:
+                if extender_group == extender.group.group_name:
+                    new_threshold: float = extender_conf[extender_id]["ext_threshold"]
+                    extender.ext_threshold = new_threshold
+
+                    new_discount: float = extender_conf[extender_id]["time_discount"]
+                    # avoids "divide by zero" cases
+                    if new_discount == 0:
+                        new_discount = 0.1
+                    extender.time_discount = new_discount
 
     def get_current_simulation_time(self) -> float:
         """
@@ -188,3 +221,38 @@ class SimEngine:
             e3_readings.append(e3)
 
         return e1_readings, e3_readings
+
+    def _init_tripinfo_parser(self) -> None:
+        tripinfo_filepath = os.path.join(
+            self._model_root, "out", "1J_tripinfo.trip.xml"
+        )
+        self._tripinfo_parser = TripReader(tripinfo_filepath)
+
+    def _retrieve_arrived_time_losses(self) -> list[float]:
+        time_losses: list[float] = []
+
+        veh_ids = self.traci.simulation.getArrivedIDList()
+        if len(veh_ids) == 0:
+            return []
+        new_trips = self._tripinfo_parser.get_new_trips()
+        for veh_id in veh_ids:
+            trip = new_trips.get(veh_id)
+            if trip is None:
+                print(f"no trip found for vehicle ID {veh_id}")
+                continue
+            time_losses.append(trip.time_loss)
+
+            # Finished trip is added to dictionary for later use
+            self._finished_vehicles[veh_id] = trip
+        return time_losses
+
+    @property
+    def total_time_loss(self) -> float:
+        res: float = 0
+        for trip in self._finished_vehicles.values():
+            res += trip.time_loss
+        return res
+
+    @property
+    def last_run_total_time_loss(self) -> float:
+        return sum(self.last_run_losses)

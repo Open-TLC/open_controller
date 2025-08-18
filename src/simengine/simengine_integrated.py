@@ -89,10 +89,7 @@ def run_sumo(conf_filename: str):
     # Start the actual simulation
     system_timer.reset()
 
-    sim_logger = SimLogger(True)
-    start_simulation(
-        sys_cnf, system_timer, traffic_controller, detector_conf, logger=sim_logger
-    )
+    start_simulation(sys_cnf, system_timer, traffic_controller, detector_conf)
 
     print("Closing traci")
     try:
@@ -183,4 +180,4 @@ def start_simulation(
 
 
 if __name__ == "__main__":
-    run_sumo(os.path.join(MODEL_ROOT, "contr/07082122.json"))
+    run_sumo(os.path.join(MODEL_ROOT, "contr/e3.json"))

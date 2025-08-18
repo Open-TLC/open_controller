@@ -40,6 +40,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Use project venv path
 ENV PATH="/app/.venv/bin:$PATH"
+
+# Ensures better logging while training model
 ENV PYTHONUNBUFFERED=1
 
 # Run the app
