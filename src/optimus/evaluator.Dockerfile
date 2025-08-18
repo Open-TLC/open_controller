@@ -41,5 +41,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Use project venv path
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["uv", "run", "-m", "simengine.simengine_integrated"]
+# Ensures better logging while training model
+ENV PYTHONUNBUFFERED=1
+
+# Run the app
+CMD ["uv", "run", "-m", "optimus.evaluator"]
 

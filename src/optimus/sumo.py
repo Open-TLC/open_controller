@@ -1,4 +1,4 @@
-import json
+import io
 import subprocess
 import sys
 import typing
@@ -56,101 +56,93 @@ def simulation_is_finished(traci_connection, timer: Optional[Timer]) -> bool:
     return traci_connection.simulation.getMinExpectedNumber() <= 0
 
 
-def read_extender_config(filepath: str) -> Config:
-    extender_config: Config = []
-    with open(filepath) as conf_f:
-        raw = json.load(conf_f)
-        extender_config = raw["controller"].get("extender")
-        if not extender_config:
-            raise Exception("no extender config found in file")
-    return extender_config
-
-
-def write_extender_config(filepath: str, config: Config) -> None:
-    existing = {}
-    try:
-        with open(filepath, "r") as conf_f:
-            existing = json.load(conf_f)
-    except FileNotFoundError:
-        pass
-    except json.JSONDecodeError:
-        print(f"invalid JSON syntax in file {filepath}")
-        existing = {"controller": {}}
-
-    existing["controller"]["extenders"] = config
-
-    with open(filepath, "w") as conf_f:
-        json.dump(existing, conf_f, indent=4)
-
-
 @dataclass
 class Trip:
+    id: str
     type: str
     departure: float
     time_loss: float
 
 
-def get_trips_from_file(filepath: str) -> list[Trip]:
-    trips: list[Trip] = []
+class TripReader:
+    def __init__(self, filepath: str):
+        self.filepath = filepath
+        self.offset = 0  # last read byte position
+        self.finished = False
+
+    def get_new_trips(self) -> dict[str, Trip]:
+        trips: dict[str, Trip] = {}
+
+        with open(self.filepath, "rb") as f:
+            f.seek(self.offset)
+            data = f.read()
+
+            if not data:
+                return {}
+
+            fake_xml = b"<root>" + data + b"</root>"
+
+            try:
+                for _, elem in et.iterparse(io.BytesIO(fake_xml), events=("end",)):
+                    if elem.tag != "tripinfo":
+                        continue
+
+                    veh_id = elem.get("id") or str(len(trips))
+                    v_type = elem.get("vType") or "unknown"
+
+                    def safe_float(value: str | None, default: float = 0.0) -> float:
+                        if value is None:
+                            return default
+                        try:
+                            return float(value)
+                        except ValueError:
+                            return default
+
+                    t_loss = safe_float(elem.get("timeLoss"), 0.0)
+                    departure = safe_float(elem.get("depart"), 0.0)
+
+                    trips[veh_id] = Trip(veh_id, v_type, departure, t_loss)
+                    elem.clear()
+
+            except et.ParseError:
+                pass
+
+            self.offset = f.tell()
+
+        return trips
+
+
+def get_trips_from_file(filepath: str) -> dict[str, Trip]:
+    trips: dict[str, Trip] = {}
+
     try:
-        info_tree = et.parse(filepath)
-        for tripinfo in info_tree.findall("tripinfo"):
-            v_type = tripinfo.get("vType")
-            if v_type is None:
-                v_type = "unknown"
+        context = et.iterparse(filepath, events=("end",))
+        for event, elem in context:
+            if elem.tag != "tripinfo":
+                continue
 
-            t_loss_str = tripinfo.get("timeLoss")
-            t_loss: float = 0
-            if t_loss_str is not None:
+            veh_id = elem.get("id") or str(len(trips))
+            v_type = elem.get("vType") or "unknown"
+
+            def safe_float(value: str | None, default: float = 0.0) -> float:
+                if value is None:
+                    return default
                 try:
-                    t_loss = float(t_loss_str)
+                    return float(value)
                 except ValueError:
-                    print(
-                        f"error converting timeLoss '{t_loss_str}' to float for tripinfo ID: {tripinfo.get('id')}"
-                    )
-            else:
-                print(
-                    f"warning: 'timeLoss' attribute missing for tripinfo ID: {tripinfo.get('id')}"
-                )
-                t_loss = 0
+                    return default
 
-            departure_str = tripinfo.get("depart")
-            departure: float = 0
-            if departure_str is not None:
-                try:
-                    departure = float(departure_str)
-                except ValueError:
-                    print(
-                        f"error converting depart '{departure_str}' to float for tripinfo ID: {tripinfo.get('id')}"
-                    )
-            else:
-                print(
-                    f"warning: 'depart' attribute missing for tripinfo ID: {tripinfo.get('id')}"
-                )
+            t_loss = safe_float(elem.get("timeLoss"), 0.0)
+            departure = safe_float(elem.get("depart"), 0.0)
 
-            trip = Trip(v_type, departure, t_loss)
-            trips.append(trip)
+            trip = Trip(veh_id, v_type, departure, t_loss)
+            trips[veh_id] = trip
+
+            elem.clear()
 
     except FileNotFoundError:
         print(f"error: File not found at {filepath}")
     except et.ParseError as e:
-        print(f"error parsing XML file '{filepath}': {e}")
-    return trips
-
-
-def get_trips_since(traci_connection, time_seconds: float) -> list[Trip]:
-    ids: list[str] = []
-    for vehid in traci_connection.vehicle.getIDList():
-        if traci_connection.vehicle.getDeparture(vehid) > time_seconds:
-            ids.append(vehid)
-
-    trips: list[Trip] = []
-    for vehid in ids:
-        v_type: str = traci_connection.vehicle.getTypeID(vehid)
-        depart: float = traci_connection.vehicle.getDeparture(vehid)
-        t_loss: float = traci_connection.vehicle.getTimeLoss(vehid)
-
-        trip = Trip(v_type, depart, t_loss)
-        trips.append(trip)
+        print(f"warning: partial XML, parsed trips so far ({len(trips)} trips): {e}")
 
     return trips
