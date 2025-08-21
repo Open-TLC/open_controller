@@ -73,6 +73,7 @@ async def main():
     # Subscribe to the subject
     await nc.subscribe("radar.266.6.objects_port.json", cb=message_handler)
 
+    
     print("Listening on 'radar.266.6.objects_port.json' ...")
     # Keep running
     while True:
