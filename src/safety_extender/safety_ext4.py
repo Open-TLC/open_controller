@@ -15,6 +15,7 @@ def process_data(objects):
     """
     stopline_lat = 60.164398019050545
     stopline_lon = 24.92070067464535
+    threshold = 20.0
 
     for obj in objects:
         vehicle_id = obj.get("sumo_id")
@@ -24,6 +25,31 @@ def process_data(objects):
             continue
         dist_m = round(distance_in_meters(stopline_lat, stopline_lon, vehicle_lat, vehicle_lon), 2)
         print(f"id={vehicle_id}, dist_to_stopline={dist_m} m")
+        obj['dist'] = dist_m
+
+    objects_with_dist = [o for o in objects if o["dist"] is not None]
+    objects_sorted = sorted(objects_with_dist, key=lambda o: o["dist"])
+
+    for obj in objects_sorted:
+        print(f"  id={obj.get('sumo_id')}, dist={obj['dist']} m")
+
+    close_vehicles = []
+    for i in range(len(objects_sorted) - 1):
+        dist_gap = objects_sorted[i + 1]["dist"] - objects_sorted[i]["dist"]
+        if dist_gap < threshold:
+            close_vehicles.append({
+                "front_id": objects_sorted[i + 1].get("sumo_id"),
+                "back_id": objects_sorted[i].get("sumo_id"),
+                "gap_m": round(dist_gap, 2),
+            })
+
+    print(f"\nVehicles closer than {threshold} m:")
+    for pair in close_vehicles:
+        print(f"  {pair['back_id']} → {pair['front_id']} gap={pair['gap_m']} m")
+
+    
+
+    # Sort objects based on obj['dist']
 
 
 async def main():
