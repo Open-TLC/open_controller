@@ -11,8 +11,9 @@ from haversine import haversine, Unit
 # ---- config ----
 INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
 INPUT_SUBJECT_SIGNAL  = "group.control.266.11"
-OUTPUT_SUBJECT        = "detector.control.g11_safety_ext"
-OUTPUT_ID             = "detector.control.g11_safety_ext"
+OUTPUT_SUBJECT_EXT    = "detector.control.g11_safety_ext"
+OUTPUT_SUBJECT_BLOCK  = "detector.control.g11_ext_block"
+
 THRESHOLD_M           = 20.0
 NATS_URL              = "nats://127.0.0.1:4222"
 STOPLINE_LAT          = 60.164398019050545
@@ -73,9 +74,9 @@ def iso_now_ms() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
 
 
-async def publish_control(nc: nats.NATS, loop_on: bool):
+async def publish_control(nc: nats.NATS, OUTPUT_SUBJECT: str, loop_on: bool):
     payload = {
-        "id": OUTPUT_ID,
+        "id": OUTPUT_SUBJECT,
         "tstamp": iso_now_ms(),
         "loop_on": loop_on,
     }
@@ -135,7 +136,7 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
             if green is True:
                 # Optionally dedupe; comment out the if-block to publish every batch while green.
                 #if last_loop_on_published is None or loop_on != last_loop_on_published:
-                    await publish_control(nc, loop_on)
+                    await publish_control(nc, OUTPUT_SUBJECT_EXT, loop_on)
                     last_loop_on_published = loop_on
             else:
                 # Not green (False or None) -> do not publish
