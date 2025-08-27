@@ -10,7 +10,7 @@ from .trafficenv import TrafficEnv
 
 CONF_ROOT = os.path.join("models", "test")
 
-TRAINING_TIMESTEPS = 5000
+TRAINING_TIMESTEPS = 500_000
 
 MODEL_TYPE = "sac"
 
@@ -21,6 +21,8 @@ def main():
     print("Checking environment...")
     check_env(env, warn=True)
     print("Environment check successful")
+
+    model_name: str = MODEL_TYPE + "_" + time.strftime("%d%m%H%M")
 
     print("Initializing model...")
     model: BaseAlgorithm
@@ -39,9 +41,7 @@ def main():
 
     env.close()
 
-    model_path: str = os.path.join(
-        CONF_ROOT, "optimus", (MODEL_TYPE + "_" + time.strftime("%d%m%H%M") + ".zip")
-    )
+    model_path: str = os.path.join(CONF_ROOT, "optimus", (model_name + ".zip"))
     model.save(model_path)
     print("Model saved to:", model_path)
 
