@@ -9,6 +9,7 @@ import numpy as np
 from simengine.confread_integrated import GlobalConf as SystemConf
 
 from .simengine import SimEngine
+from .sumo import simulation_is_finished
 
 
 class TrafficEnv(gym.Env):
@@ -45,6 +46,12 @@ class TrafficEnv(gym.Env):
         self.sim_eng.update_controller_extenders(self.system_conf)
 
         self.sim_eng.run(steps=self._step_length)
+        if self.sim_eng.traci.simulation.getMinExpectedNumber() <= 0:
+            print("traffic generation ended too ealry")
+            exit(1)
+        if simulation_is_finished(self.sim_eng.traci, self.sim_eng._timer):
+            print("simulation finished too early")
+            exit(1)
 
         # Reward value is calculated from the sum of time losses
         reward: float = self._reward()
@@ -116,19 +123,20 @@ class TrafficEnv(gym.Env):
         return res
 
     def _get_observations(self) -> np.ndarray:
-        e1_readings, e3_readings = self.sim_eng.get_detector_readings()
+        e1_readings = self.sim_eng.last_run_e1_detections
+        e3_readings = self.sim_eng.last_run_e3_detections
 
         result = np.ndarray(shape=(self._observation_dim,), dtype=np.float32)
 
         i = 0
-        for reading in e1_readings:
-            result[i] = reading[0]
-            result[i + 1] = reading[1]
+        for reading in e1_readings.values():
+            result[i] = reading.vehicle_count
+            result[i + 1] = reading.average_occupancy
             i += 2
 
-        for reading in e3_readings:
-            result[i] = reading[0]
-            result[i + 1] = reading[1]
+        for reading in e3_readings.values():
+            result[i] = reading.average_vehicle_count
+            result[i + 1] = reading.average_transit_count
             i += 2
 
         return result

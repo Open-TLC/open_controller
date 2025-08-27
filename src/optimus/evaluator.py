@@ -1,16 +1,21 @@
 import json
 import os
 import sys
+from copy import deepcopy
 from typing import Any
 
 from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.base_class import BaseAlgorithm
 
 from optimus.simengine import SimEngine
+from optimus.sumo import Trip
 from optimus.trafficenv import TrafficEnv
 
 TEST_SIMULATION_ROOT = "models/test"
-TEST_MODEL_NAMES = ["ppo_2", "sac_1"]
+# List of model names to evaluate
+TEST_MODEL_NAMES = [
+    "example_model",
+]
 
 
 def main() -> None:
@@ -60,6 +65,8 @@ class Evaluator:
         """
         results: dict[Any, float] = {}
 
+        trips: dict[Any, dict[str, Trip]] = {}
+
         for sim_id in self.sim_confs.keys():
             sim: SimEngine = SimEngine(self.sim_confs[sim_id], collect_time_loss=True)
             step_lenth = sim.conf.cnf["timer"]["time_step"]
@@ -67,6 +74,7 @@ class Evaluator:
             sim.run(step_count)
             total_time_loss: float = sim.total_time_loss
             results[sim_id] = total_time_loss
+            trips[sim_id] = deepcopy(sim._finished_vehicles)
             sim.close()
 
         for model_id in self.models.keys():
@@ -75,14 +83,12 @@ class Evaluator:
             step_count = round(self.eval_length / env.step_length_s)
 
             obs, _ = env.reset()
-            for i in range(step_count):
+            for _ in range(step_count):
                 action, _ = model.predict(obs, deterministic=True)
-                obs, reward, _, _, _ = env.step(action)
-                if i % 50 == 0:
-                    print(f"i: {i} => {action}")
-                    print(f"reward = {reward}")
+                obs, _, _, _, _ = env.step(action)
             total_time_loss: float = env.sim_eng.total_time_loss
             results[model_id] = total_time_loss
+            trips[model_id] = deepcopy(env.sim_eng._finished_vehicles)
             env.close()
 
         self.results = results

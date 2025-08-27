@@ -1,5 +1,6 @@
 import os
 import sys
+from dataclasses import dataclass
 from typing import Any, Optional
 
 from clockwork.signal_group_controller import PhaseRingController
@@ -20,7 +21,11 @@ if SUMO_HOME is None:
 
 SUMO_TOOLS = os.path.join(os.environ["SUMO_HOME"], "tools")
 sys.path.append(SUMO_TOOLS)
-import traci
+# libsumo provides the same function signatures as TraCI but with lower latencies.
+# Main limitation is that libsumo can't be used with SUMO's gui. As this is not
+# an objective with Optimus's simengine, libsumo can be used here without any
+# drawbacks to reduce training time in the model training loop.
+import libsumo as traci
 
 
 class SimEngine:
@@ -72,6 +77,10 @@ class SimEngine:
         # List of time losses from last running session
         self.last_run_losses: list[float] = []
 
+        self.last_run_e1_detections: dict[str, E1ReadingOverTime] = {}
+        self.last_run_e3_detections: dict[str, E3ReadingOverTime] = {}
+        self._reset_last_run_detections()
+
     def reset(self) -> None:
         """
         reset is a function for resetting the simulation and its timer.
@@ -83,12 +92,13 @@ class SimEngine:
         self.teleported = 0
         self._controller = PhaseRingController(self.conf.cnf, self._timer)
         self._init_tripinfo_parser()
+        self._reset_last_run_detections()
 
     def close(self) -> None:
         if self.logger is not None:
             self.logger.log("Closing TraCI")
         if self.traci.isLoaded():
-            self.traci.close(False)
+            self.traci.close()
         else:
             print("TraCI was not loaded!!")
 
@@ -115,6 +125,8 @@ class SimEngine:
         # This reset's the list of time lossses for the run
         self.last_run_losses: list[float] = []
 
+        self._reset_last_run_detections()
+
         while not self._is_simulation_finished(cur, steps):
             for vehicleId in self.traci.vehicle.getIDList():
                 self.traci.vehicle.setSpeedMode(
@@ -123,6 +135,28 @@ class SimEngine:
 
             self._det_conf.sumo_e1detections_to_controller()
             self._det_conf.sumo_e3detections_to_controller()
+
+            new_e1, new_3 = self.get_detector_readings()
+            for id in new_e1.keys():
+                prev = self.last_run_e1_detections.get(id)
+                if not prev:
+                    prev = E1ReadingOverTime(0, 0)
+                prev.vehicle_count += new_e1[id][0]
+
+                prev.total_occupancy += new_e1[id][1]
+                prev.index += 1
+                self.last_run_e1_detections[id] = prev
+
+            for id in new_3.keys():
+                prev = self.last_run_e3_detections.get(id)
+                if not prev:
+                    prev = E3ReadingOverTime(0, 0)
+
+                prev.total_vehicle_count += new_3[id][0]
+                prev.total_transit_count += new_3[id][1]
+
+                prev.index += 1
+                self.last_run_e3_detections[id] = prev
 
             self._controller.tick()
 
@@ -184,6 +218,9 @@ class SimEngine:
             for extender in self._controller.e3extenders:
                 if extender_group == extender.group.group_name:
                     new_threshold: float = extender_conf[extender_id]["ext_threshold"]
+                    # avoids always extending the green in extension algorithm
+                    if new_threshold == 0:
+                        new_threshold = 0.1
                     extender.ext_threshold = new_threshold
 
                     new_discount: float = extender_conf[extender_id]["time_discount"]
@@ -198,27 +235,29 @@ class SimEngine:
         """
         return self._timer.seconds
 
-    def get_detector_readings(self) -> tuple[list[E1Reading], list[E3Reading]]:
+    def get_detector_readings(
+        self,
+    ) -> tuple[dict[str, E1Reading], dict[str, E3Reading]]:
         """
         get_detector_readings returns all readings from both e1 and e3 detectors in the simulation
 
         @return:
-        list[E1Reading] = list of e1 detector readings from all e1 detectors
-        list[E3Reading] = list of e3 detector readings from all e3 detectors
+        dict[str, E1Reading] = dictionary of e1 detector readings from all e1 detectors with detector ID as the key
+        dict[str, E3Reading] = dictionary of e3 detector readings from all e3 detectors with detector ID as the key
         """
         e1_ids: list[str] = self._det_conf.sumo_loops
         e3_ids: list[str] = self._det_conf.sumo_e3dets
 
-        e1_readings: list[E1Reading] = []
-        e3_readings: list[E3Reading] = []
+        e1_readings: dict[str, E1Reading] = {}
+        e3_readings: dict[str, E3Reading] = {}
 
         for det_id in e1_ids:
             e1: E1Reading = self._det_conf.get_e1_readings(det_id)
-            e1_readings.append(e1)
+            e1_readings[det_id] = e1
 
         for det_id in e3_ids:
             e3: E3Reading = self._det_conf.get_e3_readings(det_id)
-            e3_readings.append(e3)
+            e3_readings[det_id] = e3
 
         return e1_readings, e3_readings
 
@@ -246,13 +285,55 @@ class SimEngine:
             self._finished_vehicles[veh_id] = trip
         return time_losses
 
+    def _reset_last_run_detections(self) -> None:
+        for det_id in self._det_conf.sumo_loops:
+            self.last_run_e1_detections[det_id] = E1ReadingOverTime(0, 0)
+
+        for det_id in self._det_conf.sumo_e3dets:
+            self.last_run_e3_detections[det_id] = E3ReadingOverTime(0, 0)
+
     @property
     def total_time_loss(self) -> float:
         res: float = 0
+        count: int = len(self._finished_vehicles.keys())
+        print(f"trips in total: {count}")
         for trip in self._finished_vehicles.values():
             res += trip.time_loss
+        print(f"avg loss: {round(res / count, 3)}")
         return res
 
     @property
     def last_run_total_time_loss(self) -> float:
         return sum(self.last_run_losses)
+
+
+@dataclass
+class E1ReadingOverTime:
+    vehicle_count: int
+    total_occupancy: float
+    index: int = 0
+
+    @property
+    def average_occupancy(self) -> float:
+        if self.index == 0:
+            return 0
+        return self.total_occupancy / self.index
+
+
+@dataclass
+class E3ReadingOverTime:
+    total_vehicle_count: int
+    total_transit_count: int
+    index: int = 0
+
+    @property
+    def average_vehicle_count(self) -> float:
+        if self.index == 0:
+            return 0
+        return self.total_vehicle_count / self.index
+
+    @property
+    def average_transit_count(self) -> float:
+        if self.index == 0:
+            return 0
+        return self.total_transit_count / self.index
