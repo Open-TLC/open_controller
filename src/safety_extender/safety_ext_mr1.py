@@ -17,7 +17,7 @@ OUTPUT_SUBJECT_REAL_BLOCK  = "detector.control.g11_ext_block"
 
 OUTPUT_SUBJECT_SIM_EXT    = "detector.status.266_11_v2x"
 
-MODE                  = "SIM"
+MODE                  = "HWIL"
 THRESHOLD_M           = 30.0
 NATS_URL              = "nats://10.8.0.36"
 STOPLINE_LAT          = 60.164398019050545
@@ -76,6 +76,10 @@ def find_close_pairs(objects: List[Dict[str, Any]], threshold_m: float) -> List[
 
 def iso_now_ms() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+
+def iso_now_ms_no_tz() -> str:
+    # Use naive datetime (no tzinfo), millisecond precision
+    return datetime.utcnow().isoformat(timespec="milliseconds")
 
 
 async def publish_control(nc: nats.NATS, OUTPUT_SUBJECT: str, loop_on: bool):
