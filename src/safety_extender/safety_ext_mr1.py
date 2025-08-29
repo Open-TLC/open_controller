@@ -17,10 +17,9 @@ OUTPUT_SUBJECT_REAL_BLOCK  = "detector.control.g11_ext_block"
 
 OUTPUT_SUBJECT_SIM_EXT    = "detector.status.266_11_v2x"
 
-MODE                  = "HW"
+MODE                  = "SIM"
 THRESHOLD_M           = 30.0
-# NATS_URL              = "nats://127.0.0.1:4222"
-NATS_URL              = "nats://10.8.0.36:4222"
+NATS_URL              = "nats://10.8.0.36"
 STOPLINE_LAT          = 60.164398019050545
 STOPLINE_LON          = 24.92070067464535
 # -----------------
@@ -146,9 +145,13 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
         objects = await queue.get()
         try:
             close_pairs = find_close_pairs(objects, threshold_m)
-            loop_on = len(close_pairs) > 0
+            ext_on = len(close_pairs) > 0
             green = await signal_state.get_green()
-            green = True
+            green_started = not(last_green) and green
+            green_ended =   last_green and  not(green)
+            green = True            # Send the ext message continuously
+            green_started = False   # Dont send the block message 
+            green_ended =   False   # Dont send the block message 
 
             # Logs for visibility
             if close_pairs:
@@ -159,19 +162,24 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
             else:
                 print(f"[processor] no close pairs (< {threshold_m} m)")
 
-            # Only publish if the signal is green (True)
+            if green_started:
+                 await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, True)  # Block other extensions
+            
             if green is True:
-                # Optionally dedupe; comment out the if-block to publish every batch while green.
-                # if last_loop_on_published is None or loop_on != last_loop_on_published:
-                    if MODE == "SIM":
-                        await publish_control(nc, OUTPUT_SUBJECT_SIM_EXT, loop_on)
-                    else:
-                        await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, loop_on)
-                        await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, loop_on)
-                    last_loop_on_published = loop_on
+                # if ext_on != last_ext_on:    # send Changes only
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, ext_on)  
+                    last_ext = ext_on
             else:
                 # Not green (False or None) -> do not publish
                 print(f"[processor] skip publish: green={green}")
+
+
+            if green_ended:
+                 await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False) # Release the block of other extensions
+
+
+            last_green = green
+
         finally:
             queue.task_done()
 # -------------------------------

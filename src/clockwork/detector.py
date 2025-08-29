@@ -31,7 +31,7 @@ class Detector:
         self._loop_on = False
         self.request_groups = []
         self.priolevel = 2
-        if self.type in ['request','extender','e3detector', 'prio']:
+        if self.type in ['request','extender','e3detector', 'prio','ext_extender']:
             self.sumo_id = conf['sumo_id']
         else:
             self.sumo_id = None
@@ -167,6 +167,20 @@ class ExtDetector(Detector):
         """tick is doing nothing, but has to defined. Otherwise will inherit from Request detector"""
         pass
 
+class Ext_Extender(ExtDetector):
+    """Detector for extending"""
+    def __init__(self, system_timer, name, conf):
+        super(ExtDetector, self).__init__(system_timer, name, conf)
+        self.group = conf['group']
+        self.ext_time = conf['ext_time']
+
+    def is_extending(self):
+        """Returns true if detector on """  
+        return self.loop_on 
+
+    def tick(self):  # DBIK240801 
+        """tick is doing nothing, but has to defined. Otherwise will inherit from Request detector"""
+        pass
 
 # BBIK231214  New detector class for extending by signal groups 
 class GrpDetector(Detector):
