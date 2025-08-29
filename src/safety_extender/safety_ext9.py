@@ -158,19 +158,27 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
             else:
                 print(f"[processor] no close pairs (< {threshold_m} m)")
 
+            # Optionally dedupe; comment out the if-block to publish every batch while green.
+            # if last_loop_on_published is None or loop_on != last_loop_on_published:
+            if MODE == "SIM":
+                await publish_control(nc, OUTPUT_SUBJECT_SIM_EXT, loop_on)
+            else:
+                await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, loop_on)
+                
+                if last_loop_on_published and Not(loop_on):
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, loop_on)
+                last_loop_on_published = loop_on
+
             # Only publish if the signal is green (True)
             if green is True:
-                # Optionally dedupe; comment out the if-block to publish every batch while green.
-                # if last_loop_on_published is None or loop_on != last_loop_on_published:
-                    if MODE == "SIM":
-                        await publish_control(nc, OUTPUT_SUBJECT_SIM_EXT, loop_on)
-                    else:
-                        await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, loop_on)
-                        await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, loop_on)
-                    last_loop_on_published = loop_on
-            else:
-                # Not green (False or None) -> do not publish
-                print(f"[processor] skip publish: green={green}")
+                if MODE != "SIM":
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, loop_on)
+                else:
+                    # Not green (False or None) -> do not publish
+                    print(f"[processor] skip publish: green={green}")
+                    
+            
+        
         finally:
             queue.task_done()
 # -------------------------------
