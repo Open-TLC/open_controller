@@ -11,9 +11,13 @@ from haversine import haversine, Unit
 # ---- config ----
 INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
 INPUT_SUBJECT_SIGNAL  = "group.control.266.11"
-OUTPUT_SUBJECT_EXT    = "detector.control.g11_safety_ext"
-OUTPUT_SUBJECT_BLOCK  = "detector.control.g11_ext_block"
 
+OUTPUT_SUBJECT_REAL_EXT    = "detector.control.g11_safety_ext"
+OUTPUT_SUBJECT_REAL_BLOCK  = "detector.control.g11_ext_block"
+
+OUTPUT_SUBJECT_SIM_EXT    = "detector.status.266_1102A_v2x"
+
+MODE                  = "SIM"
 THRESHOLD_M           = 20.0
 NATS_URL              = "nats://127.0.0.1:4222"
 STOPLINE_LAT          = 60.164398019050545
@@ -102,7 +106,28 @@ async def signal_listener(nc: nats.NATS, signal_state: SharedSignalState):
     async def on_msg(msg):
         try:
             data = json.loads(msg.data.decode("utf-8"))
-            green = bool(data.get("green", False))
+
+            # Only substate controls green:
+            # True  iff substate == "1"
+            # False otherwise (including missing)
+            substate = data.get("substate")
+            green = (substate == "1")
+
+            await signal_state.set_green(green)
+            print(f"[signal_listener] substate={substate!r} -> green={green}")
+
+        except Exception as e:
+            print("[signal_listener] parse error:", e)
+
+    await nc.subscribe(INPUT_SUBJECT_SIGNAL, cb=on_msg)
+    print(f"[signal_listener] subscribed to '{INPUT_SUBJECT_SIGNAL}'")
+
+
+    async def on_msg(msg):
+        try:
+            data = json.loads(msg.data.decode("utf-8"))
+            # green = bool(data.get("green", False))
+            green = data.get("substate") == "1"
             await signal_state.set_green(green)
             print(f"[signal_listener] green={green}")
         except Exception as e:
@@ -136,9 +161,12 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
             # Only publish if the signal is green (True)
             if green is True:
                 # Optionally dedupe; comment out the if-block to publish every batch while green.
-                #if last_loop_on_published is None or loop_on != last_loop_on_published:
-                    await publish_control(nc, OUTPUT_SUBJECT_EXT, loop_on)
-                    await publish_control(nc, OUTPUT_SUBJECT_BLOCK, loop_on)
+                # if last_loop_on_published is None or loop_on != last_loop_on_published:
+                    if MODE == "SIM":
+                        await publish_control(nc, OUTPUT_SUBJECT_SIM_EXT, loop_on)
+                    else:
+                        await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, loop_on)
+                        await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, loop_on)
                     last_loop_on_published = loop_on
             else:
                 # Not green (False or None) -> do not publish
