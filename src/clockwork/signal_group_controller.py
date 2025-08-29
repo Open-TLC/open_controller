@@ -301,6 +301,10 @@ class PhaseRingController:
                 new_det = ExtDetector(self.timer, det, det_cnf[det])
                 self.ext_dets.append(new_det)  # these are for detector extenders
 
+            if det_cnf[det]["type"] == "ext_extender":
+                new_det = Ext_Extender(self.timer, det, det_cnf[det])
+                self.ext_dets.append(new_det)  # these are for detector extenders
+
             if det_cnf[det]["type"] == "groupext":
                 new_det = GrpDetector(self.timer, det, det_cnf[det])
                 new_det.extgroup = self.get_signal_group_object(new_det.extgroup_name)
