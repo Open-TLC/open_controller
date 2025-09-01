@@ -17,10 +17,10 @@ OUTPUT_SUBJECT_REAL_BLOCK  = "detector.control.g11_ext_block"
 
 OUTPUT_SUBJECT_SIM_EXT    = "detector.status.266_11_v2x"
 
-MODE                  = "HW"
+MODE                  = "SIM"
 THRESHOLD_M           = 30.0
-# NATS_URL              = "nats://127.0.0.1:4222"
-NATS_URL              = "nats://10.8.0.36:4222"
+NATS_URL              = "nats://127.0.0.1:4222"
+# NATS_URL              = "nats://10.8.0.36:4222"
 STOPLINE_LAT          = 60.164398019050545
 STOPLINE_LON          = 24.92070067464535
 # -----------------
