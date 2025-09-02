@@ -60,10 +60,11 @@ TIMER_PARAMS = {
 GROUP_CHANNEL_STATUS = "group.status.*.*" #DEBUG
 GROUP_CHANNEL_CONTROL = "group.control"
 
-DET_CHANNEL_PREFIX = "detector.status" # This i for (physical) controller
+# DET_CHANNEL_PREFIX = "detector.status" # This i for (physical) controller
+DET_CHANNEL_PREFIX = "detector.control" # # DBIK202509 Prefix for direct access to real controller without open controller
+
 #DET_CHANNEL_PREFIX = "detector.status" # For testing
-GROUP_CHANNEL_PREFIX = "group.status"
-# For testing the request updates
+GROUP_CHANNEL_PREFIX = "group.status"  
 #GROUP_CHANNEL_PREFIX = "group.status"
 
 # From control messages

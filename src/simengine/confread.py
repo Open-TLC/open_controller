@@ -16,7 +16,10 @@ DEFAULT_SUMO_CONFIG = "sumo_config.json"
 
 # Default values
 # Outputs
-DEFAULT_SUBJECT_STAT_DETECTORS = "detector.status" # Prefix 
+# DEFAULT_SUBJECT_STAT_DETECTORS = "detector.status" # Prefix 
+
+DEFAULT_SUBJECT_STAT_DETECTORS = "detector.control" # DBIK202509 Prefix for direct access to real controller
+
 DEFAULT_SUBJECT_STAT_GROUPS = "group.status" # Prefix 
 
  
