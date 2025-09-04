@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
@@ -10,14 +11,11 @@ from haversine import haversine, Unit
 
 # ---- config ----
 INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
-INPUT_SUBJECT_SIGNAL  = "group.control.266.11"
+INPUT_SUBJECT_SIGNAL  = "group.status.266.11"
 
-OUTPUT_SUBJECT_REAL_EXT    = "detector.control.g11_safety_ext"
-OUTPUT_SUBJECT_REAL_BLOCK  = "detector.control.g11_ext_block"
+OUTPUT_SUBJECT_REAL_EXT    = "detector.control.266-g11_safety_ext"
+OUTPUT_SUBJECT_REAL_BLOCK  = "detector.control.266-g11_ext_block"
 
-OUTPUT_SUBJECT_SIM_EXT    = "detector.status.266_11_v2x"
-
-MODE                  = "HWIL"
 THRESHOLD_M           = 30.0
 NATS_URL              = "nats://10.8.0.36"
 STOPLINE_LAT          = 60.164398019050545
@@ -115,7 +113,7 @@ async def signal_listener(nc: nats.NATS, signal_state: SharedSignalState):
             # True  iff substate == "1"
             # False otherwise (including missing)
             substate = data.get("substate")
-            green = (substate == "1")
+            green = (substate == "1") or (substate == "3")
 
             await signal_state.set_green(green)
             print(f"[signal_listener] substate={substate!r} -> green={green}")
@@ -145,57 +143,43 @@ async def signal_listener(nc: nats.NATS, signal_state: SharedSignalState):
 # ---------- Processor ----------
 async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSignalState, threshold_m: float):
     last_green: Optional[bool] = None
-    green_cont = False   # Send the ext message continuously
+    safety_ext_started = False
     state = "Off"
     while True:
         objects = await queue.get()
         try:
             close_pairs = find_close_pairs(objects, threshold_m)
-            ext_on = len(close_pairs) > 0
+            safety_ext = len(close_pairs) > 0
             green = await signal_state.get_green()
             
             green_started = (not(last_green) or None ) and green
             if green_started:
-                State = 'Minimum Green"
-                print ("Current state: " state)
+                state = "Green Extension Started"
+                green_startet_at = round(time.time(),2)
+                print ("Current state: ", state, "at: ", green_startet_at)
                 await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, True)  # Set the safety extension ON
                 await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, True)  # Block other extensions
-
-            # Logs for visibility
-            if close_pairs and Not(close_pairs_found)
-                """"
-                print(f"[processor] {len(close_pairs)} close pair(s) (< {threshold_m} m):")
-                for p in close_pairs:
-                    print(f"  {p['back_id']} -> {p['front_id']} | gap={p['gap_m']} m "
-                          f"(at {p['back_dist_m']}→{p['front_dist_m']} m)") """
                 
-                close_pairs_found = True
-            else:
-                print(f"[processor] no close pairs (< {threshold_m} m)")
+        
+            if green and safety_ext and not(safety_ext_started):
+                state = "Safety Extension Started"
+                ext_startet_at = round(time.time(),2)
+                print ("Current state: ", state, "at: ", ext_startet_at)
+                safety_ext_started = True
 
+            if  safety_ext_started and not(safety_ext):
+                green = False
 
-           
             green_ended = last_green and  not(green)
             if green_ended:
-                State = "Green Ended"
-                print ("Current state: " state)
+                state = "Green Ended"
+                green_ended_at = round(time.time(),2)
+                green_time = round(green_ended_at - green_startet_at,2)
+                print ("Current state: ", state, "at: ", green_ended_at, "Green time: ", green_time)
                 await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, False)  # Set the safety extension OFF
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False) # Release the block of other extensions
-           
-           
-            close_pairs_found = False
+                await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False) # Release the block of other extensions    
             
-            
-
-            
-
-
-
-            if green_cont:
-                 await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, ext_on)  # Set the safety extension continuously
-
-            
-
+            print("Green: ", green, "Safety_ext: ", safety_ext)
             last_green = green
 
         finally:
