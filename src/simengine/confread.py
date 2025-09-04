@@ -13,7 +13,8 @@ from jsmin import jsmin
 DEFAULT_NATS_SERVER = "localhost"
 DEFAULT_NATS_PORT = 4222
 DEFAULT_SUMO_CONFIG = "sumo_config.json"
-DIRECT = True
+DIRECT = False
+
 
 # Default values
 # Outputs
