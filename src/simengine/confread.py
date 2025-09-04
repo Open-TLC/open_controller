@@ -13,12 +13,16 @@ from jsmin import jsmin
 DEFAULT_NATS_SERVER = "localhost"
 DEFAULT_NATS_PORT = 4222
 DEFAULT_SUMO_CONFIG = "sumo_config.json"
+DIRECT = True
 
 # Default values
 # Outputs
-# DEFAULT_SUBJECT_STAT_DETECTORS = "detector.status" # Prefix 
 
-DEFAULT_SUBJECT_STAT_DETECTORS = "detector.control" # DBIK202509 Prefix for direct access to real controller
+if DIRECT:
+    DEFAULT_SUBJECT_STAT_DETECTORS = "detector.control" # DBIK202509 Prefix for direct access to real controller
+else:
+    DEFAULT_SUBJECT_STAT_DETECTORS = "detector.status" # Prefix 
+
 
 DEFAULT_SUBJECT_STAT_GROUPS = "group.status" # Prefix 
 
