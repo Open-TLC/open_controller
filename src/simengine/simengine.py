@@ -79,7 +79,10 @@ class SumoNatsInterface:
     def __init__(self):
         self.system_timer = Timer(TIMER_PARAMS)
         self.set_up_the_params()
-
+        self._last_substate = '0'  # DBIK202509 getting the time of green start for V2X
+        self._cars_generated = -1   # DBIK202509 number of V2X cars generated
+        self._green_started_at = -1   # DBIK202509 number of V2X cars generated
+    
 
     def set_up_the_params(self):
         """Sets the parameters for the interface based on command line and conf file"""
@@ -187,6 +190,36 @@ class SumoNatsInterface:
                 #    subject=subject, reply=reply, data=dat a))
                 msg_dict = json.loads(data)
                 self.set_sumo_traffic_light_state(subject, msg_dict)
+
+                # DBIK202509 Additional functions to generate V2X vehicles in Sync with real TLC
+                green_start_test = self.get_green_start_time(subject, msg_dict)
+                if green_start_test != None:
+                    self._green_started_at = green_start_test
+                    self._cars_generated = 0
+
+                # if self._cars_generated >= 0:
+                if self._green_started_at > 0:
+                    time_from_green_start_grp11 = float(self.system_timer.str_seconds()) - self._green_started_at
+
+                    if self._cars_generated == 0:
+                        if time_from_green_start_grp11 > 10:
+                            traci.vehicle.add("v2x_veh1", "Ramp2Sat", typeID="v2x_type", departLane="0", departSpeed="10")
+                            print("First V2X-car generated")
+                            self._cars_generated += 1
+
+                    if self._cars_generated == 1:
+                        if time_from_green_start_grp11 > 13:
+                            traci.vehicle.add("v2x_veh2", "Ramp2Sat", typeID="v2x_type", departLane="0", departSpeed="10")
+                            print("Second V2X-car generated")
+                            self._cars_generated += 1                  
+
+                    if self._cars_generated == 2:  
+                        if time_from_green_start_grp11 > 16:
+                            traci.vehicle.add("v2x_veh3", "Ramp2Sat", typeID="v2x_type", departLane="0", departSpeed="10")
+                            print("Third V2X-car generated")
+                            self._cars_generated = -1
+
+
             # As an inital state we set all the lights to red
             self.set_all_sumo_groups_to_red()
             # Sleep for five seconds to get all to red
@@ -241,6 +274,22 @@ class SumoNatsInterface:
             else: 
                 all_Red = len(cur_state) * "r" 
             traci.trafficlight.setRedYellowGreenState(light_id_sumo, all_Red)
+
+    def get_green_start_time(self, channel, message):
+        """Gets the start time of group 11 for V2X demo """
+        controller_nats_id = channel.split(".")[-2]
+        light_id = int(channel.split(".")[-1])    
+        green_start_time = None
+
+        if light_id == 11:
+            grp11_state = message['substate']
+            if grp11_state == '1':
+                if self._last_substate != '1':
+                    green_start_time = round(float(self.system_timer.str_seconds()),2) 
+                    print("Green started at: ", green_start_time, "grp11_state = ", grp11_state,  "prev state = ", self._last_substate)               
+            self._last_substate =  message['substate']
+        return green_start_time
+
         
     def set_sumo_traffic_light_state(self, channel, message):
         """Sets the traffic light state based on the message received from the nats server
