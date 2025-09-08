@@ -202,20 +202,20 @@ class SumoNatsInterface:
                     time_from_green_start_grp11 = float(self.system_timer.str_seconds()) - self._green_started_at
 
                     if self._cars_generated == 0:
-                        if time_from_green_start_grp11 > 10:
-                            traci.vehicle.add("v2x_veh1", "Ramp2Sat", typeID="v2x_type", departLane="0", departSpeed="10")
+                        if time_from_green_start_grp11 > 1:
+                            traci.vehicle.add("v2x_veh1", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
                             print("First V2X-car generated")
                             self._cars_generated += 1
 
                     if self._cars_generated == 1:
-                        if time_from_green_start_grp11 > 13:
-                            traci.vehicle.add("v2x_veh2", "Ramp2Sat", typeID="v2x_type", departLane="0", departSpeed="10")
+                        if time_from_green_start_grp11 > 3:
+                            traci.vehicle.add("v2x_veh2", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
                             print("Second V2X-car generated")
                             self._cars_generated += 1                  
 
                     if self._cars_generated == 2:  
-                        if time_from_green_start_grp11 > 16:
-                            traci.vehicle.add("v2x_veh3", "Ramp2Sat", typeID="v2x_type", departLane="0", departSpeed="10")
+                        if time_from_green_start_grp11 > 5:
+                            traci.vehicle.add("v2x_veh3", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
                             print("Third V2X-car generated")
                             self._cars_generated = -1
 
