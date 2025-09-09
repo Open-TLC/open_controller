@@ -144,7 +144,7 @@ async def signal_listener(nc: nats.NATS, signal_state: SharedSignalState):
 async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSignalState, threshold_m: float):
     last_green: Optional[bool] = None
     safety_ext_started = False
-    state = "Off"
+    state = "Red"
     while True:
         objects = await queue.get()
         try:
@@ -152,37 +152,47 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
             safety_ext = len(close_pairs) > 0
             green = await signal_state.get_green()
             
-            green_started = (not(last_green) or None ) and green # and (state == "Off")
-            if green_started:
-                state = "Green Extension Started"
-                green_startet_at = round(time.time(),2)
-                print ("Current state: ", state, "at: ", green_startet_at)
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, True)  # Set the safety extension ON
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, True)  # Block other extensions
+            green_started = (not(last_green) or None ) and green
+                   
+            if state == "Red":
+                if green_started:
+                    state = "Green Started"
+                    green_startet_at = round(time.time(),2)
+                    print ("Current state: ", state, "at: ", round(green_startet_at) % 3600)
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, True)  # Set the safety extension ON
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, True)  # Block other extensions
                 
         
-            if green and safety_ext and not(safety_ext_started):
-                state = "Safety Extension Started"
-                ext_startet_at = round(time.time(),2)
-                print ("Current state: ", state, "at: ", ext_startet_at)
-                safety_ext_started = True
+            if state == "Green Started":
+                if not(safety_ext_started):
+                    if not(safety_ext):
+                        state = "Normal Extension Mode"
+                        ext_startet_at = round(time.time(),2)
+                        #print ("Current state: ", state, "at: ", round(ext_startet_at) % 3600)
+                        safety_ext_started = False
 
-            if  safety_ext_started and not(safety_ext):
-                green = False
-
-            green_ended = last_green and  not(green)
-            if green_ended:  # (state != "Green Ended"):
-                state = "Green Ended"
-                green_ended_at = round(time.time(),2)
-                green_time = round(green_ended_at - green_startet_at,2)
-                print ("Current state: ", state, "at: ", green_ended_at, "Green time: ", green_time)
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, False)  # Set the safety extension OFF
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False) # Release the block of other extensions   
-                BP = 1 
+            if state == "Normal Extension Mode":
+                if safety_ext:
+                    safety_ext_startet_at = round(time.time(),2)
+                    state == "Safety Extension Mode"
+                    #print ("Current state: ", state, "at: ", round(safety_ext_startet_at) % 3600)
+                    safety_ext_started = True
+                
+            if state == "Safety Extension Mode":  
+                if not(safety_ext):
+                    state = "Green Ended"
+                    green_ended_at = round(time.time(),2)
+                    green_time = round(green_ended_at - green_startet_at,2)
+                    #print ("Current state: ", state, "at: ", round(green_ended_at) % 3600, "Green time: ", green_time)
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, False)  # Set the safety extension OFF
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False) # Release the block of other extensions    
             
-            
-            print("Green: ", green, "Last Green: ", last_green, "Safety_ext: ", safety_ext, "ext_startet_at: ", ext_startet_at)
+            cur_time = round(time.time(),2)
+            cur_green = round(cur_time - green_startet_at,2)
+            if state != last_state:
+                print("State: ", state, "Green: ", green, "Safety_ext: ", safety_ext, "Green time:", cur_green )
             last_green = green
+            last_state = state
 
         finally:
             queue.task_done()
