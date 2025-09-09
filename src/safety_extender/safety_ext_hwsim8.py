@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional
 import nats  # pip install nats-py
 from haversine import haversine, Unit
 
-
 # ---- config ----
 INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
 INPUT_SUBJECT_SIGNAL  = "group.status.266.11"
@@ -72,22 +71,18 @@ def find_close_pairs(objects: List[Dict[str, Any]], threshold_m: float) -> List[
     return close_pairs
 
 
-def iso_now_ms() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
-
 def iso_now_ms_no_tz() -> str:
-    # Use naive datetime (no tzinfo), millisecond precision
     return datetime.utcnow().isoformat(timespec="milliseconds")
 
 
-async def publish_control(nc: nats.NATS, OUTPUT_SUBJECT: str, loop_on: bool):
+async def publish_control(nc: nats.NATS, subject: str, loop_on: bool):
     payload = {
-        "id": OUTPUT_SUBJECT,
+        "id": subject,
         "tstamp": iso_now_ms_no_tz(),
         "loop_on": loop_on,
     }
-    await nc.publish(OUTPUT_SUBJECT, json.dumps(payload).encode("utf-8"))
-    print(f"[publish] {OUTPUT_SUBJECT} -> loop_on={payload}")
+    await nc.publish(subject, json.dumps(payload).encode("utf-8"))
+    print(f"[publish] {subject} -> {payload}")
 
 
 # ---------- Listeners ----------
@@ -108,30 +103,11 @@ async def signal_listener(nc: nats.NATS, signal_state: SharedSignalState):
     async def on_msg(msg):
         try:
             data = json.loads(msg.data.decode("utf-8"))
-
-            # Only substate controls green:
-            # True  iff substate == "1"
-            # False otherwise (including missing)
+            # "green" iff substate is "1" or "3"
             substate = data.get("substate")
             green = (substate == "1") or (substate == "3")
-
             await signal_state.set_green(green)
             print(f"[signal_listener] substate={substate!r} -> green={green}")
-
-        except Exception as e:
-            print("[signal_listener] parse error:", e)
-
-    await nc.subscribe(INPUT_SUBJECT_SIGNAL, cb=on_msg)
-    print(f"[signal_listener] subscribed to '{INPUT_SUBJECT_SIGNAL}'")
-
-
-    async def on_msg(msg):
-        try:
-            data = json.loads(msg.data.decode("utf-8"))
-            # green = bool(data.get("green", False))
-            green = data.get("substate") == "1" or data.get("substate") == "3"
-            await signal_state.set_green(green)
-            print(f"[signal_listener] green={green}")
         except Exception as e:
             print("[signal_listener] parse error:", e)
 
@@ -142,52 +118,83 @@ async def signal_listener(nc: nats.NATS, signal_state: SharedSignalState):
 
 # ---------- Processor ----------
 async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSignalState, threshold_m: float):
+    print("[processor] started")
     last_green: Optional[bool] = None
+    last_state: Optional[str] = None
+
+    state = "Red"
+    green_started_at: Optional[float] = None
     safety_ext_started = False
-    state = "Off"
+
+    # optional heartbeat so you know the task is alive even if no objects arrive
+    async def heartbeat():
+        while True:
+            await asyncio.sleep(5)
+            print("[processor] heartbeat; state=", state, "last_green=", last_green)
+    asyncio.create_task(heartbeat())
+
     while True:
-        objects = await queue.get()
+        # Timed wait prevents “silent hang” feeling if no objects come
+        try:
+            objects = await asyncio.wait_for(queue.get(), timeout=10.0)
+        except asyncio.TimeoutError:
+            continue  # loop and print heartbeat
+
         try:
             close_pairs = find_close_pairs(objects, threshold_m)
             safety_ext = len(close_pairs) > 0
             green = await signal_state.get_green()
-            
-            green_started = (not(last_green) or None ) and green # and (state == "Off")
-            if green_started:
-                state = "Green Extension Started"
-                green_startet_at = round(time.time(),2)
-                print ("Current state: ", state, "at: ", green_startet_at)
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, True)  # Set the safety extension ON
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, True)  # Block other extensions
-                
-        
-            if green and safety_ext and not(safety_ext_started):
-                state = "Safety Extension Started"
-                ext_startet_at = round(time.time(),2)
-                print ("Current state: ", state, "at: ", ext_startet_at)
-                safety_ext_started = True
 
-            if  safety_ext_started and not(safety_ext):
-                green = False
+            # rising edge: last was not True, now is True
+            green_started = (green is True) and (last_green is not True)
 
-            green_ended = last_green and  not(green)
-            if green_ended:  # (state != "Green Ended"):
-                state = "Green Ended"
-                green_ended_at = round(time.time(),2)
-                green_time = round(green_ended_at - green_startet_at,2)
-                print ("Current state: ", state, "at: ", green_ended_at, "Green time: ", green_time)
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, False)  # Set the safety extension OFF
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False) # Release the block of other extensions   
-                BP = 1 
-            
-            
-            print("Green: ", green, "Last Green: ", last_green, "Safety_ext: ", safety_ext, "ext_startet_at: ", ext_startet_at)
+            if state == "Red":
+                if green_started:
+                    state = "Green Started"
+                    green_started_at = time.time()
+                    print("[processor] -> Green Started at", round(green_started_at, 2))
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, True)   # safety extension ON
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, True) # block others
+
+            if state == "Green Started":
+                if not safety_ext_started and not safety_ext:
+                    state = "Normal Extension Mode"
+                    print("[processor] -> Normal Extension Mode")
+
+            if state == "Normal Extension Mode":
+                if safety_ext:
+                    safety_ext_started = True
+                    state = "Safety Extension Mode"
+                    print("[processor] -> Safety Extension Mode")
+
+            if state == "Safety Extension Mode":
+                if not safety_ext:
+                    state = "Green Ended"
+                    green_ended_at = time.time()
+                    green_time = (
+                        round(green_ended_at - green_started_at, 2)
+                        if green_started_at is not None else None
+                    )
+                    print("[processor] -> Green Ended; green_time:", green_time)
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, False)
+                    await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False)
+
+            # status print only on change
+            if state != last_state:
+                cur_time = time.time()
+                cur_green = (
+                    round(cur_time - green_started_at, 2)
+                    if green_started_at is not None else None
+                )
+                print(f"[processor] State: {state} | Green={green} | Safety_ext={safety_ext} | Green time={cur_green}")
+                last_state = state
+
             last_green = green
 
         finally:
             queue.task_done()
 # -------------------------------
-
+ 
 
 async def main():
     nc = await nats.connect(NATS_URL)
@@ -196,12 +203,13 @@ async def main():
     queue: asyncio.Queue = asyncio.Queue(maxsize=100)
     signal_state = SharedSignalState()
 
-    # Start both listeners
+    # Start listeners
     await objects_listener(nc, queue)
     await signal_listener(nc, signal_state)
 
     # Start processor
     proc_task = asyncio.create_task(processor(nc, queue, signal_state, THRESHOLD_M))
+    proc_task.add_done_callback(lambda t: print("[processor] done:", repr(t.exception())))
 
     print("[main] running. Ctrl+C to stop.")
     try:

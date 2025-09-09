@@ -142,17 +142,13 @@ async def signal_listener(nc: nats.NATS, signal_state: SharedSignalState):
 
 # ---------- Processor ----------
 async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSignalState, threshold_m: float):
-    last_green: Optional[bool] = None
-    safety_ext_started = False
+    last_green: false
     state = "Off"
     while True:
-        objects = await queue.get()
         try:
-            close_pairs = find_close_pairs(objects, threshold_m)
-            safety_ext = len(close_pairs) > 0
             green = await signal_state.get_green()
             
-            green_started = (not(last_green) or None ) and green # and (state == "Off")
+            green_started = green and not(last_green) 
             if green_started:
                 state = "Green Extension Started"
                 green_startet_at = round(time.time(),2)
@@ -160,18 +156,11 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
                 await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, True)  # Set the safety extension ON
                 await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, True)  # Block other extensions
                 
-        
-            if green and safety_ext and not(safety_ext_started):
-                state = "Safety Extension Started"
-                ext_startet_at = round(time.time(),2)
-                print ("Current state: ", state, "at: ", ext_startet_at)
-                safety_ext_started = True
+            curtime = round(time.time(),2)
+            green_time = round(curtime - green_startet_at,2)
+            print ("Green Time: ", green_time)
 
-            if  safety_ext_started and not(safety_ext):
-                green = False
-
-            green_ended = last_green and  not(green)
-            if green_ended:  # (state != "Green Ended"):
+            if green_time > 15.0: 
                 state = "Green Ended"
                 green_ended_at = round(time.time(),2)
                 green_time = round(green_ended_at - green_startet_at,2)
@@ -180,8 +169,6 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
                 await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False) # Release the block of other extensions   
                 BP = 1 
             
-            
-            print("Green: ", green, "Last Green: ", last_green, "Safety_ext: ", safety_ext, "ext_startet_at: ", ext_startet_at)
             last_green = green
 
         finally:
