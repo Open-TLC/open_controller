@@ -19,7 +19,8 @@ OUTPUT_SUBJECT_REAL_BLOCK  = "detector.control.266-g11_ext_block"
 OUTPUT_SUBJECT_EXT_STATUS  = "extender.status.266-g11"
 
 THRESHOLD_M           = 30.0
-NATS_URL              = "nats://10.8.0.204"
+# NATS_URL              = "nats://10.8.0.204"
+NATS_URL              = "nats://10.8.0.36"
 STOPLINE_LAT          = 60.164398019050545
 STOPLINE_LON          = 24.92070067464535
 MAX_NORMAL_EXT        = 8.0
@@ -143,7 +144,7 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
  
 
 async def main():
-    print("Running Safety Ext Fix v9")
+    print("Running Safety Ext Fix v10")
     nc = await nats.connect(NATS_URL)
     print("[main] connected to NATS")
 
