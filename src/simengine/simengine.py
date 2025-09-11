@@ -206,13 +206,13 @@ class SumoNatsInterface:
                     time_from_green_start_grp11 = float(self.system_timer.str_seconds()) - self._green_started_at
 
                     if self._cars_generated == 0:
-                        if time_from_green_start_grp11 > 2:
+                        if time_from_green_start_grp11 > 4:
                             traci.vehicle.add("v2x_veh1", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
                             print("First V2X-car generated")
                             self._cars_generated += 1
 
                     if self._cars_generated == 1:
-                        if time_from_green_start_grp11 > 4:
+                        if time_from_green_start_grp11 > 6:
                             traci.vehicle.add("v2x_veh2", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
                             print("Second V2X-car generated")
                             self._cars_generated += 1                  
@@ -346,8 +346,8 @@ class SumoNatsInterface:
         for vehid in vehicle_ids:
             for cont_veh in controlled_vehs:
                 if vehid == cont_veh:
-                    # traci.vehicle.setSpeed(vehid, 5.0)
-                    traci.vehicle.slowDown(vehid, 5.0, 6000)
+                    traci.vehicle.setSpeed(vehid, 5.0)
+                    # traci.vehicle.slowDown(vehid, 5.0, 6000)
                     traci.vehicle.setColor(vehid, (255, 0, 0, 255))
 
 
