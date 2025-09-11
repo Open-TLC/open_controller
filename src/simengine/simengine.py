@@ -62,8 +62,8 @@ GROUP_CHANNEL_CONTROL = "group.control"
 
 # DET_CHANNEL_PREFIX = "detector.status" # This i for (physical) controller
 DET_CHANNEL_PREFIX = "detector.control" # # DBIK202509 Prefix for direct access to real controller without open controller
-
 #DET_CHANNEL_PREFIX = "detector.status" # For testing
+
 GROUP_CHANNEL_PREFIX = "group.status"  
 #GROUP_CHANNEL_PREFIX = "group.status"
 
@@ -72,6 +72,9 @@ GROUP_CHANNEL_PREFIX = "group.status"
 
 # Implied from the status messages
 GROUP_CONTROL_CHANNEL = "group.status.*.*"
+
+V2X_CONTROL_CHANNEL = "aalto.v2x.control.json"
+
 
 class SumoNatsInterface:
     """This class handles the communication between the sumo and the nats server"""
@@ -82,6 +85,7 @@ class SumoNatsInterface:
         self._last_substate = '0'  # DBIK202509 getting the time of green start for V2X
         self._cars_generated = -1   # DBIK202509 number of V2X cars generated
         self._green_started_at = -1   # DBIK202509 number of V2X cars generated
+        self.V2X_control = True  # Setd ON the V2X control message handling
     
 
     def set_up_the_params(self):
@@ -219,13 +223,26 @@ class SumoNatsInterface:
                             print("Third V2X-car generated")
                             self._cars_generated = -1
 
-
+        if self.V2X_control:
+            async def v2x_control_message_handler(msg):
+                subject = msg.subject
+                reply = msg.reply
+                data = msg.data.decode()
+                #print("Received a message on '{subject} {reply}': {data}".format(
+                #    subject=subject, reply=reply, data=dat a))
+                msg_dict = json.loads(data)
+                # print(' V2X control: ', msg_dict)
+                self.control_V2X_speed(subject,msg_dict)
+                
+    
             # As an inital state we set all the lights to red
             self.set_all_sumo_groups_to_red()
             # Sleep for five seconds to get all to red
             await asyncio.sleep(5)
             # And now we subscribe to the control messages
             await self.nats.subscribe(group_control_channel, cb=sig_group_message_handler)
+            await self.nats.subscribe(V2X_CONTROL_CHANNEL, cb=v2x_control_message_handler)
+            
 
         self.draw_radars()
         while traci.simulation.getMinExpectedNumber() > 0:
@@ -319,6 +336,19 @@ class SumoNatsInterface:
                 sumo_group_state = "r"
 
         traci.trafficlight.setLinkState(controller_sumo_id, light_id, sumo_group_state)
+
+
+    def control_V2X_speed(self,subject,msg_dict):
+        """Sets the speed for given V2X vehicles """
+        vehicle_ids = traci.vehicle.getIDList()
+        controlled_vehs = msg_dict["vehicles"]
+        print("Controlling the speed of vehicles: ",controlled_vehs)
+        for vehid in vehicle_ids:
+            for cont_veh in controlled_vehs:
+                if vehid == cont_veh:
+                    # traci.vehicle.setSpeed(vehid, 5.0)
+                    traci.vehicle.slowDown(vehid, 5.0, 6000)
+                    traci.vehicle.setColor(vehid, (255, 0, 0, 255))
 
 
 async def main():
