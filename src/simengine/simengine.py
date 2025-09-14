@@ -207,20 +207,23 @@ class SumoNatsInterface:
 
                     if self._cars_generated == 0:
                         if time_from_green_start_grp11 > 4:
-                            traci.vehicle.add("v2x_veh1", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
-                            print("First V2X-car generated")
+                            traci.vehicle.add("v2x_veh1", "Ramp2Sat", typeID="v2x_type2", departLane="0", departPos="100", departSpeed="10")
+                            vspeed = round(traci.vehicle.getSpeed("v2x_veh1"),2)
+                            print("First V2X-car generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
                             self._cars_generated += 1
 
                     if self._cars_generated == 1:
                         if time_from_green_start_grp11 > 6:
                             traci.vehicle.add("v2x_veh2", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
-                            print("Second V2X-car generated")
+                            vspeed = round(traci.vehicle.getSpeed("v2x_veh2"),2)
+                            print("Second V2X-car generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
                             self._cars_generated += 1                  
 
                     if self._cars_generated == 2:  
-                        if time_from_green_start_grp11 > 6:
+                        if time_from_green_start_grp11 > 8:
                             traci.vehicle.add("v2x_veh3", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
-                            print("Third V2X-car generated")
+                            vspeed = round(traci.vehicle.getSpeed("v2x_veh3"),2)
+                            print("Third V2X-car generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
                             self._cars_generated = -1
 
         if self.V2X_control:
@@ -346,9 +349,21 @@ class SumoNatsInterface:
         for vehid in vehicle_ids:
             for cont_veh in controlled_vehs:
                 if vehid == cont_veh:
-                    traci.vehicle.setSpeed(vehid, 5.0)
-                    # traci.vehicle.slowDown(vehid, 5.0, 6000)
-                    traci.vehicle.setColor(vehid, (255, 0, 0, 255))
+                    TLSinfo = traci.vehicle.getNextTLS(vehid)
+                    leaderInfo = traci.vehicle.getLeader(vehid, dist=30.0)
+                    leaderDist = 1000
+                    # leaderSpeed = traci.vehicle.getSpeed(vehid)
+                    try:
+                        TLSdist = round(TLSinfo[0][2],1)
+                        leaderDist = round(leaderInfo[1],1)
+                    except:
+                        print('Error in Distance')
+                    if (TLSdist < 240) and (TLSdist > 20):
+                        vehspeed = 8.0
+                        traci.vehicle.setSpeed(vehid, vehspeed)
+                        print("Set the speed of: ", vehid, "to: vehspeed", vehspeed, "DistSig: ", TLSdist, "DistSig: ", leaderDist)
+                        # traci.vehicle.slowDown(vehid, 5.0, 6000)
+                        traci.vehicle.setColor(vehid, (255, 0, 0, 255))
 
 
 async def main():
