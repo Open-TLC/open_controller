@@ -358,10 +358,10 @@ class SumoNatsInterface:
                         leaderDist = round(leaderInfo[1],1)
                     except:
                         print('Error in Distance')
-                    if (TLSdist < 240) and (TLSdist > 20):
-                        vehspeed = 8.0
+                    if (TLSdist < 160) and (TLSdist > 0):
+                        vehspeed = 8.2
                         traci.vehicle.setSpeed(vehid, vehspeed)
-                        print("Set the speed of: ", vehid, "to: vehspeed", vehspeed, "DistSig: ", TLSdist, "DistSig: ", leaderDist)
+                        print("Set the speed of: ", vehid, "to: vehspeed", vehspeed, "DistSig: ", TLSdist, "DistVeh: ", leaderDist)
                         # traci.vehicle.slowDown(vehid, 5.0, 6000)
                         traci.vehicle.setColor(vehid, (255, 0, 0, 255))
 
