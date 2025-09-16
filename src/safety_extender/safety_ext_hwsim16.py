@@ -128,9 +128,20 @@ async def objects_listener(nc: nats.NATS, queue: asyncio.Queue):
        
         data = json.loads(msg.data.decode("utf-8"))
         objects = data.get("objects", [])
-        await queue.put(objects)
+        
+        # await queue.put(objects)
         objcount = data['nobjects']
-    
+        
+        try:
+            queue.get_nowait()          # drop stale
+        except asyncio.QueueEmpty:
+            pass
+        try:
+            queue.put_nowait(objects)   # never await here
+        except asyncio.QueueFull:
+            pass  # shouldn't happen with the get_nowait() above
+
+        objcount = data['nobjects']
         # print(f"[object_listener] Obj Count: ", objcount)
        
     await nc.subscribe(INPUT_SUBJECT_OBJECTS, cb=on_msg)
