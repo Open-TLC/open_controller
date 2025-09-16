@@ -9,8 +9,8 @@ import nats  # pip install nats-py
 from haversine import haversine, Unit
 
 # ---- config ----
-INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
-# INPUT_SUBJECT_OBJECTS = "aalto.v2x.vehicles.json"
+# INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
+INPUT_SUBJECT_OBJECTS = "aalto.v2x.vehicles.json"
 INPUT_SUBJECT_SIGNAL  = "group.status.266.11"
 
 OUTPUT_SUBJECT_REAL_EXT    = "detector.control.266-g11_safety_ext"
