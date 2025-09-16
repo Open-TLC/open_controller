@@ -22,7 +22,7 @@ OUTPUT_SUBJECT_EXT_SAFETY  = "detector.status.266-g11_ext_safety"
 
 OUTPUT_SUBJECT_V2X_CONTROL = "aalto.v2x.control.json"
 
-THRESHOLD_M           = 70.0
+THRESHOLD_M           = 50.0
 NATS_URL              = "nats://10.8.0.36"   # Lab
 # NATS_URL              = "nats://10.8.0.204"  # Field
 
@@ -215,7 +215,8 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
                 print("[processor] -> Green Started at", round(green_started_at, 2))
                 await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, True)   # safety extension ON
                 await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, True) 
-
+                await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, True) # Normal extension visualization ON
+        
         #if state == "Green Started":
         #    if not safety_ext_started: 
         #        state = "Normal Extension Mode"
