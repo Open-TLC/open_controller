@@ -20,8 +20,8 @@ VECLASS_FROM_RADAR_TO_SUMO = {
     0: "car_type",
     1: "car_type",
     #1: "ped_type",
-    2: "car_type",
-    # 2: "bike_type",
+    #2: "car_type",
+    2: "bike_type",
     3: "car_type",
     4: "car_type",
     6: "car_type",
@@ -323,7 +323,7 @@ class FieldOfView:
             # Sumo simengine does not map types and lanes correctly (yet)
             if vehclass_sumo:
                 # At this stage, we only send cars and trucs. Also unknown types are not sent
-                if vehclass_sumo in ['car_type', 'truck_type']:
+                if vehclass_sumo in ['car_type', 'truck_type', 'bike_type']:  #DBIK2025 Added bike_type
                     det_obj_dict[obj_id] = new_obj
         return det_obj_dict
     
