@@ -243,12 +243,14 @@ class e3Detector(Detector):
             # TLSno = self.det_vehicles_dict[vehid]['TLSno']
             
             if (vtype == 'car_type'):
-                    pass
+                pass
             elif vtype == 'truck_type':
                 self.vehcount +=2 # DBIK240923 Add extra weight for trucks 1 truck = 3 vehs
                 # print('vehtype : ', type)
             elif  vtype == 'tram_type':
                 self.vehcount +=100
+            elif  vtype == 'bike_type':
+                pass
 
             # Special setting for JS270T, should be configured in init-file DBIK20241025
             elif (vtype == 'tram_R9'):
