@@ -18,7 +18,7 @@ from nats.aio.client import Client as NATS
 import argparse
 from confread import GlobalConf
 from radar import Radar
-from fusion import FieldOfView
+from fusion2 import FieldOfView
 from detector import Detector
 from group import Group
 
