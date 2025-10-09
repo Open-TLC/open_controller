@@ -3,7 +3,7 @@ name = "simengine"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13.0, <3.14"
 dependencies = [
     "gymnasium>=1.2.0",
     "jsmin>=3.0.1",
