@@ -2,23 +2,29 @@ FROM ubuntu:noble
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies (Python, curl, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	python3 python3-pip python3-venv \
 	curl ca-certificates software-properties-common \
 	&& rm -rf /var/lib/apt/lists/*
 
-# Install uv
-RUN curl -fsSL https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin/:$PATH"
-
-# Add SUMO PPA and install
+# Install SUMO from ppa repository
 RUN add-apt-repository ppa:sumo/stable && \
 	apt-get update && apt-get install -y --no-install-recommends \
-	sumo sumo-tools sumo-doc \
-	&& rm -rf /var/lib/apt/lists/*
+	sumo sumo-tools sumo-doc && \
+	rm -rf /var/lib/apt/lists/*
 
 ENV SUMO_HOME="/usr/share/sumo"
+
+# Install python interpreter from custom repository to control version
+RUN add-apt-repository ppa:deadsnakes/ppa -y && apt-get update && \
+	apt-get install -y --no-install-recommends \
+	python3.13 python3.13-dev python3.13-venv && \
+	rm -rf /var/lib/apt/lists/*
+
+# Use Python 3.13 but don’t overwrite system Python yet
+RUN python3.13 -m ensurepip --upgrade && \
+	python3.13 -m pip install --upgrade pip uv
+
+ENV PATH="/root/.local/bin/:$PATH"
 
 # Set working directory
 WORKDIR /app
