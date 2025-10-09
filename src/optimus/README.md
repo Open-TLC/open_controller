@@ -22,5 +22,5 @@ Koneoppimismallin kouluttaminen sinänsä on hyödytöntä, ja sen toimimisen ar
 
 ## Nimi
 
-Optimus on yhdistelmä optimointia ja Optimus Primea (ks. Transformers). Syy Optimus Primen käyttämiseen nimessä on se, että Optimus Prime on rekka, mikä sopii näppärästi liikenne-/autoprojektiin.
+Optimus on yhdistelmä optimointia ja Optimus Primea (ks. Transformers). Syy Optimus Primen käyttämiseen nimessä on se, että Optimus Prime on rekka, mikä sopii näppärästi liikenne-/autoprojektiin. Optimus Primen voidaan myös olettaa toimivan tekoälyllä, mikä niinikään liittyy tiiviisti Optimukseen.
 
