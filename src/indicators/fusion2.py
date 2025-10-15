@@ -324,7 +324,7 @@ class FieldOfView:
                 BP = 1   #DBIK102025 Added breakpoint for bike_type
             else:
                 vehclass_sumo = VECLASS_FROM_RADAR_TO_SUMO.get(vehclass_radar, None)
-           
+                           
             new_obj['vtype'] = vehclass_sumo
            
             if not vehclass_sumo:
