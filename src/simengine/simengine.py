@@ -202,7 +202,7 @@ class SumoNatsInterface:
                     self._cars_generated = 0
 
                 # if self._cars_generated >= 0:
-                if self._green_started_at > 0:
+                if (self._green_started_at > 0) or False:  # V2X veh gen OFF 25051015
                     time_from_green_start_grp11 = float(self.system_timer.str_seconds()) - self._green_started_at
 
                     if self._cars_generated == 0:
