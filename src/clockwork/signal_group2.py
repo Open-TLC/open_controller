@@ -20,7 +20,7 @@ from transitions.extensions.nesting import NestedState as State
 
 # Constant minimums in seconds
 MINIMUM_GREEN = 10
-MINIMUM_RED = 15
+MINIMUM_RED = 5
 AMBER = 4
 AMBER_RED = 2
 
@@ -151,8 +151,10 @@ class SignalGroup(Machine):
 
         # Substates
         # For fixed we always use the min as time
+        self.start_red = FixedTime(self.system_timer, self, min_length=20)  #DBIK20251017 add start red state
         self.fixed_amber = FixedTime(self.system_timer, self, min_length=grp_conf['min_amber'])
         self.fixed_amber_red = FixedTime(self.system_timer, self, min_length=grp_conf['min_amber_red'])
+        
         # Should this be dependent on conf?
         self.va_green = VehicleActuated(self.system_timer, self,
                                         min_length=grp_conf['min_green'],
@@ -163,10 +165,10 @@ class SignalGroup(Machine):
         # fixed_red = FixedTime(self.system_timer, self, min_length=grp_conf['min_red'])
         self.group_based_red = GroupBasedRed(self.system_timer, self, min_length=grp_conf['min_red'])
 
-
+        #State(name='Red', on_enter='start_red'), #DBIK20251017 
         states = [
             State(name='Start'),
-            #State(name='Red', on_enter='start_red'),
+            {'name': 'Start_Red', 'children':self.start_red},
             {'name': 'Red', 'on_enter': self.start_red_cb, 'children':self.group_based_red},
             {'name': 'AmberRed', 'children':self.fixed_amber_red},
             {'name': 'Green', 'on_enter': self.start_green_cb, 'children':self.va_green},
@@ -176,8 +178,15 @@ class SignalGroup(Machine):
             {
                 'trigger': 'next_state',
                 'source': 'Start',
+                'dest': 'Start_Red_Init'
+            },
+
+            {
+                'trigger': 'next_state',
+                'source': 'Start_Red_Exit',
                 'dest': 'Red_Init'
             },
+
             {
                 'trigger': 'next_state',
                 'source': 'Red_Exit',
@@ -189,6 +198,7 @@ class SignalGroup(Machine):
                 'source': 'AmberRed_Exit',
                 'dest': 'Green_Init'
             },
+
             {
                 'trigger': 'next_state',
                 'source': 'Green_Exit',
@@ -343,6 +353,7 @@ class SignalGroup(Machine):
         if not errors:
             self.grp_conf = params
             # We have to set the params in the submachines
+            self.start_red.min_length = 20 # DBIK20251017 Init start red 
             self.fixed_amber.min_length = float(params['min_amber'])
             self.fixed_amber_red.min_length = float(params['min_amber_red'])
             self.va_green.min_length = float(params['min_green'])
