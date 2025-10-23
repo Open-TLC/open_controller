@@ -9,22 +9,22 @@ import nats  # pip install nats-py
 from haversine import haversine, Unit
 
 # ---- config ----
-INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
-# INPUT_SUBJECT_OBJECTS = "aalto.v2x.vehicles.json"
+# INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
+INPUT_SUBJECT_OBJECTS = "aalto.v2x.vehicles.json"
 INPUT_SUBJECT_SIGNAL  = "group.status.266.11"
 
 OUTPUT_SUBJECT_REAL_EXT    = "detector.control.266-g11_safety_ext"
 OUTPUT_SUBJECT_REAL_BLOCK  = "detector.control.266-g11_ext_block"
 
-OUTPUT_SUBJECT_EXT_STATUS  = "extender.status.266-g11"
+OUTPUT_SUBJECT_EXT_STATUS  = "extender.status.266-g11"  
 OUTPUT_SUBJECT_EXT_NORMAL  = "detector.status.266-g11_ext_normal"
 OUTPUT_SUBJECT_EXT_SAFETY  = "detector.status.266-g11_ext_safety"
 
 OUTPUT_SUBJECT_V2X_CONTROL = "aalto.v2x.control.json"
 
-THRESHOLD_M           = 50.0
-NATS_URL              = "nats://10.8.0.36"   # Lab
-# NATS_URL              = "nats://10.8.0.204"  # Field
+THRESHOLD_M           = 30.0
+# NATS_URL              = "nats://10.8.0.36"   # Lab
+NATS_URL              = "nats://10.8.0.204"  # Field
 
 STOPLINE_LAT          = 60.164398019050545  #Field
 STOPLINE_LON          = 24.92070067464535   #Field
