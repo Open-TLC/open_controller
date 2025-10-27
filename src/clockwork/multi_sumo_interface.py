@@ -433,31 +433,16 @@ def Sumo_e3detections_to_controller(
             vehdict["vspeed"] = vspeed
             vehdict["maxspeed"] = vspeed
             vehdict["vcolor"] = "gray"
-
             TLSinfo = traci.vehicle.getNextTLS(vehid)
 
             try:
-                vehdict["TLSno"] = TLSinfo[0][1]
-                vehdict["TLSdist"] = round(TLSinfo[0][2], 1)
+                vehdict["leaderId"] = leaderInfo[0]
+                vehdict["leaderDist"] = round(leaderInfo[1], 1)
+                vehdict["leaderSpeed"] = round(leaderSpeed)
             except:
-                # print('Error: No TLS info')
-                vehdict["TLSno"] = "NoSig"
-                vehdict["TLSdist"] = -1
-
-            # DBIK20250211 Get extra info from V2X vehicles
-
-            if vehtype == "v2x_type":
-                leaderInfo = traci.vehicle.getLeader(vehid, dist=30.0)
-                leaderSpeed = traci.vehicle.getSpeed(vehid)
-
-                try:
-                    vehdict["leaderId"] = leaderInfo[0]
-                    vehdict["leaderDist"] = round(leaderInfo[1], 1)
-                    vehdict["leaderSpeed"] = round(leaderSpeed)
-                except:
-                    # print('Error: No leader info')
-                    vehdict["leaderId"] = "NoVeh"
-                    vehdict["leaderDist"] = -1
+                # print('Error: No leader info')
+                vehdict["leaderId"] = "NoVeh"
+                vehdict["leaderDist"] = -1
 
                 # if prt:
                 # print("V2X-data:", vehid, ", TLSno:", vehdict['TLSno'], ", TLSdist:", vehdict['TLSdist'],", LeaderId:", vehdict['leaderId'], ", LeaderDist:", vehdict['leaderDist'] )
