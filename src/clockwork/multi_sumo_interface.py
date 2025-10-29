@@ -414,7 +414,7 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode, v2x_mode)
                 vspeed   = traci.vehicle.getSpeed(vehid)
                 vehdict = {}
                 vehdict['vtype'] = vehtype               
-                vehdict['vspeed'] = vspeed
+                vehdict['speed'] = vspeed
                 vehdict['maxspeed'] = vspeed
                 vehdict['vcolor'] = 'gray'
                 TLSinfo = traci.vehicle.getNextTLS(vehid)
