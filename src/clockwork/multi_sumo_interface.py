@@ -332,7 +332,7 @@ def run_sumo(conf_filename=None, runlog=None):
 
     print("Closing traci")
     try:
-        traci.close(False)
+        traci.close()
     except Exception as e:
         print("Traci closed failed:", e)
     sys.stdout.flush()
