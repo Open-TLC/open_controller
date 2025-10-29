@@ -10,11 +10,8 @@ from haversine import haversine, Unit
 
 # ---- config ----
 INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
-# INPUT_SUBJECT_OBJECTS = "aalto.v2x.vehicles.json"
-INPUT_SUBJECT_SIGNAL  = "group.status.266.11"
 
-OUTPUT_SUBJECT_REAL_EXT    = "detector.control.266-g11_safety_ext"
-OUTPUT_SUBJECT_REAL_BLOCK  = "detector.control.266-g11_ext_block"
+INPUT_SUBJECT_SIGNAL  = "group.control.266.11"
 
 OUTPUT_SUBJECT_EXT_STATUS  = "extender.status.266-g11"  
 OUTPUT_SUBJECT_EXT_NORMAL  = "detector.status.266-g11_ext_normal"
@@ -26,13 +23,9 @@ THRESHOLD_M           = 30.0
 
 NATS_URL              = "localhost"   # Lab Software in the loop
 # NATS_URL              = "nats://10.8.0.36"   # Lab
-# NATS_URL              = "nats://10.8.0.204"  # Field
 
-STOPLINE_LAT          = 60.164398019050545  #Field
-STOPLINE_LON          = 24.92070067464535   #Field
-
-# STOPLINE_LAT          = 60.18834  #CarLab
-# STOPLINE_LON          = 24.82354  #CarLab
+STOPLINE_LAT          = 60.164368  # Sumo
+STOPLINE_LON          = 24.920622  # Sumo
 
 OUT_INT               = 1.0
 # -----------------
@@ -123,22 +116,6 @@ async def publish_to_vehicles(nc: nats.NATS, subject: str, status: bool):
     print(f"[publish] {subject} -> {payload}")
 
 
-
-"""# ---------- Listeners ----------
-async def objects_listener(nc: nats.NATS, queue: asyncio.Queue):
-    async def on_msg(msg):
-       
-        data = json.loads(msg.data.decode("utf-8"))
-        objects = data.get("objects", [])
-        await queue.put(objects)
-        objcount = data['nobjects']
-    
-        # print(f"[object_listener] Obj Count: ", objcount)
-       
-    await nc.subscribe(INPUT_SUBJECT_OBJECTS, cb=on_msg)
-    # print(f"[objects_listener] subscribed to '{INPUT_SUBJECT_OBJECTS}'")
-"""
-
 # ---------- Listeners ----------
 async def objects_listener(nc: nats.NATS, queue: asyncio.Queue):
     async def on_msg(msg):
@@ -189,8 +166,6 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
     green_started_at = time.time()
     safety_ext_started = False
     last_output = time.time()
-    await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, False) # safety extension OFF
-    await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False) # unblock others
     await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False)  # Normal extension visualization OFF
     await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, False)  # Safety extension visualization OFF
 
@@ -215,16 +190,8 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
                 state = "Normal Extension Mode"
                 green_started_at = time.time()
                 print("[processor] -> Green Started at", round(green_started_at, 2))
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, True)   # safety extension ON
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, True) 
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, True) # Normal extension visualization ON
         
-        #if state == "Green Started":
-        #    if not safety_ext_started: 
-        #        state = "Normal Extension Mode"
-        #        await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, True) # Normal extension visualization ON
-        #        print("[processor] -> Normal Extension Mode")
-
         if state == "Normal Extension Mode":
             if safety_ext:
                 safety_ext_started = True
@@ -239,8 +206,6 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
                     green_ended_at = time.time()
                     green_time = round(green_ended_at - green_started_at, 2)
                     print("[processor] -> Green Ended; green_time:", green_time)
-                    await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, False)   # safety extension OFF
-                    await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False) # unblock others
                     await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, False)  # Safety extension visualization OFF
                     await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False)  # Normal extension visualization OFF
                     safety_ext_started = False
@@ -252,8 +217,6 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
                 green_ended_at = time.time()
                 green_time = round(green_ended_at - green_started_at, 2)
                 print("[processor] -> Green Ended; green_time:", green_time)
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_EXT, False)   # safety extension OFF
-                await publish_control(nc, OUTPUT_SUBJECT_REAL_BLOCK, False) # unblock others
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, False)  # Safety extension visualization OFF
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False)  # Normal extension visualization OFF
                 safety_ext_started = False

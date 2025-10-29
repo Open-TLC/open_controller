@@ -25,8 +25,8 @@ from extender import StaticExtender
 if 'SUMO_HOME' in os.environ:
     SUMO_TOOLS = os.path.join(os.environ['SUMO_HOME'], 'tools')
     sys.path.append(SUMO_TOOLS)
-    import traci
-    # import libsumo as traci
+    # import traci
+    import libsumo as traci
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
@@ -417,7 +417,6 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode, v2x_mode)
                 vehdict['vspeed'] = vspeed
                 vehdict['maxspeed'] = vspeed
                 vehdict['vcolor'] = 'gray'
-§
                 TLSinfo = traci.vehicle.getNextTLS(vehid)
         
                 try:
