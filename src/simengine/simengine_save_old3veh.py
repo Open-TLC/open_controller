@@ -86,9 +86,6 @@ class SumoNatsInterface:
         self._cars_generated = -1   # DBIK202509 number of V2X cars generated
         self._green_started_at = -1   # DBIK202509 number of V2X cars generated
         self.V2X_control = True  # Setd ON the V2X control message handling
-        self._veh_num = 1 # DBIK20251029 The running number of vehicle generated
-        self._veh_count = 0
-        self._next_arr_time = 0
     
 
     def set_up_the_params(self):
@@ -203,27 +200,31 @@ class SumoNatsInterface:
                 if green_start_test != None:
                     self._green_started_at = green_start_test
                     self._cars_generated = 0
-                    self._next_arr_time = 4
-                    # self._veh_num = 1
-                    self._veh_count = 0
 
                 # if self._cars_generated >= 0:
-                if (self._green_started_at > 0):  # V2X veh gen OFF 25051015
+                if (self._green_started_at > 0) or False:  # V2X veh gen OFF 25051015
                     time_from_green_start_grp11 = float(self.system_timer.str_seconds()) - self._green_started_at
-                    
-                    if (time_from_green_start_grp11 > self._next_arr_time) and (self._veh_count > -1):
-                            veh_id = "v2x_veh_"+str(self._veh_num)
-                            traci.vehicle.add(veh_id, "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
-                            vspeed = round(traci.vehicle.getSpeed(veh_id),2)
-                            print("Car number ", self._veh_num,"  ",veh_id,  " generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
-                            self._veh_num += 1
-                            self._veh_count +=1
-                            self._next_arr_time = time_from_green_start_grp11 + 2
-                            if self._veh_count > 4:
-                                self._veh_count = -1
-                            print("Veh number ", self._veh_num," count: ", self._veh_count,  " next gen at : ", self._next_arr_time)
-                          
 
+                    if self._cars_generated == 0:
+                        if time_from_green_start_grp11 > 4:
+                            traci.vehicle.add("v2x_veh1", "Ramp2Sat", typeID="v2x_type2", departLane="0", departPos="100", departSpeed="10")
+                            vspeed = round(traci.vehicle.getSpeed("v2x_veh1"),2)
+                            print("First V2X-car generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
+                            self._cars_generated += 1
+
+                    if self._cars_generated == 1:
+                        if time_from_green_start_grp11 > 6:
+                            traci.vehicle.add("v2x_veh2", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
+                            vspeed = round(traci.vehicle.getSpeed("v2x_veh2"),2)
+                            print("Second V2X-car generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
+                            self._cars_generated += 1                  
+
+                    if self._cars_generated == 2:  
+                        if time_from_green_start_grp11 > 8:
+                            traci.vehicle.add("v2x_veh3", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
+                            vspeed = round(traci.vehicle.getSpeed("v2x_veh3"),2)
+                            print("Third V2X-car generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
+                            self._cars_generated = -1
 
         if self.V2X_control:
             async def v2x_control_message_handler(msg):

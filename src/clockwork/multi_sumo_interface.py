@@ -436,6 +436,14 @@ def Sumo_e3detections_to_controller(
             TLSinfo = traci.vehicle.getNextTLS(vehid)
 
             try:
+                vehdict["TLSno"] = TLSinfo[0][1]
+                vehdict["TLSdist"] = round(TLSinfo[0][2], 1)
+            except:
+                # print('Error: No TLS info')
+                vehdict["TLSno"] = "NoSig"
+                vehdict["TLSdist"] = -1
+
+            try:
                 vehdict["leaderId"] = leaderInfo[0]
                 vehdict["leaderDist"] = round(leaderInfo[1], 1)
                 vehdict["leaderSpeed"] = round(leaderSpeed)
