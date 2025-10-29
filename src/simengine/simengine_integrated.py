@@ -35,7 +35,8 @@ if SUMO_HOME is None:
 
 SUMO_TOOLS = os.path.join(os.environ["SUMO_HOME"], "tools")
 sys.path.append(SUMO_TOOLS)
-import traci
+# import traci
+import libsumo as traci
 
 sumo_bin_path = os.path.join(SUMO_HOME, "bin")
 # Add the sumo/bin directory to the PATH for this process
@@ -71,7 +72,13 @@ def run_sumo(conf_filename: str):
         traffic_controller.set_sumo_outputs(sumo_outputs, verbose=False)
 
     # Graph always if set in conf, and also if param says so
+<<<<<<< HEAD
     if sys_cnf["sumo"]["graph"]:
+=======
+    display_available = os.environ.get('DISPLAY') is not None and os.environ.get('DISPLAY') is not ''
+    # Graph always if set in conf, and also if param says so, but not if display is not available
+    if sys_cnf['sumo']['graph'] and display_available:
+>>>>>>> 8820374 (Sumo runners for datatool)
         sumo_bin = SUMO_BIN_NAME_GRAPH
     else:
         sumo_bin = SUMO_BIN_NAME
@@ -93,7 +100,7 @@ def run_sumo(conf_filename: str):
 
     print("Closing traci")
     try:
-        traci.close(False)
+        traci.close()
     except Exception as e:
         print("Traci closed failed:", e)
     sys.stdout.flush()
