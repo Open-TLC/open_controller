@@ -56,6 +56,7 @@ class Radar:
         # filter out the vehicles that are not of pre-defined type
         if self.vehicle_types:
             if not new_veh['sumo_type'] in self.vehicle_types:
+                BP=1
                 return
         
         # Filter out all the vehs outside aoi, if it is defined

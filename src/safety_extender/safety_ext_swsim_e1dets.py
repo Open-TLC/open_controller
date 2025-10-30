@@ -14,15 +14,15 @@ INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
 INPUT_SUBJECT_SIGNAL  = "group.control.266.11"
 
 OUTPUT_SUBJECT_EXT_STATUS  = "extender.status.266-g11"  
-OUTPUT_SUBJECT_EXT_NORMAL  = "detector.status.266-g11_ext_normal"
-OUTPUT_SUBJECT_EXT_SAFETY  = "detector.status.266-g11_ext_safety"
+OUTPUT_SUBJECT_EXT_NORMAL  = "detector.status.266-11_ext_normal"
+OUTPUT_SUBJECT_EXT_SAFETY  = "detector.status.266-11_ext_safety"
 
 OUTPUT_SUBJECT_V2X_CONTROL = "aalto.v2x.control.json"
 
 THRESHOLD_M           = 30.0
 
 NATS_URL              = "localhost"   # Lab Software in the loop
-# NATS_URL              = "nats://10.8.0.36"   # Lab
+# NATS_URL              = "10.8.0.36"   # Lab
 
 STOPLINE_LAT          = 60.164368  # Sumo
 STOPLINE_LON          = 24.920622  # Sumo
@@ -55,6 +55,9 @@ def find_close_pairs(objects: List[Dict[str, Any]], threshold_m: float) -> List[
     enriched = []
     for o in objects:
         lat = o.get("lat"); lon = o.get("lon")
+        vtype = o.get("sumo_type")
+        if vtype != "v2x_type":
+            continue
         if lat is None or lon is None:
             continue
         dist = distance_m(STOPLINE_LAT, STOPLINE_LON, lat, lon)
@@ -231,9 +234,10 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
 
             if close_pairs or True:
                     print(f"[processor] {len(close_pairs)} close pair(s) (< {threshold_m} m):")
-                    for p in close_pairs:
-                        print(f"  {p['back_id']} -> {p['front_id']} | gap={p['gap_m']} m "
-                                f"(at {p['back_dist_m']}→{p['front_dist_m']} m)")
+                    
+                    # for p in close_pairs:
+                        # print(f"  {p['back_id']} -> {p['front_id']} | gap={p['gap_m']} m "
+                        #        f"(at {p['back_dist_m']}→{p['front_dist_m']} m)")
             else:
                 print(f"[processor] no close pairs (< {threshold_m} m)")
 
@@ -243,9 +247,9 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
                 await publish_to_vehicles(nc, OUTPUT_SUBJECT_V2X_CONTROL, state) # send v2x control to nats
                 if close_pairs:
                     print(f"[processor] {len(close_pairs)} close pair(s) (< {threshold_m} m):")
-                    for p in close_pairs:
-                        print(f"  {p['back_id']} -> {p['front_id']} | gap={p['gap_m']} m "
-                                f"(at {p['back_dist_m']}→{p['front_dist_m']} m)")
+                    # for p in close_pairs:
+                        # print(f"  {p['back_id']} -> {p['front_id']} | gap={p['gap_m']} m "
+                         #       f"(at {p['back_dist_m']}→{p['front_dist_m']} m)")
                 else:
                     print(f"[processor] no close pairs (< {threshold_m} m)")
 
