@@ -197,33 +197,14 @@ class SumoNatsInterface:
                 #    subject=subject, reply=reply, data=dat a))
                 msg_dict = json.loads(data)
                 self.set_sumo_traffic_light_state(subject, msg_dict)
-
-                # DBIK202509 Additional functions to generate V2X vehicles in Sync with real TLC
                 green_start_test = self.get_green_start_time(subject, msg_dict)
                 if green_start_test != None:
                     self._green_started_at = green_start_test
                     self._cars_generated = 0
-                    self._next_arr_time = 4
+                    timesec = round(float(self.system_timer.str_seconds()),2)
+                    self._next_arr_time = timesec + 4.0
                     # self._veh_num = 1
                     self._veh_count = 0
-
-                # if self._cars_generated >= 0:
-                if (self._green_started_at > 0):  # V2X veh gen OFF 25051015
-                    time_from_green_start_grp11 = float(self.system_timer.str_seconds()) - self._green_started_at
-                    
-                    if (time_from_green_start_grp11 > self._next_arr_time) and (self._veh_count > -1):
-                            veh_id = "v2x_veh_"+str(self._veh_num)
-                            traci.vehicle.add(veh_id, "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
-                            vspeed = round(traci.vehicle.getSpeed(veh_id),2)
-                            print("Car number ", self._veh_num,"  ",veh_id,  " generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
-                            self._veh_num += 1
-                            self._veh_count +=1
-                            self._next_arr_time = time_from_green_start_grp11 + 2
-                            if self._veh_count > 4:
-                                self._veh_count = -1
-                            print("Veh number ", self._veh_num," count: ", self._veh_count,  " next gen at : ", self._next_arr_time)
-                          
-
 
         if self.V2X_control:
             async def v2x_control_message_handler(msg):
@@ -247,8 +228,26 @@ class SumoNatsInterface:
             
 
         self.draw_radars()
+        self._veh_count = -1
+
         while traci.simulation.getMinExpectedNumber() > 0:
             
+            timesec = round(float(self.system_timer.str_seconds()),2)
+            time_from_green_start_grp11 = round((timesec - self._green_started_at),2)
+        
+            if (timesec > self._next_arr_time) and (self._veh_count > -1):
+                veh_id = "v2x_veh_"+str(self._veh_num)
+                print(timesec, " Car number ", self._veh_num,"  ",veh_id,  " generated at : ",time_from_green_start_grp11)
+                traci.vehicle.add(veh_id, "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
+                # vspeed = round(traci.vehicle.getSpeed(veh_id),2)
+                self._veh_num += 1
+                self._veh_count +=1
+                self._next_arr_time = timesec + 1.5
+                if self._veh_count > 4:
+                    self._veh_count = -1
+                print(timesec, " Veh number ", self._veh_num," count: ", self._veh_count,  " next gen at : ", self._next_arr_time)
+                
+               
             # Debugging, this mode has to be changed in order to make sumo yelding work better
             # TODO: Needs only be sent once for vehicles (unneeded traci calls, and they are expemsive)
             for vehicleId in traci.vehicle.getIDList():
@@ -264,6 +263,8 @@ class SumoNatsInterface:
             self.system_timer.tick()
             # Note, if Sumo is stopped by hand, this will try to catch up
             await asyncio.sleep(self.system_timer.get_next_time_step())
+
+
 
     def draw_radars(self):
         radar_polygons = self.config.get_radar_polygons()
