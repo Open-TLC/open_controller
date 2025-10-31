@@ -236,16 +236,23 @@ class SumoNatsInterface:
             time_from_green_start_grp11 = round((timesec - self._green_started_at),2)
         
             if (timesec > self._next_arr_time) and (self._veh_count > -1):
-                veh_id = "v2x_veh_"+str(self._veh_num)
+
+                if (self._veh_count in [0,1,2]):
+                    veh_id = "v2x_go_"+str(self._veh_num)
+                else:
+                    veh_id = "v2x_stop_"+str(self._veh_num)
+
                 print(timesec, " Car number ", self._veh_num,"  ",veh_id,  " generated at : ",time_from_green_start_grp11)
                 traci.vehicle.add(veh_id, "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
+                if "v2x_go" in veh_id:
+                    traci.vehicle.setColor(veh_id, (173, 216, 230, 255))
                 # vspeed = round(traci.vehicle.getSpeed(veh_id),2)
                 self._veh_num += 1
                 self._veh_count +=1
                 self._next_arr_time = timesec + 1.5
                 if self._veh_count > 4:
                     self._veh_count = -1
-                print(timesec, " Veh number ", self._veh_num," count: ", self._veh_count,  " next gen at : ", self._next_arr_time)
+                # print(timesec, " Veh number ", self._veh_num," count: ", self._veh_count,  " next gen at : ", self._next_arr_time)
                 
                
             # Debugging, this mode has to be changed in order to make sumo yelding work better
@@ -345,25 +352,28 @@ class SumoNatsInterface:
         """Sets the speed for given V2X vehicles """
         vehicle_ids = traci.vehicle.getIDList()
         controlled_vehs = msg_dict["vehicles"]
+        # control_veh_type = "v2x_stop_"
         print("Controlling the speed of vehicles: ",controlled_vehs)
         for vehid in vehicle_ids:
-            for cont_veh in controlled_vehs:
-                if vehid == cont_veh:
-                    TLSinfo = traci.vehicle.getNextTLS(vehid)
-                    leaderInfo = traci.vehicle.getLeader(vehid, dist=30.0)
-                    leaderDist = 1000
-                    # leaderSpeed = traci.vehicle.getSpeed(vehid)
-                    try:
-                        TLSdist = round(TLSinfo[0][2],1)
-                        leaderDist = round(leaderInfo[1],1)
-                    except:
-                        print('Error in Distance')
-                    if (TLSdist < 120) and (TLSdist > 0):
-                        vehspeed = 9.0
-                        traci.vehicle.setSpeed(vehid, vehspeed)
-                        print("Set the speed of: ", vehid, "to: vehspeed", vehspeed, "DistSig: ", TLSdist, "DistVeh: ", leaderDist)
-                        # traci.vehicle.slowDown(vehid, 5.0, 6000)
-                        traci.vehicle.setColor(vehid, (255, 0, 0, 255))
+            if "v2x_stop" in vehid:           
+                TLSinfo = traci.vehicle.getNextTLS(vehid)
+                leaderInfo = traci.vehicle.getLeader(vehid, dist=30.0)
+                leaderDist = 1000
+                # leaderSpeed = traci.vehicle.getSpeed(vehid)
+                try:
+                    TLSdist = round(TLSinfo[0][2],1)
+                    leaderDist = round(leaderInfo[1],1)
+                except:
+                    print('Error in Distance')
+                if True or ((TLSdist < 120) and (TLSdist >40)):
+                    vehspeed = 8.0
+                    traci.vehicle.setSpeed(vehid, vehspeed)
+                    # print("Set the speed of: ", vehid, "to: vehspeed", vehspeed, "DistSig: ", TLSdist, "DistVeh: ", leaderDist)
+                    # traci.vehicle.slowDown(vehid, 5.0, 6000)
+                    traci.vehicle.setColor(vehid, (255, 0, 0, 255))
+                else:
+                    traci.vehicle.setColor(vehid, (255, 255, 0, 255))
+
 
 
 async def main():
