@@ -202,7 +202,7 @@ class SumoNatsInterface:
                     self._green_started_at = green_start_test
                     self._cars_generated = 0
                     timesec = round(float(self.system_timer.str_seconds()),2)
-                    self._next_arr_time = timesec + 4.0
+                    self._next_arr_time = timesec + 1.0
                     # self._veh_num = 1
                     self._veh_count = 0
 
@@ -242,10 +242,18 @@ class SumoNatsInterface:
                 else:
                     veh_id = "v2x_stop_"+str(self._veh_num)
 
+                if (self._veh_count in [2,3]):
+                    vehtype = "v2x_type"
+                else:
+                    vehtype = "v2x_type2"
+
                 print(timesec, " Car number ", self._veh_num,"  ",veh_id,  " generated at : ",time_from_green_start_grp11)
-                traci.vehicle.add(veh_id, "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
-                if "v2x_go" in veh_id:
-                    traci.vehicle.setColor(veh_id, (173, 216, 230, 255))
+                traci.vehicle.add(veh_id, "Ramp2Sat", typeID=vehtype, departLane="0", departPos="100", departSpeed="10")
+                if vehtype == "v2x_type":
+                    traci.vehicle.setColor(veh_id, (255, 255, 0, 255)) # Yellow
+                else: 
+                     traci.vehicle.setColor(veh_id, (173, 216, 230, 255)) # Blue
+
                 # vspeed = round(traci.vehicle.getSpeed(veh_id),2)
                 self._veh_num += 1
                 self._veh_count +=1

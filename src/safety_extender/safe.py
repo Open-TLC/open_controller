@@ -7,7 +7,7 @@ import keyboard  # pip install keyboard
 
 NATS_URL = "localhost"
 OUTPUT_SUBJECT = "detector.status.266-11_ext_normal"
-OUTPUT_SUBJECT = "detector.status.266-11_ext_safety"
+OUTPUT_SUBJECT2 = "detector.status.266-11_ext_safety"
 
 # OUTPUT_SUBJECT = "detector.status.test"
 
@@ -42,6 +42,7 @@ async def main():
         if keyboard.is_pressed("space"):
             loop_on = not loop_on
             await publish_message(nc, OUTPUT_SUBJECT, loop_on)
+            await publish_message(nc, OUTPUT_SUBJECT2, loop_on)
             print(f"loop_on = {loop_on}\n")
             await asyncio.sleep(0.3)  # pieni viive, ettei tule tuplalähetyksiä
 

@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import nats  # pip install nats-py
 from haversine import haversine, Unit
+import keyboard  # pip install keyboard
 
 # ---- config ----
 INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
@@ -160,7 +161,7 @@ async def signal_listener(nc: nats.NATS, signal_state: SharedSignalState, start_
         data = json.loads(msg.data.decode("utf-8"))
         # "green" iff substate is "1" or "3"
         substate = data.get("substate")
-        green = (substate == "1") or (substate == "3")
+        green = (substate == "1") or (substate == "3") or (substate == "5")
         tfs = round(time_from_start(start_time),1)
         await signal_state.set_green(green)
         # print(f"[signal_listener] start_time={tfs} substate={substate!r} -> green={green}")
@@ -183,7 +184,7 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
     await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False)  # Normal extension visualization OFF
     await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, False)  # Safety extension visualization OFF
 
-    while True:
+    while not(keyboard.is_pressed("space")):
                 
         await asyncio.sleep(0.1)  # Provides time for other async functions
         
@@ -203,31 +204,32 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
             if green_started:
                 state = "Normal Extension Mode"
                 green_started_at = time.time()
-                # print("[processor] -> Green Started at", round(green_started_at, 2))
+                print("[processor] -> Normal Green Extenion Started at", round(green_started_at, 2))
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, True) # Normal extension visualization ON
         
         if state == "Normal Extension Mode":
-            if timesec() - green_started_at > 20.0:
+            if timesec() - green_started_at > 15.0:
                 state = "Safety Extension Mode"
+                print("[processor] -> Start Safety Extension Mode")
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False) # Normal extension visualization OFF
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, True)  # Safety extension visualization ON
-                # print("[processor] -> Safety Extension Mode")
             else:
                 #Returns to no ext when the group goes red (maximum reached)
                 if not(green):
                     state = "Red"
                     green_ended_at = time.time()
                     green_time = round(green_ended_at - green_started_at, 2)
-                    # print("[processor] -> Green Ended; green_time:", green_time)
+                    print("[processor] -> Green Ended; green_time:", green_time)
                     await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, False)  # Safety extension visualization OFF
                     await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False)  # Normal extension visualization OFF
             
         if state == "Safety Extension Mode":
+            await publish_to_vehicles(nc, OUTPUT_SUBJECT_V2X_CONTROL, state) # send v2x control to nats  
             if not safety_ext or not(green):
                 state = "Red"
                 green_ended_at = time.time()
                 green_time = round(green_ended_at - green_started_at, 2)
-                # print("[processor] -> Green Ended; green_time:", green_time)
+                print("[processor] -> Green Ended; green_time:", green_time, "SafetExt: ", safety_ext)
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, False)  # Safety extension visualization OFF
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False)  # Normal extension visualization OFF
                 safety_ext_started = False
@@ -238,7 +240,10 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
         tfs = round(time_from_start(start_time),1) 
         
         if (cur_time - last_output > OUT_INT):
-            print(f"[processor]: Time={tfs} | State: {state} | Safety_ext={safety_ext} | Green={green} | Green time={cur_green}")
+            if green:
+                print(f"[processor]: Time={tfs} | State: {state} | Safety_ext={safety_ext} | Green={green} | Green time={cur_green}")
+            else:
+                print(f"[processor]: Time={tfs} | State: {state} ")
             last_output = cur_time
 
         if state != last_state:          
