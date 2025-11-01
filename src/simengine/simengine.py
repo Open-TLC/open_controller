@@ -252,13 +252,14 @@ class SumoNatsInterface:
                 if vehtype == "v2x_type":
                     traci.vehicle.setColor(veh_id, (255, 255, 0, 255)) # Yellow
                 else: 
-                     traci.vehicle.setColor(veh_id, (173, 216, 230, 255)) # Blue
+                     traci.vehicle.setColor(veh_id, (255, 255, 0, 255)) # Test color
+                
 
                 # vspeed = round(traci.vehicle.getSpeed(veh_id),2)
                 self._veh_num += 1
                 self._veh_count +=1
                 self._next_arr_time = timesec + 1.5
-                if self._veh_count > 4:
+                if self._veh_count > 5:
                     self._veh_count = -1
                 # print(timesec, " Veh number ", self._veh_num," count: ", self._veh_count,  " next gen at : ", self._next_arr_time)
                 

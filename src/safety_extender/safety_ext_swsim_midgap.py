@@ -12,7 +12,7 @@ import keyboard  # pip install keyboard
 # ---- config ----
 INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
 
-INPUT_SUBJECT_SIGNAL  = "group.control.266.11"
+INPUT_SUBJECT_SIGNAL  = "group.status.266.11"
 
 OUTPUT_SUBJECT_EXT_STATUS  = "extender.status.266-g11"  
 OUTPUT_SUBJECT_EXT_NORMAL  = "detector.status.266-11_ext_normal"
