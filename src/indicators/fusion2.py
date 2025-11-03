@@ -280,7 +280,7 @@ class FieldOfView:
         while True:
             await asyncio.sleep(self.trigger_time)
             if self.view_type == "grp_view":
-                out_data = self.get_linewise_ouptut()
+                out_data = self.get_linewise_output()
             elif self.view_type == "e3":
                 out_data = self.get_e3_area_output()
             else:
@@ -291,7 +291,7 @@ class FieldOfView:
                 #print(f"Sent queue data from {self.name}: {queue_lengths}")
 
 
-    def get_linewise_ouptut(self):
+    def get_linewise_output(self):
         """Returns a dictionary for the queue output type"""
         queue_lengths = self.get_approaching_objects()
         data = {}
@@ -319,11 +319,14 @@ class FieldOfView:
             # Sumo simengine does not map types and lanes correctly (yet)
            
             vehclass_radar = obj.get('class', None)   
+            
+            """
             if vehclass_radar in ["bike_type"]: 
                 vehclass_sumo = obj.get('class', None)  #DBIK102025 Omit Sumo vehclass mapping 
                 BP = 1   #DBIK102025 Added breakpoint for bike_type
-            else:
-                vehclass_sumo = VECLASS_FROM_RADAR_TO_SUMO.get(vehclass_radar, None)
+            else: """
+
+            vehclass_sumo = VECLASS_FROM_RADAR_TO_SUMO.get(vehclass_radar, None)
                            
             new_obj['vtype'] = vehclass_sumo
            
