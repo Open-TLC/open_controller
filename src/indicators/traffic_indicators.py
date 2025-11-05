@@ -58,6 +58,7 @@ class SensorTwin:
         # For generating the outputs and manipulationg the data
         for fov in self.fovs.values():
             fov.assign_radars(self.radars)
+        print(self.fovs)
 
     #DETECTORS
     def add_detector_streams(self, detector_dict):
