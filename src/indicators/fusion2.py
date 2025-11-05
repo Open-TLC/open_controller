@@ -54,7 +54,7 @@ class Lane:
                 #self.input_radars[radar_name] = radars[radar_params['stream']]
                 self.input_radars[radar_name] = LaneRadar(lane, radar)
 
-        #print(f"assigned radars: {self.input_radars}")
+        print(f"assigned radars: {self.input_radars}")
 
     def assign_detectors(self, detectors):
         """Assigns in and out detectors to the lane"""
