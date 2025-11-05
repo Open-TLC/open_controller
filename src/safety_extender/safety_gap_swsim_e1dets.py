@@ -50,7 +50,7 @@ def distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return haversine((lat1, lon1), (lat2, lon2), unit=Unit.METERS)
 
 
-def find_close_pairs(objects: List[Dict[str, Any]], threshold_m: float) -> List[Dict[str, Any]]:
+def find_safe_gap(objects: List[Dict[str, Any]], threshold_m: float) -> List[Dict[str, Any]]:
     """Compute each object's distance to stopline, sort, and collect adjacent pairs under threshold."""
     enriched = []
     for o in objects:
@@ -73,7 +73,7 @@ def find_close_pairs(objects: List[Dict[str, Any]], threshold_m: float) -> List[
         back = enriched[i]
         front = enriched[i + 1]
         gap = round(front["dist"] - back["dist"], 2)
-        if gap < threshold_m:
+        if gap > threshold_m:
             close_pairs.append({
                 "back_id": back.get("sumo_id"),
                 "front_id": front.get("sumo_id"),
@@ -178,10 +178,16 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
         
         objects = await asyncio.wait_for(queue.get(), timeout=10.0) # Get radar data to objects
            
-        close_pairs = find_close_pairs(objects, threshold_m) # Find if there are too short gaps between the vehicles 
-        safety_ext = len(close_pairs) > 0  # Put safety extension ON
+        safe_gap = find_safe_gap(objects, threshold_m) # Find if there are too short gaps between the vehicles 
+        
+        if len(safe_gap) == 0: # Put safety extension ON
+            safety_ext = True
+        else: 
+            safety_ext = False
+        
         if safety_ext:
             BO = 1
+
         green = await signal_state.get_green()  # Get the signal state of group 11
         controlled_vehicles = []
 
@@ -232,8 +238,8 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
             print(f"[processor] State: {state} | Green={green} | Safety_ext_started ={safety_ext_started} | Safety_ext={safety_ext} | Green time={cur_green}")
             last_output = cur_time
 
-            if close_pairs or True:
-                    print(f"[processor] {len(close_pairs)} close pair(s) (< {threshold_m} m):")
+            if safe_gap:
+                print(f"[processor] {len(safe_gap)} close pair(s) (< {threshold_m} m):")
                     
                     # for p in close_pairs:
                         # print(f"  {p['back_id']} -> {p['front_id']} | gap={p['gap_m']} m "

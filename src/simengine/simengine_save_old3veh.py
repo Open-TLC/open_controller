@@ -86,9 +86,6 @@ class SumoNatsInterface:
         self._cars_generated = -1   # DBIK202509 number of V2X cars generated
         self._green_started_at = -1   # DBIK202509 number of V2X cars generated
         self.V2X_control = True  # Setd ON the V2X control message handling
-        self._veh_num = 1 # DBIK20251029 The running number of vehicle generated
-        self._veh_count = 0
-        self._next_arr_time = 0
     
 
     def set_up_the_params(self):
@@ -197,14 +194,37 @@ class SumoNatsInterface:
                 #    subject=subject, reply=reply, data=dat a))
                 msg_dict = json.loads(data)
                 self.set_sumo_traffic_light_state(subject, msg_dict)
+
+                # DBIK202509 Additional functions to generate V2X vehicles in Sync with real TLC
                 green_start_test = self.get_green_start_time(subject, msg_dict)
                 if green_start_test != None:
                     self._green_started_at = green_start_test
                     self._cars_generated = 0
-                    timesec = round(float(self.system_timer.str_seconds()),2)
-                    self._next_arr_time = timesec + 1.0
-                    # self._veh_num = 1
-                    self._veh_count = 0
+
+                # if self._cars_generated >= 0:
+                if (self._green_started_at > 0) or False:  # V2X veh gen OFF 25051015
+                    time_from_green_start_grp11 = float(self.system_timer.str_seconds()) - self._green_started_at
+
+                    if self._cars_generated == 0:
+                        if time_from_green_start_grp11 > 4:
+                            traci.vehicle.add("v2x_veh1", "Ramp2Sat", typeID="v2x_type2", departLane="0", departPos="100", departSpeed="10")
+                            vspeed = round(traci.vehicle.getSpeed("v2x_veh1"),2)
+                            print("First V2X-car generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
+                            self._cars_generated += 1
+
+                    if self._cars_generated == 1:
+                        if time_from_green_start_grp11 > 6:
+                            traci.vehicle.add("v2x_veh2", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
+                            vspeed = round(traci.vehicle.getSpeed("v2x_veh2"),2)
+                            print("Second V2X-car generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
+                            self._cars_generated += 1                  
+
+                    if self._cars_generated == 2:  
+                        if time_from_green_start_grp11 > 8:
+                            traci.vehicle.add("v2x_veh3", "Ramp2Sat", typeID="v2x_type", departLane="0", departPos="100", departSpeed="10")
+                            vspeed = round(traci.vehicle.getSpeed("v2x_veh3"),2)
+                            print("Third V2X-car generated at : ",time_from_green_start_grp11, "speed: ", vspeed)
+                            self._cars_generated = -1
 
         if self.V2X_control:
             async def v2x_control_message_handler(msg):
@@ -228,42 +248,8 @@ class SumoNatsInterface:
             
 
         self.draw_radars()
-        self._veh_count = -1
-
         while traci.simulation.getMinExpectedNumber() > 0:
             
-            timesec = round(float(self.system_timer.str_seconds()),2)
-            time_from_green_start_grp11 = round((timesec - self._green_started_at),2)
-        
-            if (timesec > self._next_arr_time) and (self._veh_count > -1):
-
-                if (self._veh_count in [0,1,2]):
-                    veh_id = "v2x_go_"+str(self._veh_num)
-                else:
-                    veh_id = "v2x_stop_"+str(self._veh_num)
-
-                if (self._veh_count in [2,3]):
-                    vehtype = "v2x_type"
-                else:
-                    vehtype = "v2x_type2"
-
-                print(timesec, " Car number ", self._veh_num,"  ",veh_id,  " generated at : ",time_from_green_start_grp11)
-                traci.vehicle.add(veh_id, "Ramp2Sat", typeID=vehtype, departLane="0", departPos="100", departSpeed="10")
-                if vehtype == "v2x_type":
-                    traci.vehicle.setColor(veh_id, (255, 255, 0, 255)) # Yellow
-                else: 
-                     traci.vehicle.setColor(veh_id, (255, 255, 0, 255)) # Test color
-                
-
-                # vspeed = round(traci.vehicle.getSpeed(veh_id),2)
-                self._veh_num += 1
-                self._veh_count +=1
-                self._next_arr_time = timesec + 1.5
-                if self._veh_count > 5:
-                    self._veh_count = -1
-                # print(timesec, " Veh number ", self._veh_num," count: ", self._veh_count,  " next gen at : ", self._next_arr_time)
-                
-               
             # Debugging, this mode has to be changed in order to make sumo yelding work better
             # TODO: Needs only be sent once for vehicles (unneeded traci calls, and they are expemsive)
             for vehicleId in traci.vehicle.getIDList():
@@ -279,8 +265,6 @@ class SumoNatsInterface:
             self.system_timer.tick()
             # Note, if Sumo is stopped by hand, this will try to catch up
             await asyncio.sleep(self.system_timer.get_next_time_step())
-
-
 
     def draw_radars(self):
         radar_polygons = self.config.get_radar_polygons()
@@ -361,28 +345,25 @@ class SumoNatsInterface:
         """Sets the speed for given V2X vehicles """
         vehicle_ids = traci.vehicle.getIDList()
         controlled_vehs = msg_dict["vehicles"]
-        # control_veh_type = "v2x_stop_"
         print("Controlling the speed of vehicles: ",controlled_vehs)
         for vehid in vehicle_ids:
-            if "v2x_stop" in vehid:           
-                TLSinfo = traci.vehicle.getNextTLS(vehid)
-                leaderInfo = traci.vehicle.getLeader(vehid, dist=30.0)
-                leaderDist = 1000
-                # leaderSpeed = traci.vehicle.getSpeed(vehid)
-                try:
-                    TLSdist = round(TLSinfo[0][2],1)
-                    leaderDist = round(leaderInfo[1],1)
-                except:
-                    print('Error in Distance')
-                if True or ((TLSdist < 120) and (TLSdist >40)):
-                    vehspeed = 8.0
-                    traci.vehicle.setSpeed(vehid, vehspeed)
-                    # print("Set the speed of: ", vehid, "to: vehspeed", vehspeed, "DistSig: ", TLSdist, "DistVeh: ", leaderDist)
-                    # traci.vehicle.slowDown(vehid, 5.0, 6000)
-                    traci.vehicle.setColor(vehid, (255, 0, 0, 255))
-                else:
-                    traci.vehicle.setColor(vehid, (255, 255, 0, 255))
-
+            for cont_veh in controlled_vehs:
+                if vehid == cont_veh:
+                    TLSinfo = traci.vehicle.getNextTLS(vehid)
+                    leaderInfo = traci.vehicle.getLeader(vehid, dist=30.0)
+                    leaderDist = 1000
+                    # leaderSpeed = traci.vehicle.getSpeed(vehid)
+                    try:
+                        TLSdist = round(TLSinfo[0][2],1)
+                        leaderDist = round(leaderInfo[1],1)
+                    except:
+                        print('Error in Distance')
+                    if (TLSdist < 120) and (TLSdist > 0):
+                        vehspeed = 9.0
+                        traci.vehicle.setSpeed(vehid, vehspeed)
+                        print("Set the speed of: ", vehid, "to: vehspeed", vehspeed, "DistSig: ", TLSdist, "DistVeh: ", leaderDist)
+                        # traci.vehicle.slowDown(vehid, 5.0, 6000)
+                        traci.vehicle.setColor(vehid, (255, 0, 0, 255))
 
 
 async def main():

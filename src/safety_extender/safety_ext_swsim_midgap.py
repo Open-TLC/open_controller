@@ -7,11 +7,12 @@ from typing import Any, Dict, List, Optional
 
 import nats  # pip install nats-py
 from haversine import haversine, Unit
+import keyboard  # pip install keyboard
 
 # ---- config ----
 INPUT_SUBJECT_OBJECTS = "radar.266.6.objects_port.json"
 
-INPUT_SUBJECT_SIGNAL  = "group.control.266.11"
+INPUT_SUBJECT_SIGNAL  = "group.status.266.11"
 
 OUTPUT_SUBJECT_EXT_STATUS  = "extender.status.266-g11"  
 OUTPUT_SUBJECT_EXT_NORMAL  = "detector.status.266-11_ext_normal"
@@ -56,6 +57,7 @@ def find_close_pairs(objects: List[Dict[str, Any]], threshold_m: float) -> List[
     for o in objects:
         lat = o.get("lat"); lon = o.get("lon")
         vtype = o.get("sumo_type")
+        veh_id = o.get("sumo_id")
         if vtype != "v2x_type":
             continue
         if lat is None or lon is None:
@@ -81,12 +83,20 @@ def find_close_pairs(objects: List[Dict[str, Any]], threshold_m: float) -> List[
                 "front_dist_m": front["dist"],
                 "gap_m": gap,
             })
+
     return close_pairs
 
 
 def iso_now_ms_no_tz() -> str:
     return datetime.utcnow().isoformat(timespec="milliseconds")
 
+def timesec():
+    t = round(time.time(), 2)
+    return t
+
+def time_from_start(start_time):
+    tfs = (round(time.time(), 2) - start_time)
+    return tfs  
 
 async def publish_control(nc: nats.NATS, subject: str, loop_on: bool):
     payload = {
@@ -95,7 +105,7 @@ async def publish_control(nc: nats.NATS, subject: str, loop_on: bool):
         "loop_on": loop_on,
     }
     await nc.publish(subject, json.dumps(payload).encode("utf-8"))
-    print(f"[publish] {subject} -> {payload}")
+    # print(f"[publish] {subject} -> {payload}")
 
 
 async def publish_status(nc: nats.NATS, subject: str, status: bool):
@@ -105,7 +115,7 @@ async def publish_status(nc: nats.NATS, subject: str, status: bool):
         "status": status,
     }
     await nc.publish(subject, json.dumps(payload).encode("utf-8"))
-    print(f"[publish] {subject} -> {payload}")
+    # print(f"[publish] {subject} -> {payload}")
 
 
 async def publish_to_vehicles(nc: nats.NATS, subject: str, status: bool):
@@ -116,7 +126,7 @@ async def publish_to_vehicles(nc: nats.NATS, subject: str, status: bool):
         "vehicles": ["v2x_veh3"]
     }
     await nc.publish(subject, json.dumps(payload).encode("utf-8"))
-    print(f"[publish] {subject} -> {payload}")
+    # print(f"[publish] {subject} -> {payload}")
 
 
 # ---------- Listeners ----------
@@ -145,15 +155,16 @@ async def objects_listener(nc: nats.NATS, queue: asyncio.Queue):
     # print(f"[objects_listener] subscribed to '{INPUT_SUBJECT_OBJECTS}'")
 
 
-async def signal_listener(nc: nats.NATS, signal_state: SharedSignalState):
+async def signal_listener(nc: nats.NATS, signal_state: SharedSignalState, start_time: float):
     async def on_msg(msg):
        
         data = json.loads(msg.data.decode("utf-8"))
         # "green" iff substate is "1" or "3"
         substate = data.get("substate")
-        green = (substate == "1") or (substate == "3")
+        green = (substate == "1") or (substate == "3") or (substate == "5")
+        tfs = round(time_from_start(start_time),1)
         await signal_state.set_green(green)
-        print(f"[signal_listener] substate={substate!r} -> green={green}")
+        # print(f"[signal_listener] start_time={tfs} substate={substate!r} -> green={green}")
        
     await nc.subscribe(INPUT_SUBJECT_SIGNAL, cb=on_msg)
     # print(f"[signal_listener] subscribed to '{INPUT_SUBJECT_SIGNAL}'")
@@ -168,11 +179,12 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
     state = "Red"
     green_started_at = time.time()
     safety_ext_started = False
+    start_time = timesec()
     last_output = time.time()
     await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False)  # Normal extension visualization OFF
     await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, False)  # Safety extension visualization OFF
 
-    while True:
+    while not(keyboard.is_pressed("space")):
                 
         await asyncio.sleep(0.1)  # Provides time for other async functions
         
@@ -192,16 +204,15 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
             if green_started:
                 state = "Normal Extension Mode"
                 green_started_at = time.time()
-                print("[processor] -> Green Started at", round(green_started_at, 2))
+                print("[processor] -> Normal Green Extenion Started at", round(green_started_at, 2))
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, True) # Normal extension visualization ON
         
         if state == "Normal Extension Mode":
-            if safety_ext:
-                safety_ext_started = True
+            if timesec() - green_started_at > 15.0:
                 state = "Safety Extension Mode"
+                print("[processor] -> Start Safety Extension Mode")
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False) # Normal extension visualization OFF
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, True)  # Safety extension visualization ON
-                print("[processor] -> Safety Extension Mode")
             else:
                 #Returns to no ext when the group goes red (maximum reached)
                 if not(green):
@@ -211,50 +222,32 @@ async def processor(nc: nats.NATS, queue: asyncio.Queue, signal_state: SharedSig
                     print("[processor] -> Green Ended; green_time:", green_time)
                     await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, False)  # Safety extension visualization OFF
                     await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False)  # Normal extension visualization OFF
-                    safety_ext_started = False
-
-
+            
         if state == "Safety Extension Mode":
+            await publish_to_vehicles(nc, OUTPUT_SUBJECT_V2X_CONTROL, state) # send v2x control to nats  
             if not safety_ext or not(green):
                 state = "Red"
                 green_ended_at = time.time()
                 green_time = round(green_ended_at - green_started_at, 2)
-                print("[processor] -> Green Ended; green_time:", green_time)
+                print("[processor] -> Green Ended; green_time:", green_time, "SafetExt: ", safety_ext)
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_SAFETY, False)  # Safety extension visualization OFF
                 await publish_control(nc, OUTPUT_SUBJECT_EXT_NORMAL, False)  # Normal extension visualization OFF
                 safety_ext_started = False
              
         # status print only on change
         cur_time = time.time()
-        cur_green = round(cur_time - green_started_at, 2)  
+        cur_green = round(cur_time - green_started_at, 2)
+        tfs = round(time_from_start(start_time),1) 
         
         if (cur_time - last_output > OUT_INT):
-            print(f"[processor] State: {state} | Green={green} | Safety_ext_started ={safety_ext_started} | Safety_ext={safety_ext} | Green time={cur_green}")
+            if green:
+                print(f"[processor]: Time={tfs} | State: {state} | Safety_ext={safety_ext} | Green={green} | Green time={cur_green}")
+            else:
+                print(f"[processor]: Time={tfs} | State: {state} ")
             last_output = cur_time
 
-            if close_pairs or True:
-                    print(f"[processor] {len(close_pairs)} close pair(s) (< {threshold_m} m):")
-                    
-                    # for p in close_pairs:
-                        # print(f"  {p['back_id']} -> {p['front_id']} | gap={p['gap_m']} m "
-                        #        f"(at {p['back_dist_m']}→{p['front_dist_m']} m)")
-            else:
-                print(f"[processor] no close pairs (< {threshold_m} m)")
-
-
-            if state  == "Safety Extension Mode":          
-                print(f"[processor] State: {state} | Green={green} | Safety_ext={safety_ext} | Green time={cur_green} ! PUBLISHING V2X CONTROL !!!" )
-                await publish_to_vehicles(nc, OUTPUT_SUBJECT_V2X_CONTROL, state) # send v2x control to nats
-                if close_pairs:
-                    print(f"[processor] {len(close_pairs)} close pair(s) (< {threshold_m} m):")
-                    # for p in close_pairs:
-                        # print(f"  {p['back_id']} -> {p['front_id']} | gap={p['gap_m']} m "
-                         #       f"(at {p['back_dist_m']}→{p['front_dist_m']} m)")
-                else:
-                    print(f"[processor] no close pairs (< {threshold_m} m)")
-
         if state != last_state:          
-            print(f"[processor] State: {state} | Green={green} | Safety_ext={safety_ext} | Green time={cur_green}")
+            print(f"[processor]: Time={tfs} State: {state} |  Safety_ext={safety_ext} | Green={green} |Green time={cur_green}")
             await publish_status(nc, OUTPUT_SUBJECT_EXT_STATUS, state) # send extension status to nats
 
 
@@ -272,10 +265,11 @@ async def main():
 
     queue: asyncio.Queue = asyncio.Queue(maxsize=100)
     signal_state = SharedSignalState()
+    start_time = time.time()
 
     # Start listeners
     await objects_listener(nc, queue)
-    await signal_listener(nc, signal_state)
+    await signal_listener(nc, signal_state, start_time)
 
     # Start processor
     proc_task = asyncio.create_task(processor(nc, queue, signal_state, THRESHOLD_M))
