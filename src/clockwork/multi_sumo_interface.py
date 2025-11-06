@@ -175,8 +175,11 @@ def run_sumo(conf_filename=None, runlog=None):
 
     sumo_name = "0" # DEBUG POINT, INIT OK 
 
-    # Graph always if set in conf, and also if param says so
-    if sys_cnf['sumo']['graph']:
+        # Check whether the display is available before using gui
+    display_available = os.environ.get('DISPLAY') is not None and os.environ.get('DISPLAY') is not ''
+    
+    # Graph always if set in conf, and also if param says so, but not if display is not available
+    if sys_cnf['sumo']['graph'] and display_available:
         sumo_bin = SUMO_BIN_NAME_GRAPH
     else:
         sumo_bin = SUMO_BIN_NAME
