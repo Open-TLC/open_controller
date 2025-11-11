@@ -122,6 +122,7 @@ class Radar:
             lane = obj['lane']
             if lane not in queue_lengths:
                 queue_lengths[lane] = 0
+                
             queue_lengths[lane] += 1
                 
         return queue_lengths

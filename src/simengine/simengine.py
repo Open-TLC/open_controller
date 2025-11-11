@@ -232,10 +232,10 @@ class SumoNatsInterface:
 
         while traci.simulation.getMinExpectedNumber() > 0:
             
+            # DBIK 202510  Generate vehicles in Sync with given traffic signal
             timesec = round(float(self.system_timer.str_seconds()),2)
             time_from_green_start_grp11 = round((timesec - self._green_started_at),2)
-        
-            if (timesec > self._next_arr_time) and (self._veh_count > -1):
+            if False and ((timesec > self._next_arr_time) and (self._veh_count > -1)):
 
                 if (self._veh_count in [0,1,2]):
                     veh_id = "v2x_go_"+str(self._veh_num)
@@ -253,8 +253,7 @@ class SumoNatsInterface:
                     traci.vehicle.setColor(veh_id, (255, 255, 0, 255)) # Yellow
                 else: 
                      traci.vehicle.setColor(veh_id, (255, 255, 0, 255)) # Test color
-                
-
+            
                 # vspeed = round(traci.vehicle.getSpeed(veh_id),2)
                 self._veh_num += 1
                 self._veh_count +=1
