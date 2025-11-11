@@ -31,8 +31,8 @@ from extender import StaticExtender
 if 'SUMO_HOME' in os.environ:
     SUMO_TOOLS = os.path.join(os.environ['SUMO_HOME'], 'tools')
     sys.path.append(SUMO_TOOLS)
-    # import traci
-    import libsumo as traci
+    import traci
+    # import libsumo as traci
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
@@ -115,7 +115,7 @@ def run_sumo(conf_filename=None, runlog=None):
     # Graph always if set in conf, and also if param says so
     display_available = os.environ.get('DISPLAY') is not None and os.environ.get('DISPLAY') is not ''
     # Graph always if set in conf, and also if param says so, but not if display is not available
-    if sys_cnf['sumo']['graph'] and display_available:
+    if sys_cnf['sumo']['graph']: # and display_available:
         sumo_bin = SUMO_BIN_NAME_GRAPH
     else:
         sumo_bin = SUMO_BIN_NAME

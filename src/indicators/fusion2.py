@@ -26,7 +26,7 @@ VECLASS_FROM_RADAR_TO_SUMO = {
     4: "car_type",
     6: "car_type",
     7: "truck_type",
-    8: "truck_type",}
+    8: "tram_type",}
 
 class Lane:
     """Lane indicators contained"""
@@ -34,7 +34,7 @@ class Lane:
         self.name = params.get('name', "No name")
         self.in_dets = {} # detectors for incoming traffic
         self.out_dets = {} # detectors for outgoing traffic
-        self.input_radars = {}
+        self.input_radars = {} #=RadarLane, filtered radar 
         self.input_radars_params = params.get('radar_lanes', {})
         self.in_dets_params = params.get('in_dets', {})
         self.out_dets_params = params.get('out_dets', {})
@@ -262,11 +262,20 @@ class FieldOfView:
             approaching_objs.append(new_lane)
         return approaching_objs
 
+    " This function find the radar objects from all all lanes DBIK20251107"
     def get_objects_in_all_lanes(self):
         """Returns the number of approaching vehicles"""
         detected_objects = []
         for lane in self.lanes:
-            detected_objects += lane.get_detected_objects_e3()
+            det_objs = lane.get_detected_objects_e3()
+            detected_objects += det_objs
+            rad_obj_cnt = len(det_objs)
+            if self.name == "group15_view":
+                print("Radar objs:", rad_obj_cnt, " Lane: ", self.name)
+
+        all_rad_obj_cnt = len(detected_objects)
+        if self.name == "group15_view":
+            print("All Radar objs:", all_rad_obj_cnt, "View: ", self.name)
         return detected_objects
 
     def reset_lane_detector_vehcounters(self):
@@ -358,6 +367,9 @@ class FieldOfView:
         detector_objs = self.get_objects_detected_by_detectors()
         vehcounts['radar'] = radar_objs
         vehcounts['det'] = detector_objs
+
+        if self.group_name == "group15":
+           print("Radar data grp15: ", len(vehcounts['radar']))
 
         # No dets, no need to combine
         if self.detectors_broken:
