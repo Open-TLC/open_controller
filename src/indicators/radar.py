@@ -68,9 +68,12 @@ class Radar:
         if len(self.data) <= 0:
             return []
         if measurements == 1:
-            return last_data['objects']
+            # print('Last data: ', last_data)  #DBIK 202511
+            return last_data['objects'] 
         else:
-            return self.get_object_list_for_n_measurements(measurements)
+            obj_list = self.get_object_list_for_n_measurements(measurements)
+            # print('obj_list: ', obj_list)    #DBIK 202511
+            return obj_list 
 
     def get_object_list_for_n_measurements(self, number_of_measurements):
         """

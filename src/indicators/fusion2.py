@@ -18,12 +18,11 @@ RADAR_PAST_MEASUREMENTS = 1
 # It is assumed that the other road users cannot be seen in the area
 VECLASS_FROM_RADAR_TO_SUMO = {
     0: "car_type",
-    1: "car_type",
-    #1: "ped_type",
-    #2: "car_type",
+    1: "bike_type",
     2: "bike_type",
     3: "car_type",
     4: "car_type",
+    5: "car_type",
     6: "car_type",
     7: "truck_type",
     8: "tram_type",}
@@ -141,8 +140,11 @@ class LaneRadar:
         objects = self.radar.get_object_list(measurements= measurements)
         objects_in_lane = []
         for obj in objects:
+            # print(obj['lane'], '  ', self.lane)
             if str(obj['lane']) == self.lane:
                 objects_in_lane.append(obj)
+                # vt = str(obj['vtype'])
+                # print('Radar lane: ', self.lane, 'Vtype: ')  #DBIK 202511
         return objects_in_lane
 
 
@@ -270,12 +272,14 @@ class FieldOfView:
             det_objs = lane.get_detected_objects_e3()
             detected_objects += det_objs
             rad_obj_cnt = len(det_objs)
-            if self.name == "group15_view":
-                print("Radar objs:", rad_obj_cnt, " Lane: ", self.name)
+            if self.name == "group16_view":
+                print("Radar objs:", rad_obj_cnt, " Lane: ", lane.name)
+                pass
 
         all_rad_obj_cnt = len(detected_objects)
-        if self.name == "group15_view":
+        if self.name == "group16_view":
             print("All Radar objs:", all_rad_obj_cnt, "View: ", self.name)
+            pass
         return detected_objects
 
     def reset_lane_detector_vehcounters(self):
@@ -368,8 +372,9 @@ class FieldOfView:
         vehcounts['radar'] = radar_objs
         vehcounts['det'] = detector_objs
 
-        if self.group_name == "group15":
-           print("Radar data grp15: ", len(vehcounts['radar']))
+        rad_veh_count = len(vehcounts['radar'])
+        if (self.group_name == "group16") and (rad_veh_count > 0):
+           print("Radar count group16: ", rad_veh_count)
 
         # No dets, no need to combine
         if self.detectors_broken:
