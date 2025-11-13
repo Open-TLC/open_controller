@@ -250,7 +250,7 @@ class e3Detector(Detector):
             elif  vtype == 'tram_type':
                 self.vehcount +=100
             elif  vtype == 'bike_type':
-                self.vehcount + 10
+                self.vehcount += 1
                  # pass
 
             # Special setting for JS270T, should be configured in init-file DBIK20241025
