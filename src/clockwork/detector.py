@@ -250,7 +250,8 @@ class e3Detector(Detector):
             elif  vtype == 'tram_type':
                 self.vehcount +=100
             elif  vtype == 'bike_type':
-                self.vehcount += 1
+                self.vehcount += 9
+                self.loop_on = True  # DBIK 202511 Let AI-cam to set request
                  # pass
 
             # Special setting for JS270T, should be configured in init-file DBIK20241025
