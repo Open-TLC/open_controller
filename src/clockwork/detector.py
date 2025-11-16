@@ -88,7 +88,10 @@ class Detector:
 
     def set_request_groups(self, list_of_groups):
         """Init script for mapping dets to group-objects"""
-        if not self.type == 'request':
+
+        
+        # if not self.type in ['request',"e3detector"]:
+        if not self.type in ['request']: 
             return False
 
         for req_grp in self.conf['request_groups']:
@@ -126,7 +129,7 @@ class Detector:
         return self._loop_on
 
     @loop_on.setter
-    def loop_on(self, set_on):
+    def loop_on(self, set_on):        
         if set_on and not self._loop_on:
             self.pulse_up()
             for grp in self.request_groups:
@@ -250,9 +253,12 @@ class e3Detector(Detector):
             elif  vtype == 'tram_type':
                 self.vehcount +=100
             elif  vtype == 'bike_type':
-                self.vehcount += 9
-                self.loop_on = True  # DBIK 202511 Let AI-cam to set request
-                 # pass
+                self.vehcount += 0
+                if self.name == "e3d16m30":
+                    BP1 = 1
+                    self.owngroup_obj.request_green = True 
+                    # self.loop_on = True  # DBIK 202511 Let AI-cam to set request
+                    #   pass
 
             # Special setting for JS270T, should be configured in init-file DBIK20241025
             elif (vtype == 'tram_R9'):
