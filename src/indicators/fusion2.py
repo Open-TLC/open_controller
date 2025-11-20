@@ -272,12 +272,12 @@ class FieldOfView:
             det_objs = lane.get_detected_objects_e3()
             detected_objects += det_objs
             rad_obj_cnt = len(det_objs)
-            if self.name == "group16_view":
+            if self.name == "group1_view":
                 print("Radar objs:", rad_obj_cnt, " Lane: ", lane.name)
                 pass
 
         all_rad_obj_cnt = len(detected_objects)
-        if self.name == "group16_view":
+        if self.name == "group1_view":
             print("All Radar objs:", all_rad_obj_cnt, "View: ", self.name)
             pass
         return detected_objects
@@ -285,7 +285,8 @@ class FieldOfView:
     def reset_lane_detector_vehcounters(self):
         """Resets the vehcounts to zero for all the lanes"""
         for lane in self.lanes:
-            lane.reset_detector_based_vehcount()
+            lane.reset_detector_based_vehcoun
+            ()
 
     # Async function for sending the data out
     async def send_nats_messages(self, nats):
