@@ -179,6 +179,7 @@ class FieldOfView:
         if 'detectors_broken' in params:
             if params['detectors_broken']:
                 self.detectors_broken = True
+        # self.out_str = "FoV: "+ str(self.group) + " "
 
     #
     # Assigning functions (maps the input streams to the view)
@@ -268,18 +269,24 @@ class FieldOfView:
     def get_objects_in_all_lanes(self):
         """Returns the number of approaching vehicles"""
         detected_objects = []
+        lane_cnt = 0
         for lane in self.lanes:
             det_objs = lane.get_detected_objects_e3()
             detected_objects += det_objs
             rad_obj_cnt = len(det_objs)
-            if self.name == "group1_view":
-                print("Radar objs:", rad_obj_cnt, " Lane: ", lane.name)
-                pass
+            # if self.name == "group1_view":
+                # print("Radar objs:", rad_obj_cnt, " Lane: ", lane.name)
+            if lane_cnt > 0:
+                self.out_str += "+ "
+            self.out_str += str(rad_obj_cnt) + " "
+            lane_cnt += 1
+            
 
         all_rad_obj_cnt = len(detected_objects)
-        if self.name == "group1_view":
-            print("All Radar objs:", all_rad_obj_cnt, "View: ", self.name)
-            pass
+        # if self.name == "group1_view":
+        # print("All Radar objs:", all_rad_obj_cnt, "View: ", self.name)
+        self.out_str += "= " + str(all_rad_obj_cnt) 
+
         return detected_objects
 
     def reset_lane_detector_vehcounters(self):
@@ -412,6 +419,8 @@ class FieldOfView:
     def get_e3_area_output(self):
         """Returns the output for the E3 area"""
         data = {}
+        sig_state = self.group.substate
+        self.out_str = "Fov " + str(self.group_name) + " state " + sig_state + " "
         
         #det_obj_dict = self.get_objects_detected_by_radars()
         #det_obj_dict = self.get_objects_detected_by_detectors()
@@ -437,4 +446,6 @@ class FieldOfView:
         data['objects'] = det_obj_dict['combined']
         data['offsets'] = self.get_lane_offsets_as_dict()
         data['tstamp'] = datetime.datetime.now().timestamp() * 1000
+
+        print(self.out_str)
         return data
