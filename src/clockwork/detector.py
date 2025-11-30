@@ -259,7 +259,7 @@ class e3Detector(Detector):
                     self.owngroup_obj.request_green = True 
                     # self.loop_on = True  # DBIK 202511 Let AI-cam to set request
                     #   pass
-
+            
             # Special setting for JS270T, should be configured in init-file DBIK20241025
             elif (vtype == 'tram_R9'):
                 if (self.owngroup_name == 'group4'):
@@ -293,6 +293,9 @@ class e3Detector(Detector):
 
             else:
                 print('**************** Error in vehicle type: ', vtype)
+            
+            if "Sat2Ramp" in vehid:
+                self.vehcount +=100
 
     def veh_count(self):
         return self.vehcount
