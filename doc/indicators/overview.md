@@ -15,19 +15,17 @@ The component is intended to be expanded to use more inputs and perform several 
 
 ## Quick Install and Run
 
-### Docker (recommended)
+### Docker Compose (recommended)
+Use the repo’s Docker setup so the `indicators` service can reach the `nats` service via the Docker network hostname `nats` (as expected by `run_indicators.sh`).
 ```bash
-# Build image
-docker build -f docker/indicators/Dockerfile -t traffic-indicators .
-# Run with host networking to reach local NATS
-docker run -it --name indicators --network host traffic-indicators
+# In the open controller directory
+docker-compose up nats indicators
 ```
-- Entry script: `docker/indicators/run_indicators.sh`
+- Entrypoint: `docker/indicators/run_indicators.sh` (runs Python with `--nats-server nats`)
 - Requirements: `docker/indicators/requirements.txt`
 
 ### Standalone (Python)
 ```bash
-cd /Users/karikoskinen/Documents/work/conveqs/dev/source/open_controller
 pip install -r docker/indicators/requirements.txt
 python src/indicators/traffic_indicators.py --conf models/testmodel/indicators.json --nats-server localhost
 ```
@@ -48,9 +46,26 @@ python src/indicators/traffic_indicators.py [OPTIONS]
 - No input data:
   - Verify simulation/devices publish to expected subjects.
   - Check configuration paths and subject patterns.
+  - Listen to input streams with NATS CLI (for the testmodel):
+    ```bash
+    # Signal group states (e.g., junction 270)
+    nats sub "group.status.270.*"
+
+    # Loop detector events
+    nats sub "detector.status.*"
+
+    # Radar objects (all radars under junction 270)
+    nats sub "radar.270.*.objects_port.json"
+    ```
 - No outputs:
   - Confirm `outputs` are configured and `trigger_time` > 0.
   - Ensure lanes and groups referenced by views exist.
+  - Listen to indicator outputs:
+    ```bash
+    # E3 traffic views for junction 270
+    nats sub "group.e3.270.*"
+    ```
+
 
 ## Links to Further Documentation
 - Configuration: to be authored in `doc/indicators/configuration.md`
@@ -58,7 +73,3 @@ python src/indicators/traffic_indicators.py [OPTIONS]
 - Troubleshooting: to be authored in `doc/indicators/troubleshooting.md`
 - Milestone summary: `doc/indicators/milestone_summary.md`
 
-## Short Overview Summary
-This component reads data inputs from given channels — namely signal group (traffic signal) statuses, loop detectors, and radars — from simulated or real sources in JSON format. It then calculates high-level “views” or traffic indicators from them. These indicators are used by the traffic controller for signal timings. Outputs are generally one per signal group and consist of macro and micro indicators of the amount of traffic.
-
-The component is intended to be used as part of Open Controller, but it can be run standalone as well.
