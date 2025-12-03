@@ -294,7 +294,7 @@ class e3Detector(Detector):
             else:
                 print('**************** Error in vehicle type: ', vtype)
             
-            COORD = False
+            COORD = True
             if COORD: 
                 if "Sat2Ramp" in vehid:
                     self.vehcount +=100

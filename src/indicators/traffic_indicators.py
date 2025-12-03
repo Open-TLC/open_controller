@@ -21,6 +21,8 @@ from radar import Radar
 from fusion2 import FieldOfView
 from detector import Detector
 from group import Group
+import pandas as pd
+import re
 
 # Note: should be in a separate file in the end
 class SensorTwin:
@@ -206,6 +208,43 @@ async def main():
 
     while True:
         await asyncio.sleep(1)
+        print('******************************************')
+        fovs_out = "Fovs:"
+
+        df = pd.DataFrame(columns=["Name", "Age", "Occupation"])
+
+        fovs_out = "Groups: "
+        for name, fov in sensor_twin.fovs.items():    
+            grp = fov.group_name
+            grp_num = int(re.findall(r"\d+", grp)[0])
+            fovs_out += " " + str(grp_num)
+        print(fovs_out)
+
+        fovs_out = "States: "
+        for name, fov in sensor_twin.fovs.items():    
+            sig_state = fov.group.substate
+            grp = fov.group_name
+            grp_num = int(re.findall(r"\d+", grp)[0])
+            if grp_num > 9:
+                fovs_out += " " 
+            fovs_out += " " + sig_state
+        print(fovs_out)
+
+        fovs_out = "Queues: "
+        for name, fov in sensor_twin.fovs.items():  
+            obj_cnt = len(fov.get_objects_in_all_lanes())
+            grp = fov.group_name
+            grp_num = int(re.findall(r"\d+", grp)[0])
+            if grp_num > 9:
+                if obj_cnt < 10:
+                    fovs_out += " " 
+            fovs_out += " " + str(obj_cnt)
+        print(fovs_out)
+              
+
+        
+        
+
 
 
 def read_command_line():
@@ -242,3 +281,4 @@ def read_command_line():
 if __name__ == "__main__":
     asyncio.run(main())
 
+ls
