@@ -179,7 +179,8 @@ class FieldOfView:
         if 'detectors_broken' in params:
             if params['detectors_broken']:
                 self.detectors_broken = True
-        # self.out_str = "FoV: "+ str(self.group) + " "
+        self.out_str = " "
+        self.out_list = []
 
     #
     # Assigning functions (maps the input streams to the view)
@@ -292,7 +293,7 @@ class FieldOfView:
     def reset_lane_detector_vehcounters(self):
         """Resets the vehcounts to zero for all the lanes"""
         for lane in self.lanes:
-            lane.reset_detector_based_vehcoun
+            lane.reset_detector_based_vehcount
             ()
 
     # Async function for sending the data out
@@ -420,8 +421,11 @@ class FieldOfView:
         """Returns the output for the E3 area"""
         data = {}
         sig_state = self.group.substate
+        
         self.out_str = "Fov " + str(self.group_name) + " state " + sig_state + " "
         
+        self.out_list.append(self.out_str)
+
         #det_obj_dict = self.get_objects_detected_by_radars()
         #det_obj_dict = self.get_objects_detected_by_detectors()
         det_obj_dict = self.get_objects_combined_from_radar_and_detectors()
@@ -447,5 +451,5 @@ class FieldOfView:
         data['offsets'] = self.get_lane_offsets_as_dict()
         data['tstamp'] = datetime.datetime.now().timestamp() * 1000
 
-        print(self.out_str)
+        #print(self.out_str)
         return data
