@@ -208,7 +208,7 @@ async def main():
 
     while True:
         await asyncio.sleep(1)
-        print('******************************************')
+        print('********************TRAFFIC_INDICATORS***************************')
         fovs_out = "Fovs:"
 
         df = pd.DataFrame(columns=["Name", "Age", "Occupation"])
@@ -217,17 +217,19 @@ async def main():
         for name, fov in sensor_twin.fovs.items():    
             grp = fov.group_name
             grp_num = int(re.findall(r"\d+", grp)[0])
-            fovs_out += " " + str(grp_num)
+            if grp_num < 10:
+                add = " "
+            else:
+                add =""
+            fovs_out += " | " + add + str(grp_num)
+        fovs_out += " | "
         print(fovs_out)
 
         fovs_out = "States: "
         for name, fov in sensor_twin.fovs.items():    
             sig_state = fov.group.substate
-            grp = fov.group_name
-            grp_num = int(re.findall(r"\d+", grp)[0])
-            if grp_num > 9:
-                fovs_out += " " 
-            fovs_out += " " + sig_state
+            fovs_out += " |  " + sig_state
+        fovs_out += " | "
         print(fovs_out)
 
         fovs_out = "Queues: "
@@ -235,12 +237,15 @@ async def main():
             obj_cnt = len(fov.get_objects_in_all_lanes())
             grp = fov.group_name
             grp_num = int(re.findall(r"\d+", grp)[0])
-            if grp_num > 9:
-                if obj_cnt < 10:
-                    fovs_out += " " 
-            fovs_out += " " + str(obj_cnt)
+            if obj_cnt < 10:
+                add = " "
+            else:
+                add =""
+            fovs_out += " | " + add + str(obj_cnt)
+        fovs_out += " | "
         print(fovs_out)
-              
+
+        print('_________________________________________________________________')  
 
         
         
