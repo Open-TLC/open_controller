@@ -378,6 +378,9 @@ async def main(conf_filename=None, set_controller_requests=False):
     #    print("no responders")
 
     # When we start we will send an all red message to the groups
+
+    # DBIK 202512 All red off ?
+    """"
     for channel in distributor.group_mapping:
         group_message = get_group_control_message(distributor.group_mapping[channel], channel)
         await nats.publish(channel, json.dumps(group_message).encode())
@@ -391,6 +394,7 @@ async def main(conf_filename=None, set_controller_requests=False):
             await nats.publish(channel, json.dumps(group_message).encode())
         await asyncio.sleep(5)
         time_waited += 5
+    """
 
     
     #await asyncio.sleep(BEGININNG_ALL_RED_TIME)
