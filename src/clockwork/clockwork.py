@@ -20,7 +20,7 @@ DEFAULT_NATS_SERVER = "nats"
 DEFAULT_NATS_PORT = 4222
 
 # This should bne read from the conf file
-SEND_SUBSTATES = True
+SEND_SUBSTATES = False
 
 DEFAULT_CHANNEL = "detector.*.*"
 
@@ -379,7 +379,7 @@ async def main(conf_filename=None, set_controller_requests=False):
     # When we start we will send an all red message to the groups
 
     # DBIK 202512 All red off ?
-    """"
+    
     for channel in distributor.group_mapping:
         group_message = get_group_control_message(distributor.group_mapping[channel], channel)
         await nats.publish(channel, json.dumps(group_message).encode())
@@ -393,7 +393,7 @@ async def main(conf_filename=None, set_controller_requests=False):
             await nats.publish(channel, json.dumps(group_message).encode())
         await asyncio.sleep(5)
         time_waited += 5
-    """
+
 
     
     #await asyncio.sleep(BEGININNG_ALL_RED_TIME)
@@ -401,6 +401,11 @@ async def main(conf_filename=None, set_controller_requests=False):
 
 
     status_channel = STATUS_CHANNEL_PREFIX + "." + controller_cnf['name']
+    
+    # Debug
+    #import time
+    #update_count = 0
+    #start_time = time.time()
     while True:
         
         # If run updates is off, we just sleep and wait for the next command
@@ -438,10 +443,17 @@ async def main(conf_filename=None, set_controller_requests=False):
                 if distributor.group_state_has_changed(stat, channel):
                     await nats.publish(channel, json.dumps(group_message).encode())
                     #print("Published group status:", group_message, " to channel:", channel)
+        
 
         # Debugging the time drift remove later
         # print(system_timer.aggregate_time_drift)        
-        await asyncio.sleep(system_timer.get_next_time_step())
+        #update_count += 1
+        time_step = system_timer.get_next_time_step()
+        await asyncio.sleep(time_step)
+        #passed_time = time.time() - start_time
+        #updates_per_second = update_count/passed_time
+        #print(f"T: {time_step:6.4f} {updates_per_second}")
+
 
 
 def get_group_control_message(group, channel):
