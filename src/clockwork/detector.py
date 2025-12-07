@@ -236,8 +236,17 @@ class e3Detector(Detector):
         self.vehcount = len(self.det_vehicles_dict)
         self.ShortGapFound = False  # DBIK20250312
         self.speedsum = 0
+        
+        SIM = True
+        COORD1 = True
+        COORD2 = True
+
 
         for vehid in self.det_vehicles_dict:
+
+            if self.owngroup_name == 'group11':
+                og_name = self.owngroup_name
+                BP = 1
 
             vtype = self.det_vehicles_dict[vehid]['vtype']
             speed = self.det_vehicles_dict[vehid]['speed']  # DBIK202508 Key error ?
@@ -294,13 +303,30 @@ class e3Detector(Detector):
             else:
                 print('**************** Error in vehicle type: ', vtype)
             
-            COORD = True
-            if COORD: 
+            
+            if SIM and COORD1: 
                 if "Sat2Ramp" in vehid:
                     self.vehcount +=100
-                
-                # elif "Ramp2Sat" in vehid:
-                #    self.vehcount +=100
+            if SIM and COORD2:    
+                if "Ramp2Sat" in vehid:
+                    self.vehcount +=100
+
+            if not(SIM) and COORD1: 
+                if self.channel == "group.e3.266.2":
+                    self.vehcount +=100
+                if self.channel == "group.e3.266.9":
+                    self.vehcount +=100
+                if self.channel == "group.e3.267.1":
+                    self.vehcount +=100
+            
+
+            
+
+
+
+
+            
+
 
     def veh_count(self):
         return self.vehcount
