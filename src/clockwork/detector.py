@@ -216,7 +216,8 @@ class e3Detector(Detector):
         self.vehcount = 0
         self.errorcount = 0
         self.speedsum = 0
-        self.e3channel = conf['channel']
+        if 'channel' in conf:
+            self.e3channel = conf['channel']
         BP = 1
         
     def is_extending(self):
@@ -239,7 +240,7 @@ class e3Detector(Detector):
         self.ShortGapFound = False  # DBIK20250312
         self.speedsum = 0
         
-        SIM = False
+        SIM = True
         COORD1 = True
         COORD2 = False
 
