@@ -215,6 +215,8 @@ class e3Detector(Detector):
         self.vehcount = 0
         self.errorcount = 0
         self.speedsum = 0
+        self.e3channel = conf['channel']
+        BP = 1
         
     def is_extending(self):
         """Returns true if vehicle count is more than zero"""
@@ -236,9 +238,9 @@ class e3Detector(Detector):
         self.ShortGapFound = False  # DBIK20250312
         self.speedsum = 0
         
-        SIM = True
+        SIM = False
         COORD1 = True
-        COORD2 = True
+        COORD2 = False
 
 
         for vehid in self.det_vehicles_dict:
@@ -311,11 +313,11 @@ class e3Detector(Detector):
                     self.vehcount +=100
 
             if not(SIM) and COORD1: 
-                if self.channel == "group.e3.266.2":
+                if self.e3channel == "group.e3.266.2":
                     self.vehcount +=100
-                if self.channel == "group.e3.266.9":
+                if self.e3channel == "group.e3.266.9":
                     self.vehcount +=100
-                if self.channel == "group.e3.267.1":
+                if self.e3channel == "group.e3.267.1":
                     self.vehcount +=100
             
 

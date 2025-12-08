@@ -208,7 +208,7 @@ async def main():
 
     while True:
         await asyncio.sleep(1)
-        print('********************TRAFFIC_INDICATORS***************************')
+        print('***********************TRAFFIC_INDICATORS*****************************')
         fovs_out = "Fovs:"
 
         df = pd.DataFrame(columns=["Name", "Age", "Occupation"])
@@ -228,7 +228,10 @@ async def main():
         fovs_out = "States: "
         for name, fov in sensor_twin.fovs.items():    
             sig_state = fov.group.substate
-            fovs_out += " |  " + sig_state
+            if sig_state == None:
+                fovs_out += " |   " + sig_state
+            else:
+                fovs_out += " |  " + sig_state
         fovs_out += " | "
         print(fovs_out)
 
@@ -245,7 +248,7 @@ async def main():
         fovs_out += " | "
         print(fovs_out)
 
-        print('_________________________________________________________________')  
+        print('______________________________________________________________________')  
 
         
         
