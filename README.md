@@ -110,6 +110,16 @@ This is usefull especially when running only one part of the Open Controller pac
 
 ### The Controller (Clockwork)
 
+#### The basic functions
+
+#### Smart Extender
+        
+#### Priorities
+
+#### Multi-modal traffic
+
+#### Signal Coordination
+
 ### User Interface
 
 
