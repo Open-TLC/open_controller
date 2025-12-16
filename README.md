@@ -114,9 +114,12 @@ This is usefull especially when running only one part of the Open Controller pac
 
 Clockwork is the core component of the open controller. It takes care of the basic functions of signal group oriented traffic control.
 Signal groups tend to green if requested, but other signal groups may prevent it because of conflicting greens, intergreen time or
-another conflicting group is first in line to go green. Once the signal group is green it can start extending the green time based
-on detector inputs. The green can end due to no more extension, maximum time reached or other conflicting group orders to go red.
+another conflicting group is first in line to go green. Once the signal group is green and the minimum green time is elapsed then it can start extending the green time based
+on detector inputs. If any detector sends an extension signal to the signal group, then the green will be continued until the maximum green time.
+The green can end due to no more extension, maximum time reached or other conflicting group orders to go red.
+The signal groups states go though a cycle of states described in table x.
 
+*Table x: Signal group states*
 | State | Description |
 |-------|-------------|
 | 0 | Red/yellow |
@@ -127,10 +130,8 @@ on detector inputs. The green can end due to no more extension, maximum time rea
 | a | Minimum red |
 | b | Red, not requested |
 | c | Red requested |
-| f | Green permission, next to go green |
+| f | Green permission given, next to go green |
 | g | Intergreen time |
-
-
 
 The configuration file of the open controller is a JSON-file, in which the each data type has a header called 'key'. The key can be
 a title which defines the data item e.g. the maximum green time 'maxgreen'. The key can also be a given name of a component like signa group e.g. 'group1'.
@@ -144,7 +145,7 @@ intersection in the sumo simulator.
 The signal groups are defined as a list of dictionaries. The time values are in seconds. The fields not in use are markef with (NA). The order of items within the dictionary does not matter:
 
 *Table 2: Signal group settings*
-| key                                    | value         | explanation                                          |
+| Key                                    | Value         | Description                                          |
 |----------------------------------------|---------------|------------------------------------------------------|
 | "group1"                               | dictionary    | signal group name                                    |
 | "min_green"                            | 4             | minimum green time                                   |
@@ -161,10 +162,12 @@ The signal groups are defined as a list of dictionaries. The time values are in 
 | "channel"                              | "group.control.266.1" | NATS channel to send the commands to the TLC |
 
 
-The next part is defining the detectors, which can be of type 'request' or type 'extender'. 
+The detectors can be of type 'request' or type 'extender'. Requesting detector sends a request signal to the predefined signal groups. 
+The requested group can go green if there is no active conflicting green ongoing. If there are only passive greens ongoing,
+they will be terminated and the requested group can go green after intergreen period. 
 
  *Table 3: Request detector settings*
-| key                                    | value         | explanation                                          |
+| Key                                    | Value         | Description                                          |
 |----------------------------------------|---------------|------------------------------------------------------|
 | "req1m20A"                             | dictionary    | detector name                                        |
 | "type"                                 | "request"     | detector type                                        |
@@ -172,18 +175,48 @@ The next part is defining the detectors, which can be of type 'request' or type 
 | "request_groups"                       | ["group1"]    | a list of signal groups to be requested              |
 | "channel"                              | "detector.status.266_102A"| NATS-channel to read the detector status |
 
+Detector of type "extender" can extend an ongoing green signal keeping it in active state, which normally cannot be
+terminated by other signal groups. Each vehicle passing the detector will extend the green time with predefined time (ext_time).
+This means that if the gap between successive vehicles is more the the "ext_time" then the green time is no more extended.
+It should be noted that time of detector being occupied is not counted, but the extension time starts from the trailing edge of the detector pulse.
+An occupied detector always extends regardless of the time. 
 
  *Table 4: Extension detector settings*
-| key                                    | value         | explanation                                          |
+| Key                                    | Value         | Description                                          |
 |----------------------------------------|---------------|------------------------------------------------------|
 | "ext1m20A"                             | dictionary    | detector name                                        |
-| "type"                                 | 4             | detector type                                        |
+| "type"                                 | "extender"    | detector type                                        |
 | "sumo_id"                              | "266_102A"    | amber red time                                       |
-| "request_groups"                       | ["group1"]    | a list of signal group to be extended                |
+| "group"                                | ["group1"]    | a list of signal group to be extended                |
+| "ext_time"                             | 2.0           | extension time                                       |
 | "channel"                              | "detector.status.266_102A"| NATS-channel to read the detector status |
 
+An intergreen matrix is defined to secure enough safety time between conflicting green signals. The intergreen times
+are very case specific depending on intersection geometry etc. and therefore each pair of conflicting greens have
+to be defined in the integreen matrix. The matrix is not symmetric, since for example when pedestrian signal is ending,
+then very long intergreen is needed to guarantee each pedestrian enough time to pass the street. However, the other way round,
+if car signal is ending, then pedestrian green can be started almost immediately. In table X, the starting signal groups
+has to to check all integreen times in its column and obey the maximum value. 
 
-
+Table x: Example of the intergreen matrix. Rows refer to ending groups and columns to starting groups.
+```json
+"intergreens":[     [0.0, 0.0, 0.0, 0.0, 5.0, 7.0, 6.0, 6.0, 6.0, 4.0, 4.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 4.0, 8.0, 8.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 9.0, 0.0, 8.0, 9.0, 8.0, 1.0, 5.0, 1.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 7.0, 4.0, 0.0, 6.0, 10.0, 6.0, 0.0, 0.0, 0.0],
+                    [7.0, 0.0, 5.0, 5.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 8.0, 8.0],
+                    [5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.5, 4.5, 0.5],
+                    [6.0, 8.0, 8.0, 7.0, 7.0, 0.0, 0.0, 6.0, 6.0, 0.0, 0.0, 0.0, 4.5, 4.5, 0.5],
+                    [8.0, 8.0, 0.0, 4.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 10.0, 6.0],
+                    [7.0, 0.0, 7.0, 0.0, 0.0, 0.0, 7.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 5.0, 1.0],
+                    [5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [5.0, 4.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [1.0, 4.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 1.0, 9.0, 9.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 2.0, 6.0, 6.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 5.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        ]
+```
 
 
 
