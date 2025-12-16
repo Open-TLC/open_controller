@@ -49,7 +49,7 @@ In addittion, simclient can also receive *Signal Group control* messsages dictat
 
 
 ## Operating the user interface
-Likely the fist use of the system is to be done via the UI component. When the system is run, one can access it in the localhost port 8050 (i.e. [http://127.0.0.1:8050](http://127.0.0.1:8050)) 
+Likely the first use of the system is to be done via the UI component. When the system is run, one can access it in the localhost port 8050 (i.e. [http://127.0.0.1:8050](http://127.0.0.1:8050)) 
 
 ## Monitoring the messages
 In order to monitor the messages, you will need a nats-client. Installing this depends on your operating system, and the instructions can be found [here](https://docs.nats.io/running-a-nats-service/clients). It should be noted that the server itself is not needed, since it will be provided in it's own container and accessibles via the standard port in the host. That is, you can subscribe to all the NATS-messages by iussuing a command
@@ -110,7 +110,28 @@ This is usefull especially when running only one part of the Open Controller pac
 
 ### The Controller (Clockwork)
 
+#### The basic functions
+
 Clockwork is the core component of the open controller. It takes care of the basic functions of signal group oriented traffic control.
+Signal groups tend to green if requested, but other signal groups may prevent it because of conflicting greens, intergreen time or
+another conflicting group is first in line to go green. Once the signal group is green it can start extending the green time based
+on detector inputs. The green can end due to no more extension, maximum time reached or other conflicting group orders to go red.
+
+| State | Description |
+|-------|-------------|
+| 0 | Red/yellow |
+| 1 | Minimum green |
+| 4 | Remain green (passive green) |
+| 5 | Green extended (active green) |
+| < | Amber time |
+| a | Minimum red |
+| b | Red, not requested |
+| c | Red requested |
+| f | Green permission, next to go green |
+| g | Intergreen time |
+
+
+
 The configuration file of the open controller is a JSON-file, in which the each data type has a header called 'key'. The key can be
 a title which defines the data item e.g. the maximum green time 'maxgreen'. The key can also be a given name of a component like signa group e.g. 'group1'.
 The structure of the configuration file is so called 'dictionary'. This means that once open controller has read the configuation file,
@@ -120,7 +141,7 @@ The configuration file consists of general settings like 'operation mode', 'time
 which is also a dictionary. Controller has a 'name' like '266' referring to the actual intersection. There is also a 'sumo_name', which refers to the
 intersection in the sumo simulator. 
 
-The signal groups are defined as a list of dictionaries. The time values are in seconds. The fields not in use are markef with (NA):
+The signal groups are defined as a list of dictionaries. The time values are in seconds. The fields not in use are markef with (NA). The order of items within the dictionary does not matter:
 
 *Table 2: Signal group settings*
 | key                                    | value         | explanation                                          |
@@ -164,7 +185,7 @@ The next part is defining the detectors, which can be of type 'request' or type 
 
 
 
-#### The basic functions
+
 
 #### Smart extender
         
