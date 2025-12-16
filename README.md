@@ -122,19 +122,21 @@ intersection in the sumo simulator.
 
 The signal groups are defined as a list of dictionaries:
 
-"group1":{                                         # signal group name
-            "min_green": 4,                        # minimum green time
-            "min_amber_red": 1,                    # amber red time
-            "min_red": 20,                         # minimum red time
-            "min_amber": 3,                        # amber time
-            "max_green": 30,                       # maximum green time
-            "max_amber_red": 1,                    # NA
-            "max_red": -1,                         # NA
-            "max_amber": 3,                        # NA
-            "request_type": "fixed",               # request type options: 'fixed', 'detector'
-            "phase_request": false,                # NA
-            "green_end": "remain",                 # green end options: 'remain', 'after_max'
-            "channel": "group.control.266.1"       # NATS channel to send the commands to the TLC
+*Table 2: Signal group settings*
+|----------------------------------------|------------------------------------------------------|
+| "group1":{                             | signal group name                                    |
+| "min_green": 4,                        | minimum green time                                   |
+| "min_amber_red": 1,                    | amber red time                                       |
+| "min_red": 20,                         | minimum red time                                     |
+| "min_amber": 3,                        | amber time                                           |
+| "max_green": 30,                       | maximum green time                                   |
+| "max_amber_red": 1,                    | NA                                                   |
+| "max_red": -1,                         | NA                                                   |
+| "max_amber": 3,                        | NA                                                   |
+| "request_type": "fixed",               | request type options: 'fixed', 'detector'            |
+| "phase_request": false,                | NA                                                   |
+| "green_end": "remain",                 | green end options: 'remain', 'after_max'             |
+| "channel": "group.control.266.1"       | NATS channel to send the commands to the TLC         |
             },
 
 The next part is defining the detectors, which can be of type 'request' or type 'extender'. 
