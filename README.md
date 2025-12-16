@@ -122,7 +122,7 @@ intersection in the sumo simulator.
 
 The signal groups are defined as a list of dictionaries:
 
-"group1":{
+"group1":{                                         # signal group name
             "min_green": 4,                        # minimum green time
             "min_amber_red": 1,                    # amber red time
             "min_red": 20,                         # minimum red time
@@ -133,14 +133,31 @@ The signal groups are defined as a list of dictionaries:
             "max_amber": 3,                        # NA
             "request_type": "fixed",               # request type options: 'fixed', 'detector'
             "phase_request": false,                # NA
-            "green_end": "remain",                 # green end options 'remaim'. 'after_max'
+            "green_end": "remain",                 # green end options: 'remain', 'after_max'
             "channel": "group.control.266.1"       # NATS channel to send the commands to the TLC
             },
- 
+
+The next part is defining the detectors, which can be of type 'request' or type 'extender'. 
+
+"req1m20A":{                                      # detector name
+            "type": "request",                    # detector type
+            "sumo_id": "266_102A",                # sumo name
+            "channel": "detector.status.266_102A", # NATS-channel to read the detector status
+            "request_groups": ["group1"]         # signal group to be requested
+        },
+
+"ext1m20A":{                                     # detector name
+            "type": "extender",                  # detector type
+            "sumo_id": "266_102A",               # sumo name
+            "channel": "detector.status.266_102A", # NATS-channel to read the detector status
+            "group": "group1",                   # signal group to be extended
+            "ext_time": 2.0                      # extension time
+        },
+
+        
 
 
 
-Each signal group is listed in the configuration file. 
 
 
 #### The basic functions
