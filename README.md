@@ -48,7 +48,7 @@ In addittion, simclient can also receive *Signal Group control* messsages dictat
 **UI** is a simple user intraface providing monitoring and limited managemen fore the other services. In essence, this is a web server connectiong to the backend NATS-broker and providing an user interface accessible with a browser.
 
 
-## Operaing the user interface
+## Operating the user interface
 Likely the fist use of the system is to be done via the UI component. When the system is run, one can access it in the localhost port 8050 (i.e. [http://127.0.0.1:8050](http://127.0.0.1:8050)) 
 
 ## Monitoring the messages
@@ -110,15 +110,48 @@ This is usefull especially when running only one part of the Open Controller pac
 
 ### The Controller (Clockwork)
 
+Clockwork is the core component of the open controller. It takes care of the basic functions of signal group oriented traffic control.
+The configuration file of the open controller is a JSON-file, in which the each data type has a header called 'key'. The key can be
+a title which defines the data item e.g. the maximum green time 'maxgreen'. The key can also be a given name of a component like signa group e.g. 'group1'.
+The structure of the configuration file is so called 'dictionary'. This means that once open controller has read the configuation file,
+it can access any data item within the dictionary by setting the the key as input. 
+
+The configuration file consists of general settings like 'operation mode', 'timer' and 'sumo'. The actual controller settings are in the 'controller' part,
+which is also a dictionary. Controller has a 'name' like '266' referring to the actual intersection. There is also a 'sumo_name', which refers to the
+intersection in the sumo simulator. 
+
+The signal groups are defined as a list of dictionaries:
+
+"group1":{
+            "min_green": 4,                        # minimum green time
+            "min_amber_red": 1,                    # amber red time
+            "min_red": 20,                         # minimum red time
+            "min_amber": 3,                        # amber time
+            "max_green": 30,                       # maximum green time
+            "max_amber_red": 1,                    # NA
+            "max_red": -1,                         # NA
+            "max_amber": 3,                        # NA
+            "request_type": "fixed",               # request type options: 'fixed', 'detector'
+            "phase_request": false,                # NA
+            "green_end": "remain",                 # green end options 'remaim'. 'after_max'
+            "channel": "group.control.266.1"       # NATS channel to send the commands to the TLC
+            },
+ 
+
+
+
+Each signal group is listed in the configuration file. 
+
+
 #### The basic functions
 
-#### Smart Extender
+#### Smart extender
         
 #### Priorities
 
 #### Multi-modal traffic
 
-#### Signal Coordination
+#### Signal coordination
 
 ### User Interface
 
