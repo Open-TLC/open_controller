@@ -247,11 +247,11 @@ The basic input is the sum of all vehicles (in queue or not) behind the conflict
 
 The decision about green extension is made per each update of the open controller ca. 10 times per second. The smart extender
 looks at the APPR and CONFQUEUE values and calculates their ratio APPR/CONFQUEUE. When this value gets lower than a given
-theshold, then the green extension is terminated. The THRESHOLD is a parameter in the smart extender settings.
+theshold, then the green extension is terminated. The EXT_THRESHOLD is a parameter in the smart extender settings.
 After the extension the signal can remain in passive green or go to red just like with extending detectors.
 
 To avoid overly long green extensions, there has to be a mechanism to make the green extension harder over time. Therefore,
-the THRESHOLD-value is increased based on how long the green signal has been active. By increasing the THRESHOLD, the termination
+the EXT_THRESHOLD-value is increased based on how long the green signal has been active. By increasing the EXT_THRESHOLD, the termination
 of the extension get more likely and eventually getting so high that the extension must end. The parameters used here
 is called TIME_DISCOUNT. 
 
@@ -261,9 +261,10 @@ Also the minimum green time is always guaranteeed despite of any other timing se
 Configuration of the smart extender consists of two blocks in the open controller configuration file. Firstly,
 the a special detector type is defined. There are two main detector types defined in open controller namely type "e1"
 and type "e3". The naming convention comes from the Sumo traffic simulator which uses the same type. Detector of
-type "e1" is the "normal" occupancy detector, which has only states "true" or "false". The "e3" detector resembles
-the radar input since it defines an area in which vehicles are detected and tracked. The output of "e3" detector
-is a list of vehicles with some optional parameters. The configuration of e3-detector is described below.
+type "e1" is the "normal" occupancy detector, which has only states "true" or "false". The "e3" detector represents
+a radar input since it defines an area in which vehicles are detected and tracked. The output of the "e3" detector
+is a list of vehicles with some optional features likes vehicle type and speed. 
+The configuration of e3-detector is described below.
 
  *Table 4: Extension detector settings*
 | Key                                    | Value         | Description                                          |
@@ -276,23 +277,45 @@ is a list of vehicles with some optional parameters. The configuration of e3-det
 
 Example of smart extender detector configuration
 ```json
-"e3d2m80":{
+"e3g2m80":{
         "type": "e3detector",
         "sumo_id": "e3Det_266_Mech_Left",
         "channel": "group.e3.266.2",
         "group": "group2"
         },
 ```
-The "e3" detector has a name, which is the key value of the following dictionary including the parameters.
+The "e3" detector has a name, which is the key value of the following dictionary including the parameters. User can
+select the name freely. Here the g2 refers to signal group 2 and m80 to the range of 80 meters of detecting area. 
+In the Sumo-simulator the e3-detectors must be added to the network. In live operation, the actual radars define
+the area of detection.
 
+The smart extender has two main parameters for its operation. The default value for EXT_THRESHOLD is 0.25 and for
+TIME_DISCOUNT 60. If the user doesn't need to change the default values, then no extra settings is needed. 
+However, if the user want to edit the paramters, then "extender" section needs to be defined. 
 
-
+```json
+"extenders":{
+        "ext1": {
+            "group": "group1",
+            "ext_mode": 4,
+            "ext_threshold": 0.25,
+            "time_discount": 60 
+            }
+    }
+```
 
 #### Priorities
 
+
+
+
 #### Multi-modal traffic
 
+
+
 #### Signal coordination
+
+
 
 ### User Interface
 
