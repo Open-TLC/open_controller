@@ -187,7 +187,7 @@ An occupied detector always extends regardless of the time.
 | "ext1m20A"                             | dictionary    | detector name                                        |
 | "type"                                 | "extender"    | detector type                                        |
 | "sumo_id"                              | "266_102A"    | amber red time                                       |
-| "group"                                | ["group1"]    | a list of signal group to be extended                |
+| "group"                                | "group1"      | signal group to be extended                          |
 | "ext_time"                             | 2.0           | extension time                                       |
 | "channel"                              | "detector.status.266_102A"| NATS-channel to read the detector status |
 
@@ -258,7 +258,36 @@ is called TIME_DISCOUNT.
 User can always set a hard maximum time to the signal group, which overrules any attemps to extend the green. 
 Also the minimum green time is always guaranteeed despite of any other timing settings.
 
-    
+Configuration of the smart extender consists of two blocks in the open controller configuration file. Firstly,
+the a special detector type is defined. There are two main detector types defined in open controller namely type "e1"
+and type "e3". The naming convention comes from the Sumo traffic simulator which uses the same type. Detector of
+type "e1" is the "normal" occupancy detector, which has only states "true" or "false". The "e3" detector resembles
+the radar input since it defines an area in which vehicles are detected and tracked. The output of "e3" detector
+is a list of vehicles with some optional parameters. The configuration of e3-detector is described below.
+
+ *Table 4: Extension detector settings*
+| Key                                    | Value         | Description                                          |
+|----------------------------------------|---------------|------------------------------------------------------|
+| "e3d2m80"                              | dictionary    | detector name                                        |
+| "type"                                 | "e3detector"  | detector type                                        |
+| "sumo_id"                              | "e3Det_266_Mech_Left"   | name in Sumo simulation                    |
+| "group"                                | "group1"   | signal group to be extended                             |
+| "channel"                              | "group.e3.266.2" | NATS-channel to read the traffic indicators       |
+
+Example of smart extender detector configuration
+...json
+"e3d2m80":{
+        "type": "e3detector",
+        "sumo_id": "e3Det_266_Mech_Left",
+        "channel": "group.e3.266.2",
+        "group": "group2"
+        },
+...
+The "e3" detector has a name, which is the key value of the following dictionary including the parameters.
+
+dfsdgherthr
+
+
 #### Priorities
 
 #### Multi-modal traffic
