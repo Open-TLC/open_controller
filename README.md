@@ -240,6 +240,15 @@ Example of detector section in the configuration file
   }
 ```
 
+After defining the signal groups and their parameters the user should list the groups that are actually used in the control. 
+User may define groups that are not currently used and activate them by adding to the list. It is important that the number
+of signal groups in the group_list matches with number of groups in the intergreen matrix and the in the phase ring definition.
+
+Example of the group list:
+```json
+"group_list": ["group1", "group2", "group3", "group4", "group5", "group6", "group7", "group8", "group9", "group10", "group11", "group12", "group13", "group14", "group15"],
+```
+
 An intergreen matrix is defined to secure enough safety time between end and start of conflicting green signals. The intergreen times
 are very case specific depending on intersection geometry etc. Therefore each pair of conflicting greens have
 to be defined in the integreen matrix. The matrix is not symmetric, since for example when pedestrian signal is ending,
@@ -349,7 +358,7 @@ The smart extender has two main parameters for its operation. The default value 
 TIME_DISCOUNT 60. If the user doesn't need to change the default values, then no extra settings is needed. 
 However, if the user want to edit the paramters, then "extender" section needs to be defined. 
 
-Example of smart extender paramter settings
+Example of smart extender parameter settings
 ```json
 "extenders":{
         "ext1": {
