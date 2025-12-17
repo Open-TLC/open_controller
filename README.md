@@ -119,7 +119,7 @@ on detector inputs. If any detector sends an extension signal to the signal grou
 The green can end due to no more extension, maximum time reached or other conflicting group orders to go red.
 The signal groups states go though a cycle of states described in table x.
 
-*Table x: Signal group states*
+*Table 1: Signal group states*
 | State | Description |
 |-------|-------------|
 | 0 | Red/yellow |
@@ -158,10 +158,40 @@ The signal groups are defined as a list of dictionaries. The time values are in 
 | "max_amber"                            | 3             | NA                                                   |
 | "request_type"                         | "fixed"       | request type options: 'fixed', 'detector'            |
 | "phase_request"                        | false         | NA                                                   |
-| "green_end"                            | "remain"      | green end options: 'remain', 'after_max'             |
+| "green_end"                            | "remain"      | green end options: 'remain', 'after_ext'             |
 | "channel"                              | "group.control.266.1" | NATS channel to send the commands to the TLC |
 
-
+Example of signal group configuration
+```json
+"signal_groups":{
+        "group1":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 30,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+        "group2":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 20,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "after_ext"
+            }
+     }
+```
 The detectors can be of type 'request' or type 'extender'. Requesting detector sends a request signal to the predefined signal groups. 
 The requested group can go green if there is no active conflicting green ongoing. If there are only passive greens ongoing,
 they will be terminated and the requested group can go green after intergreen period. 
@@ -191,6 +221,25 @@ An occupied detector always extends regardless of the time.
 | "ext_time"                             | 2.0           | extension time                                       |
 | "channel"                              | "detector.status.266_102A"| NATS-channel to read the detector status |
 
+Example of detector section in the configuration file
+```json
+"detectors":{
+        "req1m20A":{
+            "type": "request",
+            "sumo_id": "266_102A",
+            "channel": "detector.status.266_102A",
+            "request_groups": ["group1"]
+        },
+        "ext1m20A":{
+            "type": "extender",
+            "sumo_id": "266_102A",
+            "channel": "detector.status.266_102A",
+            "group": "group1",
+            "ext_time": 2.0
+        }
+  }
+```
+
 An intergreen matrix is defined to secure enough safety time between end and start of conflicting green signals. The intergreen times
 are very case specific depending on intersection geometry etc. Therefore each pair of conflicting greens have
 to be defined in the integreen matrix. The matrix is not symmetric, since for example when pedestrian signal is ending,
@@ -198,7 +247,7 @@ then very long intergreen is needed to guarantee each pedestrian enough time to 
 if car signal is ending, then pedestrian green can be started almost immediately. In table X, the starting signal groups
 has to to check all integreen times in its column and use the maximum value. 
 
-Table x: Example of the intergreen matrix. Rows refer to ending groups and columns to starting groups.
+Example of the intergreen matrix. Rows refer to ending groups and columns to starting groups.
 ```json
    "intergreens":[  [0.0, 0.0, 0.0, 0.0, 5.0, 7.0, 6.0, 6.0, 6.0, 4.0, 4.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 4.0, 8.0, 8.0, 0.0, 0.0, 0.0],
@@ -222,13 +271,20 @@ However, there should be a mechanism to put competing conflicting green requests
 to decide which signal group get green first, if there are conflicting green requests. The phase ring does not
 provide fixed stages, but it defines in which order green permits are given.
 
-Table x: Example of the phase ring. Number 1 means green permission can be given in the phase.
+Example of the phase ring. Number 1 means green permission can be given in the phase.
 ```json
    "phases":[  [0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0 ],
                [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 ],
                [0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1 ,1, 0, 0, 0 ]
             ]
 ```
+
+
+```json
+"group_list": ["group1", "group2", "group3", "group4", "group5", "group6", "group7", "group8", "group9", "group10", "group11", "group12", "group13", "group14", "group15"],
+```
+
+
 
 #### Smart extender
 
@@ -266,7 +322,7 @@ a radar input since it defines an area in which vehicles are detected and tracke
 is a list of vehicles with some optional features likes vehicle type and speed. 
 The configuration of e3-detector is described below.
 
- *Table 4: Extension detector settings*
+ *Table 5: Extension detector settings*
 | Key                                    | Value         | Description                                          |
 |----------------------------------------|---------------|------------------------------------------------------|
 | "e3d2m80"                              | dictionary    | detector name                                        |
@@ -293,6 +349,7 @@ The smart extender has two main parameters for its operation. The default value 
 TIME_DISCOUNT 60. If the user doesn't need to change the default values, then no extra settings is needed. 
 However, if the user want to edit the paramters, then "extender" section needs to be defined. 
 
+Example of smart extender paramter settings
 ```json
 "extenders":{
         "ext1": {
