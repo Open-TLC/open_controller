@@ -288,13 +288,6 @@ Example of the phase ring. Number 1 means green permission can be given in the p
             ]
 ```
 
-
-```json
-"group_list": ["group1", "group2", "group3", "group4", "group5", "group6", "group7", "group8", "group9", "group10", "group11", "group12", "group13", "group14", "group15"],
-```
-
-
-
 #### Smart extender
 
 Smart extender can be used instead of the extending detectors. The smart extender is not using the detector input,
