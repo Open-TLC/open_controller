@@ -110,6 +110,37 @@ This is usefull especially when running only one part of the Open Controller pac
 
 ### The Controller (Clockwork)
 
+#### Running the Clockwork
+
+The Clockwork can be run outside of the container by giving approapriate command line parameters: 
+```json
+python src/clockwork/clockwork.py --conf-file=models/testmodel/oc_demo_basic.json --nats-server localhost
+```
+
+#### General settings
+
+```json
+"timer":{
+    "timer_mode": "fixed",
+    "time_step":0.1,
+    "real_time_multiplier":1
+},
+"operation_mode":"test",
+"v2x_mode": false,
+"vis_mode": "main_states",
+
+"nats":{
+    "server": "localhost",
+    "port": "4222",
+    "mode": "change"
+},
+"sumo":{
+    "graph" : true,
+    "file_name": "../testmodels/JS_266/cfgFiles/JS_266-267.sumocfg",
+    "print_status": true
+},
+```
+
 #### The basic functions
 
 Clockwork is the core component of the open controller. It takes care of the basic functions of signal group oriented traffic control.
