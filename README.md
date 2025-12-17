@@ -191,16 +191,16 @@ An occupied detector always extends regardless of the time.
 | "ext_time"                             | 2.0           | extension time                                       |
 | "channel"                              | "detector.status.266_102A"| NATS-channel to read the detector status |
 
-An intergreen matrix is defined to secure enough safety time between conflicting green signals. The intergreen times
-are very case specific depending on intersection geometry etc. and therefore each pair of conflicting greens have
+An intergreen matrix is defined to secure enough safety time between end and start of conflicting green signals. The intergreen times
+are very case specific depending on intersection geometry etc. Therefore each pair of conflicting greens have
 to be defined in the integreen matrix. The matrix is not symmetric, since for example when pedestrian signal is ending,
 then very long intergreen is needed to guarantee each pedestrian enough time to pass the street. However, the other way round,
 if car signal is ending, then pedestrian green can be started almost immediately. In table X, the starting signal groups
-has to to check all integreen times in its column and obey the maximum value. 
+has to to check all integreen times in its column and use the maximum value. 
 
 Table x: Example of the intergreen matrix. Rows refer to ending groups and columns to starting groups.
 ```json
-"intergreens":[     [0.0, 0.0, 0.0, 0.0, 5.0, 7.0, 6.0, 6.0, 6.0, 4.0, 4.0, 0.0, 0.0, 0.0, 0.0],
+   "intergreens":[  [0.0, 0.0, 0.0, 0.0, 5.0, 7.0, 6.0, 6.0, 6.0, 4.0, 4.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 4.0, 8.0, 8.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 9.0, 0.0, 8.0, 9.0, 8.0, 1.0, 5.0, 1.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 7.0, 4.0, 0.0, 6.0, 10.0, 6.0, 0.0, 0.0, 0.0],
@@ -215,10 +215,20 @@ Table x: Example of the intergreen matrix. Rows refer to ending groups and colum
                     [0.0, 0.0, 0.0, 0.0, 1.0, 9.0, 9.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 2.0, 6.0, 6.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 5.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        ]
+                 ] 
 ```
+In signal group control, there are no fixed phases. Basically any non-conflicting group could start the green.
+However, there should be a mechanism to put competing conflicting green requests in order. A phase ring is used
+to decide which signal group get green first, if there are conflicting green requests. The phase ring does not
+provide fixed stages, but it defines in which order green permits are given.
 
-
+Table x: Example of the phase ring. Number 1 means green permission can be given in the phase.
+```json
+   "phases":[  [0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0 ],
+               [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 ],
+               [0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1 ,1, 0, 0, 0 ]
+             ],
+```
 
 #### Smart extender
         
