@@ -227,11 +227,38 @@ Table x: Example of the phase ring. Number 1 means green permission can be given
    "phases":[  [0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0 ],
                [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 ],
                [0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1 ,1, 0, 0, 0 ]
-             ],
+            ]
 ```
 
 #### Smart extender
-        
+
+Smart extender can be used instead of the extending detectors. The smart extender is not using the detector input,
+but uses more holistic scene understanding based on radar and camera data. The data for smart extender is provided
+by the traffic indicators component which is running independently from the open controller. The traffic indicators
+is processing the raw sensor data and providing meaningful indicators as input to the smart extenders. 
+
+The smart extender relies basically on two main inputs. It is looking at the approaching vehicles on the lanes it is
+controlling. The number of approaching vehicles (APPR) is the basic input. However, as the smart extender get a list of
+approaching vehicles with their type, speed etc. information, it can give different weigths for example based on
+vehicle type (e.g. 1 truck equals 3 passenger cars). 
+
+Unlike the extending detector, the smart extender is looking at the traffic situation behind the conflicting signal groups.
+The basic input is the sum of all vehicles (in queue or not) behind the conflicting signal groups. 
+
+The decision about green extension is made per each update of the open controller ca. 10 times per second. The smart extender
+looks at the APPR and CONFQUEUE values and calculates their ratio APPR/CONFQUEUE. When this value gets lower than a given
+theshold, then the green extension is terminated. The THRESHOLD is a parameter in the smart extender settings.
+After the extension the signal can remain in passive green or go to red just like with extending detectors.
+
+To avoid overly long green extensions, there has to be a mechanism to make the green extension harder over time. Therefore,
+the THRESHOLD-value is increased based on how long the green signal has been active. By increasing the THRESHOLD, the termination
+of the extension get more likely and eventually getting so high that the extension must end. The parameters used here
+is called TIME_DISCOUNT. 
+
+User can always set a hard maximum time to the signal group, which overrules any attemps to extend the green. 
+Also the minimum green time is always guaranteeed despite of any other timing settings.
+
+    
 #### Priorities
 
 #### Multi-modal traffic
