@@ -424,6 +424,16 @@ green earlier. While crossing the street, we can count the pedestrians and exten
 
 #### Signal coordination
 
+Traffic signal coordination is used when certain routes over multiple intersections need to be favored. 
+Traditionally this is done by using common cycle time for all the intersections and the green starting
+at consecutive intersections are staggered to create a green wave. In open controller the signal coordination
+is implemented if different manner (at least so far). By default each intersection runs in isolated mode
+using the smart extenders. Then the prioritized lanes on prioritized routes are given extra  weight. 
+This weight can either cut the conflicting green to start thee green when needed or to extend the the
+ongoing green. The difference to the isolated mode is that the request to start green or to extend the 
+green can come from previous intersections. One signal head can have multiple smart extenders and the
+in coordination the prioritized signal groups have extra extenders from the previous intersections.
+
 
 
 ### User Interface
