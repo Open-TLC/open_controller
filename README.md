@@ -26,16 +26,41 @@ In addittion, simclient can also receive *Signal Group control* messsages dictat
 
 **UI** is a simple user intraface providing monitoring and limited managemen fore the other services. In essence, this is a web server connectiong to the backend NATS-broker and providing an user interface accessible with a browser.
 
-# Baaic usage
+# Basic usage
 
 The open controller can be used in several ways. When starting a new project it is recommended to test evarything within simulation. 
 The simulator used with open controller is [SUMO](https://eclipse.dev/sumo/) "Simulation of Urban MObility". Sumo is an open source
 traffic simulator which comes with many features useful in running and testing the open controller. Sumo offers and interface called
 Traci to let the open controller to communicate with the simulator.
 
+The available modes for using open controller are the following:
+1) Integrated simulation
+2) Distributed simulation
+3) Hardware-in-the-loop simulation
+4) Live operation (controlling the traffic in the field).
+
+The easiest way is to start with the integrated simulation, which is most often used to evaluate the performance of the signal control.
+The second step is to use the distributed simulation, in which the simulation is separated from the controller. This way it is possibkle 
+to test that the communication and messages needed in the actual signal control are working properly.
+Ther third step is the Hardware-in-the-loop simulation, which is similar to distributed simulation, except thast the actual signal controller
+device is included in the simulation. This way everything can be tested to the last detail before live operation.
+In live signal control in the field, the simulagtor is no more involved. All the inputs are coming from real sensors and the signal control
+output commands go the the actual road side device which carries out the control of the real traffic.
 
 
+## Running the integrated version
 
+The most simple way of running open controller is so called integrated simulation. In this case, only one configuration file is needed,
+namely the one for the clockwork. 
+
+```json
+python src/clockwork/clockwork.py --conf-file=models/testmodel/oc_demo_basic.json 
+```
+
+The configuration file involves everything needed to run the open controller with Sumo. Inside the config-file there is row
+for defining the Sumo-model used. 
+
+The integrated simulation can be run in real-time or with full speed depending on the available computing power.
 
 
 
