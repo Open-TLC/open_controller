@@ -414,7 +414,13 @@ As soon as the tram has passed ist own signasl then the extension end and othe a
 
 #### Multi-modal traffic
 
+The traffic in intersections consists of vehicles like car, trucks, buses and trams. Hoever, the pedestrians, bicycles
+and micro-mobility is often negleted in many ways. Pedestrians and bikers are not detected automatically like vehicles,
+which can be annoying espcially for cyclists. Also, the signal timing is not affected by the pedestrian counts. 
 
+Having the the radars and espcially the cameras we can detect the pedestrians automatically and generate the requests.
+Also, it is possible to get the count of pedestrians waiting for green and give them extra weight in order to get the
+green earlier. While crossing the street, we can count the pedestrians and extend the green time is necessary. 
 
 #### Signal coordination
 
