@@ -4,27 +4,6 @@
 
 This is the main repository of Open Controller, an open source traffic light controller.  **
 
-# Quickstart
-
-In order to run the basic system you need to have [docker](https://docs.docker.com/get-started/get-docker/) installed into your system. 
-
-After this you can setup the full Open Controller system and run it with a relatively simple test model by issuing command:
-
-    docker compose up
-
-This script will in essence install four separate docker containers and run them, they are:
-
-- Nats server, a standard [NATS](https://nats.io) message broker
-- Clockwork, the open source traffic light controller
-- Simengine, a [SUMO](https://eclipse.dev/sumo/) simulation platform with interfaces to access the open controller
-- UI, an user interface for the system
-
-After this you should be able to see the user interface via [http://127.0.0.1:8050](http://127.0.0.1:8050)
-
-One should note that the simulation model in this example is ran inside a container without a UI, if you wish to see the intersection in operation, you will need to run the Sumo and simengine in your local computer in the graphical mode. How to do this is explained in [here](#installing-and-running-simengine-in-local-computer)
-
-
-# Basic usage
 ## What comes with the package
 The open controller system conists of separate services communcating with each other via bub/sum messages (see Figure 1). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
 
@@ -47,6 +26,37 @@ In addittion, simclient can also receive *Signal Group control* messsages dictat
 
 **UI** is a simple user intraface providing monitoring and limited managemen fore the other services. In essence, this is a web server connectiong to the backend NATS-broker and providing an user interface accessible with a browser.
 
+# Baaic usage
+
+The open controller can be used in several ways. When starting a new project it is recommended to test evarything within simulation. 
+The simulator used with open controller is [SUMO](https://eclipse.dev/sumo/) "Simulation of Urban MObility". Sumo is an open source
+traffic simulator which comes with many features useful in running and testing the open controller. Sumo offers and interface called
+Traci to let the open controller to communicate with the simulator.
+
+
+
+
+
+
+
+## Running the distributed version
+
+In order to run the basic system you need to have [docker](https://docs.docker.com/get-started/get-docker/) installed into your system. 
+
+After this you can setup the full Open Controller system and run it with a relatively simple test model by issuing command:
+
+    docker compose up
+
+This script will in essence install four separate docker containers and run them, they are:
+
+- Nats server, a standard [NATS](https://nats.io) message broker
+- Clockwork, the open source traffic light controller
+- Simengine, a [SUMO](https://eclipse.dev/sumo/) simulation platform with interfaces to access the open controller
+- UI, an user interface for the system
+
+After this you should be able to see the user interface via [http://127.0.0.1:8050](http://127.0.0.1:8050)
+
+One should note that the simulation model in this example is ran inside a container without a UI, if you wish to see the intersection in operation, you will need to run the Sumo and simengine in your local computer in the graphical mode. How to do this is explained in [here](#installing-and-running-simengine-in-local-computer)
 
 ## Operating the user interface
 Likely the first use of the system is to be done via the UI component. When the system is run, one can access it in the localhost port 8050 (i.e. [http://127.0.0.1:8050](http://127.0.0.1:8050)) 
