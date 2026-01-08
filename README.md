@@ -396,8 +396,21 @@ Example of smart extender parameter settings
 
 #### Priorities
 
+Priorities can be implemented in two ways. If open controller is used without the smart extenders i.e. by using
+the normal detectors as the only input, then priority is defined within the detectors. The request set up by a
+detector can have a priority level input. If not defined, the default priority level is 2 for normal car traffic. 
+If the request level of the detector is higher, e.g. to 5, then this request can cut off an active green with priority level 2. 
+An active green with higher priority level cannot be cut another request of same or lower priority level. 
+In practice the higher priority levels are given to public transport like trams only. However, in principle, it is
+possible to prioritize any other mode of traffic or any given approach. 
 
-
+The alternative approach is to use the smmart extender for priorities, too. This is done by configuring the smart
+extender so, that it will give extra weight to a given vehicles type like tram. If a tram is regognized, then the
+predefined weight is associated with the vehicle. For example, if a weight 100 is configured to thr tram, then the
+open controller thinks that there is 100 passenger cars approaching or in a queue. This means the that the tram
+approach can easily cut conflicting active greens to starts it own green earlier. Also, as soon as started, the
+green with weight 100 is not likely to be cut by any other approaches, even if the tram is still waiting on station.
+As soon as the tram has passed ist own signasl then the extension end and othe approaches may get green if requested. 
 
 #### Multi-modal traffic
 
