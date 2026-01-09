@@ -160,20 +160,20 @@ This is usefull especially when running only one part of the Open Controller pac
 [comment]: <> (Installation to a local machine here)
 
 
-## Configuration
+# Configuration
 
 [comment]: <> (Command line arguments under this also)
 
-### Simengine
+## Simengine
 
-### Traffic Indicators
+## Traffic Indicators
 
-### The Controller (Clockwork)
+## The Controller (Clockwork)
 
 The traffic signal controller (also referred as the clockwork) can be configured by using the following instructions: 
 [Configuration of the controller](https://github.com/Open-TLC/open_controller/blob/main/doc/clockwork/configuration.md)
 
-### User Interface
+## User Interface
 
 # Documentation and further reading
 
