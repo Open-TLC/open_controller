@@ -29,7 +29,7 @@ The last option is live signal control in the field, in which the simulagtor is 
 output commands are sent the the actual road side device, which carries out the control of the real traffic.
 
 It should be noted that the options 3 and 4 cannot be used without interface component to the signal controller device. For safety
-reasons this component is not publicly open. Only the City of Helsinki can provide access to the real signal controller.
+reasons this component cannot be shared publicly. Only the City of Helsinki can provide access to the real signal controllers.
 
 
 ## Using the integrated version
@@ -41,11 +41,18 @@ To run the opne controller in integrated mode, you call the controller in python
 command line parameter. See the example below. 
 
 ```json
-python src/clockwork/clockwork.py --conf-file=models/testmodel/oc_demo_basic.json 
+python src/clockwork/clockwork.py --conf-file=models/testmodel/oc_demo.json 
 ```
 
 The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file can
-be given within the open controller configuration file or as command line paramter.
+be given within the open controller configuration file or as command line paramter. Sumo can be run with or without
+graphic display. This can also be defined in the command line or in the open controller configuration (see below).
+
+```json
+"sumo":{
+    "graph" : true,
+    "file_name": "models/testmodel/oc_demo.sumocfg"
+```
 
 The open controller takes a time step (default value = 0.1 sec), reads the detector data from Sumo and updates its own internal states. 
 Finally it send the new traffic signal states to the Sumo and continues with next update.
