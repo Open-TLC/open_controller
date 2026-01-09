@@ -1,21 +1,6 @@
 # Traffic controller configuration
 
-## Configuration
-
-[comment]: <> (Command line arguments under this also)
-
-### Simengine
-
-### The Controller (Clockwork)
-
-#### Running the Clockwork
-
-The Clockwork can be run outside of the container by giving approapriate command line parameters: 
-```json
-python src/clockwork/clockwork.py --conf-file=models/testmodel/oc_demo_basic.json --nats-server localhost
-```
-
-#### General settings
+## General settings
 
 ```json
 "timer":{
@@ -39,7 +24,7 @@ python src/clockwork/clockwork.py --conf-file=models/testmodel/oc_demo_basic.jso
 },
 ```
 
-#### The basic functions
+## The basic functions
 
 Clockwork is the core component of the open controller. It takes care of the basic functions of signal group oriented traffic control.
 Signal groups tend to green if requested, but other signal groups may prevent it because of conflicting greens, intergreen time or
@@ -217,7 +202,7 @@ Example of the phase ring. Number 1 means green permission can be given in the p
             ]
 ```
 
-#### Smart extender
+## Smart extender
 
 Smart extender can be used instead of the extending detectors. The smart extender is not using the detector input,
 but uses more holistic scene understanding based on radar and camera data. The data for smart extender is provided
@@ -292,7 +277,7 @@ Example of smart extender parameter settings
     }
 ```
 
-#### Priorities
+## Priorities
 
 Priorities can be implemented in two ways. If open controller is used without the smart extenders i.e. by using
 the normal detectors as the only input, then priority is defined within the detectors. The request set up by a
@@ -310,7 +295,7 @@ approach can easily cut conflicting active greens to starts it own green earlier
 green with weight 100 is not likely to be cut by any other approaches, even if the tram is still waiting on station.
 As soon as the tram has passed ist own signasl then the extension end and othe approaches may get green if requested. 
 
-#### Multi-modal traffic
+## Multi-modal traffic
 
 The traffic in intersections consists of vehicles like car, trucks, buses and trams. Hoever, the pedestrians, bicycles
 and micro-mobility is often negleted in many ways. Pedestrians and bikers are not detected automatically like vehicles,
@@ -320,7 +305,7 @@ Having the the radars and espcially the cameras we can detect the pedestrians au
 Also, it is possible to get the count of pedestrians waiting for green and give them extra weight in order to get the
 green earlier. While crossing the street, we can count the pedestrians and extend the green time is necessary. 
 
-#### Signal coordination
+## Signal coordination
 
 Traffic signal coordination is used when certain routes over multiple intersections need to be favored. 
 Traditionally this is done by using common cycle time for all the intersections and the green starting
@@ -334,16 +319,3 @@ in coordination the prioritized signal groups have extra extenders from the prev
 
 
 
-### User Interface
-
-
-# Documentation and further reading
-
-[comment]: <> (Links to : sysarch, theory and maybe to something else)
-
-
-    
-
-# License
-
-The sofware is released unde the EUPL-1.2 licence, click
