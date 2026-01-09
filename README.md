@@ -166,12 +166,12 @@ This is usefull especially when running only one part of the Open Controller pac
 
 ### Simengine
 
+### Traffic Indicators
 
 ### The Controller (Clockwork)
 
 The traffic signal controller (also referred as the clockwork) can be configured by using the following instructions: 
 [Configuration of the controller](https://github.com/Open-TLC/open_controller/blob/main/doc/clockwork/configuration.md)
-
 
 ### User Interface
 
