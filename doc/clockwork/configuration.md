@@ -1,7 +1,9 @@
 # Traffic controller configuration
 
-The configuration of the controller is defined by a json-file. The file consists of several blocks
-namely: general settings, signal groups, detectors, extenders, phase ring and intergreen matrix. 
+The configuration of the controller is defined by a json-file, which consists of several blocks.
+In the beginning there are general sections related to timer, operation and sumo.
+The next section is called 'controller', which consist of subsections like: 
+"signal_groups", "detectors", "extenders", "phases" and "intergreens". 
 
 ```json
 {
@@ -21,7 +23,6 @@ namely: general settings, signal groups, detectors, extenders, phase ring and in
         "group_outputs": ["group1", "group2", "group3", "group4"]
 },
 
-// Controller operations
 "controller":{
     "name": "test",
     "sumo_name": "N_J1",
