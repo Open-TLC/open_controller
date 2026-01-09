@@ -1,9 +1,15 @@
 # Traffic controller configuration
 
 The configuration of the controller is defined by a json-file, which consists of several blocks.
-In the beginning there are general sections related to timer, operation and sumo.
+In the beginning there are general sections like "timer", "operation_mode" and "sumo". These 
+sections are obligatory so that the controller doesn't run without them.
+There can be additional voluntary sections which are explained later. 
+
 The next section is called 'controller', which consist of subsections like: 
 "signal_groups", "detectors", "extenders", "phases" and "intergreens". 
+The controller has a name, which user can select freely. There is also "sumo_name", which
+has to match with the controller name in the sumo-configuration file.
+In the example below, not all items withing the sections are shown to keep the file short.
 
 ```json
 {
@@ -18,7 +24,7 @@ The next section is called 'controller', which consist of subsections like:
 
 "sumo":{
     "graph" : true,
-    "file_name": "../testmodels/iisakki/1junc_DT/cfgFiles/1junc_4leg_DT.sumocfg",
+    "file_name": "../testmodels/test.sumocfg",
     "print_status": true,
         "group_outputs": ["group1", "group2", "group3", "group4"]
 },
@@ -87,11 +93,17 @@ The next section is called 'controller', which consist of subsections like:
     }
 }
 
-
 ```
 
-
 ## General settings
+
+*Table X: Timer settings*
+| Timer | Description |
+|-------|-------------|
+| timer_mode | fixed/real |
+| time_step | in seconds |
+| real_time_multiplier | x times faster than real-time|
+
 
 ```json
 "timer":{
@@ -110,7 +122,7 @@ The next section is called 'controller', which consist of subsections like:
 },
 "sumo":{
     "graph" : true,
-    "file_name": "../testmodels/JS_266/cfgFiles/JS_266-267.sumocfg",
+    "file_name": "../testmodels/demo.sumocfg",
     "print_status": true
 },
 ```
