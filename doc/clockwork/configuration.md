@@ -1,5 +1,250 @@
 # Traffic controller configuration
 
+The configuration of the controller is defined by a json-file. The file consists of several blocks
+namely: general settings, signal groups, detectors, extenders, phase ring and intergreen matrix. 
+
+```json
+{
+    "timer":{
+        "timer_mode": "fixed",
+        "time_step":0.1,
+        "real_time_multiplier":1,
+        "max_time": 4000
+    },
+
+// Modes will be: sumo, test, realtime
+"operation_mode":"test",
+
+"sumo":{
+    "graph" : true,
+    "file_name": "../testmodels/iisakki/1junc_DT/cfgFiles/1junc_4leg_DT.sumocfg",
+    "print_status": true,
+        "group_outputs": ["group1", "group2", "group3", "group4"]
+},
+
+// Controller operations
+"controller":{
+    "name": "test",
+    "sumo_name": "N_J1",
+    // Signal groups, controller object has a list value "groups"
+    // defining which ones are used
+    "signal_groups":{
+        //Values used, id not specified later
+        // request_type can be:
+        //      "fixed" - always on
+        //      "detector" - defined by detectors (see detectors section)
+        // green_end can be:
+        //      "after_ext" - green terminates after own extensions end
+        //      "remain" - remains green until other extensions out
+        "default":{
+            "min_green": 3,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 30,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+
+        "group1":{
+            "min_green": 4,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+
+        "group2":{
+            "min_green": 4,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+
+        "group3":{
+            "min_green": 4,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+            
+        "group4":{
+            "min_green": 4,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            }
+        },
+
+    "detectors":{
+        
+        "req1A":{
+            "type": "request",
+            "sumo_id": "e1_West1",
+            "request_groups": ["group1"]
+        },
+        
+        "req1B":{
+            "type": "request",
+            "sumo_id": "e1_West2",
+            "request_groups": ["group1"]
+        },
+        
+        "req2A":{
+            "type": "request",
+            "sumo_id": "e1_East1",
+            "request_groups": ["group2"]
+        },
+        
+        "req2B":{
+            "type": "request",
+            "sumo_id": "e1_East2",
+            "request_groups": ["group2"]
+        },
+        
+        "req3A":{
+            "type": "request",
+            "sumo_id": "e1_North1",
+            "request_groups": ["group3"]
+        },
+        
+        "req3B":{
+            "type": "request",
+            "sumo_id": "e1_North2",
+            "request_groups": ["group3"]
+        },
+        
+        "req4A":{
+            "type": "request",
+            "sumo_id": "e1_South1",
+            "request_groups": ["group4"]
+        },
+        
+        "req4B":{
+            "type": "request",
+            "sumo_id": "e1_South2",
+            "request_groups": ["group4"]
+        },
+        
+        
+        
+        "e3d1m60":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_West",
+            "group": "group1"
+            },
+            
+        "e3d2m60":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_East",
+            "group": "group2"
+            },
+            
+        "e3d3m60":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_North",
+            "group": "group3"
+            },
+            
+        "e3d4m60":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_South",
+            "group": "group4"
+            }
+               
+    },
+    
+    "extenders":{
+
+        "ext1": {
+            "group": "group1",
+            "ext_mode": 4,
+            "ext_threshold": 0.25,
+            "time_discount": 60 
+            },
+      
+        "ext2": {
+            "group": "group2",
+            "ext_mode": 4,
+            "ext_threshold": 0.25,
+            "time_discount": 60 
+            },
+            
+        "ext3": {
+            "group": "group3",
+            "ext_mode": 4,
+            "ext_threshold": 0.25,
+            "time_discount": 60 
+            },
+            
+        "ext4": {
+            "group": "group4",
+            "ext_mode": 4,
+            "ext_threshold": 0.25,
+            "time_discount": 60 
+            }
+
+    },
+    
+
+    // This defines groups used in each phase
+    // (see phases matrix to see which ones are on)
+    "group_list": ["group1", "group2", "group3","group4"],
+
+    // Each row is a phase and index is the group
+    "phases":[
+        [1, 1, 0, 0],
+        [0, 0, 1, 1]
+        ],
+
+    // transfer from  each group to another
+    // this is a group_list*group_list matrix
+    // each row refers to starting group and column the end group
+    "intergreens":[
+        [0.0, 0.0, 3.0, 3.0],
+        [0.0, 0.0, 3.0, 3.0],
+        [3.0, 3.0, 0.0, 0.0],
+        [3.0, 3.0, 0.0, 0.0]
+        ]
+   
+    }
+}
+
+
+```
+
+
 ## General settings
 
 ```json
