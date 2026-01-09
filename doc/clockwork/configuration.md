@@ -97,12 +97,7 @@ In the example below, not all items withing the sections are shown to keep the f
 
 ## General settings
 
-*Table X: Timer settings*
-| Timer | Description |
-|-------|-------------|
-| timer_mode | fixed/real |
-| time_step | in seconds |
-| real_time_multiplier | x times faster than real-time|
+
 
 
 ```json
@@ -126,6 +121,14 @@ In the example below, not all items withing the sections are shown to keep the f
     "print_status": true
 },
 ```
+
+*Table X: Timer settings*
+| Key | Value |
+|-------|-------------|
+| "timer_mode" | "fixed" / "real" |
+| time_step | in seconds |
+| real_time_multiplier | x times faster than real-time|
+
 
 ## The basic functions
 
