@@ -2,7 +2,8 @@
 
 # About 
 
-This is the main repository of Open Controller, an open source traffic light controller.  **
+This is the main repository of Open Controller, an open source traffic light controller. 
+To get started clone the open controller repository to your own local computer. 
 
 # Basic usage
 
@@ -66,8 +67,8 @@ The integrated simulation can be run in real-time or with full speed depending o
 The open controller system conists of separate services communcating with each other via bub/sum messages (see Figure 1). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
 
 - **Simengine**, a sumo simulation environment with Open Controller interfaces
-- **Clockwork**, the traffic light controller
-- **UI**, an user interface for monitoring and controlling the services
+- **Traffic Indicators**, processing the sensor data into traffic situation indicators 
+- **User Interface**, an user interface for monitoring and controlling the services
 
 ![Open Controller Docker Services](/doc/images/OC_Docker_Services.png)
 *Figure 1: Open Controller Standard Services*
@@ -78,11 +79,13 @@ The open controller system conists of separate services communcating with each o
 - *Signal Group statuses* (status of traffic lights), and
 - *Radar statuses* (object list of vehicles in pre-detemind area)
 
-In addittion, simclient can also receive *Signal Group control* messsages dictating the statuses of the signal groups (traffic lights) in the model. This is to be used for controlling the traffic controllers in the simulation model.
+In addittion, simengine can also receive *Signal Group control* messsages dictating the statuses of the signal groups (traffic lights) in the model. This is to be used for controlling the traffic controllers in the simulation model.
+
+**Traffic Indicators** is processing the sensor data into traffic indicators which can be used as input for the signal control. Traffic indicators is not needed if only detector data is used as input. When rradar or camera data is used, then the traffic indicators component is needed.
 
 **Clockwork** is a traffic light controller that subscribes to data inputs (e.g. detector statuses) and provides signal contol commands (*Signal Group Control* messages) as an output. It should be noted that this unit can be used both with a simulator as well as with real traffic controllers, given that there is an interface for relaying them to the controller (this part is not provided at the time of writing due to IP restrictions).
 
-**UI** is a simple user intraface providing monitoring and limited managemen fore the other services. In essence, this is a web server connectiong to the backend NATS-broker and providing an user interface accessible with a browser.
+**User Interface** is a simple user intraface providing monitoring and limited managemen fore the other services. In essence, this is a web server connectiong to the backend NATS-broker and providing an user interface accessible with a browser.
 
 
 In order to run the basic system you need to have [docker](https://docs.docker.com/get-started/get-docker/) installed into your system. 
