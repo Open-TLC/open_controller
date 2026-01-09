@@ -125,9 +125,9 @@ In the example below, not all items withing the sections are shown to keep the f
 *Table X: Timer settings*
 | Key | Value |
 |-------|-------------|
-| "timer_mode" | "fixed" / "real" |
+| *"timer_mode"* | "fixed" / "real" |
 | time_step | in seconds |
-| real_time_multiplier | x times faster than real-time|
+| *real_time_multiplier* | x times faster than real-time|
 
 
 ## The basic functions
