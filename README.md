@@ -4,28 +4,6 @@
 
 This is the main repository of Open Controller, an open source traffic light controller.  **
 
-## What comes with the package
-The open controller system conists of separate services communcating with each other via bub/sum messages (see Figure 1). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
-
-- **Simclient**, a sumo simulation environment with Open Controller interfaces
-- **Clockwork**, the traffic light controller
-- **UI**, an user interface for monitoring and controlling the services
-
-![Open Controller Docker Services](/doc/images/OC_Docker_Services.png)
-*Figure 1: Open Controller Standard Services*
-
-**Simclient** is a service for running [SUMO](https://eclipse.dev/sumo/) simulation in real time and providing interface for exchang messages between the Sumo model and other applications and services. The simulation works as a simulated "reality" and provides similar outputs one would be getting from a field devices, namely:
-
-- *Detector statuses* (induction detector determining if there is a vehicle over certain area)
-- *Signal Group statuses* (status of traffic lights), and
-- *Radar statuses* (object list of vehicles in pre-detemind area)
-
-In addittion, simclient can also receive *Signal Group control* messsages dictating the statuses of the signal groups (traffic lights) in the model. This is to be used for controlling the traffic controllers in the simulation model.
-
-**Clockwork** is a traffic light controller that subscribes to data inputs (e.g. detector statuses) and provides signal contol commands (*Signal Group Control* messages) as an output. It should be noted that this unit can be used both with a simulator as well as with real traffic controllers, given that there is an interface for relaying them to the controller (this part is not provided at the time of writing due to IP restrictions).
-
-**UI** is a simple user intraface providing monitoring and limited managemen fore the other services. In essence, this is a web server connectiong to the backend NATS-broker and providing an user interface accessible with a browser.
-
 # Basic usage
 
 The open controller can be used in several ways. When starting a new project it is recommended to test evarything within simulation. 
@@ -40,31 +18,63 @@ The available modes for using open controller are the following:
 4) Live operation (controlling the traffic in the field).
 
 The easiest way is to start with the integrated simulation, which is most often used to evaluate the performance of the signal control.
-The second step is to use the distributed simulation, in which the simulation is separated from the controller. This way it is possibkle 
+The second option is to use the distributed simulation, in which the simulation is separated from the controller. This way it is possible 
 to test that the communication and messages needed in the actual signal control are working properly.
-Ther third step is the Hardware-in-the-loop simulation, which is similar to distributed simulation, except thast the actual signal controller
-device is included in the simulation. This way everything can be tested to the last detail before live operation.
-In live signal control in the field, the simulagtor is no more involved. All the inputs are coming from real sensors and the signal control
-output commands go the the actual road side device which carries out the control of the real traffic.
+
+The third option is the Hardware-in-the-loop simulation, which is similar to the distributed simulation, except thast the actual signal controller
+device is included in the control loop. This way everything can be tested to the last detail before live operation.
+The last option is live signal control in the field, in which the simulagtor is no more involved. All the inputs are coming from real sensors and the signal control
+output commands are sent the the actual road side device, which carries out the control of the real traffic.
+
+It should be noted that the options 3 and 4 cannot be used without interface component to the signal controller device. For safety
+reasons this component is not publically open. Only the City of Helsinki can provide access to the real signal controller.
 
 
-## Running the integrated version
+## Using the integrated version
 
-The most simple way of running open controller is so called integrated simulation. In this case, only one configuration file is needed,
-namely the one for the clockwork. 
+The most simple way of running open controller is so called integrated simulation. In this case, no communication channels are needed
+between the controller and simulation, because the the open controller access the simulator using direct commands through Traci-interface.
+
+To run the opne controller in integrated mode, you call the controller in python and give a configuration file name and path as 
+command line parameter. See the example below. 
 
 ```json
 python src/clockwork/clockwork.py --conf-file=models/testmodel/oc_demo_basic.json 
 ```
 
-The configuration file involves everything needed to run the open controller with Sumo. Inside the config-file there is row
-for defining the Sumo-model used. 
+The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file can
+be given within the open controller configuration file or as command line paramter.
 
+The open controller takes a time step (default value = 0.1 sec), reads the detector data from Sumo and updates its own internal states. 
+Finally it send the new traffic signal states to the Sumo and continues with next update.
 The integrated simulation can be run in real-time or with full speed depending on the available computing power.
 
 
 
-## Running the distributed version
+## Using the distributed version
+
+### What comes with the package
+The open controller system conists of separate services communcating with each other via bub/sum messages (see Figure 1). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
+
+- **Simengine**, a sumo simulation environment with Open Controller interfaces
+- **Clockwork**, the traffic light controller
+- **UI**, an user interface for monitoring and controlling the services
+
+![Open Controller Docker Services](/doc/images/OC_Docker_Services.png)
+*Figure 1: Open Controller Standard Services*
+
+**Simengine** is a service for running [SUMO](https://eclipse.dev/sumo/) simulation in real time and providing interface for exchang messages between the Sumo model and other applications and services. The simulation works as a simulated "reality" and provides similar outputs one would be getting from a field devices, namely:
+
+- *Detector statuses* (induction detector determining if there is a vehicle over certain area)
+- *Signal Group statuses* (status of traffic lights), and
+- *Radar statuses* (object list of vehicles in pre-detemind area)
+
+In addittion, simclient can also receive *Signal Group control* messsages dictating the statuses of the signal groups (traffic lights) in the model. This is to be used for controlling the traffic controllers in the simulation model.
+
+**Clockwork** is a traffic light controller that subscribes to data inputs (e.g. detector statuses) and provides signal contol commands (*Signal Group Control* messages) as an output. It should be noted that this unit can be used both with a simulator as well as with real traffic controllers, given that there is an interface for relaying them to the controller (this part is not provided at the time of writing due to IP restrictions).
+
+**UI** is a simple user intraface providing monitoring and limited managemen fore the other services. In essence, this is a web server connectiong to the backend NATS-broker and providing an user interface accessible with a browser.
+
 
 In order to run the basic system you need to have [docker](https://docs.docker.com/get-started/get-docker/) installed into your system. 
 
