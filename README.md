@@ -17,17 +17,19 @@ The available modes for using open controller are the following:
 3) Hardware-in-the-loop simulation
 4) Live operation (controlling the traffic in the field).
 
-The easiest way is to start with the integrated simulation, which is most often used to evaluate the performance of the signal control.
+The easiest way to get started with the open controller is the option 1 (the integrated simulation), which is commonly used for evaluating the performance of the signal control.
+
 The second option is to use the distributed simulation, in which the simulation is separated from the controller. This way it is possible 
 to test that the communication and messages needed in the actual signal control are working properly.
 
 The third option is the Hardware-in-the-loop simulation, which is similar to the distributed simulation, except thast the actual signal controller
 device is included in the control loop. This way everything can be tested to the last detail before live operation.
+
 The last option is live signal control in the field, in which the simulagtor is no more involved. All the inputs are coming from real sensors and the signal control
 output commands are sent the the actual road side device, which carries out the control of the real traffic.
 
 It should be noted that the options 3 and 4 cannot be used without interface component to the signal controller device. For safety
-reasons this component is not publically open. Only the City of Helsinki can provide access to the real signal controller.
+reasons this component is not publicly open. Only the City of Helsinki can provide access to the real signal controller.
 
 
 ## Using the integrated version
