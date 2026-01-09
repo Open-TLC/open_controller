@@ -159,7 +159,10 @@ This is usefull especially when running only one part of the Open Controller pac
 
 [comment]: <> (Installation to a local machine here)
 
+
 ## Configuration
+
+[Configuration instructions](https://github.com/Open-TLC/open_controller/blob/main/doc/clockwork/configuration.md)
 
 [comment]: <> (Command line arguments under this also)
 
