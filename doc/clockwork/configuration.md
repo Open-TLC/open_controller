@@ -123,12 +123,21 @@ Example of general settings
 *Table X: Timer settings*
 | Key | Value |
 |-------|-------------|
-| *"timer_mode"* | "fixed" / "real" |
-| time_step | in seconds |
-| *real_time_multiplier* | x times faster than real-time|
+| "timer_mode" | "fixed" / "real" |
+| "time_step" | in seconds |
+| "real_time_multiplier" | x times faster than real-time|
 
 If timer_mode is "fixed" then the simulation is run as fast as possible, but if the mode is "real" the the simulation proceed in "normal" time.
 The time_step is given in seconds (default value 0.1 seconds). Real time multiplier can be used speed up the simulation by a factor for example 2.
+
+*Table X: Sumo settings*
+| Key | Value | Comment |
+|-------|-------------|----------------------------------------------|
+| "graph" | "True" / "False" | Graphics visualization on/off |
+| "file_name" | "../testmodels/demo.sumocfg" | path and file name to the Sumo-configuration file (.sumocfg) |
+| "print_status | "True" / "False" | "Printing to console on/off |
+
+
 
 
 ## The basic functions
