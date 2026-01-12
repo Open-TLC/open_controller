@@ -152,6 +152,11 @@ The messages can be sent based on changes in the status or per each update.
 | "port" | "4222" | Port number |
 | "mode" | "change" / "update" | Sending the data per every update or only when there is a change in status |
 
+Other general setting involve for example the operation mode. This feature is currently used for testing only (="test"),
+in which case there can be some functionalities which are currently testing phase. The "V2X_mode" is a sets ON the special
+features related to the safety green extension through the V2X-communication". The "vis_mode" is used to visualize the
+internal states of the traffic signals by coloring the vehicles controlled by the signal based on the signal state. 
+
 *Table X: Other settings*
 | Key | Value | Comment |
 |-------|-------------|----------------------------------------------|
