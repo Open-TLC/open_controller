@@ -120,8 +120,8 @@ Example of general settings
 },
 ```
 Timer is controlling the speed of the simulation and controller. 
-If timer_mode is "fixed" then the simulation is run as fast as possible, but if the mode is "real" the the simulation proceed in "normal" time.
-The time_step is given in seconds (default value 0.1 seconds). Real time multiplier can be used speed up the simulation by a factor for example 2.
+If the "timer_mode" is "fixed" then the simulation is run as fast as possible, but if the mode is "real" the the simulation proceed with speed of the "normal" time.
+The "time_step" is given in seconds (default value 0.1 seconds). The "real_time_multiplier" can be used speed up the simulation by a given factor for example 2.
 
 *Table X: Timer settings*
 | Key | Value |
@@ -131,18 +131,18 @@ The time_step is given in seconds (default value 0.1 seconds). Real time multipl
 | "real_time_multiplier" | x times faster than real-time|
 
 Sumo is the simulator started by the Open Controller. A correct path and file name must be given to run the Open Controller.
-If the graph mode is ON, then the simulation is visualized on the screen. If the print_status is ON then status information is
-printed on the screen: time, signal states, request status, extension status etc.
+If the "graph_mode" is "true", then the simulation is visualized on the screen. If the "print_status" is "true" then status information is
+printed on the screen including data like time, signal states, request status, extension status etc.
 
 *Table X: Sumo settings*
 | Key | Value | Comment |
 |-------|-------------|----------------------------------------------|
-| "graph" | "True" / "False" | Graphics visualization on/off |
+| "graph" | "true" / "false" | Graphics visualization on/off |
 | "file_name" | "../testmodels/demo.sumocfg" | path and file name to the Sumo-configuration file (.sumocfg) |
-| "print_status" | "True" / "False" | Printing to console on/off |
+| "print_status" | "true" / "false" | Printing to console on/off |
 
-NATS is a server which provides communication services between software components based on publish and subscribe principle.
-The "server" defines the IP-address of the NATS-server ("localhost" means that the server is in the local computer").
+NATS is a server which provides communication services between various software components based on publish and subscribe principle.
+The "server" defines the IP-address of the NATS-server ("localhost" means that the server is in the local computer).
 The messages can be sent based on changes in the status or per each update.
 
 *Table X: NATS settings*
@@ -153,15 +153,15 @@ The messages can be sent based on changes in the status or per each update.
 | "mode" | "change" / "update" | Sending the data per every update or only when there is a change in status |
 
 Other general setting involve for example the operation mode. This feature is currently used for testing only (="test"),
-in which case there can be some functionalities which are currently testing phase. The "V2X_mode" is a sets ON the special
-features related to the safety green extension through the V2X-communication". The "vis_mode" is used to visualize the
+in which case there can be some functionalities, which are currently testing phase. The "V2X_mode" is "true" then special
+features related to the safety green extension through the V2X-communication is set on. The "vis_mode" is used to visualize the
 internal states of the traffic signals by coloring the vehicles controlled by the signal based on the signal state. 
 
 *Table X: Other settings*
 | Key | Value | Comment |
 |-------|-------------|----------------------------------------------|
 | "operation_mode" | "test" | This feature is currently not in use |
-| "v2x_mode" | "True" / "False" | Setting on/off the safety extension through the V2X |
+| "v2x_mode" | "true" / "false" | Setting on/off the safety extension through the V2X |
 | "vis_mode" | "off" / "main_states" / "sub_states" | Visualizing the signal states by color of the controlled vehicles |
 
 
