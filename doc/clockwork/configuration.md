@@ -119,6 +119,9 @@ Example of general settings
     "print_status": true
 },
 ```
+Timer is controlling the speed of the simulation and controller. 
+If timer_mode is "fixed" then the simulation is run as fast as possible, but if the mode is "real" the the simulation proceed in "normal" time.
+The time_step is given in seconds (default value 0.1 seconds). Real time multiplier can be used speed up the simulation by a factor for example 2.
 
 *Table X: Timer settings*
 | Key | Value |
@@ -127,8 +130,9 @@ Example of general settings
 | "time_step" | in seconds |
 | "real_time_multiplier" | x times faster than real-time|
 
-If timer_mode is "fixed" then the simulation is run as fast as possible, but if the mode is "real" the the simulation proceed in "normal" time.
-The time_step is given in seconds (default value 0.1 seconds). Real time multiplier can be used speed up the simulation by a factor for example 2.
+Sumo is the simulator started by the Open Controller. A correct path and file name must be given to run the Open Controller.
+If the graph mode is ON, then the simulation is visualized on the screen. If the print_status is ON then status information is
+printed on the screen: time, signal states, request status, extension status etc.
 
 *Table X: Sumo settings*
 | Key | Value | Comment |
