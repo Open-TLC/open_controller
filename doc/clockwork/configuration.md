@@ -141,6 +141,9 @@ printed on the screen: time, signal states, request status, extension status etc
 | "file_name" | "../testmodels/demo.sumocfg" | path and file name to the Sumo-configuration file (.sumocfg) |
 | "print_status" | "True" / "False" | Printing to console on/off |
 
+NATS is a server which provides communication services between software components based on publish and subscribe principle.
+The "server" defines the IP-address of the NATS-server ("localhost" means that the server is in the local computer").
+The messages can be sent based on changes in the status or per each update.
 
 *Table X: NATS settings*
 | Key | Value | Comment |
