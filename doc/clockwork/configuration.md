@@ -97,9 +97,7 @@ In the example below, not all items withing the sections are shown to keep the f
 
 ## General settings
 
-
-
-
+Example of general settings
 ```json
 "timer":{
     "timer_mode": "fixed",
