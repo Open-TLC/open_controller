@@ -129,6 +129,9 @@ In the example below, not all items withing the sections are shown to keep the f
 | time_step | in seconds |
 | *real_time_multiplier* | x times faster than real-time|
 
+If timer_mode is "fixed" then the simulation is run as fast as possible, but if the mode is "real" the the simulation proceed in "normal" time.
+The time_step is given in seconds (default value 0.1 seconds). Real time multiplier can be used speed up the simulation by a factor for example 2.
+
 
 ## The basic functions
 
