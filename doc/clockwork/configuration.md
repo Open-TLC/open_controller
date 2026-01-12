@@ -145,7 +145,12 @@ The time_step is given in seconds (default value 0.1 seconds). Real time multipl
 | "port" | "4222" | Port number |
 | "mode" | "change" / "update" | Sending the data per every update or only when there is a change in status |
 
-
+*Table X: Other settings*
+| Key | Value | Comment |
+|-------|-------------|----------------------------------------------|
+| "operation_mode" | "test" | This feature is currently not in use |
+| "v2x_mode" | "True" / "False" | Setting on/off the safety extension through the V2X |
+| "vis_mode" | "off" / "main_states" / "sub_states" | Visualizing the signal states by color of the controlled vehicles |
 
 
 ## The basic functions
