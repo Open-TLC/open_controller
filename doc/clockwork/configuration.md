@@ -135,7 +135,15 @@ The time_step is given in seconds (default value 0.1 seconds). Real time multipl
 |-------|-------------|----------------------------------------------|
 | "graph" | "True" / "False" | Graphics visualization on/off |
 | "file_name" | "../testmodels/demo.sumocfg" | path and file name to the Sumo-configuration file (.sumocfg) |
-| "print_status | "True" / "False" | "Printing to console on/off |
+| "print_status" | "True" / "False" | Printing to console on/off |
+
+
+*Table X: NATS settings*
+| Key | Value | Comment |
+|-------|-------------|----------------------------------------------|
+| "server" | "10.8.0.36" / "localhost" | The address of the NATS-server |
+| "port" | "4222" | Port number |
+| "mode" | "change" / "update" | Sending the data per every update or only when there is a change in status |
 
 
 
