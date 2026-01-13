@@ -15,6 +15,16 @@ defined the section "inputs" The radars are specified in the
 "radars" section, but the radars actually used are listed
 in the "rad_outputs" section. 
 
+The detector and signal outputs have the value for "trigger".
+If the value is "change" then new message is sent only when the status has changed.
+The value "update" means the that new message is sent per each update of the simengine.
+The "update" mode can generate a lot of redundant messages, but with radars only the "update" mode is used.
+
+There is also a mapping mode for the detector and signal data. 
+The mode "direct" means that the Sumo-name is used directly in the output message. 
+Otherwise a mapping is needed, which is a lookup table converting the Sumo-name to something else.
+
+
 ```json
 {
 "simulation":{
@@ -59,7 +69,11 @@ in the "rad_outputs" section.
         "radars": ["int_266_1", "int_266_3", "int_267_3", "int_267_1", "int_267_2"]
     }
 },
+```
 
+
+
+```json
 "inputs":{
     "sig_inputs": {
         "type": "group",
@@ -75,7 +89,11 @@ in the "rad_outputs" section.
         }
     }
 },
+```
 
+
+
+```json
 "radars":{
     "int_266_1":{
         "sink_id": 1,
@@ -100,33 +118,6 @@ in the "rad_outputs" section.
             "-Mech07_2": 1,
             "-Mech06_3": 0,
             "-Mech07_3": 0          
-            }
-        },
-
-   
-    "int_266_3":{
-        "sink_id": 3,
-        "service": "nats_server",
-        "topic": "radar.266.3.objects_port.json",
-        "data_type": "geo",
-        "source": "sumo_radar",
-        "trigger": "update",
-        "area_of_interest": [
-            [60.164259, 24.920621],
-            [60.16415219789967, 24.917593344944827],
-            [60.164421523847004, 24.917530151519223],
-            [60.16450395728876, 24.920611991105122]
-            ],
-        "description": "266 West, approaching",
-        "lane_map":{
-            "Mech_ramppi02_0": 3,
-            "Mech_ramppi03_0": 3,
-            "Mech_ramppi02_1": 2,
-            "Mech_ramppi03_1": 2,
-            "Mech_ramppi02_2": 1,
-            "Mech_ramppi03_2": 1,
-            "Mech_ramppi02_3": 0,
-            "Mech_ramppi03_3": 0
             }
         }
     }
