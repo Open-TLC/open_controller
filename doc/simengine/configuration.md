@@ -24,6 +24,10 @@ There is also a mapping mode for the detector and signal data.
 The mode "direct" means that the Sumo-name is used directly in the output message. 
 Otherwise a mapping is needed, which is a lookup table converting the Sumo-name to something else.
 
+The NATS-channel name (or topic) consists of prefix and the name of the detector or signal group.
+Each message-type has its own "topic_prefix", which indicates how the message is processed in the receiving end.
+For example "detector.control" prefix is used in the hardware-in-the-loop simulation to control the
+detector states of the real signal controller. If only detector status is needed, then the prefix would be "detector.status".
 
 ```json
 {
@@ -53,7 +57,7 @@ Otherwise a mapping is needed, which is a lookup table converting the Sumo-name 
         "type": "group",
         "trigger": "change",
         "controller_mapping_mode": "direct",
-        "topic_prefix": "group.data",
+        "topic_prefix": "group.status",
         "controller_map": {
             "1": "266"
         },
@@ -70,7 +74,11 @@ Otherwise a mapping is needed, which is a lookup table converting the Sumo-name 
     }
 },
 ```
-
+The input side of the simengine is configured in the "inputs" section. 
+Traffic signal inputs from the controller are configured within the section "sig_inputs".
+The key values are same than with the outputs. 
+In most cases the mapping modes are of type "direct" meaning that there is
+no mapping between names in Sumo and the Open Controller. 
 
 
 ```json
@@ -78,7 +86,7 @@ Otherwise a mapping is needed, which is a lookup table converting the Sumo-name 
     "sig_inputs": {
         "type": "group",
         "trigger": "update",
-        "topic_prefix": "group.status",
+        "topic_prefix": "group.control",
         "controller_mapping_mode": "direct",
         "controller_map": {
             "266": "1"
@@ -90,8 +98,16 @@ Otherwise a mapping is needed, which is a lookup table converting the Sumo-name 
     }
 },
 ```
-
-
+Each radar is defined in its own section starting with key value thast is the name of the radar.
+Any number of radars can be predefined, but only the ones lited in the "rad_outputs" sections will be used.
+Here the topic has fixed prefix "radar", but the full topic name has to be given under the "topic". 
+The topic name consists of "radar" + "intersection number" + "radar number" + "object_port.json".
+The "area_of_interest" is a polygon of geocoordinates. The polygon can have any number of points. 
+Only vehicles inside the polygon will be counted in and sent out through the NATS-channel. 
+In Sumo the lanes are defined bya string consisting of edge-name + "-" + lane number. 
+The lane mapping is needed especially if the controller is intended for live control in the field.
+In that case, the Sumo-lane are mapped to radar-lanes of the real radars in the field. 
+This way the simulated controller will work directly in the field. 
 
 ```json
 "radars":{
