@@ -1,5 +1,20 @@
 # Simengine configuration
 
+The simulation engine uses a json-configuration file. 
+In section "simulation" the Sumo-configuration file is defined (sumocfg).
+The Sumo-model can involve one or more intersections. 
+All the sensors and detectors should have unique names.
+Currently one "mode" is supported namely "nats". 
+All the messages go through the nats message broker.
+For the nats-server you have define an IP-address and port number. 
+
+Therest of the file is divided into the following sections.
+In the section "outputs" all outputs are defined including
+detectors, signals and radars. The signal control inputs are
+defined the section "inputs" The radars are specified in the 
+"radars" section, but the radars actually used are listed
+in the "rad_outputs" section. 
+
 ```json
 {
 "simulation":{
