@@ -97,6 +97,8 @@ In the example below, not all items withing the sections are shown to keep the f
 
 ## General settings
 
+General settings are related to the controller and simulation as a whole. They involve setting various features on and off.
+
 Example of general settings
 ```json
 "timer":{
