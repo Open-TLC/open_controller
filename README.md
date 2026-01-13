@@ -166,9 +166,9 @@ This is usefull especially when running only one part of the Open Controller pac
 
 ## Simulation engine
 
-The simulation engine (simengine for short) is a software component that runs the Sumo and generates the detector and sensor messages to the controller.
-The simengine can also receive messages which control the traffic signals or vehicles (through V2X).
-[Configuration of the simengine](https://github.com/Open-TLC/open_controller/blob/main/doc/simengine/configuration.md)
+The simulation engine (simengine for short) is a software component that runs the Sumo traffic simulator, collects data from detectors and sensors 
+and generates the messages to the controller through NATS. The simengine can also receive messages which control the traffic signals or vehicles (through V2X).
+Instructions for configuration can be found here: [Configuration of the simengine](https://github.com/Open-TLC/open_controller/blob/main/doc/simengine/configuration.md)
 
 ## Traffic Indicators
 
