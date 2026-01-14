@@ -44,7 +44,19 @@
 <flow id="F_Vali2Jatk"  from="Vali10" to="Jatk02" route="Vali2Jatk"  begin="30" end="360000" type="car_type" color="255,0,0" probability="0.05"></flow>
 
 
+
 <!---
+
+<vehicle id="jatk1" depart="9"   route="Jatk2Sat"  departPos="25"  departLane="0"/>
+
+<vehicle id="v2x_car_2"  depart="83"   route="Sat2Jatk"  type="v2x_car" departPos="25"  departLane="2"/>
+
+<vehicle id="jatk2" depart="12"  route="Jatk2Vali" departPos="25"  departLane="0"/>
+
+<vehicle id="vali1" depart="15"  route="Vali2Sat"  departPos="25"  departLane="0"/>
+
+<vehicle id="vali2" depart="18"  route="Vali2Jatk" departPos="25"  departLane="0"/>
+<vehicle id="v2x_car_1"  depart="1"   route="Jatk2Sat"  type="v2x_car" departPos="25"  departLane="0"/>
 
 
 >>>>>>> 173ad84d8092218f6902b809abef87682404e34f
