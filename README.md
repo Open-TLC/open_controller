@@ -41,9 +41,9 @@ between the controller and simulation, because the the open controller access th
 To run the opne controller in integrated mode, you call the controller in python and give a configuration file name and path as 
 command line parameter. See the example below. 
 
-```json
-python src/simengine/simengine_integrated.py --conf-file=models/testmodel/oc_demo.json 
-```
+
+    python src/simengine/simengine_integrated.py --conf-file=models/testmodel/oc_demo.json 
+
 
 The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file can
 be given within the open controller configuration file or as command line paramter. Sumo can be run with or without
@@ -63,13 +63,10 @@ In simulation it is possible to run several open controllers at the same time. I
 The multi-sumo version runn by default in console mode only. This way it can use the LibSumo component instead of Traci, which makes it much faster.
 If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py.
 
-```json
-python src/clockwork/multi_sumo_interface.py --conf-file=models/testmodel/oc_demo.json 
-```
+    python src/clockwork/multi_sumo_interface.py --conf-file=models/testmodel/oc_demo.json 
 
-```json
-python src/clockwork/multi_sumo_int_graph.py --conf-file=models/testmodel/oc_demo.json 
-```
+    python src/clockwork/multi_sumo_int_graph.py --conf-file=models/testmodel/oc_demo.json 
+
 
 ## Using the distributed version
 
