@@ -2,9 +2,101 @@
 
 # About 
 
-This is the main repository of Open Controller, an open source traffic light controller.  **
+This is the main repository of Open Controller, an open source traffic light controller. 
+To get started clone the open controller repository to your own local computer. 
 
-# Quickstart
+# Basic usage
+
+The open controller can be used in several ways. When starting a new project it is recommended to test evarything within simulation. 
+The simulator used with open controller is [SUMO](https://eclipse.dev/sumo/) "Simulation of Urban MObility". Sumo is an open source
+traffic simulator which comes with many features useful in running and testing the open controller. Sumo offers and interface called
+Traci to let the open controller to communicate with the simulator.
+
+The available modes for using open controller are the following:
+1) Integrated simulation
+2) Distributed simulation
+3) Hardware-in-the-loop simulation
+4) Live operation (controlling the traffic in the field).
+
+The easiest way to get started with the open controller is the option 1 (the integrated simulation), which is commonly used for evaluating the performance of the signal control.
+
+The second option is to use the distributed simulation, in which the simulation is separated from the controller. This way it is possible 
+to test that the communication and messages needed in the actual signal control are working properly.
+
+The third option is the Hardware-in-the-loop simulation, which is similar to the distributed simulation, except thast the actual signal controller
+device is included in the control loop. This way everything can be tested to the last detail before live operation.
+
+The last option is live signal control in the field, in which the simulagtor is no more involved. All the inputs are coming from real sensors and the signal control
+output commands are sent the the actual road side device, which carries out the control of the real traffic.
+
+It should be noted that the options 3 and 4 cannot be used without interface component to the signal controller device. For safety
+reasons this component cannot be shared publicly. Only the City of Helsinki can provide access to the real signal controllers.
+
+
+## Using the integrated version
+
+The most simple way of running open controller is so called integrated simulation. In this case, no communication channels are needed
+between the controller and simulation, because the the open controller access the simulator using direct commands through Traci-interface.
+
+To run the opne controller in integrated mode, you call the controller in python and give a configuration file name and path as 
+command line parameter. See the example below. 
+
+```json
+python src/simengine/simengine_integrated.py --conf-file=models/testmodel/oc_demo.json 
+```
+
+The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file can
+be given within the open controller configuration file or as command line paramter. Sumo can be run with or without
+graphic display. This can also be defined in the command line or in the open controller configuration (see below).
+
+```json
+"sumo":{
+    "graph" : true,
+    "file_name": "models/testmodel/oc_demo.sumocfg"
+```
+
+The open controller takes a time step (default value = 0.1 sec), reads the detector data from Sumo and updates its own internal states. 
+Finally it send the new traffic signal states to the Sumo and continues with next update.
+The integrated simulation can be run in real-time or with full speed depending on the available computing power.
+
+In simulation it is possible to run several open controllers at the same time. In this case another Python script is used (multi_sumo_interface.py).
+The multi-sumo version runn by default in console mode only. This way it can use the LibSumo component instead of Traci, which makes it much faster.
+If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py.
+
+```json
+python src/clockwork/multi_sumo_interface.py --conf-file=models/testmodel/oc_demo.json 
+```
+
+```json
+python src/clockwork/multi_sumo_int_graph.py --conf-file=models/testmodel/oc_demo.json 
+```
+
+## Using the distributed version
+
+### What comes with the package
+The open controller system conists of separate services communcating with each other via bub/sum messages (see Figure 1). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
+
+- **Simengine**, a sumo simulation environment with Open Controller interfaces
+- **Traffic Indicators**, processing the sensor data into traffic situation indicators 
+- **User Interface**, an user interface for monitoring and controlling the services
+
+![Open Controller Docker Services](/doc/images/OC_Docker_Services.png)
+*Figure 1: Open Controller Standard Services*
+
+**Simengine** is a service for running [SUMO](https://eclipse.dev/sumo/) simulation in real time and providing interface for exchang messages between the Sumo model and other applications and services. The simulation works as a simulated "reality" and provides similar outputs one would be getting from a field devices, namely:
+
+- *Detector statuses* (induction detector determining if there is a vehicle over certain area)
+- *Signal Group statuses* (status of traffic lights), and
+- *Radar statuses* (object list of vehicles in pre-detemind area)
+
+In addittion, simengine can also receive *Signal Group control* messsages dictating the statuses of the signal groups (traffic lights) in the model. This is to be used for controlling the traffic controllers in the simulation model.
+
+**Traffic Indicators** is processing the sensor data into traffic indicators which can be used as input for the signal control. Traffic indicators is not needed if only detector data is used as input. When rradar or camera data is used, then the traffic indicators component is needed.
+
+**Clockwork** is a traffic light controller that subscribes to data inputs (e.g. detector statuses) and provides signal contol commands (*Signal Group Control* messages) as an output. It should be noted that this unit can be used both with a simulator as well as with real traffic controllers, given that there is an interface for relaying them to the controller (this part is not provided at the time of writing due to IP restrictions).
+
+**User Interface** is a simple user intraface providing monitoring and limited managemen fore the other services. In essence, this is a web server connectiong to the backend NATS-broker and providing an user interface accessible with a browser.
+
 
 In order to run the basic system you need to have [docker](https://docs.docker.com/get-started/get-docker/) installed into your system. 
 
@@ -23,33 +115,8 @@ After this you should be able to see the user interface via [http://127.0.0.1:80
 
 One should note that the simulation model in this example is ran inside a container without a UI, if you wish to see the intersection in operation, you will need to run the Sumo and simengine in your local computer in the graphical mode. How to do this is explained in [here](#installing-and-running-simengine-in-local-computer)
 
-
-# Basic usage
-## What comes with the package
-The open controller system conists of separate services communcating with each other via bub/sum messages (see Figure 1). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
-
-- **Simclient**, a sumo simulation environment with Open Controller interfaces
-- **Clockwork**, the traffic light controller
-- **UI**, an user interface for monitoring and controlling the services
-
-![Open Controller Docker Services](/doc/images/OC_Docker_Services.png)
-*Figure 1: Open Controller Standard Services*
-
-**Simclient** is a service for running [SUMO](https://eclipse.dev/sumo/) simulation in real time and providing interface for exchang messages between the Sumo model and other applications and services. The simulation works as a simulated "reality" and provides similar outputs one would be getting from a field devices, namely:
-
-- *Detector statuses* (induction detector determining if there is a vehicle over certain area)
-- *Signal Group statuses* (status of traffic lights), and
-- *Radar statuses* (object list of vehicles in pre-detemind area)
-
-In addittion, simclient can also receive *Signal Group control* messsages dictating the statuses of the signal groups (traffic lights) in the model. This is to be used for controlling the traffic controllers in the simulation model.
-
-**Clockwork** is a traffic light controller that subscribes to data inputs (e.g. detector statuses) and provides signal contol commands (*Signal Group Control* messages) as an output. It should be noted that this unit can be used both with a simulator as well as with real traffic controllers, given that there is an interface for relaying them to the controller (this part is not provided at the time of writing due to IP restrictions).
-
-**UI** is a simple user intraface providing monitoring and limited managemen fore the other services. In essence, this is a web server connectiong to the backend NATS-broker and providing an user interface accessible with a browser.
-
-
-## Operaing the user interface
-Likely the fist use of the system is to be done via the UI component. When the system is run, one can access it in the localhost port 8050 (i.e. [http://127.0.0.1:8050](http://127.0.0.1:8050)) 
+## Operating the user interface
+Likely the first use of the system is to be done via the UI component. When the system is run, one can access it in the localhost port 8050 (i.e. [http://127.0.0.1:8050](http://127.0.0.1:8050)) 
 
 ## Monitoring the messages
 In order to monitor the messages, you will need a nats-client. Installing this depends on your operating system, and the instructions can be found [here](https://docs.nats.io/running-a-nats-service/clients). It should be noted that the server itself is not needed, since it will be provided in it's own container and accessibles via the standard port in the host. That is, you can subscribe to all the NATS-messages by iussuing a command
@@ -102,23 +169,30 @@ This is usefull especially when running only one part of the Open Controller pac
 
 [comment]: <> (Installation to a local machine here)
 
-## Configuration
+
+# Configuration
 
 [comment]: <> (Command line arguments under this also)
 
-### Simengine
+## Simulation engine
 
-### The Controller (Clockwork)
+The simulation engine (simengine for short) is a software component that runs the Sumo traffic simulator, collects data from detectors and sensors 
+and generates the messages to the controller through NATS. The simengine can also receive messages which control the traffic signals or vehicles (through V2X).
+Instructions for configuration can be found here: [Configuration of the simengine](https://github.com/Open-TLC/open_controller/blob/main/doc/simengine/configuration.md)
 
-### User Interface
+## Traffic Indicators
 
+## The Controller (Clockwork)
+
+The traffic signal controller (also referred as the clockwork) can be configured by using the following instructions: 
+[Configuration of the controller](https://github.com/Open-TLC/open_controller/blob/main/doc/clockwork/configuration.md)
+
+## User Interface
 
 # Documentation and further reading
 
 [comment]: <> (Links to : sysarch, theory and maybe to something else)
 
-
-    
 
 # License
 
