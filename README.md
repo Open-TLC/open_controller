@@ -190,6 +190,9 @@ The traffic signal controller (also referred as the clockwork) can be configured
 
 [comment]: <> (Links to : sysarch, theory and maybe to something else)
 
+# Links and other material
+
+The [Open Controller web page](https://www.opencontroller.org): 
 
 # License
 
