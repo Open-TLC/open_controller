@@ -1,12 +1,14 @@
-![Open Controller Logo](/src/ui/assets/OC_logo_green_horizontal.jpg)
+9(![Open Controller Logo](/src/ui/assets/OC_logo_green_horizontal.jpg)
 
 # About 
 
 This is the main repository of Open Controller, an open source traffic light controller. 
 The main idea of the open controller is to separate the data processing from signal control, which
 makes it possible to develope new algorithms for traffic signal control.
-The Open controller was developed in [Smart Junction](https://www.aalto.fi/en/department-of-built-environment/smart-junction) project in co-operation between City of Helsinki,
-Aalto University and Conveqs Oy. During the project a new control algorithm was developed
+The Open controller was developed in [Smart Junction](https://www.aalto.fi/en/department-of-built-environment/smart-junction) project in co-operation between 
+[City of Helsinki](https://www.hel.fi/en/decision-making/city-organisation/divisions/urban-environment-division), 
+[Aalto University](https://www.aalto.fi/en/department-of-built-environment/spatial-planning-and-transportation-engineering) and 
+[Conveqs Oy](https://www.conveqs.fi). During the project a new control algorithm was developed
 which is based on holistic undestanding of the traffic situation in real-time. 
 The holistic traffic situation is based on ordinary detectors and new sensors like radars and cameras.
 
