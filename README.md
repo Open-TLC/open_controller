@@ -2,10 +2,10 @@
 
 # About 
 
-Open Controller is an open source software for traffic signal control. 
+This is the main repository of Open Controller, an open source traffic light controller. 
 The main idea of the open controller is to separate the data processing from signal control, which
 makes it possible to develope new algorithms for traffic signal control.
-Oprn controller was developed in the Smart Junction project in co-operation between City of Helsinki,
+The Open controller was developed in [Smart Junction](https://www.aalto.fi/en/department-of-built-environment/smart-junction) project in co-operation between City of Helsinki,
 Aalto University and Conveqs Oy. During the project a new control algorithm was developed
 which is based on holistic undestanding of the traffic situation in real-time. 
 The holistic traffic situation is based on ordinary detectors and new sensors like radars and cameras.
@@ -14,11 +14,10 @@ The holistic traffic situation is based on ordinary detectors and new sensors li
 *Figure 1: Overview of the Open Controller*
 
 
-This is the main repository of Open Controller, an open source traffic light controller. 
-To get started clone the open controller repository to your own local computer. 
 
 # Basic usage
 
+To get started clone the open controller repository to your own local computer. 
 The open controller can be used in several ways. When starting a new project it is recommended to test evarything within simulation. 
 The simulator used with open controller is [SUMO](https://eclipse.dev/sumo/) "Simulation of Urban MObility". Sumo is an open source
 traffic simulator which comes with many features useful in running and testing the open controller. Sumo offers and interface called
