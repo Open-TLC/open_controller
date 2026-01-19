@@ -55,7 +55,7 @@ To run the opne controller in integrated mode, you call the controller in python
 command line parameter. See the example below. 
 
 
-    python src/simengine/simengine_integrated.py --conf-file=models/testmodel/oc_demo.json 
+    python src/simengine/simengine_integrated.py --conf-file=models/JS270_DEMO/JS270_DEMO.json 
 
 
 The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file can
