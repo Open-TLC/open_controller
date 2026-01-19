@@ -91,7 +91,7 @@ The open controller system consists of separate services communcating with each 
 - **User Interface**, an user interface for monitoring and controlling the services
 
 ![Open Controller Docker Services](/doc/images/OC_Docker_Services.png)
-*Figure 1: Open Controller Standard Services*
+*Figure 2: Open Controller Standard Services*
 
 **Simengine** is a service for running [SUMO](https://eclipse.dev/sumo/) simulation in real time and providing interface for exchang messages between the Sumo model and other applications and services. The simulation works as a simulated "reality" and provides similar outputs one would be getting from a field devices, namely:
 
