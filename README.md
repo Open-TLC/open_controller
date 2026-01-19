@@ -2,6 +2,18 @@
 
 # About 
 
+Open Controller is an open source software for traffic signal control. 
+The main idea of the open controller is to separate the data processing from signal control, which
+makes it possible to develope new algorithms for traffic signal control.
+Oprn controller was developed in the Smart Junction project in co-operation between City of Helsinki,
+Aalto University and Conveqs Oy. During the project a new control algorithm was developed
+which is based on holistic undestanding of the traffic situation in real-time. 
+The holistic traffic situation is based on ordinary detectors and new sensors like radars and cameras.
+
+![Open Controller Overview](/doc/images/OpenController_Overview.png)
+*Figure 1: Overview of the Open Controller*
+
+
 This is the main repository of Open Controller, an open source traffic light controller. 
 To get started clone the open controller repository to your own local computer. 
 
