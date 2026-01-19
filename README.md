@@ -65,7 +65,7 @@ graphic display. This can also be defined in the command line or in the open con
 ```json
 "sumo":{
     "graph" : true,
-    "file_name": "models/testmodel/oc_demo.sumocfg"
+    "file_name": "models/JS270_DEMO/cfgFiles/JS270_DEMO.sumocfg"
 ```
 
 The open controller takes a time step (default value = 0.1 sec), reads the detector data from Sumo and updates its own internal states. 
