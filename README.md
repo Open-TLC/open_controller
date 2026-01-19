@@ -20,7 +20,7 @@ The holistic traffic situation is based on ordinary detectors and on new sensor 
 # Basic usage
 
 To get started clone the open controller repository to your own local computer. 
-The open controller can be used in several ways. When starting a new project it is recommended to test evarything within simulation. 
+The open controller can be used in several ways. When starting a new project it is recommended to test everything within simulation. 
 The simulator used with open controller is [SUMO](https://eclipse.dev/sumo/) "Simulation of Urban MObility". Sumo is an open source
 traffic simulator which comes with many features useful in running and testing the open controller. Sumo offers and interface called
 Traci to let the open controller to communicate with the simulator.
@@ -84,7 +84,7 @@ If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py
 ## Using the distributed version
 
 ### What comes with the package
-The open controller system conists of separate services communcating with each other via bub/sum messages (see Figure 1). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
+The open controller system consists of separate services communcating with each other via bub/sum messages (see Figure 1). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
 
 - **Simengine**, a sumo simulation environment with Open Controller interfaces
 - **Traffic Indicators**, processing the sensor data into traffic situation indicators 
