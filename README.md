@@ -42,7 +42,7 @@ device is included in the control loop. This way everything can be tested to the
 The last option is live signal control in the field, in which the simulagtor is no more involved. All the inputs are coming from real sensors and the signal control
 output commands are sent the the actual road side device, which carries out the control of the real traffic.
 
-It should be noted that the options 3 and 4 cannot be used without interface component to the signal controller device. For safety
+It should be noted that the options 3 and 4 cannot be used without an interface component to the signal controller device. For safety
 reasons this component cannot be shared publicly. Only the City of Helsinki can provide access to the real signal controllers.
 
 
