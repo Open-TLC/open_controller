@@ -60,13 +60,14 @@ command line parameter. See the example below.
 The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file must
 be given within the open controller configuration file. The print-status-option sets open controller to print status data to the console.
 The graph-option puth the graphical mode on visualizing the intersection and traffic. The options can also be defined in the 
-open controller configuration (see below). Command-line options always overrules the configuration file settings. 
+sum-section of the open controller configuration (see below). Command-line options always overrules the configuration file settings. 
 
 ```json
 "sumo":{
     "print-status": true,
     "graph" : true,
     "file_name": "models/JS270_DEMO/cfgFiles/JS270_DEMO.sumocfg"
+    }
 ```
 
 The open controller takes a time step (default value = 0.1 sec), reads the detector data from Sumo and updates its own internal states. 
