@@ -78,8 +78,8 @@ In simulation it is possible to run several open controllers at the same time. I
 The multi-sumo version runs by default in the console mode only. This way it can use the LibSumo component instead of Traci, which makes it much faster.
 If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py command.
 
-python src/clockwork/multi_sumo_interface.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
-python src/clockwork/multi_sumo_int_graph.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
+    python src/clockwork/multi_sumo_interface.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
+    python src/clockwork/multi_sumo_int_graph.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
 
 
 ## Using the distributed version
