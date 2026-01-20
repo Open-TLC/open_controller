@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-01-20 13:12:27 by Eclipse SUMO GUI Version 1.22.0
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="models/JS270_DEMO/cfgFiles/../net/JS270_def.net.xml"/>
+        <route-files value="models/JS270_DEMO/cfgFiles/../rou/JS270_cars_trucks.rou.xml,models/JS270_DEMO/cfgFiles/ ../rou/JS270_trams2.rou.xml,models/JS270_DEMO/cfgFiles/ ../rou/JS270_bikes.rou.xml"/>
+        <additional-files value="models/JS270_DEMO/cfgFiles/../add/JR_vehicletypes.add.xml,models/JS270_DEMO/cfgFiles/ ../tll/ft270_1.tll.xml,models/JS270_DEMO/cfgFiles/ ../add/JS270_stations.add.xml,models/JS270_DEMO/cfgFiles/         ../add/JS270_e1_dets.add.xml,models/JS270_DEMO/cfgFiles/ ../add/JS270_e3s_dets.add.xml"/>
+    </input>
+
+    <output>
+        <output-prefix value="JS_"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="36000000"/>
+        <step-length value="0.1"/>
+    </time>
+
+    <processing>
+        <lateral-resolution value="0.5"/>
+        <ignore-route-errors value="0"/>
+        <collision.action value="warn"/>
+        <scale value="1.0"/>
+        <time-to-teleport value="300"/>
+        <random-depart-offset value="60"/>
+        <parking.maneuver value="false"/>
+    </processing>
+
+    <report>
+        <verbose value="t"/>
+        <no-step-log value="f"/>
+        <step-log.period value="1000"/>
+    </report>
+
+    <traci_server>
+        <remote-port value="52106"/>
+    </traci_server>
+
+    <gui_only>
+        <gui-settings-file value="models/JS270_DEMO/cfgFiles/../gui/JS270_near.guicfg.xml"/>
+        <quit-on-end value="true"/>
+        <start value="true"/>
+        <delay value="300"/>
+        <demo value="0"/>
+    </gui_only>
+
+</sumoConfiguration>
+-->
+
+<e3Detector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/det_e3_file.xsd">
+   <interval begin="0.00" end="81.40" id="e3Det_270_Tyyn" meanTravelTime="6.39" meanOverlapTravelTime="12.15" meanSpeed="6.34" meanHaltsPerVehicle="0.46" meanTimeLoss="8.23" vehicleSum="13" meanSpeedWithin="-1.00" meanHaltsPerVehicleWithin="-1.00" meanDurationWithin="-1.00" vehicleSumWithin="0" meanIntervalSpeedWithin="-1.00" meanIntervalHaltsPerVehicleWithin="-1.00" meanIntervalDurationWithin="-1.00" meanTimeLossWithin="-1.00"/>
+   <interval begin="0.00" end="81.40" id="e3Det_270_Tyyn_Left" meanTravelTime="15.20" meanOverlapTravelTime="24.44" meanSpeed="1.21" meanHaltsPerVehicle="1.00" meanTimeLoss="21.80" vehicleSum="4" meanSpeedWithin="4.20" meanHaltsPerVehicleWithin="0.50" meanDurationWithin="4.53" vehicleSumWithin="2" meanIntervalSpeedWithin="4.20" meanIntervalHaltsPerVehicleWithin="0.50" meanIntervalDurationWithin="4.53" meanTimeLossWithin="3.45"/>
+   <interval begin="0.00" end="81.40" id="e3Det_270_Jatk" meanTravelTime="4.61" meanOverlapTravelTime="5.61" meanSpeed="9.98" meanHaltsPerVehicle="0.00" meanTimeLoss="0.01" vehicleSum="2" meanSpeedWithin="0.94" meanHaltsPerVehicleWithin="1.00" meanDurationWithin="32.99" vehicleSumWithin="4" meanIntervalSpeedWithin="0.94" meanIntervalHaltsPerVehicleWithin="1.00" meanIntervalDurationWithin="32.99" meanTimeLossWithin="29.77"/>
+   <interval begin="0.00" end="81.40" id="e3Det_270_Jatk_Right" meanTravelTime="-1.00" meanOverlapTravelTime="-1.00" meanSpeed="-1.00" meanHaltsPerVehicle="-1.00" meanTimeLoss="-1.00" vehicleSum="0" meanSpeedWithin="-1.00" meanHaltsPerVehicleWithin="-1.00" meanDurationWithin="-1.00" vehicleSumWithin="0" meanIntervalSpeedWithin="-1.00" meanIntervalHaltsPerVehicleWithin="-1.00" meanIntervalDurationWithin="-1.00" meanTimeLossWithin="-1.00"/>
+   <interval begin="0.00" end="81.40" id="e3Det_270_Vali" meanTravelTime="7.13" meanOverlapTravelTime="11.58" meanSpeed="5.74" meanHaltsPerVehicle="0.50" meanTimeLoss="7.04" vehicleSum="4" meanSpeedWithin="5.22" meanHaltsPerVehicleWithin="0.67" meanDurationWithin="7.61" vehicleSumWithin="3" meanIntervalSpeedWithin="5.22" meanIntervalHaltsPerVehicleWithin="0.67" meanIntervalDurationWithin="7.61" meanTimeLossWithin="4.04"/>
+   <interval begin="0.00" end="81.40" id="e3Det_270_Tyyn_Tram" meanTravelTime="-1.00" meanOverlapTravelTime="-1.00" meanSpeed="-1.00" meanHaltsPerVehicle="-1.00" meanTimeLoss="-1.00" vehicleSum="0" meanSpeedWithin="-1.00" meanHaltsPerVehicleWithin="-1.00" meanDurationWithin="-1.00" vehicleSumWithin="0" meanIntervalSpeedWithin="-1.00" meanIntervalHaltsPerVehicleWithin="-1.00" meanIntervalDurationWithin="-1.00" meanTimeLossWithin="-1.00"/>
+   <interval begin="0.00" end="81.40" id="e3Det_270_Vali_Tram" meanTravelTime="-1.00" meanOverlapTravelTime="-1.00" meanSpeed="-1.00" meanHaltsPerVehicle="-1.00" meanTimeLoss="-1.00" vehicleSum="0" meanSpeedWithin="-1.00" meanHaltsPerVehicleWithin="-1.00" meanDurationWithin="-1.00" vehicleSumWithin="0" meanIntervalSpeedWithin="-1.00" meanIntervalHaltsPerVehicleWithin="-1.00" meanIntervalDurationWithin="-1.00" meanTimeLossWithin="-1.00"/>
+   <interval begin="0.00" end="81.40" id="e3Det_270_Jatk_Tram" meanTravelTime="-1.00" meanOverlapTravelTime="-1.00" meanSpeed="-1.00" meanHaltsPerVehicle="-1.00" meanTimeLoss="-1.00" vehicleSum="0" meanSpeedWithin="-1.00" meanHaltsPerVehicleWithin="-1.00" meanDurationWithin="-1.00" vehicleSumWithin="0" meanIntervalSpeedWithin="-1.00" meanIntervalHaltsPerVehicleWithin="-1.00" meanIntervalDurationWithin="-1.00" meanTimeLossWithin="-1.00"/>
+</e3Detector>
