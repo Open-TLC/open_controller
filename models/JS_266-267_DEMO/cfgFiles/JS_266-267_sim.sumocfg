@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+    
+    <input>
+       <net-file value="../net/JS_266-267K.net.xml"/>
+       <route-files value="../rou/JS_266-267_cars_trucks_real2.rou.xml"/>
+       <additional-files value="../add/JS_266-267_stations.add.xml, ../add/JS_267_e1dets.add.xml, ../add/JS_266_e1dets.add.xml, ../add/JS_267_e3dets.add.xml, ../add/JS_266_e3dets.add.xml,
+                            ../tll/ft266_1.tll.xml, ../tll/ft267_1.tll.xml, ../add/generate_lane_data.xml, ../add/generate_edge_data.xml"/>
+       <scale v="1.0"/>
+       <seed v="5819"/>
+       
+    </input>
+
+    <time>
+        <begin v="0"/>
+        <step-length v="0.1"/>
+        <end v="3600"/>
+        <delay value="0.00"/>
+    </time>
+    
+    <output>
+        <output-prefix v="JS_"/>
+        <summary-output/>
+        <tripinfo-output v="../out/tripinfo.trip.xml"/>
+        <link-output/>
+    </output>
+
+    <report>
+        <verbose     value="true"/>
+        <no-step-log value="true"/>
+    </report>
+    
+    <processing>
+        <ignore-route-errors value="0"/>
+        <lateral-resolution v="0.5"/>
+        <time-to-teleport/>
+        
+        <collision.action/>
+        <collision.stoptime/>
+        
+        <parking.maneuver v="false"/>
+    </processing>
+    
+
+    
+<!--
+Comments:
+
+--> 
+
+</configuration>
+
+

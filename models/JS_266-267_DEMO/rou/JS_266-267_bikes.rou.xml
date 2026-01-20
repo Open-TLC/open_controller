@@ -1,0 +1,30 @@
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+
+<vType id="bike_type" vClass="bicycle"/>
+
+<vType id="ped_type" vClass="pedestrian"/>
+
+<route id="Mech2South_bike" edges="-Mech_jp06 -Mech_jp05 -Mech_jp04 Mech_ylitItam1R Mech_ylitItamR2 Mech_ylitItam23 -Mech_jp02 -Mech_jp021 -Mech_jp022 -Mech_jp01"/>
+
+<route id="Mech2North_bike" edges="Mech_jp01b Mech_jp022 Mech_jp021 Mech_jp02b Mech_ylitItam32 Mech_ylitItam2R Mech_ylitItamR1 Mech_jp04b Mech_jp05b Mech_jp06b"/>
+
+<route id="Baan2Itam_bike" edges="-Baana01.6 -Itam_ylitMech Itam_jp13b"/>
+
+<route id="Itam2Baan_bike" edges="Itam_jp13 Itam_ylitMech Baana01"/>
+
+
+<flow id="F_Mech2South_bike" from="-Mech_jp06"  to="-Mech_jp01"  route="Mech2South_bike"  begin="0" end="3600" type="bike_type" color="0,255,0"   number="200"> </flow>
+
+<flow id="F_Mech2North_bike" from="Mech_jp01b"  to="Mech_jp06b"  route="Mech2North_bike"  begin="30" end="3600" type="bike_type" color="0,255,0"   number="150"> </flow>
+
+<flow id="F_Baan2Itam_bike"  from="-Baana01.6"  to="Itam_jp13b"  route="Baan2Itam_bike"   begin="30" end="3600" type="bike_type" color="0,255,0"   number="150"> </flow>
+
+<flow id="F_Itam2Baan_bike"  from="Itam_jp13"   to="Baana01"     route="Itam2Baan_bike"   begin="30" end="3600" type="bike_type" color="0,255,0"   number="150"> </flow>
+
+</routes>
+
+<!---
+
+
+-->

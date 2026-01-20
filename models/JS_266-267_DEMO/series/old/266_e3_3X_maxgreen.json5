@@ -1,0 +1,24 @@
+{
+  runseries_name: 'JS266_e3_3X_maxgreen_run3600sec',
+  sumo_conf:  'testmodels/iisakki/JS_266_sim/cfgFiles/JS_266-267.sumocfg',
+  contr_path: 'testmodels/iisakki/JS_266_sim/contr/JS1_266_e3DETs_F.json',
+  variable_groups: [
+      {
+      'name': 'traffic inputs',
+      run_priority: 1, 
+      step_count: 3,
+      variables_synchronized: [  
+        {
+          description: 'increment max green',
+          type: 'incrementing_value',
+          start_value: 0.1,
+          increment_per_step: 0.2,
+          path_to_file: 'testmodels/iisakki/JS_266_sim/contr/JS1_266_e3DETs_F.json',
+          attribute_identifier: {
+            dot_notation: 'controller.signal_groups.*.max_green'
+          }   
+        }     
+      ]
+    }
+  ]
+}

@@ -1,0 +1,669 @@
+{
+
+"JS_266":{
+    
+    "sumo_name": "266_Pork_Mech",
+    
+    "print_status": true,
+    
+    "group_outputs": ["group1", "group1", "group2", "group3", "group4", "group5", "group6", "group7", "group8", "group9", 
+                      "group10", "group11", "group12", "group13", "group14", "group15", "group16", "group17"],
+
+    "signal_groups":{
+    
+        "default":{
+            "min_green": 3,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "after-ext"
+            },
+
+        "group1":{
+            "min_green": 10,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.1"
+            },
+ 
+        "group2":{
+            "min_green": 10,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.2"
+
+        },
+
+        "group3":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.3"
+
+        },
+
+        "group4":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.4"
+
+        },
+
+        "group5":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.5"
+
+        },
+
+        "group6":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.6"
+
+        },
+
+        "group7":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 15,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.7"
+
+        },
+
+        "group8":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.8"
+
+        },
+
+        "group9":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.269.9"
+
+        },
+
+        "group10":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.10"
+
+        },
+        
+        "group11":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.11"
+
+        },
+
+        "group12":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.12"
+
+        },
+
+        "group13":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.13"
+
+        },
+
+        "group14":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.14"
+
+        },
+
+        "group15":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.15"
+
+        },
+
+        "group16":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.16"
+
+        },
+
+        "group17":{
+            "min_green": 8,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "fixed",
+            "phase_request": false,
+            "green_end": "remain",
+            "channel": "group.control.267.17"
+
+        }
+
+     
+    },
+
+    "detectors":{
+
+        "req1m20A":{
+            "type": "request",
+            "sumo_id": "266_102A",
+            "channel": "detector.status.266_102A",
+            "request_groups": ["group1"]
+        },
+
+        "req1m20B":{
+            "type": "request",
+            "sumo_id": "266_102B",
+            "channel": "detector.status.266_102B",
+            "request_groups": ["group1"]
+        },
+
+        "req1m50A":{
+            "type": "request",
+            "sumo_id": "266_105A",
+            "channel": "detector.status.266_105A",
+            "request_groups": ["group1"]
+        },
+
+        "req1m50B":{
+            "type": "request",
+            "sumo_id": "266_105B",
+            "channel": "detector.status.266_105B",
+            "request_groups": ["group1"]
+        },
+
+        "req2m20A":{
+            "type": "request",
+            "sumo_id": "266_202A",
+            "channel": "detector.status.266_202A",
+            "request_groups": ["group2"]
+        },
+
+        "req2m20A":{
+            "type": "request",
+            "sumo_id": "266_202B",
+            "channel": "detector.status.266_202B",
+            "request_groups": ["group2"]
+        },
+
+        "req2m50A":{
+            "type": "request",
+            "sumo_id": "266_205A",
+            "channel": "detector.status.266_205A",
+            "request_groups": ["group2"]
+        },
+
+        "req2m50B":{
+            "type": "request",
+            "sumo_id": "266_205B",
+            "channel": "detector.status.266_205B",
+            "request_groups": ["group2"]
+        },
+
+        "req3m10A":{
+            "type": "request",
+            "sumo_id": "266_301A",
+            "channel": "detector.status.266_301A",
+            "request_groups": ["group3","group10"]
+        },
+
+        "req3m10B":{
+            "type": "request",
+            "sumo_id": "266_301B",
+            "channel": "detector.status.266_301B",
+            "request_groups": ["group3","group10"]
+        },
+
+        "req3m60A":{
+            "type": "request",
+            "sumo_id": "266_306A",
+            "channel": "detector.status.266_306A",
+            "request_groups": ["group3","group10"]
+        },
+
+        "req3m60B":{
+            "type": "request",
+            "sumo_id": "266_306B",
+            "channel": "detector.status.266_306B",
+            "request_groups": ["group3","group10"]
+        },
+
+        "req4m10A":{
+            "type": "request",
+            "sumo_id": "266_401A",
+            "channel": "detector.status.266_401A",
+            "request_groups": ["group4"]
+        },
+
+        "req4m10B":{
+            "type": "request",
+            "sumo_id": "266_401B",
+            "channel": "detector.status.266_401B",
+            "request_groups": ["group4"]
+        },
+
+        "req4m60A":{
+            "type": "request",
+            "sumo_id": "266_406A",
+            "channel": "detector.status.266_406A",
+            "request_groups": ["group4"]
+        },
+        
+        "req4m60B":{
+            "type": "request",
+            "sumo_id": "266_406B",
+            "channel": "detector.status.266_406B",
+            "request_groups": ["group4"]
+        },
+
+        "req9m20A":{
+            "type": "request",
+            "sumo_id": "266_902A",
+            "channel": "detector.status.266_902A",
+            "request_groups": ["group9"]
+        },
+
+        "req9m20B":{
+            "type": "request",
+            "sumo_id": "266_902B",
+            "channel": "detector.status.266_902B",
+            "request_groups": ["group9"]
+        },
+
+        "req11m20A":{
+            "type": "request",
+            "sumo_id": "266_1102A",
+            "channel": "detector.status.266_1102A",
+            "request_groups": ["group11"]
+        },
+
+        "req11m20B":{
+            "type": "request",
+            "sumo_id": "266_1102B",
+            "channel": "detector.status.266_1102B",
+            "request_groups": ["group11"]
+        },
+
+        "req11m40A":{
+            "type": "request",
+            "sumo_id": "266_1104A",
+            "channel": "detector.status.266_1104A",
+            "request_groups": ["group11"]
+        },
+
+        "req11m40B":{
+            "type": "request",
+            "sumo_id": "266_1104B",
+            "channel": "detector.status.266_1104B",
+            "request_groups": ["group11"]
+        },
+
+        "req11m180A":{
+            "type": "request",
+            "sumo_id": "266_111AA",
+            "channel": "detector.status.266_111A",
+            "request_groups": ["group11"]
+        },
+
+        "req11m180B":{
+            "type": "request",
+            "sumo_id": "266_1118B",
+            "channel": "detector.status.266_1118B",
+            "request_groups": ["group11"]
+        },
+
+        "req12m20A":{
+            "type": "request",
+            "sumo_id": "266_1202A",
+            "channel": "detector.status.266_1202A",
+            "request_groups": ["group12"]
+        },
+
+        "req12m20B":{
+            "type": "request",
+            "sumo_id": "266_1202B",
+            "channel": "detector.status.266_1202B",
+            "request_groups": ["group12"]
+        },
+
+        "req12m40A":{
+            "type": "request",
+            "sumo_id": "266_1204A",
+            "channel": "detector.status.266_1204A",
+            "request_groups": ["group12"]
+        },
+
+        "req12m40B":{
+            "type": "request",
+            "sumo_id": "266_1204B",
+            "channel": "detector.status.266_1204B",
+            "request_groups": ["group12"]
+        },
+
+        "req12m180A":{
+            "type": "request",
+            "sumo_id": "266_121AA",
+            "channel": "detector.status.266_121A",
+            "request_groups": ["group12"]
+        },
+
+        "req12m180B":{
+            "type": "request",
+            "sumo_id": "266_1218B",
+            "channel": "detector.status.266_1218B",
+            "request_groups": ["group12"]
+        },
+
+        "req14m10A":{
+            "type": "request",
+            "sumo_id": "266_1401A",
+            "channel": "detector.status.266_1401A",
+            "request_groups": ["group14"]
+        },
+
+        "req14m10B":{
+            "type": "request",
+            "sumo_id": "266_1401B",
+            "channel": "detector.status.266_1401B",
+            "request_groups": ["group14"]
+        },
+
+        "req15m02A":{
+            "type": "request",
+            "sumo_id": "266_1501A",
+            "channel": "detector.status.266_1501A",
+            "request_groups": ["group15"]
+        },
+
+        "req15m02B":{
+            "type": "request",
+            "sumo_id": "266_1501B",
+            "channel": "detector.status.266_1501B",
+            "request_groups": ["group15"]
+        },
+
+        "req16m02A":{
+            "type": "request",
+            "sumo_id": "266_1601A",
+            "channel": "detector.status.266_1601A",
+            "request_groups": ["group16"]
+        },
+
+        "req16m02B":{
+            "type": "request",
+            "sumo_id": "266_1601B",
+            "channel": "detector.status.266_1601B",
+            "request_groups": ["group16"]
+        },
+
+
+
+        "e3d1m60":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Mech_North",
+            "group": "group1"
+            },
+
+        "e3d2m60":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Mech_Left",
+            "group": "group2"
+            },
+
+        "e3d9m60":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Mech_Left",
+            "group": "group9"
+            },
+        
+        "e3d3m50":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Mech_South",
+            "group": "group3"
+            },
+
+        "e3d10m50":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Mech_South",
+            "group": "group10"
+            },
+        
+        "e3d4m50":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Mech_Right",
+            "group": "group4"
+            },
+
+        "e3d9m20":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Mid_Left",
+            "group": "group9"
+            },
+
+        "e3d10m20":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Mid_South",
+            "group": "group10"
+            },
+        
+        "e3d11m120":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Ramp_Right",
+            "group": "group11"
+            },
+
+        "e3d12m120":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Ramp_Left",
+            "group": "group12"
+            },
+        
+        "e3d13m20":{
+            "type": "e3detector",
+            "sumo_id": "e3Det_266_Mid_North",
+            "group": "group13"
+            }
+
+    },
+
+    
+    // This defines groups used in each phase
+    // (see phases matrix to see which ones are on)
+    "group_list": ["group1", "group2", "group3", "group4", "group5", "group6", "group7", "group8", "group9", "group10", "group11", "group12", "group13", "group14", "group15", "group16", "group17"],
+
+    // Each row is a phase and index is the group
+    //          1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17
+    "phases":[ [1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1],
+               [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 ,0, 1, 0, 1, 0, 1],
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1],          
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 0, 1, 0, 0, 0]
+        ],
+
+    // transfer from  each group to another
+    // this is a group_list*group_list matrix
+    // each row refers to starting group and column the end group
+    //                 1   2    3    4    5    6    7    8    9    10   11   12   13   14   15   16   17 
+    "intergreens":[ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 8.0, 0.0, 0.0, 0.0],   
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 8.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 8.0, 8.0, 0.0, 4.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 5.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+
+                    [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 1.0, 0.0, 4.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 5.0, 0.0, 4.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 1.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 6.0, 7.0, 3.0, 4.0, 6.0, 6.0, 0.0, 6.0, 0.0, 0.0, 0.0, 4.0, 0.0, 7.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 6.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+
+                    [0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 2.0, 5.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0],
+                    [8.0, 8.0, 3.0, 0.0, 6.0, 7.0, 3.0, 6.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 7.0, 8.0, 0.0, 6.0, 7.0, 0.0, 7.0, 0.0, 0.0, 1.0, 5.0, 0.0, 0.0, 8.0, 8.0],
+                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 13.0, 13.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+
+                    [0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0]
+
+                    
+        ]
+
+    }
+}
+

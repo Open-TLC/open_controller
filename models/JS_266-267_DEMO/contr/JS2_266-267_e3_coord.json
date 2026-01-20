@@ -1,0 +1,40 @@
+{
+    "timer":{
+        "timer_mode": "fixed",
+        "time_step":0.1,
+        "real_time_multiplier":1,
+        "max_time":4000
+    },
+
+
+    "operation_mode":"test",
+    "v2x_mode": false,
+    "vis_mode": "sub_states",
+
+    "sumo":{
+        "graph" : true,
+        "file_name": "../testmodels/iisakki/JS_266-267_sim/cfgFiles/JS_266-267_sim.sumocfg"
+    },
+
+"controller_list": ["JS_266","JS_267"],
+
+"controllers":{
+       
+    "JS_266":{
+    
+        "controller_file": "../testmodels/iisakki/JS_266-267_sim/contr/JSA_266_e3_coord5.json"
+
+        },
+
+    "JS_267":{
+        
+        "controller_file": "../testmodels/iisakki/JS_266-267_sim/contr/JSB_267_e3_coord5.json"
+
+        }
+
+    }
+
+}
+
+
+

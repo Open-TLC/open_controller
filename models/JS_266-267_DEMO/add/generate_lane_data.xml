@@ -1,0 +1,9 @@
+<additional>
+    <laneData
+        id="MEASUREMENT_ID"
+        file="../out/lane.data.xml"
+        period="900"
+        begin="0"
+        end="3600"
+    />
+</additional>
