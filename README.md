@@ -52,7 +52,7 @@ The most simple way of running open controller is so called integrated simulatio
 between the controller and simulation, because the the open controller access the simulator using direct commands through Traci-interface.
 
 To run the opne controller in integrated mode, you call the controller in python and give a configuration file name and path as 
-command line parameter (see the example below). Open the console in your desktop. Go the the open_controller directory. 
+command line parameter (see the example below). Open the console in your desktop. Go to the open_controller directory. 
 Copy the command below and press enter.
 
     python src/simengine/simengine_integrated.py  --conf-file models/JS270_DEMO/contr/JS270_DEMO.json --print-status --graph
@@ -60,7 +60,7 @@ Copy the command below and press enter.
 The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file must
 be given within the open controller configuration file. The print-status-option sets open controller to print status data to the console.
 The graph-option puth the graphical mode on visualizing the intersection and traffic. The options can also be defined in the 
-sum-section of the open controller configuration (see below). Command-line options always overrules the configuration file settings. 
+sumo-section of the open controller configuration (see below). Command-line options always overrules the configuration file settings. 
 
 ```json
 "sumo":{
