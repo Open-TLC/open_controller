@@ -57,12 +57,14 @@ command line parameter. See the example below.
     cd */open_controller
     python src/simengine/simengine_integrated.py  --conf-file models/JS270_DEMO/contr/JS270_DEMO.json --print-status --graph
 
-The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file can
-be given within the open controller configuration file or as command line paramter. Sumo can be run with or without
-graphic display. This can also be defined in the command line or in the open controller configuration (see below).
+The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file must
+be given within the open controller configuration file. The print-status-option sets open controller to print status data to the console.
+The graph-option puth the graphical mode on visualizing the intersection and traffic. The options can also be defined in the 
+open controller configuration (see below). Command-line options always overrules the configuration file settings. 
 
 ```json
 "sumo":{
+    "print-status": true,
     "graph" : true,
     "file_name": "models/JS270_DEMO/cfgFiles/JS270_DEMO.sumocfg"
 ```
