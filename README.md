@@ -39,6 +39,9 @@ to test that the communication and messages needed in the actual signal control 
 The third option is the Hardware-in-the-loop simulation, which is similar to the distributed simulation, except thast the actual signal controller
 device is included in the control loop. This way everything can be tested to the last detail before live operation.
 
+![Open Controller Docker Services](/doc/images/hwil_sim.png)
+*Figure x: Hardware-in-the-loop simulation*
+
 The last option is live signal control in the field, in which the simulagtor is no more involved. All the inputs are coming from real sensors and the signal control
 output commands are sent the the actual road side device, which carries out the control of the real traffic.
 
