@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    
+
+    <e1Detector id="266_102A"   lane="Mech04_0"     pos="-20.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_102B"   lane="Mech04_1"     pos="-20.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_105A"   lane="Mech04_0"     pos="-50.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_105B"   lane="Mech04_1"     pos="-50.00"   freq="900.00" file="NUL"/>
+
+    <e1Detector id="266_202A"   lane="Mech04_2"     pos="-20.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_202B"   lane="Mech04_3"     pos="-20.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_205A"   lane="Mech04_2"     pos="-50.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_205B"   lane="Mech04_3"     pos="-50.00"   freq="900.00" file="NUL"/>
+     
+    <e1Detector id="266_301A"    lane="-Mech06_2"    pos="-3.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_301B"    lane="-Mech06_3"    pos="-3.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_306A"    lane="-Mech07_2"    pos="3.00"    freq="900.00" file="NUL"/>
+    <e1Detector id="266_306B"    lane="-Mech07_3"    pos="3.00"    freq="900.00" file="NUL"/>
+  
+    <e1Detector id="266_401A"   lane="-Mech06_0"    pos="-3.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_401B"   lane="-Mech06_1"    pos="-3.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_406A"   lane="-Mech07_0"    pos="3.00"    freq="900.00" file="NUL"/>
+    <e1Detector id="266_406B"   lane="-Mech07_1"    pos="3.00"    freq="900.00" file="NUL"/>
+ 
+    <e1Detector id="266_902A"   lane="Mech05_2"     pos="10.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_902B"   lane="Mech05_3"     pos="10.00"   freq="900.00" file="NUL"/>
+     
+    <e1Detector id="266_1102A"   lane="Mech_ramppi03_0"     pos="-20.00"    freq="900.00" file="NUL"/>
+    <e1Detector id="266_1102B"   lane="Mech_ramppi03_1"     pos="-20.00"    freq="900.00" file="NUL"/>
+    <e1Detector id="266_1104A"   lane="Mech_ramppi03_0"     pos="-40.00"    freq="900.00" file="NUL"/>
+    <e1Detector id="266_1104B"   lane="Mech_ramppi03_1"     pos="-40.00"    freq="900.00" file="NUL"/>
+    <e1Detector id="266_1118A"   lane="Mech_ramppi03_0"     pos="-120.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_1118B"   lane="Mech_ramppi03_1"     pos="-120.00"   freq="900.00" file="NUL"/>
+
+    <e1Detector id="266_1202A"   lane="Mech_ramppi03_2"     pos="-20.00"    freq="900.00" file="NUL"/>
+    <e1Detector id="266_1202B"   lane="Mech_ramppi03_3"     pos="-20.00"    freq="900.00" file="NUL"/>
+    <e1Detector id="266_1204A"   lane="Mech_ramppi03_2"     pos="-40.00"    freq="900.00" file="NUL"/>
+    <e1Detector id="266_1204B"   lane="Mech_ramppi03_3"     pos="-40.00"    freq="900.00" file="NUL"/>
+    <e1Detector id="266_1218A"   lane="Mech_ramppi03_2"     pos="-120.00"   freq="900.00" file="NUL"/>
+    <e1Detector id="266_1218B"   lane="Mech_ramppi03_3"     pos="-120.00"   freq="900.00" file="NUL"/>
+
+    <e1Detector id="266_1401A"   lane="-Maria_parkki01_0"   pos="-3.00"     freq="900.00" file="NUL"/>
+    <e1Detector id="266_1401B"   lane="-Maria_parkki01_1"   pos="-3.00"     freq="900.00" file="NUL"/>
+
+    <e1Detector id="266_1501A"   lane="-Mech_jp05_1"        pos="-3.00"     freq="900.00" file="NUL"/>
+    <e1Detector id="266_1501B"   lane="Mech_jp04b_0"        pos="-3.00"     freq="900.00" file="NUL"/>
+
+    <e1Detector id="266_1601A"   lane="-Mech_jp06_1"        pos="-3.00"     freq="900.00" file="NUL"/>
+    <e1Detector id="266_1601B"   lane="Mech_jp05b_0"        pos="-3.00"     freq="900.00" file="NUL"/>
+
+</additional>

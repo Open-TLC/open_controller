@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <tlLogic id="266_Pork_Mech" type="static" programID="1" offset="-10">
+        <phase duration="20" state="rGrGGGGGGrGrrGrGrGrrrrrrrrrrrrrrrrrrrrrr"/>
+        <phase duration="3"  state="rGryyyyyGrGrrGrGrGrrrrrrrrrrrrrrrrrrrrrr"/>
+        <phase duration="30" state="rGGrrrrrGGGrrGrGrGrrrrrrrrrrrrrrrrrrrrrr"/>
+        <phase duration="3"  state="ryyrrrrryyyrrGrrrGrrrrrrrrrrrrrrrrrrrrrr"/>
+        <phase duration="20" state="rrrrrrrrrrrGGGrrGGrrrrrrrrrrrrrrrrrrrrrr"/>
+        <phase duration="3"  state="rrrrrrrrrrryyGrrGGrrrrrrrrrrrrrrrrrrrrrr"/>
+        <phase duration="11" state="rGrGrGGrGrGrrGrGGGrrrrrrrrrrrrrrrrrrrrrr"/>
+                                    
+    </tlLogic>
+</additional>

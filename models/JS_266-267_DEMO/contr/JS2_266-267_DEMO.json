@@ -1,0 +1,40 @@
+{
+    "timer":{
+        "timer_mode": "fixed",
+        "time_step":0.1,
+        "real_time_multiplier":1,
+        "max_time":4000
+    },
+
+
+    "operation_mode":"test",
+    "v2x_mode": false,
+    "vis_mode": "main_states",
+
+    "sumo":{
+        "graph" : true,
+        "file_name": "models/JS_266-267_DEMO/cfgFiles/JS_266-267_sim.sumocfg"
+    },
+
+"controller_list": ["JS_266","JS_267"],
+
+"controllers":{
+       
+    "JS_266":{
+    
+        "controller_file": "models/JS_266-267_DEMO/contr/JSA_266_e3_EXT_max30.json"
+
+        },
+
+    "JS_267":{
+        
+        "controller_file": "models/JS_266-267_DEMO/contr/JSB_267_e3_EXT_max30.json"
+
+        }
+
+    }
+
+}
+
+
+
