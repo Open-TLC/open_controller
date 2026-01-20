@@ -74,7 +74,9 @@ The open controller takes a time step (default value = 0.1 sec), reads the detec
 Finally it send the new traffic signal states to the Sumo and continues with next update.
 The integrated simulation can be run in real-time or with full speed depending on timer setting (see the configuration section).
 
-In simulation it is possible to run several open controllers at the same time. In this case another Python script is used (multi_sumo_interface.py).
+## Running multiple Open Controllers
+
+In simulation it is possible to run several Open Controllers at the same time. In this case another Python script is used (multi_sumo_interface.py).
 The multi-sumo version runs by default in the console mode only. This way it can use the LibSumo component instead of Traci, which makes it much faster.
 If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py command. The demo model is from the Jätkäsaari test region junctions 266-267
 (266 is under the bridge) with the smart green extension included. In this demo the junctions are controlled without mutual coordination. 
