@@ -53,7 +53,7 @@ between the controller and simulation, because the the open controller access th
 
 To run the opne controller in integrated mode, you call the controller in python and give a configuration file name and path as 
 command line parameter (see the example below). Open the console in your desktop. Go to the open_controller directory. 
-Copy the command below and press enter.
+Copy the command below and press enter. The demo model is from the Jätkäsaari test region junction 270 (in front of the Clarion-hotel) with the smart green extension included.
 
     python src/simengine/simengine_integrated.py  --conf-file models/JS270_DEMO/contr/JS270_DEMO.json --print-status --graph
 
@@ -76,8 +76,9 @@ The integrated simulation can be run in real-time or with full speed depending o
 
 In simulation it is possible to run several open controllers at the same time. In this case another Python script is used (multi_sumo_interface.py).
 The multi-sumo version runs by default in the console mode only. This way it can use the LibSumo component instead of Traci, which makes it much faster.
-If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py command.
-
+If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py command. The demo model is from the Jätkäsaari test region junctions 266-267
+(266 is under the bridge) with the smart green extension included. In this demo the junctions are controlled without mutual coordination. 
+ 
     python src/clockwork/multi_sumo_interface.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
     python src/clockwork/multi_sumo_int_graph.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
 
