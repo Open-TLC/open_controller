@@ -90,10 +90,10 @@ If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py
 ### What comes with the package
 The open controller system consists of separate services communcating with each other via pub/sub messages (see Figure 2). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
 
-- **Clockwork**, the core component of the Open Controller
+- **Clockwork**, the signal group control engine 
 - **Simengine**, a sumo simulation environment with Open Controller interfaces
 - **Traffic Indicators**, processing the sensor data into traffic situation indicators 
-- **User Interface**, an user interface for monitoring and controlling the services
+- **User Interface**, an user interfaces for monitoring and controlling the services
 
 ![Open Controller Docker Services](/doc/images/OC_Docker_Services2.png)
 *Figure 2: Open Controller Standard Services*
