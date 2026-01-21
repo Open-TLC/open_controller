@@ -15,7 +15,22 @@ The holistic traffic situation is based on ordinary detectors and on new sensor 
 ![Open Controller Overview](/doc/images/OpenController_Overview.png)
 *Figure 1: Overview of the Open Controller*
 
+# Quickstart
 
+In order to run the basic system you need to have docker installed into your system.
+
+After this you can setup the full Open Controller system and run it with a relatively simple test model by issuing command:
+
+    docker-compose up
+
+This script will in essence install four separate docker containers and run them, they are:
+
+- **Nats server**, a standard NATS message broker
+- **Clockwork**, the open source traffic light controller
+- **Simengine**, a SUMO simulation platform with interfaces to access the open controller
+- **UI**, an user interface for the system
+
+After this you should be able to see the user interface via http://127.0.0.1:8050
 
 # Basic usage
 
