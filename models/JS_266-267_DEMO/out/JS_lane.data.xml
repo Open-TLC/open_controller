@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-01-20 16:42:03 by Eclipse SUMO GUI Version 1.22.0
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="models/JS_266-267_DEMO/cfgFiles/../net/JS_266-267K.net.xml"/>
+        <route-files value="models/JS_266-267_DEMO/cfgFiles/../rou/JS_266-267_cars_trucks_real2.rou.xml"/>
+        <additional-files value="models/JS_266-267_DEMO/cfgFiles/../add/JS_266-267_stations.add.xml,models/JS_266-267_DEMO/cfgFiles/ ../add/JS_267_e1dets.add.xml,models/JS_266-267_DEMO/cfgFiles/ ../add/JS_266_e1dets.add.xml,models/JS_266-267_DEMO/cfgFiles/ ../add/JS_267_e3dets.add.xml,models/JS_266-267_DEMO/cfgFiles/ ../add/JS_266_e3dets.add.xml,models/JS_266-267_DEMO/cfgFiles/                             ../tll/ft266_1.tll.xml,models/JS_266-267_DEMO/cfgFiles/ ../tll/ft267_1.tll.xml,models/JS_266-267_DEMO/cfgFiles/ ../add/generate_lane_data.xml,models/JS_266-267_DEMO/cfgFiles/ ../add/generate_edge_data.xml"/>
+    </input>
+
+    <output>
+        <output-prefix value="JS_"/>
+        <tripinfo-output value="models/JS_266-267_DEMO/cfgFiles/../out/tripinfo.trip.xml"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="3600"/>
+        <step-length value="0.1"/>
+    </time>
+
+    <processing>
+        <lateral-resolution value="0.5"/>
+        <ignore-route-errors value="0"/>
+        <scale value="1.0"/>
+        <parking.maneuver value="false"/>
+    </processing>
+
+    <report>
+        <verbose value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <traci_server>
+        <remote-port value="63084"/>
+    </traci_server>
+
+    <random_number>
+        <seed value="5819"/>
+    </random_number>
+
+    <gui_only>
+        <quit-on-end value="true"/>
+        <start value="true"/>
+        <delay value="0.00"/>
+    </gui_only>
+
+</sumoConfiguration>
+-->
+
+<meandata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/meandata_file.xsd">
+    <interval begin="0.00" end="26.90" id="MEASUREMENT_ID">
+        <edge id="-122959051#3">
+            <lane id="-122959051#3_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-122959051#3_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-353182117#2">
+            <lane id="-353182117#2_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-353182117#3">
+            <lane id="-353182117#3_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-353182117#4">
+            <lane id="-353182117#4_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-353182117#5">
+            <lane id="-353182117#5_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-698004127">
+            <lane id="-698004127_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-749346337">
+            <lane id="-749346337_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Baana01">
+            <lane id="-Baana01_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Baana01.6">
+            <lane id="-Baana01.6_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Huoltoraide_Mec_Ita">
+            <lane id="-Huoltoraide_Mec_Ita_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam09">
+            <lane id="-Itam09_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam09.26">
+            <lane id="-Itam09.26_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Itam09.26_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam10">
+            <lane id="-Itam10_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam11">
+            <lane id="-Itam11_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam12">
+            <lane id="-Itam12_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam13">
+            <lane id="-Itam13_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam14">
+            <lane id="-Itam14_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam_RB09">
+            <lane id="-Itam_RB09_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam_RB10">
+            <lane id="-Itam_RB10_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam_RB11">
+            <lane id="-Itam_RB11_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam_RB12">
+            <lane id="-Itam_RB12_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam_RB13">
+            <lane id="-Itam_RB13_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Itam_RB13_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam_j09">
+            <lane id="-Itam_j09_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam_j10">
+            <lane id="-Itam_j10_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam_j11">
+            <lane id="-Itam_j11_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam_j13">
+            <lane id="-Itam_j13_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Itam_ylitMech">
+            <lane id="-Itam_ylitMech_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Maria_parkki01">
+            <lane id="-Maria_parkki01_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Maria_parkki01_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech01">
+            <lane id="-Mech01_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech01_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech01_2" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech03">
+            <lane id="-Mech03_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech03_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech03_2" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech05">
+            <lane id="-Mech05_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech05_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech06">
+            <lane id="-Mech06_0" sampledSeconds="4.92" traveltime="4.25" overlapTraveltime="4.92" density="4.50" laneDensity="4.50" occupancy="1.98" waitingTime="0.00" timeLoss="0.05" speed="9.28" speedRelative="0.84" departed="0" arrived="0" entered="1" left="1" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech06_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech06_2" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech06_3" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech07">
+            <lane id="-Mech07_0" sampledSeconds="2.29" traveltime="1.77" overlapTraveltime="2.29" density="4.96" laneDensity="4.96" occupancy="1.92" waitingTime="0.00" timeLoss="0.01" speed="9.69" speedRelative="0.87" departed="0" arrived="0" entered="1" left="1" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech07_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech07_2" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech07_3" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech08">
+            <lane id="-Mech08_0" sampledSeconds="41.42" traveltime="15.41" overlapTraveltime="15.95" density="11.12" laneDensity="11.12" occupancy="5.53" waitingTime="0.00" timeLoss="6.36" speed="8.99" speedRelative="0.81" departed="5" arrived="0" entered="0" left="1" laneChangedFrom="1" laneChangedTo="0"/>
+            <lane id="-Mech08_1" sampledSeconds="3.90" traveltime="11.07" overlapTraveltime="11.47" density="1.05" laneDensity="1.05" occupancy="0.52" waitingTime="0.00" timeLoss="0.06" speed="12.51" speedRelative="1.13" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="1"/>
+            <lane id="-Mech08_2" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech_R03">
+            <lane id="-Mech_R03_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech_jp01">
+            <lane id="-Mech_jp01_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech_jp01_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech_jp02">
+            <lane id="-Mech_jp02_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech_jp02_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech_jp021">
+            <lane id="-Mech_jp021_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech_jp021_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech_jp022">
+            <lane id="-Mech_jp022_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech_jp04">
+            <lane id="-Mech_jp04_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech_jp04_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech_jp05">
+            <lane id="-Mech_jp05_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech_jp05_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech_jp06">
+            <lane id="-Mech_jp06_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech_jp06_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech_ramp02">
+            <lane id="-Mech_ramp02_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech_ramp02_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Mech_ramp03">
+            <lane id="-Mech_ramp03_0" sampledSeconds="0.31" traveltime="0.79" overlapTraveltime="1.39" density="1.79" laneDensity="1.79" occupancy="0.23" waitingTime="0.00" timeLoss="0.05" speed="8.25" speedRelative="0.74" departed="0" arrived="0" entered="1" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Mech_ramp03_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Ruoh01">
+            <lane id="-Ruoh01_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Ruoh01_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="-Ruora05">
+            <lane id="-Ruora05_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="-Ruora05_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="122959051#3">
+            <lane id="122959051#3_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="126901142#0">
+            <lane id="126901142#0_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="126901142#1">
+            <lane id="126901142#1_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="24693198#1">
+            <lane id="24693198#1_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="24693198#4">
+            <lane id="24693198#4_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="24693198#5">
+            <lane id="24693198#5_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="28639750#1">
+            <lane id="28639750#1_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="353182117#2">
+            <lane id="353182117#2_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="353182117#3">
+            <lane id="353182117#3_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="353182117#4">
+            <lane id="353182117#4_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="353182117#5">
+            <lane id="353182117#5_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="363528252#0">
+            <lane id="363528252#0_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="377853083#6">
+            <lane id="377853083#6_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="377853083#6.0">
+            <lane id="377853083#6.0_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="60710552#13">
+            <lane id="60710552#13_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="60710552#14">
+            <lane id="60710552#14_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="60710552#15">
+            <lane id="60710552#15_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="60710552#17">
+            <lane id="60710552#17_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="697173136">
+            <lane id="697173136_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="698004126">
+            <lane id="698004126_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="698004127">
+            <lane id="698004127_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="698004129#0">
+            <lane id="698004129#0_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="698004129#1">
+            <lane id="698004129#1_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="698004129#2">
+            <lane id="698004129#2_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="698004130">
+            <lane id="698004130_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="749346337">
+            <lane id="749346337_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Baana01">
+            <lane id="Baana01_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Baana01_j">
+            <lane id="Baana01_j_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Baana01_j.144">
+            <lane id="Baana01_j.144_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Huoltoraide_Mec_Ita">
+            <lane id="Huoltoraide_Mec_Ita_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Huoltoraide_Mec_Ita.34">
+            <lane id="Huoltoraide_Mec_Ita.34_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam09">
+            <lane id="Itam09_0" sampledSeconds="14.01" traveltime="4.85" overlapTraveltime="5.43" density="16.55" laneDensity="16.55" occupancy="7.74" waitingTime="0.00" timeLoss="2.67" speed="6.72" speedRelative="0.81" departed="3" arrived="0" entered="0" left="3" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam10">
+            <lane id="Itam10_0" sampledSeconds="13.47" traveltime="4.07" overlapTraveltime="4.66" density="14.88" laneDensity="14.88" occupancy="6.61" waitingTime="0.00" timeLoss="0.04" speed="8.29" speedRelative="0.99" departed="0" arrived="0" entered="3" left="3" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam11">
+            <lane id="Itam11_0" sampledSeconds="14.57" traveltime="7.07" overlapTraveltime="7.65" density="9.09" laneDensity="9.09" occupancy="4.27" waitingTime="0.00" timeLoss="0.04" speed="8.44" speedRelative="1.01" departed="0" arrived="0" entered="2" left="1" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam12">
+            <lane id="Itam12_0" sampledSeconds="2.44" traveltime="1.86" overlapTraveltime="2.44" density="5.69" laneDensity="5.69" occupancy="2.16" waitingTime="0.00" timeLoss="0.01" speed="8.59" speedRelative="1.03" departed="0" arrived="0" entered="1" left="1" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam13">
+            <lane id="Itam13_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Itam13_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam14">
+            <lane id="Itam14_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Itam14_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_RB09">
+            <lane id="Itam_RB09_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_RB10">
+            <lane id="Itam_RB10_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_RB11">
+            <lane id="Itam_RB11_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_RB12">
+            <lane id="Itam_RB12_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_RB13">
+            <lane id="Itam_RB13_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Itam_RB13_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_jp10">
+            <lane id="Itam_jp10_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Itam_jp10_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_jp10b">
+            <lane id="Itam_jp10b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_jp11">
+            <lane id="Itam_jp11_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Itam_jp11_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_jp11b">
+            <lane id="Itam_jp11b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_jp12">
+            <lane id="Itam_jp12_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Itam_jp12_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_jp12b">
+            <lane id="Itam_jp12b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_jp13">
+            <lane id="Itam_jp13_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Itam_jp13_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_jp13b">
+            <lane id="Itam_jp13b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Itam_ylitMech">
+            <lane id="Itam_ylitMech_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Itam_ylitMech_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Maria_parkki01">
+            <lane id="Maria_parkki01_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech01">
+            <lane id="Mech01_0" sampledSeconds="12.22" traveltime="9.98" overlapTraveltime="10.45" density="5.16" laneDensity="5.16" occupancy="2.54" waitingTime="0.00" timeLoss="2.26" speed="8.90" speedRelative="0.80" departed="2" arrived="0" entered="0" left="1" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech01_1" sampledSeconds="55.42" traveltime="13.64" overlapTraveltime="15.00" density="23.41" laneDensity="23.41" occupancy="33.71" waitingTime="0.00" timeLoss="19.78" speed="6.87" speedRelative="0.62" departed="6" arrived="0" entered="0" left="4" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech01_2" sampledSeconds="39.63" traveltime="9.14" overlapTraveltime="9.61" density="16.74" laneDensity="16.74" occupancy="8.23" waitingTime="0.00" timeLoss="6.28" speed="9.68" speedRelative="0.87" departed="5" arrived="0" entered="0" left="3" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech02">
+            <lane id="Mech02_0" sampledSeconds="0.59" traveltime="3.92" overlapTraveltime="4.36" density="0.50" laneDensity="0.50" occupancy="0.16" waitingTime="0.00" timeLoss="0.00" speed="11.28" speedRelative="1.02" departed="0" arrived="0" entered="1" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech02_1" sampledSeconds="15.19" traveltime="3.89" overlapTraveltime="5.20" density="12.77" laneDensity="12.77" occupancy="14.59" waitingTime="0.00" timeLoss="0.01" speed="11.38" speedRelative="1.02" departed="0" arrived="0" entered="4" left="3" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech02_2" sampledSeconds="11.77" traveltime="3.90" overlapTraveltime="4.34" density="9.89" laneDensity="9.89" occupancy="4.48" waitingTime="0.00" timeLoss="0.04" speed="11.34" speedRelative="1.02" departed="0" arrived="0" entered="3" left="2" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech02_3" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech03">
+            <lane id="Mech03_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech03_1" sampledSeconds="4.06" traveltime="0.73" overlapTraveltime="2.03" density="17.91" laneDensity="17.91" occupancy="9.67" waitingTime="0.00" timeLoss="0.00" speed="11.54" speedRelative="1.04" departed="0" arrived="0" entered="2" left="2" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech03_2" sampledSeconds="1.20" traveltime="0.76" overlapTraveltime="1.20" density="5.31" laneDensity="5.31" occupancy="1.67" waitingTime="0.00" timeLoss="0.00" speed="11.15" speedRelative="1.00" departed="0" arrived="0" entered="1" left="1" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech04">
+            <lane id="Mech04_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech04_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech04_2" sampledSeconds="8.45" traveltime="7.35" overlapTraveltime="9.24" density="5.39" laneDensity="5.39" occupancy="6.93" waitingTime="1.30" timeLoss="3.03" speed="7.93" speedRelative="0.71" departed="0" arrived="0" entered="2" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech04_3" sampledSeconds="1.78" traveltime="5.23" overlapTraveltime="5.68" density="1.13" laneDensity="1.13" occupancy="0.50" waitingTime="0.00" timeLoss="0.00" speed="11.15" speedRelative="1.00" departed="0" arrived="0" entered="1" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech05">
+            <lane id="Mech05_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech05_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech05_2" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech05_3" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech06">
+            <lane id="Mech06_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech06_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech07">
+            <lane id="Mech07_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech07_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech08">
+            <lane id="Mech08_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech08_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech09">
+            <lane id="Mech09_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech09_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech09_2" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_R04">
+            <lane id="Mech_R04_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_R05">
+            <lane id="Mech_R05_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_R06">
+            <lane id="Mech_R06_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_j04">
+            <lane id="Mech_j04_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_j05">
+            <lane id="Mech_j05_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_j07">
+            <lane id="Mech_j07_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_j08">
+            <lane id="Mech_j08_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_jp01b">
+            <lane id="Mech_jp01b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_jp021">
+            <lane id="Mech_jp021_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_jp022">
+            <lane id="Mech_jp022_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_jp02b">
+            <lane id="Mech_jp02b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_jp04b">
+            <lane id="Mech_jp04b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_jp05b">
+            <lane id="Mech_jp05b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_jp06b">
+            <lane id="Mech_jp06b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ramppi02">
+            <lane id="Mech_ramppi02_0" sampledSeconds="65.36" traveltime="12.28" overlapTraveltime="12.81" density="17.78" laneDensity="17.78" occupancy="12.62" waitingTime="0.00" timeLoss="13.81" speed="11.23" speedRelative="0.81" departed="7" arrived="0" entered="0" left="5" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech_ramppi02_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech_ramppi02_2" sampledSeconds="22.98" traveltime="11.55" overlapTraveltime="11.92" density="6.25" laneDensity="6.25" occupancy="3.08" waitingTime="0.00" timeLoss="3.02" speed="11.88" speedRelative="0.86" departed="2" arrived="0" entered="0" left="2" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech_ramppi02_3" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ramppi03">
+            <lane id="Mech_ramppi03_0" sampledSeconds="44.11" traveltime="11.36" overlapTraveltime="11.88" density="13.03" laneDensity="13.03" occupancy="7.27" waitingTime="6.50" timeLoss="10.12" speed="11.08" speedRelative="0.80" departed="0" arrived="0" entered="5" left="0" laneChangedFrom="3" laneChangedTo="0"/>
+            <lane id="Mech_ramppi03_1" sampledSeconds="10.20" traveltime="34.95" overlapTraveltime="36.34" density="3.01" laneDensity="3.01" occupancy="1.51" waitingTime="2.50" timeLoss="7.58" speed="3.60" speedRelative="0.26" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="3"/>
+            <lane id="Mech_ramppi03_2" sampledSeconds="23.27" traveltime="12.09" overlapTraveltime="12.57" density="6.87" laneDensity="6.87" occupancy="3.38" waitingTime="2.60" timeLoss="5.59" speed="10.41" speedRelative="0.75" departed="0" arrived="0" entered="2" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech_ramppi03_3" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ramppi_jp02">
+            <lane id="Mech_ramppi_jp02_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech_ramppi_jp02_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ramppi_jp02b">
+            <lane id="Mech_ramppi_jp02b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ramppi_jp03">
+            <lane id="Mech_ramppi_jp03_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech_ramppi_jp03_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ramppi_jp03b">
+            <lane id="Mech_ramppi_jp03b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ramppi_jp04">
+            <lane id="Mech_ramppi_jp04_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech_ramppi_jp04_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ramppi_jp04b">
+            <lane id="Mech_ramppi_jp04b_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ylitItam1R">
+            <lane id="Mech_ylitItam1R_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech_ylitItam1R_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ylitItam23">
+            <lane id="Mech_ylitItam23_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech_ylitItam23_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ylitItam2R">
+            <lane id="Mech_ylitItam2R_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ylitItam32">
+            <lane id="Mech_ylitItam32_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ylitItamR1">
+            <lane id="Mech_ylitItamR1_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Mech_ylitItamR2">
+            <lane id="Mech_ylitItamR2_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Mech_ylitItamR2_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Ruoh01">
+            <lane id="Ruoh01_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Ruoh01_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+        <edge id="Ruora05">
+            <lane id="Ruora05_0" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+            <lane id="Ruora05_1" sampledSeconds="0.00" departed="0" arrived="0" entered="0" left="0" laneChangedFrom="0" laneChangedTo="0"/>
+        </edge>
+    </interval>
+</meandata>

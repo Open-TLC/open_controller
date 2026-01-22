@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <tlLogic id="267_Mech_Itam" type="static" programID="1" offset="0">
+        <phase duration="40" state="rGGrrrrrrrrrrGGG"/>
+        <phase duration="3"  state="rGyrrrrrrrrrrrrr"/>
+        <phase duration="10" state="rGGrrGGrrrrrrrrr"/>
+        <phase duration="3"  state="ryGrryyrrrrrrrrr"/>
+        <phase duration="16" state="rrGGGrrGGrrGGrrr"/>
+        <phase duration="3"  state="rrGyyrryyrrGGrrr"/>
+        <phase duration="12" state="rrGrrrrrrGGGGrrr"/>
+        <phase duration="3"  state="rrGrrrrrryyrrrrr"/>
+    </tlLogic>
+</additional>

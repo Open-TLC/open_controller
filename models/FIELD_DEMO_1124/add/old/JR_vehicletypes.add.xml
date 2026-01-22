@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<vTypes>
-    <vType id="auto" vClass="passenger"/>
-    <vType id="bussi" vClass="bus" length="12" personCapacity="60"/>
-    <vType id="pikkubussi" vClass="bus" length="8" personCapacity="20"/>
-    <vType id="ratikka" vClass="tram" length="27.60" height="3.83" maxSpeed="15" personCapacity="200"/>
-    <vType id="rekka" length="16.50" vClass="trailer"/>
-</vTypes>
