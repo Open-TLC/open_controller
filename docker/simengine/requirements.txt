@@ -3,3 +3,4 @@ jsmin==3.0.1
 nats-py==2.9.0; python_version >= '3.7'
 numpy==2.0.2; python_version >= '3.9'
 shapely==2.0.6; python_version >= '3.7'
+pandas==2.2.3; python_version >= '3.7'
