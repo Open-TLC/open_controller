@@ -190,7 +190,7 @@ Running the components on a local computer (pr a server in a cloud) on the other
 
 It should be noted, that it is possible, and recommended, to use the docker installation as a basis of operations and run in the local computer only the parts needed (e.g. the graphical version of Simclient)
 
-### Operating the Open Controller docker cointainers
+### Operating the Open Controller docker containers
 
 The Open Controllers can be operated as any other containers in the system by shutting starting and stopping them by using the Docker user interface. Of course they can be started and stopped from command line as well by issuing commands such as
 
