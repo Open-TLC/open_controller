@@ -19,7 +19,7 @@ The holistic traffic situation is based on ordinary detectors and on new sensor 
 
 In order to run the basic system you need to have docker installed into your system.
 
-After this you can setup the full Open Controller system and run it with a relatively simple test model by issuing command:
+After this you can setup the full Open Controller system and run it with a relatively simple test model by issuing command (in the repository folder):
 
     docker-compose up
 
