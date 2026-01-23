@@ -1,13 +1,32 @@
 # Traffic indicator configuration
 
 ## About
-This document describes how the traffic indicators micro service is configured. There are currently two ways to pass parameters for the traffic_indicators service: 1) The command line parameters, and 2) configuration file. 
+Traffic indicators is a micro service that takes input variables (pre processed data from the traffic environment) calculates relevant traffic indicators (situational awareness) out of it. All inputs and outputs are json-messages and they are relayed using NATS message broker, asi indicated in the following image.
 
-## Command line parameters
+![Traffic Indicators data flows](TI_data_flows.png)
+
+This document describes how the traffic indicators micro service is configured. Conceptually configuration is based on configuring differeent output types and their parameters. Thede are explained in the following chapter. Below output configuration we provide detailed descriptuon of a configuration file and it's sections.
+
+## Output types and configuration
+### Traffic indicator outputs
+
+As it stands, traffic indicators provides only one type of an output: "e3". Configuring of this output type is described in the following chapter.
+
+### Traffic view (e3 detector)
+Traffic view is an indicator output that tries to estimate the vehicled approaching given traffic signal. One can think it a view the traffic signal "sees" when it ids determining when to change it's state.
+
+We use three different (stream) input types to calculate the output: 1), detector statuses, 2) object lists, and 3) corresponding traffic signal status. These streams are filtered and processed as depicted in the following figure.
+
+![Traffic Vieq configuration](TI_traffic_view.png)
+
+**Detector statuses** are in messages indicating if given detector is "occupied" or "not occupied". 
 
 
 ## Configuration file
 ### Config file and sections
+The purpose of config file is to 1) define connectivity for the service (at the time of the writing, only NATS is available), and 2) define output data we expect from the service, and 3) define inputs needed for the calculation of outputs and how they are connected.
+
+
 The configuration file is divided into the following sections:
 
 * **Connectivity** - Settings for accessing data sources (currenlty only NATS)
@@ -16,6 +35,8 @@ The configuration file is divided into the following sections:
 * **inputs** - Input definitions (detectors, radar lanes, signal groups)
 * **lanes** - Traffic lane configurations
 * **outputs** - Output configurations for data publishing
+
+
 
 Each of these sections are explained below.
 
