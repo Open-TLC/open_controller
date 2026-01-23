@@ -149,7 +149,7 @@ Example configuration snippet:
         }
 
     },
-    "rad_lanes":{
+    "object_filters":{
         "270_1_0": {
             "type": "simple",
             "stream": "radar270.1",
@@ -266,7 +266,7 @@ The full configuration file used in this example is:
         }
 
     },
-    "rad_lanes":{
+    "object_filters":{
         "270_1_0": {
             "type": "simple",
             "stream": "radar270.1",
