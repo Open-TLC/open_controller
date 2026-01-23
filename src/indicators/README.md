@@ -191,7 +191,7 @@ We are not explaining the details of the algorithms operating in the calculation
         "name": "Group 2 lane 1",
         "in_dets": ["2-040"],
         "out_dets": ["2-002"],
-        "radar_lanes":["270_1_0"],
+        "object_lists":["270_1_0"],
         "notes": "Approach from north"
     }
 },
@@ -212,7 +212,7 @@ We are not explaining the details of the algorithms operating in the calculation
 }
 ```
 
-It should be noted that the actuar detectors, radar_lanes and signal groups have to be defined in the configuration. These definitions are explained in the previous chapters.
+It should be noted that the actuar detectors, object_lists and signal groups have to be defined in the configuration. These definitions are explained in the previous chapters.
 
 ## Configuration file example
 
@@ -287,7 +287,7 @@ The full configuration file used in this example is:
         "name": "Group 2 lane 1",
         "in_dets": ["2-040"],
         "out_dets": ["2-002"],
-        "radar_lanes":["270_1_0"],
+        "object_lists":["270_1_0"],
         "notes": "Approach from north"
     }
 },

@@ -34,7 +34,7 @@ class Lane:
         self.in_dets = {} # detectors for incoming traffic
         self.out_dets = {} # detectors for outgoing traffic
         self.input_radars = {} #=RadarLane, filtered radar 
-        self.input_radars_params = params.get('radar_lanes', {})
+        self.input_radars_params = params.get('object_lists', {})
         self.in_dets_params = params.get('in_dets', {})
         self.out_dets_params = params.get('out_dets', {})
         # These will be updated based on detector values

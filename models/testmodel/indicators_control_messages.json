@@ -272,21 +272,21 @@
         "name": "Group 1 lane 1",
         "in_dets": ["1-040"],
         "out_dets": ["1-002"],
-        "radar_lanes":["270_2_0"],
+        "object_lists":["270_2_0"],
         "notes": "Approach from west"
     },
     "grp2_1":{
         "name": "Group 2 lane 1",
         "in_dets": ["2-040"],
         "out_dets": ["2-002"],
-        "radar_lanes":["270_1_0"],
+        "object_lists":["270_1_0"],
         "notes": "Approach from north"
     },
     "grp3_1":{
         "name": "Group 3 lane 1",
         "in_dets": ["R3PY"],
         "out_dets": ["R3KU"],
-        "radar_lanes":[],
+        "object_lists":[],
         "lane_main_type": "tram_type",
         "notes": "Tram lane from west"
     },
@@ -294,7 +294,7 @@
         "name": "Group 4 lane 1",
         "in_dets": ["R4PY"],
         "out_dets": ["R4KU"],
-        "radar_lanes":[],
+        "object_lists":[],
         "lane_main_type": "tram_type",
         "notes": "Tram line from north"
     },
@@ -302,35 +302,35 @@
         "name": "Group 5 lane 1",
         "in_dets": ["5-040"],
         "out_dets": ["5-002"],
-        "radar_lanes":["270_1_1"],
+        "object_lists":["270_1_1"],
         "notes": "Approach from north"
     },
     "grp6_1":{
         "name": "Group 6 lane 1",
         "in_dets": ["6-040"],
         "out_dets": ["6-002A"],
-        "radar_lanes":["270_3_1"],
+        "object_lists":["270_3_1"],
         "notes": "Approach from north"
     },
     "grp6_2":{
         "name": "Group 6 lane 2",
         "in_dets": ["6-030"],
         "out_dets": ["6-002B"],
-        "radar_lanes":["270_3_2"],
+        "object_lists":["270_3_2"],
         "notes": "Approach from north"
     },
     "grp7_1":{
         "name": "Group 7 lane 1",
         "in_dets": ["7-020"],
         "out_dets": ["7-001"],
-        "radar_lanes":["270_3_3"],
+        "object_lists":["270_3_3"],
         "notes": "Approach from north"
     },
     "grp8_1":{
         "name": "Tram lane for Group 8",
         "in_dets": ["R8PY"],
         "out_dets": ["R8KU"],
-        "radar_lanes":[],
+        "object_lists":[],
         "lane_main_type": "tram_type",
         "notes": "Special lane for tram"
     },
@@ -338,7 +338,7 @@
         "name": "Tram lane for Group 9",
         "in_dets": ["R9PY"],
         "out_dets": ["R9KU"],
-        "radar_lanes":[],
+        "object_lists":[],
         "lane_main_type": "tram_type",
         "notes": "Special lane for tram"
     },
@@ -346,7 +346,7 @@
         "name": "Tram test lane",
         "in_dets": ["test_request"],
         "out_dets": ["test_clear"],
-        "radar_lanes":[],
+        "object_lists":[],
         "lane_main_type": "tram_type",
         "notes": "Special lane for tram, test"
     }
