@@ -168,6 +168,36 @@ The `connection` parameter refers to the `connectivity` section defined in the s
 
 Currently, the subtype has no effect on the operation.
 
+
+### Inputs
+#### Inptus and streams
+
+This section defines intputs for the traffic indicator calculation. This section can be thought of as a "filter" for the input streams, as this section defines how to pick parts of the data from the streams defined above and how to give names for them. Three typed of inputs are available: `dets`, `groups`, and `object_filters`, each of them having their own subsection under `inputs`
+
+#### Signal grpoups (`groups`)
+Signal groups define which signal group status streams are filtered for use in traffic indicator calculations. Each signal group input is mapped to a specific group identifier from the input stream.
+
+Signal group input is defined with the following configuration:
+
+```json
+    "GROUP_ID": {
+        "type": "simple",
+        "stream": "STREAM_NAME",
+        "group": "GROUP_NUMBER"
+    }
+```
+
+Parameters in the sample above are as follows:
+
+| Variable | Explanation | Example Value |
+|----------|-------------|----------------|
+| GROUP_ID | Identifier for the signal group input | "group1" |
+| type | Input type: `simple` | "simple" |
+| stream | Reference to input stream defined in `input_streams` | "sig_inputs" |
+| group | Signal group number to filter from the stream | "1" |
+
+The `stream` parameter refers to a stream defined in the `input_streams` section (typically a `groups` type stream). Multiple signal group inputs can reference the same stream but filter different group numbers. These inputs are then used in lane definitions and output configurations to associate traffic indicators with specific signal groups.
+
 ## Example file
 
 Below is a simplified configuration with full sections. For an operational configuration, see examples under `/models`, for example `models/testmodel/indicators.md`
