@@ -12,14 +12,22 @@ This document describes how the traffic indicators micro service is configured. 
 
 As it stands, traffic indicators provides only one type of an output: "e3". Configuring of this output type is described in the following chapter.
 
-### Traffic view (e3 detector)
+### Traffic view 
+#### Traffic viwe and it's ide
+
 Traffic view is an indicator output that tries to estimate the vehicled approaching given traffic signal. One can think it a view the traffic signal "sees" when it ids determining when to change it's state.
 
-We use three different (stream) input types to calculate the output: 1), detector statuses, 2) object lists, and 3) corresponding traffic signal status. These streams are filtered and processed as depicted in the following figure.
+We use three different (stream) input types to calculate the output: 1), detector statuses, 2) object lists, and 3) corresponding traffic signal status. These streams are filtered and processed as depicted in the figure below.
 
 ![Traffic Vieq configuration](TI_traffic_view.png)
 
-**Detector statuses** are in messages indicating if given detector is "occupied" or "not occupied". 
+#### Imput streams
+Three different types of streams are used for the view operations. All of them are deifned in the `input_streams`section of the configuration file. Each of these streams are subscribed to at the start of the traffic indicators operations, and data is processed as it comes.  
+
+**Detector statuses** are in messages indicating if given detector is "occupied" or "not occupied". In practice these are typically loop detectors installed below the pavement indicating if there is a vehicle on top of it. This type of data can be used for making estimates of traffic flow (vehicle counts) crossing the section of the road.
+
+**Signal groups statuses** are stream of messages indicating if a given signal (or signal group) is green or red as well as internal state of the traffic controlled. This infromation can be used when estimating the traffic conditions. 
+
 
 
 ## Configuration file
@@ -59,18 +67,106 @@ The block is definbed as follows:
 
 The section can accept following parameters:
 
-| Variable | Explanation | Default Value |
+| Variable | Explanation | Example Value |
 |----------|-------------|----------------|
-| HOSTNAME | The hostname or IP address of the NATS server | localhost |
+| HOSTNAME | The hostname or IP address of the NATS server | "localhost" |
 | HOSTPORT | The port number for the NATS server connection | 4222 |
 
 
 Typical use case is to use nats-server running in the localhost and relaying all the messaging via that.
 
 ### Input streams
+#### The input stream section
+This section defines the input stratms to be used in traffic indicator calculation. There are currently three input stream types available: 1) `groups` for signal statuses, 2) `detectors` for detector inputs, and 3) `radar` for obkject lists. In the following subsections we cover each of them
 
-This section defines the input stratms to be used in traffic indicator calculation.
+#### Signal group input stream (`groups`)
 
+Signal group stream is defined with following type of configuration:
+
+```json
+    "STREAM_NAME": {
+        "connection": "CONNECTION_TYPE",
+        "type": "groups",
+        "subtype": "SUBTYPE",
+        "nats_subject": "SUBSCRIPTION CHANNEL",
+        "notes": "DESCRIPTION"
+    }
+
+```
+
+Parameters in the sample above takes parameters as follows:
+
+| Variable | Explanation | Example Value |
+|----------|-------------|----------------|
+| STREAM_NAME | Identifier for the input stream | "sig_inputs" |
+| connection | Type of connection protocol | "nats" |
+| type | Stream type: `groups` | "groups" |
+| subtype | Data source type (e.g., sumo) | "sumo" |
+| nats_subject | NATS subject pattern to subscribe to | "group.status.270.*" |
+| notes | Description of the stream | "All groups from sumo" |
+
+One should note that typically this stream type subscribes to several different signal group streams (indicated by the `*` at the `nats_subject` example above). The `connection` parameter refers to the `connectivity` section defined in the same configuration file (this is mandatory).
+
+Currently, the subtype has no effect on the operation.
+
+#### Detector input stream (`detectors`)
+Detector stream is defined with following type of configuration:
+
+```json
+    "STREAM_NAME": {
+        "connection": "CONNECTION_TYPE",
+        "type": "groups",
+        "subtype": "SUBTYPE",
+        "nats_subject": "SUBSCRIPITON CHANNEL",
+        "notes": "DESCRIPTION"
+    }
+
+```
+Parameters in the stample above takes parameters as follows:
+
+| Variable | Explanation | Example Value |
+|----------|-------------|----------------|
+| STREAM_NAME | Identifier for the input stream | "det_inputs" |
+| connection | Type of connection protocol | "nats" |
+| type | Stream type: `detectors` | "detectors" |
+| subtype | Data source type (e.g., sumo) | "sumo" |
+| nats_subject | NATS subject pattern to subscribe to |  "detector.status.*" |
+| notes | Description of the stream | "All dets from sumo" |
+
+One should note that typically this stream type subscribes to several different detectors streams (indicated by the `*` at the `nats_subject` example above. The `connection`parameter refers to the `connectivity` section defined in the same configuration file (this is mandatory) 
+
+Currently, the subtype has no effect on the operation.
+
+
+#### Radar input stream (`radar`)
+
+Radar stream is defined with following type of configuration:
+
+```json
+    "STREAM_NAME": {
+        "connection": "CONNECTION_TYPE",
+        "type": "radar",
+        "subtype": "SUBTYPE",
+        "nats_subject": "SUBSCRIPTION CHANNEL",
+        "notes": "DESCRIPTION"
+    }
+
+```
+
+Parameters in the sample above takes parameters as follows:
+
+| Variable | Explanation | Example Value |
+|----------|-------------|----------------|
+| STREAM_NAME | Identifier for the input stream | "radar270.1" |
+| connection | Type of connection protocol | "nats" |
+| type | Stream type: `radar` | "radar" |
+| subtype | Data source type (e.g., sumo) | "sumo" |
+| nats_subject | NATS subject for object list subscription | "radar.270.1.objects_port.json" |
+| notes | Description of the stream | "Radar pointing north" |
+
+The `connection` parameter refers to the `connectivity` section defined in the same configuration file (this is mandatory).
+
+Currently, the subtype has no effect on the operation.
 
 ## Example file
 
