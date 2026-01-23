@@ -315,11 +315,11 @@ class GlobalConf:
                 lane_params = params
                 # These read the params from the inputs section
                 # For radars
-                rad_lanes = params.get('radar_lanes', [])
+                obj_lists = params.get('object_lists', [])
                 radar_lane_params = {}
-                for r_lane in rad_lanes:
-                    radar_lane_params[r_lane] = self.get_radar_input_params(r_lane)
-                lane_params['radar_lanes'] = radar_lane_params
+                for obj_list in obj_lists:
+                    radar_lane_params[obj_list] = self.get_radar_input_params(obj_list)
+                lane_params['object_lists'] = radar_lane_params
                 # For in dets
                 in_dets = params.get('in_dets', [])
                 in_det_params = {}
