@@ -198,6 +198,70 @@ Parameters in the sample above are as follows:
 
 The `stream` parameter refers to a stream defined in the `input_streams` section (typically a `groups` type stream). Multiple signal group inputs can reference the same stream but filter different group numbers. These inputs are then used in lane definitions and output configurations to associate traffic indicators with specific signal groups.
 
+#### Detectors (`dets`)
+
+Detector inputs define which detector status streams are filtered for use in traffic indicator calculations. Each detector input is mapped to a specific detector identifier from the input stream and can be configured to trigger on state changes.
+
+Detector input is defined with the following configuration:
+
+```json
+    "DETECTOR_ID": {
+        "type": "TRIGGER_TYPE",
+        "stream": "STREAM_NAME",
+        "name": "DETECTOR_NAME",
+        "vtype": "VEHICLE_TYPE"
+    }
+```
+
+Parameters in the sample above are as follows:
+
+| Variable | Explanation | Example Value |
+|----------|-------------|----------------|
+| DETECTOR_ID | Identifier for the detector input | "2-002" |
+| type | Trigger type: `rising_edge`, `falling_edge`, or `change` | "falling_edge" |
+| stream | Reference to input stream defined in `input_streams` | "det_inputs" |
+| name | Detector name/identifier from the stream | "2-002" |
+| vtype | Vehicle type for filtering (optional) | "tram_type" |
+
+The `stream` parameter specifies the input stream that the detector will monitor, as defined in the `input_streams` section of the configuration. 
+
+The `type` parameter determines the conditions under which the detector will trigger a state change. There are three options available for this parameter:
+1. **Rising Edge**: The detector triggers when the input signal transitions from a low state to a high state.
+2. **Falling Edge**: The detector triggers when the input signal transitions from a high state to a low state.
+3. **Both**: The detector triggers on both rising and falling edges, allowing it to respond to changes in either direction.
+
+#### Object filters (`object_filters`)
+
+Object filters define how object lists (coming from radars for example) are processed for use in traffic indicator calculations. Each object filter maps to a specific radar stream and lane configuration.
+
+Object filter input is defined with the following configuration:
+
+```json
+    "FILTER_ID": {
+        "type": "simple",
+        "stream": "STREAM_NAME",
+        "lane": "LANE_NUMBER"
+    }
+```
+
+Parameters in the sample above are as follows:
+
+| Variable | Explanation | Example Value |
+|----------|-------------|----------------|
+| FILTER_ID | Identifier for the object filter | "270_1_0" |
+| type | Filter type: `simple` | "simple" |
+| stream | Reference to input stream defined in `input_streams` | "radar270.1" |
+| lane | Lane number to filter from the radar stream | "0" |
+
+The `stream` parameter refers to a stream defined in the `input_streams` section (typically a `radar` type stream). Multiple object filters can reference the same stream but filter different lane numbers. These filters are then referenced in lane definitions to associate object detection with specific traffic lanes.
+
+### Lanes
+
+#### Combining different inputs
+
+Lanes section defines lanes to be used for calculating different "views". 
+
+
 ## Example file
 
 Below is a simplified configuration with full sections. For an operational configuration, see examples under `/models`, for example `models/testmodel/indicators.md`
