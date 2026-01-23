@@ -338,7 +338,7 @@ class GlobalConf:
     # read from "inputs section"
     def get_radar_input_params(self, radar_name):
         """Returns parameters for the radars as a dictionary"""
-        radars_section = self.conf['inputs'].get('rad_lanes', {})
+        radars_section = self.conf['inputs'].get('object_filters', {})
         radar_params = {}
         for param_radar_name, params in radars_section.items():
             if param_radar_name == radar_name:

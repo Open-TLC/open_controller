@@ -388,7 +388,7 @@ Below is a simplified configuration with full sections. For an operational confi
         }
 
     },
-    "rad_lanes":{
+    "object_filters":{
         "270_1_0": {
             "type": "simple",
             "stream": "radar270.1",

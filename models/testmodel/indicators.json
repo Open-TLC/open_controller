@@ -186,7 +186,7 @@
         }
 
     },
-    "rad_lanes":{
+    "object_filters":{
         "270_1_0": {
             "type": "simple",
             "stream": "radar270.1",
