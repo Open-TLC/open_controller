@@ -1,32 +1,73 @@
 # Traffic indicator configuration
 
 ## About
-Traffic indicators is a micro service that takes input variables (pre processed data from the traffic environment) calculates relevant traffic indicators (situational awareness) out of it. All inputs and outputs are json-messages and they are relayed using NATS message broker, asi indicated in the following image.
+
+This document explains configuring the traffic indicators component, which is part of the [Open Controller](../../../README.md) software package. For usage ot shis component see [Traffic indicators overview](./overview.md).
+
+
+Traffic indicators is a micro service that takes input variables (pre processed data from the traffic environment) and calculates relevant traffic indicators (situational awareness) from it. All inputs and outputs are JSON messages and they are relayed using NATS message broker, as indicated in the following image.
 
 ![Traffic Indicators data flows](TI_data_flows.png)
 
-This document describes how the traffic indicators micro service is configured. Conceptually configuration is based on configuring differeent output types and their parameters. Thede are explained in the following chapter. Below output configuration we provide detailed descriptuon of a configuration file and it's sections.
+This document describes how the traffic indicators micro service is configured. Conceptually, configuration is based on configuring different output types and their parameters. These are explained in the following chapter. Below the output configuration we provide detailed description of a configuration file and its sections.
+
+This document is divided into three parts: 1) Instructions on how to configure typical outputs ([Output types and configuration](#output-types-and-configuration)), 2) Configuration file reference guide ([Configuration file](#configuration-file)), and 3) Example configuration file ([Example file](#example-file)).
 
 ## Output types and configuration
 ### Traffic indicator outputs
 
-As it stands, traffic indicators provides only one type of an output: "e3". Configuring of this output type is described in the following chapter.
+As it stands, traffic indicators provides only one type of an output: Traffic View (this is roughly similar to "e3" detector in Sumo). Following subsection explains configuration of this output type.
 
 ### Traffic view 
-#### Traffic viwe and it's ide
+#### Traffic view and it's idea
 
-Traffic view is an indicator output that tries to estimate the vehicled approaching given traffic signal. One can think it a view the traffic signal "sees" when it ids determining when to change it's state.
+Traffic view is an indicator output that tries to estimate vehicles approaching a given traffic signal. One can think of it as a view the traffic signal "sees" when it is determining when to change its state. This can seem like a relatively limited understanding of traffic conditions, but it has proven to be quite versatile: sophisticated traffic controller schemes can be built by using several views as control inputs. For more information about the corresponding controller configuration see [Control Engine configuration](../clockwork/configuration).
 
-We use three different (stream) input types to calculate the output: 1), detector statuses, 2) object lists, and 3) corresponding traffic signal status. These streams are filtered and processed as depicted in the figure below.
+Configuring the view output can be seen as a data pipeline that starts from input stream and produces stream of output messagges based on configuration and input data. This process is depicted in the figure below. There are four main steps in this process: 1) **reading the input data** from streams we have configured, 2) **filtering the data** and picking _relevant_ inputs to be used in the state estimation, 3) **estimating the relevant output variables** (i.e lists of road users) based on inbput data and the configuration, and 4) **sending the indicator output** to a channel defined in the configuration
 
 ![Traffic Vieq configuration](TI_traffic_view.png)
 
-#### Imput streams
-Three different types of streams are used for the view operations. All of them are deifned in the `input_streams`section of the configuration file. Each of these streams are subscribed to at the start of the traffic indicators operations, and data is processed as it comes.  
+#### Steps for configuring a view
 
-**Detector statuses** are in messages indicating if given detector is "occupied" or "not occupied". In practice these are typically loop detectors installed below the pavement indicating if there is a vehicle on top of it. This type of data can be used for making estimates of traffic flow (vehicle counts) crossing the section of the road.
+#### Configuring the streams
+The streams are defined in the `input_streams` section of the configuration file. In the example shown in the figure above, we utilize three different input types to calculate the output: 1) detector statuses from specified channels, 2) signal statuses from the controller, and 3) object lists from sensors or other data sources (e.g., radars). This can be configured as follows:
 
-**Signal groups statuses** are stream of messages indicating if a given signal (or signal group) is green or red as well as internal state of the traffic controlled. This infromation can be used when estimating the traffic conditions. 
+```json
+{
+    "det_inputs": {
+        "connection": "nats",
+        "type": "detectors",
+        "subtype": "sumo",
+        "nats_subject": "detector.status.*",
+        "notes": "Detector statuses"
+    },
+    "sig_inputs": {
+        "connection": "nats",
+        "type": "groups",
+        "subtype": "sumo",
+        "nats_subject": "group.status.270.*",
+        "notes": "Signal group statuses"
+    },
+    "radar270": {
+        "connection": "nats",
+        "type": "radar",
+        "subtype": "sumo",
+        "nats_subject": "radar.270.1.objects_port.json",
+        "notes": "Object lists from radar"
+    }
+}
+```
+
+Each of these streams is subscribed to at the start of the traffic indicators operations, and data is processed as it arrives. In this case, the `connection` for all inputs is NATS, and three different types of data are used (`detectors`, `groups`, and `radar`), with a `nats_subject` defined for each. As illustrated in the example, the object list (`radar270`) of type `radar` is subscribed from one topic (`radar.270.1.objects_port.json`), while detectors and groups subscribe to multiple channels (indicated by the asterisk at the end of the `nats_subject`). Note that the parameters `subtype` and `notes` do not impact the operation; they are included for clarity and future expansion.
+
+The types of streams are as follows:
+- **Detector statuses** (`det_inputs`) are messages indicating whether a given detector is "occupied" or "not occupied." In practice, these are typically loop detectors installed beneath the pavement, indicating if a vehicle is present. This type of data can be used to estimate traffic flow (vehicle counts) crossing a section of the road.
+- **Signal group statuses** are streams of messages indicating whether a given signal (or signal group) is green or red, as well as the internal state of the traffic controller. This information can be utilized when estimating traffic conditions.
+- **Object lists** (`radar`) are streams of detected objects from sensors such as radars or cameras. Each object typically includes position, velocity, classification, and other attributes. This type of data can be used to estimate vehicle presence and movement in specific traffic lanes.
+
+Streams themselves are not enough for practical operations. Thus the next step in the configuration is to define the indicator inputs.
+
+#### Configuring the inputs
 
 
 
@@ -44,13 +85,11 @@ The configuration file is divided into the following sections:
 * **lanes** - Traffic lane configurations
 * **outputs** - Output configurations for data publishing
 
-
-
 Each of these sections are explained below.
 
 ### Connectivity
 
-This section defines the data (stream) connections. In currednt setting we only support NATS connections.
+This section defines the data (stream) connections. In the current setting we only support NATS connections.
 
 The block is definbed as follows:
 ```json
@@ -58,7 +97,7 @@ The block is definbed as follows:
 "connectivity":{
 	"notes": "This is for accessing the data",
 	"nats": {
-		"server": HOSTNAME,
+		"server": "HOSTNAME",
 		"port": HOSTPORT
         }
     }
@@ -77,7 +116,7 @@ Typical use case is to use nats-server running in the localhost and relaying all
 
 ### Input streams
 #### The input stream section
-This section defines the input stratms to be used in traffic indicator calculation. There are currently three input stream types available: 1) `groups` for signal statuses, 2) `detectors` for detector inputs, and 3) `radar` for obkject lists. In the following subsections we cover each of them
+This section defines the input streams to be used in traffic indicator calculation. There are currently three input stream types available: 1) `groups` for signal statuses, 2) `detectors` for detector inputs, and 3) `radar` for object lists. In the following subsections we cover each of them.
 
 #### Signal group input stream (`groups`)
 
@@ -122,7 +161,7 @@ Detector stream is defined with following type of configuration:
     }
 
 ```
-Parameters in the stample above takes parameters as follows:
+Parameters in the sample above are as follows:
 
 | Variable | Explanation | Example Value |
 |----------|-------------|----------------|
@@ -169,12 +208,17 @@ The `connection` parameter refers to the `connectivity` section defined in the s
 Currently, the subtype has no effect on the operation.
 
 
+### Detlogics
+
+This part is to be implemented later. The goal is to define typical detector logic output to be used as part of an Open Controller implementation.
+
+
 ### Inputs
-#### Inptus and streams
+#### Inputs and streams
 
-This section defines intputs for the traffic indicator calculation. This section can be thought of as a "filter" for the input streams, as this section defines how to pick parts of the data from the streams defined above and how to give names for them. Three typed of inputs are available: `dets`, `groups`, and `object_filters`, each of them having their own subsection under `inputs`
+This section defines inputs for the traffic indicator calculation. This section can be thought of as a "filter" for the input streams, as this section defines how to pick parts of the data from the streams defined above and how to give names for them. Three types of inputs are available: `dets`, `groups`, and `object_filters`, each of them having their own subsection under `inputs`.
 
-#### Signal grpoups (`groups`)
+#### Signal groups (`groups`)
 Signal groups define which signal group status streams are filtered for use in traffic indicator calculations. Each signal group input is mapped to a specific group identifier from the input stream.
 
 Signal group input is defined with the following configuration:
