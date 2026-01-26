@@ -27,7 +27,7 @@ Configuring the view output can be seen as a data pipeline that starts from inpu
 
 ![Traffic Vieq configuration](TI_traffic_view.png)
 
-#### Steps for configuring a view
+In terms of configuring, thes steps are carried out by configuring the 1) input streams, 2) defining input data, 3) defining traffic lanes, and 4) using one or several lanes to aggregate them to an output.
 
 #### Configuring the streams
 The streams are defined in the `input_streams` section of the configuration file. In the example shown in the figure above, we utilize three different input types to calculate the output: 1) detector statuses from specified channels, 2) signal statuses from the controller, and 3) object lists from sensors or other data sources (e.g., radars). This can be configured as follows:
@@ -62,12 +62,29 @@ Each of these streams is subscribed to at the start of the traffic indicators op
 
 The types of streams are as follows:
 - **Detector statuses** (`det_inputs`) are messages indicating whether a given detector is "occupied" or "not occupied." In practice, these are typically loop detectors installed beneath the pavement, indicating if a vehicle is present. This type of data can be used to estimate traffic flow (vehicle counts) crossing a section of the road.
-- **Signal group statuses** are streams of messages indicating whether a given signal (or signal group) is green or red, as well as the internal state of the traffic controller. This information can be utilized when estimating traffic conditions.
+- **Signal group statuses** (`sig_inputs`) are streams of messages indicating whether a given signal (or signal group) is green or red, as well as the internal state of the traffic controller. This information can be utilized when estimating traffic conditions.
 - **Object lists** (`radar`) are streams of detected objects from sensors such as radars or cameras. Each object typically includes position, velocity, classification, and other attributes. This type of data can be used to estimate vehicle presence and movement in specific traffic lanes.
 
 Streams themselves are not enough for practical operations. Thus the next step in the configuration is to define the indicator inputs.
 
 #### Configuring the inputs
+Three types of indicator inputs are defined, each of them corresponding to a input stream. This part of the configuration is best to be undestod as a filter: we take as an input stream(s) of data, and filter relevant inputs from it. In addition to the stream name each input is given a tag (to be used later) and parameters for the filtering.
+
+In essence we definte inputs by giving them filtering criteria and possible other parameters. Each of these ouutputs is given a tag, that is used later when we define input connections to lanes. The Input types and parameters are as follows:
+
+| Input Type | Stream | Filtering Criteria | Other Parameters |
+|------------|--------|-------------------|------------------|
+| Signal groups (`groups`) | `groups` type stream | Signal group id | - |
+| Detectors (`dets`) | `detectors` type stream | detector id, `name`; vehicle type, `vtype` (optional) | trigger type (rising edge, falling edge, change)|
+| Object filters (`object_filters`) | `radar` type stream | Lane number | - |
+
+For more details of configuration format see [Inputs and streams](#inputs-and-streams)
+
+#### Configuring the lanes
+Lanes are where the actual data fusion happens. Each lane can be onfigured to: 1) input detectors, 2) output detectors, and 3) one or many filtered object lists. 
+
+
+#### Configuring the outputs
 
 
 
