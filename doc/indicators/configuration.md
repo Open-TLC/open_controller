@@ -318,10 +318,71 @@ The `stream` parameter refers to a stream defined in the `input_streams` section
 
 ### Lanes
 
-#### Combining different inputs
+Lanes section defines lanes to be used for calculating different views. In essence, we use input and output detectors as well as object list data (e.g. from radar) to provide a reasonable estimate for the amount of road users in a given lane. 
 
-Lanes section defines lanes to be used for calculating different "views". 
+The lane is configured as follows:
+```json
+    "LANE_ID": {
+        "name": "LANE_NAME",
+        "in_dets": ["INPUT_DETECTOR_IDS"],
+        "out_dets": ["OUTPUT_DETECTOR_IDS"],
+        "object_lists": ["OBJECT_FILTER_IDS"],
+        "lane_main_type": "VEHICLE_TYPE",
+        "notes": "DESCRIPTION"
+    }
+```
 
+Parameters in the sample above are as follows:
+
+| Variable | Explanation | Example Value |
+|----------|-------------|----------------|
+| LANE_ID | Identifier for the lane | "grp1_1" |
+| name | Descriptive name for the lane | "Group 1 lane 1" |
+| in_dets | Array of input detector IDs from `inputs.dets` | ["1-040"] |
+| out_dets | Array of output detector IDs from `inputs.dets` | ["1-002"] |
+| object_lists | Array of object filter IDs from `inputs.object_filters` | ["270_2_0"] |
+| lane_main_type | Vehicle type for the lane (optional) | "tram_type" |
+| notes | Description of the lane | "Approach from west" |
+
+The `in_dets` parameter defines detectors that trigger when vehicles enter the lane section, while `out_dets` defines detectors that trigger when vehicles exit. The `object_lists` parameter references object filters that provide radar-based tracking within the lane. The optional `lane_main_type` parameter is used to specify lanes dedicated to specific vehicle types, such as tram lanes (this is only usef for the ouptuts, not for filtering).
+
+### Outputs
+
+#### Views outputs (`e3`)
+Currenlty this output type we use. In essence, this output emits (at given freguency) our current best estimate of veicles in the lanes mapped in this view.
+
+Views output is defined with the following configuration:
+
+```json
+    "VIEW_ID": {
+        "connection": "CONNECTION_TYPE",
+        "type": "e3",
+        "nats_output_subject": "OUTPUT_SUBJECT",
+        "trigger": "TRIGGER_TYPE",
+        "trigger_time": FREQUENCY,
+        "lanes": ["LANE_IDS"],
+        "group": "GROUP_ID",
+        "detectors_broken": BOOLEAN,
+        "notes": "DESCRIPTION"
+    }
+```
+
+Parameters in the sample above are as follows:
+
+| Variable | Explanation | Example Value |
+|----------|-------------|----------------|
+| VIEW_ID | Identifier for the view output | "group1_view" |
+| connection | Type of connection protocol | "nats" |
+| type | Output type: `e3` | "e3" |
+| nats_output_subject | NATS subject for publishing the view | "group.e3.270.1" |
+| trigger | Trigger type: `time` is the only option for now | "time" |
+| trigger_time | Emission frequency in seconds (for time trigger) | 1.0 |
+| lanes | Array of lane IDs from `lanes` section | ["grp1_1", "grp1_2"] |
+| group | Associated signal group ID from `inputs.groups` | "group1" |
+| detectors_broken | Boolean flag indicating detector malfunction (optional) | false |
+| notes | Description of the view | "Approach from north" |
+
+The `lanes` parameter aggregates multiple lanes into a single view, allowing the output to represent the combined vehicle count across several traffic lanes. The `group` parameter associates the view with a specific signal group for coordination purposes. When `detectors_broken` is set to `true`, the system will rely on alternative data sources (such as radar object lists) for vehicle estimation.
 
 ## Example file
 
