@@ -2,7 +2,7 @@
 
 ## About
 
-This document explains configuring the traffic indicators component, which is part of the [Open Controller](../../../README.md) software package. For usage ot shis component see [Traffic indicators overview](./overview.md).
+This document explains configuring the traffic indicators component, which is part of the [Open Controller](../../../README.md) software package. For usage of this component, see [Traffic indicators overview](./overview.md).
 
 
 Traffic indicators is a micro service that takes input variables (pre processed data from the traffic environment) and calculates relevant traffic indicators (situational awareness) from it. All inputs and outputs are JSON messages and they are relayed using NATS message broker, as indicated in the following image.
@@ -21,16 +21,16 @@ As it stands, traffic indicators provides only one type of an output: Traffic Vi
 ### Traffic view 
 #### Traffic view and it's idea
 
-Traffic view is an indicator output that tries to estimate vehicles approaching a given traffic signal. One can think of it as a view the traffic signal "sees" when it is determining when to change its state. This can seem like a relatively limited understanding of traffic conditions, but it has proven to be quite versatile: sophisticated traffic controller schemes can be built by using several views as control inputs. For more information about the corresponding controller configuration see [Control Engine configuration](../clockwork/configuration).
+Traffic view is an indicator output that tries to estimate vehicles approaching a given traffic signal. One can think of it as a view the traffic signal "sees" when determining when to change its state. This can seem like a relatively limited understanding of traffic conditions, but it has proven to be quite versatile: sophisticated traffic controller schemes can be built by using several views as control inputs. For more information about the corresponding controller configuration, see [Control Engine configuration](../clockwork/configuration).
 
-Configuring the view output can be seen as a data pipeline that starts from input stream and produces stream of output messagges based on configuration and input data. This process is depicted in the figure below. There are four main steps in this process: 1) **reading the input data** from streams we have configured, 2) **filtering the data** and picking _relevant_ inputs to be used in the state estimation, 3) **estimating the relevant output variables** (i.e lists of road users) based on inbput data and the configuration, and 4) **sending the indicator output** to a channel defined in the configuration
+Configuring the view output can be seen as a data pipeline that starts from the input stream and produces a stream of output messages based on configuration and input data. This process is depicted in the figure below. There are four main steps in this process: 1) **reading the input data** from streams we have configured, 2) **filtering the data** and picking _relevant_ inputs to be used in the state estimation, 3) **estimating the relevant output variables** (i.e., lists of road users) based on input data and the configuration, and 4) **sending the indicator output** to a channel defined in the configuration.
 
-![Traffic Vieq configuration](TI_traffic_view.png)
+![Traffic View configuration](TI_traffic_view.png)
 
-In terms of configuring, thes steps are carried out by configuring the 1) input streams, 2) defining input data, 3) defining traffic lanes, and 4) using one or several lanes to aggregate them to an output.
+In terms of configuring, these steps are carried out by configuring the 1) input streams, 2) defining input data, 3) defining traffic lanes, and 4) using one or several lanes to aggregate them into an output.
 
 #### Configuring the streams
-The streams are defined in the `input_streams` section of the configuration file. In the example shown in the figure above, we utilize three different input types to calculate the output: 1) detector statuses from specified channels, 2) signal statuses from the controller, and 3) object lists from sensors or other data sources (e.g., radars). This can be configured as follows:
+The streams are defined in the `input_streams` section of the configuration file. In the example shown in the figure above, we utilize three different input types to calculate the output: 1) detector statuses from specified channels, 2) signal statuses from the controller, and 3) object lists from sensors or other data sources (e.g., radars). They can be configured as follows:
 
 ```json
 {
@@ -68,9 +68,9 @@ The types of streams are as follows:
 Streams themselves are not enough for practical operations. Thus the next step in the configuration is to define the indicator inputs.
 
 #### Configuring the inputs
-Three types of indicator inputs are defined, each of them corresponding to a input stream. This part of the configuration is best to be undestod as a filter: we take as an input stream(s) of data, and filter relevant inputs from it. In addition to the stream name each input is given a tag (to be used later) and parameters for the filtering.
+Three types of indicator inputs are defined, each of them corresponding to an input stream. This part of the configuration is best understood as a filter: we take input stream(s) of data and filter relevant inputs from it. In addition to the stream name, each input is given a tag (to be used later) and parameters for the filtering.
 
-In essence we definte inputs by giving them filtering criteria and possible other parameters. Each of these ouutputs is given a tag, that is used later when we define input connections to lanes. The Input types and parameters are as follows:
+In essence, we define inputs by giving them filtering criteria and possible other parameters. Each of these inputs is given a tag that is used later when we define input connections to lanes. The input types and parameters are as follows:
 
 | Input Type | Stream | Filtering Criteria | Other Parameters |
 |------------|--------|-------------------|------------------|
@@ -81,28 +81,28 @@ In essence we definte inputs by giving them filtering criteria and possible othe
 For more details of configuration format see [Inputs and streams](#inputs-and-streams)
 
 #### Configuring the lanes
-Lanes are where the actual data fusion happens. Each lane can be onfigured to: 1) input detectors, 2) output detectors, and 3) one or many filtered object lists.
+Lanes are where the actual data fusion happens. Each lane can be configured to: 1) input detectors, 2) output detectors, and 3) one or many filtered object lists.
 
 Lane objects attempt to estimate, how many and what road users there are at any given moment in a given lane (lane can also be a traffic island for example, conceptially we want an area controlled by a single traffic light). This is calculating by 1) keeping track of road users entering the lane (input detector triggers) and ones exiting the lane (output detector triggers), and 2) collecting the vehicle lists from the object list sensors (e.g. radars).
 
-In practice we keep up the count of road users in the lane by adding one every time one passes an input detector and deducting one when someone passes output detector. This works in a very simmilar manner as SUMO simulation engine's detector type "e3" (thus the name). Unlike in the simulation, this approach can cause cumulative error if detectors miss the outgoing road users for one reason or another. Because of this, we also reset the counter if following coditions are met: 1) red starts, and 2) controller thinks there are no vehicles on this lane. This approach gives us a reasonable estimate for _number of vehicles_ inside the lane.
+In practice, we keep track of the count of road users in the lane by adding one every time a vehicle passes an input detector and subtracting one when a vehicle passes an output detector. This works in a very similar manner to SUMO simulation engine's detector type "e3" (thus the name). Unlike in the simulation, this approach can cause cumulative error if detectors miss outgoing road users for one reason or another. Because of this, we also reset the counter if the following conditions are met: 1) red starts, and 2) the controller thinks there are no vehicles on this lane. This approach gives us a reasonable estimate for the _number of vehicles_ inside the lane.
 
-In addition to detectors, we might be getting object list type of information (that is, list of objects detected to be in this lane by a ai-camera, radar or lidar). This data is augmented with the detector counts (deemed normally to be more reliable) in following manner: 1) if there are more detected objects in the object list than in the detector count, send the object list and use that as an estimate, 2) same if the count is exactly the same, 3) if there are more counted vehicled expand the list by adding new objects with defaulta values.
+In addition to detectors, we might be getting object list type of information (i.e., a list of objects detected to be in this lane by an AI camera, radar, or lidar). This data is augmented with the detector counts (deemed normally to be more reliable) in the following manner: 1) if there are more detected objects in the object list than in the detector count, send the object list and use that as an estimate, 2) do the same if the count is exactly the same, 3) if there are more counted vehicles, expand the list by adding new objects with default values.
 
 Detailed configuration withe examples is given [here](#lanes)
 
 #### Configuring the outputs
-After the lanes are defined and configured correctly, output fonfiguration is straight forward: we define list of lanes (ouptut is aggregate of object lists in each lane), connection type and channel, as well as frequency. Detailed cnfiguration is given in [Wiew outputs](#view-outputs-e3) section.
+After the lanes are defined and configured correctly, output configuration is straightforward: we define a list of lanes (output is an aggregate of object lists in each lane), connection type and channel, as well as frequency. Detailed configuration is given in the [View outputs](#view-outputs-e3) section.
 
 
 ## Configuration file
 ### Config file and sections
-The purpose of config file is to 1) define connectivity for the service (at the time of the writing, only NATS is available), and 2) define output data we expect from the service, and 3) define inputs needed for the calculation of outputs and how they are connected.
+The purpose of the config file is to 1) define connectivity for the service (at the time of writing, only NATS is available), 2) define output data we expect from the service, and 3) define inputs needed for the calculation of outputs and how they are connected.
 
 
 The configuration file is divided into the following sections:
 
-* **Connectivity** - Settings for accessing data sources (currenlty only NATS)
+* **Connectivity** - Settings for accessing data sources (currently only NATS)
 * **input_streams** - Data stream configurations (signals, detectors, radar)
 * **detlogics** - Detection logic definitions, not operational yet
 * **inputs** - Input definitions (detectors, radar lanes, signal groups)
@@ -113,9 +113,9 @@ Each of these sections are explained below.
 
 ### Connectivity
 
-This section defines the data (stream) connections. In the current setting we only support NATS connections.
+This section defines the data (stream) connections. In the current setting, we only support NATS connections.
 
-The block is definbed as follows:
+The block is defined as follows:
 ```json
 {
 "connectivity":{
@@ -168,12 +168,12 @@ Parameters in the sample above takes parameters as follows:
 | nats_subject | NATS subject pattern to subscribe to | "group.status.270.*" |
 | notes | Description of the stream | "All groups from sumo" |
 
-One should note that typically this stream type subscribes to several different signal group streams (indicated by the `*` at the `nats_subject` example above). The `connection` parameter refers to the `connectivity` section defined in the same configuration file (this is mandatory).
+One should note that typically this stream type subscribes to several different signal group streams (indicated by the `*` in the `nats_subject` example above). The `connection` parameter refers to the `connectivity` section defined in the same configuration file (this is mandatory).
 
 Currently, the subtype has no effect on the operation.
 
 #### Detector input stream (`detectors`)
-Detector stream is defined with following type of configuration:
+Detector stream is defined with the following type of configuration:
 
 ```json
     "STREAM_NAME": {
@@ -240,7 +240,7 @@ This part is to be implemented later. The goal is to define typical detector log
 ### Inputs
 #### Inputs and streams
 
-This section defines inputs for the traffic indicator calculation. This section can be thought of as a "filter" for the input streams, as this section defines how to pick parts of the data from the streams defined above and how to give names for them. Three types of inputs are available: `dets`, `groups`, and `object_filters`, each of them having their own subsection under `inputs`.
+This section defines inputs for the traffic indicator calculation. This section can be thought of as a "filter" for the input streams, as it defines how to pick parts of the data from the streams defined above and how to assign names to them. Three types of inputs are available: `dets`, `groups`, and `object_filters`, each with their own subsection under `inputs`.
 
 #### Signal groups (`groups`)
 Signal groups define which signal group status streams are filtered for use in traffic indicator calculations. Each signal group input is mapped to a specific group identifier from the input stream.
@@ -294,9 +294,9 @@ Parameters in the sample above are as follows:
 The `stream` parameter specifies the input stream that the detector will monitor, as defined in the `input_streams` section of the configuration. 
 
 The `type` parameter determines the conditions under which the detector will trigger a state change. There are three options available for this parameter:
-1. **Rising Edge**: The detector triggers when the input signal transitions from a low state to a high state.
-2. **Falling Edge**: The detector triggers when the input signal transitions from a high state to a low state.
-3. **Both**: The detector triggers on both rising and falling edges, allowing it to respond to changes in either direction.
+1. **Rising Edge** (`rising_edge`): The detector triggers when the input signal transitions from a low state to a high state.
+2. **Falling Edge** (`falling_edge`): The detector triggers when the input signal transitions from a high state to a low state.
+3. **Change** (`change`): The detector triggers on both rising and falling edges, allowing it to respond to changes in either direction.
 
 #### Object filters (`object_filters`)
 
@@ -351,12 +351,12 @@ Parameters in the sample above are as follows:
 | lane_main_type | Vehicle type for the lane (optional) | "tram_type" |
 | notes | Description of the lane | "Approach from west" |
 
-The `in_dets` parameter defines detectors that trigger when vehicles enter the lane section, while `out_dets` defines detectors that trigger when vehicles exit. The `object_lists` parameter references object filters that provide radar-based tracking within the lane. The optional `lane_main_type` parameter is used to specify lanes dedicated to specific vehicle types, such as tram lanes (this is only usef for the ouptuts, not for filtering).
+The `in_dets` parameter defines detectors that trigger when vehicles enter the lane section, while `out_dets` defines detectors that trigger when vehicles exit. The `object_lists` parameter references object filters that provide radar-based tracking within the lane. The optional `lane_main_type` parameter is used to specify lanes dedicated to specific vehicle types, such as tram lanes (this is only used for the outputs, not for filtering).
 
 ### Outputs
 
 #### View outputs (`e3`)
-Currenlty this output type we use. In essence, this output emits (at given freguency) our current best estimate of veicles in the lanes mapped in this view.
+Currently, this is the output type we use. In essence, this output emits (at a given frequency) our current best estimate of vehicles in the lanes mapped in this view.
 
 Views output is defined with the following configuration:
 
