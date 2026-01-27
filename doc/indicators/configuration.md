@@ -81,11 +81,18 @@ In essence we definte inputs by giving them filtering criteria and possible othe
 For more details of configuration format see [Inputs and streams](#inputs-and-streams)
 
 #### Configuring the lanes
-Lanes are where the actual data fusion happens. Each lane can be onfigured to: 1) input detectors, 2) output detectors, and 3) one or many filtered object lists. 
+Lanes are where the actual data fusion happens. Each lane can be onfigured to: 1) input detectors, 2) output detectors, and 3) one or many filtered object lists.
 
+Lane objects attempt to estimate, how many and what road users there are at any given moment in a given lane (lane can also be a traffic island for example, conceptially we want an area controlled by a single traffic light). This is calculating by 1) keeping track of road users entering the lane (input detector triggers) and ones exiting the lane (output detector triggers), and 2) collecting the vehicle lists from the object list sensors (e.g. radars).
+
+In practice we keep up the count of road users in the lane by adding one every time one passes an input detector and deducting one when someone passes output detector. This works in a very simmilar manner as SUMO simulation engine's detector type "e3" (thus the name). Unlike in the simulation, this approach can cause cumulative error if detectors miss the outgoing road users for one reason or another. Because of this, we also reset the counter if following coditions are met: 1) red starts, and 2) controller thinks there are no vehicles on this lane. This approach gives us a reasonable estimate for _number of vehicles_ inside the lane.
+
+In addition to detectors, we might be getting object list type of information (that is, list of objects detected to be in this lane by a ai-camera, radar or lidar). This data is augmented with the detector counts (deemed normally to be more reliable) in following manner: 1) if there are more detected objects in the object list than in the detector count, send the object list and use that as an estimate, 2) same if the count is exactly the same, 3) if there are more counted vehicled expand the list by adding new objects with defaulta values.
+
+Detailed configuration withe examples is given [here](#lanes)
 
 #### Configuring the outputs
-
+After the lanes are defined and configured correctly, output fonfiguration is straight forward: we define list of lanes (ouptut is aggregate of object lists in each lane), connection type and channel, as well as frequency. Detailed cnfiguration is given in [Wiew outputs](#view-outputs-e3) section.
 
 
 ## Configuration file
@@ -348,7 +355,7 @@ The `in_dets` parameter defines detectors that trigger when vehicles enter the l
 
 ### Outputs
 
-#### Views outputs (`e3`)
+#### View outputs (`e3`)
 Currenlty this output type we use. In essence, this output emits (at given freguency) our current best estimate of veicles in the lanes mapped in this view.
 
 Views output is defined with the following configuration:
