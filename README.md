@@ -144,7 +144,7 @@ given that there is an interface for relaying them to the controller (this part 
 **User Interfaces** are tools for monitoring and controlling the state of the open controller. User interfaces are either native programns or browser-based tools. Various user interfaces are available or under development. 
 
 
-In order to run the basic system you need to have [docker](https://docs.docker.com/get-started/get-docker/) installed into your system. 
+In order to run the basic system you need to have [docker](https://docs.docker.com/get-started/get-docker/) installed into your system. In Windows environment you may need to install Windows Subsystem for Linux (WSL) 2.
 
 After this you can setup the full Open Controller system and run it with a relatively simple test model by issuing command:
 
