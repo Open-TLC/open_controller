@@ -6,12 +6,12 @@ services:
     ports:
       - "4222:4222"
 
-  clockwork-runner:
-    image: clockwork-runner
-    container_name: oc_clockwork_container
+  controller-runner:
+    image: controller-runner
+    container_name: oc_controller_container
     build:
       context: .
-      dockerfile: docker/clockwork/Dockerfile
+      dockerfile: services/control_engine/docker/Dockerfile
 
   ui-runner:
     image: ui-runner
