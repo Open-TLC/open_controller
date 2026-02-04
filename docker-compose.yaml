@@ -27,7 +27,7 @@ services:
     container_name: oc_indicators_container
     build:
       context: .
-      dockerfile: docker/indicators/Dockerfile
+      dockerfile: services/indicators/docker/Dockerfile
 
   sumo-simulator:
     image: simengine-runner
