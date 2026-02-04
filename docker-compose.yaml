@@ -18,7 +18,7 @@ services:
     container_name: oc_ui_container
     build:
       context: .
-      dockerfile: docker/ui/Dockerfile
+      dockerfile: services/user_interfaces/docker/Dockerfile
     ports:
       - "8050:8050"
 
