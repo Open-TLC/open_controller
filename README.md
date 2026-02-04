@@ -34,7 +34,7 @@ After this you should be able to see the user interface via http://127.0.0.1:805
 
 # Basic usage
 
-To get started clone the open controller repository to your own local computer. 
+To get started clone the open controller repository to your own local computer. You need to have [GIT](https://github.com/git-guides/install-git) installed into yout computer.
 The open controller can be used in several ways. When starting a new project it is recommended to test everything within simulation. 
 The simulator used with open controller is [SUMO](https://eclipse.dev/sumo/) "Simulation of Urban MObility". Sumo is an open source
 traffic simulator which comes with many features useful in running and testing the open controller. Sumo offers and interface called
