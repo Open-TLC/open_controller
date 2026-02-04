@@ -34,4 +34,4 @@ services:
     container_name: oc_simengine_container
     build:
       context: .
-      dockerfile: docker/simengine/Dockerfile
+      dockerfile: services/simengine/docker/Dockerfile
