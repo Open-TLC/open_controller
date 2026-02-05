@@ -231,7 +231,9 @@ Instructions for configuration can be found here: [Configuration of the simengin
 ## The Controller (Clockwork)
 
 The traffic signal controller (also referred as the clockwork) can be configured by using the following instructions: 
-[Configuration of the controller](https://github.com/Open-TLC/open_controller/blob/main/doc/clockwork/configuration.md)
+[Configuration of the controller]((https://github.com/Open-TLC/open_controller/blob/main/services/control_engine/doc/configuration.md)
+
+(https://github.com/Open-TLC/open_controller/blob/main/doc/clockwork/configuration.md)
 
 ## User Interface
 
