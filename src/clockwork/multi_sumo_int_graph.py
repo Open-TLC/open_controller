@@ -90,6 +90,15 @@ def run_sumo(conf_filename=None, runlog=None):
     dets = []
     exts = []  
 
+    traci_mode = 'traci'
+    if 'traci_mode' in sys_cnf.keys():
+        traci_mode = sys_cnf['traci_mode']
+        
+    # if traci_mode == 'libsumo':
+        # import libsumo as traci
+    # else:
+        # import traci
+
     operating_mode = 'basic'
     if 'operating_mode' in sys_cnf.keys():
         operating_mode = sys_cnf['operating_mode']

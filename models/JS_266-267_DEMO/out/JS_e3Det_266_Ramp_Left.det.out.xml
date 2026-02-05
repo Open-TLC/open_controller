@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2026-01-20 16:42:03 by Eclipse SUMO GUI Version 1.22.0
+<!-- generated on 2026-02-04T14:59:43.794230+02:00 by Eclipse SUMO GUI 1.26.0
 <sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
@@ -33,7 +33,7 @@
     </report>
 
     <traci_server>
-        <remote-port value="63084"/>
+        <remote-port value="49696"/>
     </traci_server>
 
     <random_number>
@@ -50,5 +50,5 @@
 -->
 
 <e3Detector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/det_e3_file.xsd">
-   <interval begin="0.00" end="26.90" id="e3Det_266_Ramp_Left" meanTravelTime="-1.00" meanOverlapTravelTime="-1.00" meanSpeed="-1.00" meanHaltsPerVehicle="-1.00" meanTimeLoss="-1.00" vehicleSum="0" meanSpeedWithin="11.11" meanHaltsPerVehicleWithin="0.50" meanDurationWithin="14.64" vehicleSumWithin="2" meanIntervalSpeedWithin="11.11" meanIntervalHaltsPerVehicleWithin="0.50" meanIntervalDurationWithin="14.64" meanTimeLossWithin="2.80"/>
+   <interval begin="0.00" end="244.30" id="e3Det_266_Ramp_Left" meanTravelTime="38.63" meanOverlapTravelTime="49.54" meanSpeed="4.15" meanHaltsPerVehicle="1.20" meanTimeLoss="36.91" vehicleSum="20" meanSpeedWithin="6.95" meanHaltsPerVehicleWithin="1.00" meanDurationWithin="28.37" vehicleSumWithin="6" meanIntervalSpeedWithin="6.95" meanIntervalHaltsPerVehicleWithin="1.00" meanIntervalDurationWithin="28.37" meanTimeLossWithin="17.89"/>
 </e3Detector>

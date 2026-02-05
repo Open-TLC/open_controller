@@ -31,29 +31,43 @@ class Detector:
         self._loop_on = False
         self.request_groups = []
         self.priolevel = 2
+        self.weight = 0
+        
         if self.type in ['request','extender','e3detector', 'prio','ext_extender']:
             self.sumo_id = conf['sumo_id']
         else:
             self.sumo_id = None
+        
         self.detection_at = 0  # detection start time in seconds
         self.detection_end_at = 0  # detection end time, extension countdown start
+        
         if self.type in ['request']:
             names = conf['request_groups']
             self.owngroup_name = names[0]
         else: 
             self.owngroup_name = conf['group']
+        
         if 'priority' in conf: 
             self.priolevel = conf['priority']
             print('Priority detector: ', name,' Priority level: ', self.priolevel)
         else:
             self.priolevel = 2
+
         if 'v2x-on' in conf: 
             self.v2x_ON = conf['v2x-on']
             print('V2X-detector: ', name,' V2X-ON: ', self.v2x_ON)
             BP = 1
         else:
             self.v2x_ON = False
-        
+
+        # DBIK202602  Add weight to e3-detectors
+        if 'weight' in conf: 
+            self.weight = conf['weight']
+            print('e3-detector: ', name,' Weight: ', self.weight)
+            BP = 1
+        else:
+            self.weight = 0        
+
         self.owngroup_obj = None
 
         self.extgroup_obj = None
@@ -306,7 +320,11 @@ class e3Detector(Detector):
             else:
                 print('**************** Error in vehicle type: ', vtype)
             
-            
+            # DBIK202602  Add weight to e3-detectors
+            if SIM and COORD1: 
+                    self.vehcount +=self.weight
+                    # self.vehcount = self.vehcount * self.weight
+
             if SIM and COORD1: 
                 if "Sat2Ramp" in vehid:
                     self.vehcount +=100
