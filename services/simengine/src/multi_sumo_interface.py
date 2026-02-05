@@ -9,8 +9,9 @@ This module operates Sumo simulator and applies controller to it
 import sys 
 import os
 import time
-from confread import GlobalConf
+from confread_ms import GlobalConf
 # from traffic_controller import TrafficController
+sys.path.append('services/control_engine/src')
 from signal_group_controller import PhaseRingController
 from timer import Timer
 from extender import StaticExtender
@@ -25,9 +26,9 @@ from extender import StaticExtender
 if 'SUMO_HOME' in os.environ:
     SUMO_TOOLS = os.path.join(os.environ['SUMO_HOME'], 'bin') #DBIK202601 'tools' to 'bin'
     sys.path.append(SUMO_TOOLS)
-    # import traci
+    import traci
     print('SUMO_HOME: ', SUMO_TOOLS)
-    import libsumo as traci
+    # import libsumo as traci
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
