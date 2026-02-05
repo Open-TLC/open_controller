@@ -34,7 +34,12 @@ After this you should be able to see the user interface via http://127.0.0.1:805
 
 # Basic usage
 
-To get started clone the open controller repository to your own local computer. 
+To get started clone the open controller repository to your own local computer. You need to have [GIT](https://github.com/git-guides/install-git) installed into yout computer.
+Go to the open controller repository with your web-browswer. Press the 'code'-button and copy the command an paste it by console into your own local directory. You may need to
+install SSH if you use that option for the cloning. 
+
+    git clone git@github.com:Open-TLC/open_controller.git
+
 The open controller can be used in several ways. When starting a new project it is recommended to test everything within simulation. 
 The simulator used with open controller is [SUMO](https://eclipse.dev/sumo/) "Simulation of Urban MObility". Sumo is an open source
 traffic simulator which comes with many features useful in running and testing the open controller. Sumo offers and interface called
@@ -139,7 +144,7 @@ given that there is an interface for relaying them to the controller (this part 
 **User Interfaces** are tools for monitoring and controlling the state of the open controller. User interfaces are either native programns or browser-based tools. Various user interfaces are available or under development. 
 
 
-In order to run the basic system you need to have [docker](https://docs.docker.com/get-started/get-docker/) installed into your system. 
+In order to run the basic system you need to have [docker](https://docs.docker.com/get-started/get-docker/) installed into your system. In Windows environment you may need to install Windows Subsystem for Linux (WSL) 2.
 
 After this you can setup the full Open Controller system and run it with a relatively simple test model by issuing command:
 
@@ -186,7 +191,7 @@ There are two main methods for running and using the Open Controller components:
 
 Running the system by using docker is relatively straight forward and makes it easy to deploy into different environments, however, debugginf and developing new features mught be a bit more troublesome. In addition, at least as it stands, the SUMO can only be run in the non graphical mode inside the docker.
 
-Running the components on a local computer (pr a server in a cloud) on the other hand has its own drawbacks. The biggest nuisance is the need to install and configure many different libraries and components. In the following, a short instructions are given for bot mehtods.
+Running the components on a local computer (or a server in a cloud) on the other hand has its own drawbacks. The biggest nuisance is the need to install and configure many different libraries and components. In the following, a short instructions are given for bot methods.
 
 It should be noted, that it is possible, and recommended, to use the docker installation as a basis of operations and run in the local computer only the parts needed (e.g. the graphical version of Simclient)
 

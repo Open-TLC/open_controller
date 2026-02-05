@@ -116,7 +116,7 @@ class Lane:
             new_obj = {}
             id = str(uuid.uuid4())
             new_obj['speed'] = DEFAULT_TRAM_SPEED
-            new_obj['vtype'] = self.lane_main_type
+            new_obj['vtype'] = self.lane_main_type # TODO: check if we need this
             new_obj['sumo_id'] = None
             new_obj['source'] = "detector_count"
             new_obj['notes'] = "Speed and types are default values"

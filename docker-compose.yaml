@@ -6,19 +6,19 @@ services:
     ports:
       - "4222:4222"
 
-  clockwork-runner:
-    image: clockwork-runner
-    container_name: oc_clockwork_container
+  controller-runner:
+    image: controller-runner
+    container_name: oc_controller_container
     build:
       context: .
-      dockerfile: docker/clockwork/Dockerfile
+      dockerfile: services/control_engine/docker/Dockerfile
 
   ui-runner:
     image: ui-runner
     container_name: oc_ui_container
     build:
       context: .
-      dockerfile: docker/ui/Dockerfile
+      dockerfile: services/user_interfaces/docker/Dockerfile
     ports:
       - "8050:8050"
 
@@ -27,11 +27,11 @@ services:
     container_name: oc_indicators_container
     build:
       context: .
-      dockerfile: docker/indicators/Dockerfile
+      dockerfile: services/indicators/docker/Dockerfile
 
   sumo-simulator:
     image: simengine-runner
     container_name: oc_simengine_container
     build:
       context: .
-      dockerfile: docker/simengine/Dockerfile
+      dockerfile: services/simengine/docker/Dockerfile

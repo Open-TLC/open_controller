@@ -169,3 +169,7 @@ Pipfile
 
 # VSCODE
 .vscode/*
+
+# Old stuff not daring to be deleted
+/old
+/tmp
