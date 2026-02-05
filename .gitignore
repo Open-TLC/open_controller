@@ -173,3 +173,7 @@ Pipfile
 # Old stuff not daring to be deleted
 /old
 /tmp
+#sumo
+.out.xml
+.data.xml
+.trip.xml
