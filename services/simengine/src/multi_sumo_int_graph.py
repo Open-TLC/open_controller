@@ -9,12 +9,12 @@ This module operates Sumo simulator and applies controller to it
 import sys 
 import os
 import time
-from confread import GlobalConf
+from confread_ms import GlobalConf
 # from traffic_controller import TrafficController
+sys.path.append('services/control_engine/src')
 from signal_group_controller import PhaseRingController
 from timer import Timer
 from extender import StaticExtender
-
 
 
 # This will need:
