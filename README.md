@@ -224,14 +224,14 @@ This is usefull especially when running only one part of the Open Controller pac
 
 The simulation engine (simengine for short) is a software component that runs the Sumo traffic simulator, collects data from detectors and sensors 
 and generates the messages to the controller through NATS. The simengine can also receive messages which control the traffic signals or vehicles (through V2X).
-Instructions for configuration can be found here: [Configuration of the simengine](https://github.com/Open-TLC/open_controller/blob/main/doc/simengine/configuration.md)
+Instructions for configuration can be found here: [Configuration of the simengine](https://github.com/Open-TLC/open_controller/blob/main/services/simengine/doc/configuration.md)
 
 ## Traffic Indicators
 
 ## The Controller (Clockwork)
 
 The traffic signal controller (also referred as the clockwork) can be configured by using the following instructions: 
-[Configuration of the controller](https://github.com/Open-TLC/open_controller/blob/main/doc/clockwork/configuration.md)
+[Configuration of the controller](https://github.com/Open-TLC/open_controller/blob/main/services/control_engine/doc/configuration.md)
 
 ## User Interface
 
