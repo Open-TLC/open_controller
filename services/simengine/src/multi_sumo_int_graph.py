@@ -53,9 +53,6 @@ def read_conf(file_name):
         return config
 
 
-
-
-
 # We run the sumo model based on conf dictionery given as parameter
 def run_sumo(conf_filename=None, runlog=None):
     """Run sumo with given configuration"""
@@ -418,8 +415,24 @@ def Sumo_e1detections_to_controller(sumo_loops, sumo_to_dets):
 def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode, v2x_mode): #DBIK241113  New function to pass e3 detector info
     """ Passes the Sumo e3-detector info to the controller detector objects"""
     for e3det_id_sumo in sumo_e3dets:
-        vehcount = traci.multientryexit.getLastStepVehicleNumber(e3det_id_sumo) 
-        e3vehlist = traci.multientryexit.getLastStepVehicleIDs(e3det_id_sumo)     
+        
+        det_obj = sumo_to_dets[e3det_id_sumo]
+
+        for e3det in sumo_to_dets[e3det_id_sumo]:     
+            detlanes = e3det.lanes
+            if detlanes == []:
+                vehcount = traci.multientryexit.getLastStepVehicleNumber(e3det_id_sumo) 
+                e3vehlist = traci.multientryexit.getLastStepVehicleIDs(e3det_id_sumo) 
+            else:
+                vehcount = 0
+                e3vehlist = []
+                for lane_id in detlanes:
+                    vehcount += traci.lane.getLastStepVehicleNumber(lane_id)
+                    vl = traci.lane.getLastStepVehicleIDs(lane_id)
+                    e3vehlist = e3vehlist + list(vl)
+                    # e3vehlist = vl
+                print('e3det: ', e3det_id_sumo, ' vehcount: ',vehcount, 'vehlist: ', e3vehlist)        
+
         vehiclesdict = {}
         for vehid in e3vehlist:
                 vehtype  = traci.vehicle.getTypeID(vehid)
@@ -466,8 +479,7 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode, v2x_mode)
 
         for e3det in sumo_to_dets[e3det_id_sumo]:     
             #e3det.vehcount = vehcount
-
-        
+                             
             if v2x_mode:
             
                 for veh in e3det.det_vehicles_dict:

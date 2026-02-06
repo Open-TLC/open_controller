@@ -32,6 +32,7 @@ class Detector:
         self.request_groups = []
         self.priolevel = 2
         self.weight = 0
+        self.lanes = []
         
         if self.type in ['request','extender','e3detector', 'prio','ext_extender']:
             self.sumo_id = conf['sumo_id']
@@ -66,7 +67,16 @@ class Detector:
             print('e3-detector: ', name,' Weight: ', self.weight)
             BP = 1
         else:
-            self.weight = 0        
+            self.weight = 0   
+
+        # DBIK202602  Add lanes to e3-detectors
+        if 'lanes' in conf: 
+            self.lanes = conf['lanes']
+            print('e3-detector: ', name,' Lanes: ', self.lanes)
+            BP = 1
+        else:
+            self.lanes = []   
+
 
         self.owngroup_obj = None
 
