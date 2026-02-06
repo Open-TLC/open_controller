@@ -33,6 +33,7 @@ class Detector:
         self.priolevel = 2
         self.weight = 0
         self.lanes = []
+        self.MaxDist = 200.0
         
         if self.type in ['request','extender','e3detector', 'prio','ext_extender']:
             self.sumo_id = conf['sumo_id']
@@ -76,6 +77,14 @@ class Detector:
             BP = 1
         else:
             self.lanes = []   
+        
+        # DBIK202602  Add Max distance to e3-detector
+        if 'max_dist' in conf: 
+            self.MaxDist = conf['max_dist']
+            print('e3-detector: ', name,' Max Dist: ', self.MaxDist)
+            BP = 1
+        else:
+            self.MaxDist = 200   
 
 
         self.owngroup_obj = None
@@ -87,6 +96,8 @@ class Detector:
 
         self.det_vehicles_dict = {}
         self.last_vehicles_dict = {}
+
+        
 
          # DBIK202502 Variables for safety green extension
         self.MinOZ = 40.0
@@ -260,7 +271,8 @@ class e3Detector(Detector):
     def update_e3_vehicles(self, obj_list):
         """updates the vehlist from e3 message"""
         self.det_vehicles_dict = obj_list
-        self.vehcount = len(self.det_vehicles_dict)
+        # self.vehcount = len(self.det_vehicles_dict)
+        self.vehcount = 0
         self.ShortGapFound = False  # DBIK20250312
         self.speedsum = 0
         
@@ -278,16 +290,23 @@ class e3Detector(Detector):
             vtype = self.det_vehicles_dict[vehid]['vtype']
             speed = self.det_vehicles_dict[vehid]['speed']  # DBIK202508 Key error ?
             self.speedsum += speed                      
-            # TLSdist = self.det_vehicles_dict[vehid]['TLSdist']  # DBIK202508 Key error ?
-            # TLSno = self.det_vehicles_dict[vehid]['TLSno']
+            TLSdist = self.det_vehicles_dict[vehid]['TLSdist']  # DBIK202602 Omit vehicles further than the maximum distance
+            if TLSdist > self.MaxDist:
+                continue
+                
+           
+            # DBIK2026 Add extra weight for this detector e.g. for coordination
+            self.vehcount +=self.weight
             
             if (vtype == 'car_type'):
-                pass
+                self.vehcount +=1 # DBIK202602 Give the basic weight for passenger cars
             elif vtype == 'truck_type':
-                self.vehcount +=2 # DBIK240923 Add extra weight for trucks 1 truck = 3 vehs
-                # print('vehtype : ', type)
+                self.vehcount +=3 # DBIK240923 Add extra weight for trucks 1 truck = 3 vehs
             elif  vtype == 'tram_type':
-                self.vehcount +=100
+                self.vehcount +=100  # DBIK240923 Add extra weight for trams 1 tram = 100 vehs
+
+
+
             elif  vtype == 'bike_type':
                 self.vehcount += 0
                 if self.name == "e3d16m30":
@@ -296,6 +315,7 @@ class e3Detector(Detector):
                     # self.loop_on = True  # DBIK 202511 Let AI-cam to set request
                     #   pass
             
+           
             # Special setting for JS270T, should be configured in init-file DBIK20241025
             elif (vtype == 'tram_R9'):
                 if (self.owngroup_name == 'group4'):
@@ -304,6 +324,7 @@ class e3Detector(Detector):
                 if (self.owngroup_name == 'group8'):
                     self.vehcount +=100
 
+            
             elif (vtype == 'v2x_type'):
                 if self.v2x_ON:                 
                     self.det_vehicles_dict[vehid]['vcolor'] = 'blue'  # V2X vehicle detected   
@@ -331,7 +352,7 @@ class e3Detector(Detector):
                 print('**************** Error in vehicle type: ', vtype)
             
             # DBIK202602  Add weight to e3-detectors
-            if SIM and COORD1: 
+            if False and COORD1: 
                     self.vehcount +=self.weight
                     # self.vehcount = self.vehcount * self.weight
 

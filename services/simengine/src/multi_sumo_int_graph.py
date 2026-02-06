@@ -424,14 +424,14 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode, v2x_mode)
                 vehcount = traci.multientryexit.getLastStepVehicleNumber(e3det_id_sumo) 
                 e3vehlist = traci.multientryexit.getLastStepVehicleIDs(e3det_id_sumo) 
             else:
+                # DBIK202602 If lanes defined omit Sumo e3detector and use direct lane counts
                 vehcount = 0
                 e3vehlist = []
                 for lane_id in detlanes:
                     vehcount += traci.lane.getLastStepVehicleNumber(lane_id)
                     vl = traci.lane.getLastStepVehicleIDs(lane_id)
                     e3vehlist = e3vehlist + list(vl)
-                    # e3vehlist = vl
-                print('e3det: ', e3det_id_sumo, ' vehcount: ',vehcount, 'vehlist: ', e3vehlist)        
+                # print('e3det: ', e3det_id_sumo, ' vehcount: ',vehcount, 'vehlist: ', e3vehlist)        
 
         vehiclesdict = {}
         for vehid in e3vehlist:
