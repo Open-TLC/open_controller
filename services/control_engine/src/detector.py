@@ -31,6 +31,7 @@ class Detector:
         self._loop_on = False
         self.request_groups = []
         self.priolevel = 2
+        self.vtypes = []  
         self.weight = 0
         self.lanes = []
         self.MaxDist = 200.0
@@ -58,15 +59,20 @@ class Detector:
         if 'v2x-on' in conf: 
             self.v2x_ON = conf['v2x-on']
             print('V2X-detector: ', name,' V2X-ON: ', self.v2x_ON)
-            BP = 1
         else:
             self.v2x_ON = False
+
+        # DBIK202602  Add vehicle types fileter to e3-detectors        
+        if 'vtypes' in conf: 
+            self.vtypes = conf['vtypes']
+            print('e3-detector: ', name,' vtypes: ', self.vtypes)
+        else:
+            self.vtypes = []   
 
         # DBIK202602  Add weight to e3-detectors
         if 'weight' in conf: 
             self.weight = conf['weight']
             print('e3-detector: ', name,' Weight: ', self.weight)
-            BP = 1
         else:
             self.weight = 0   
 
@@ -74,7 +80,7 @@ class Detector:
         if 'lanes' in conf: 
             self.lanes = conf['lanes']
             print('e3-detector: ', name,' Lanes: ', self.lanes)
-            BP = 1
+
         else:
             self.lanes = []   
         
@@ -292,6 +298,9 @@ class e3Detector(Detector):
             self.speedsum += speed                      
             TLSdist = self.det_vehicles_dict[vehid]['TLSdist']  # DBIK202602 Omit vehicles further than the maximum distance
             if TLSdist > self.MaxDist:
+                continue
+            if (self.vtypes != []) and not(vtype in self.vtypes):
+                BP=1
                 continue
                 
            
