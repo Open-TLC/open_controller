@@ -443,7 +443,7 @@ As soon as the tram has passed ist own signasl then the extension end and othe a
               "type": "e3detector",
               "sumo_id": "e3det_tram_north",
               "group": "group1",
-              "vtype: "tram",
+              "vtypes: ["tram"],
               "weight": 100
             },
 ```
