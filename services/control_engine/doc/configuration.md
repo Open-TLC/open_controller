@@ -453,20 +453,32 @@ trams an extra weight of one hundred.
 
 ## Multi-modal traffic
 
-The traffic in intersections consists of vehicles like car, trucks, buses and trams. Hoever, the pedestrians, bicycles
-and micro-mobility is often negleted in many ways. Pedestrians and bikers are not detected automatically like vehicles,
-which can be annoying espcially for cyclists. Also, the signal timing is not affected by the pedestrian counts. 
+The traffic in intersections consists of vehicles like car, trucks, buses and trams. However, the pedestrians, bicycles
+and micro-mobility is often negleted in many ways. Usually pedestrians and bikers are not detected automatically like vehicles,
+which can be annoying espcially for cyclists. Also, the green start or green extension is usually not affected by the number of pedestrians. 
 
-Having the the radars and espcially the cameras we can detect the pedestrians automatically and generate the requests.
+By using the cameras, we can detect the pedestrians automatically and generate the requests for green.
 Also, it is possible to get the count of pedestrians waiting for green and give them extra weight in order to get the
 green earlier. While crossing the street, we can count the pedestrians and extend the green time is necessary. 
+
+In order to process te camera-data properly we need to set up an AI-camera pipeline. In this setting the camera stream
+is directed to a processing unit which used AI-tools to detect pedestrians, cyclists on micro-mobility from the stream.
+The instructions for setting up the AI-camera pipeline can be found from "link".
+
+The user need to set up zones in the camera view, which denote the waiting areas and the crossing areas of the given
+pedestrian crossing. Based on the zone the AI-pipeline can compute the number of pedestrians at each zone, which can
+be used as an input for the traffic control. The actual outcome of the AI-pipeline is similator the one of radars,
+so that basically the output is a list of objects with some attributes like type, position etc. This list is sent
+to the traffic-indicators for processing the input for open controller. The list data may or may not involve attributes
+of the individual road users, but they are not necessarily needed and used. However, the count of of the objects,
+which is the lenght of the list is always provided. 
 
 ## Signal coordination
 
 Traffic signal coordination is used when certain routes over multiple intersections need to be favored. 
 Traditionally this is done by using common cycle time for all the intersections and the green starting
-at consecutive intersections are staggered to create a green wave. In open controller the signal coordination
-is implemented if different manner (at least so far). By default each intersection runs in isolated mode
+at consecutive intersections are staggered to create a green wave. In the open controller the signal coordination
+is implemented if different manner. By default each intersection runs in isolated mode
 using the smart extenders. Then the prioritized lanes on prioritized routes are given extra  weight. 
 This weight can either cut the conflicting green to start thee green when needed or to extend the the
 ongoing green. The difference to the isolated mode is that the request to start green or to extend the 
