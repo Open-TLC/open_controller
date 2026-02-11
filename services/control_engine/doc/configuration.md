@@ -430,30 +430,55 @@ An active green with higher priority level cannot be cut another request of same
 In practice the higher priority levels are given to public transport like trams only. However, in principle, it is
 possible to prioritize any other mode of traffic or any given approach. 
 
-The alternative approach is to use the smmart extender for priorities, too. This is done by configuring the smart
+The alternative approach is to use the smart extender for priorities, too. This is done by configuring the smart
 extender so, that it will give extra weight to a given vehicles type like tram. If a tram is regognized, then the
 predefined weight is associated with the vehicle. For example, if a weight 100 is configured to thr tram, then the
 open controller thinks that there is 100 passenger cars approaching or in a queue. This means the that the tram
 approach can easily cut conflicting active greens to starts it own green earlier. Also, as soon as started, the
 green with weight 100 is not likely to be cut by any other approaches, even if the tram is still waiting on station.
-As soon as the tram has passed ist own signasl then the extension end and othe approaches may get green if requested. 
+As soon as the tram has passed its own signal then the extension ends and the approaches may get green if requested.
+
+Example of configurating priority for trams by smart extender
+```json
+ "e3_tram_north":{
+              "type": "e3detector",
+              "sumo_id": "e3det_tram_north",
+              "group": "group1",
+              "vtypes": ["tram_type"],
+              "weight": 100
+            },
+```
+In the example above, there is an e3-detector similar to radar, which is configured to detect trams only and to give the 
+trams an extra weight of one hundred.
 
 ## Multi-modal traffic
 
-The traffic in intersections consists of vehicles like car, trucks, buses and trams. Hoever, the pedestrians, bicycles
-and micro-mobility is often negleted in many ways. Pedestrians and bikers are not detected automatically like vehicles,
-which can be annoying espcially for cyclists. Also, the signal timing is not affected by the pedestrian counts. 
+The traffic in intersections consists of vehicles like car, trucks, buses and trams. However, the pedestrians, bicycles
+and micro-mobility is often negleted in many ways. Usually pedestrians and bikers are not detected automatically like vehicles,
+which can be annoying espcially for cyclists. Also, the green start or green extension is usually not affected by the number of pedestrians. 
 
-Having the the radars and espcially the cameras we can detect the pedestrians automatically and generate the requests.
+By using the cameras, we can detect the pedestrians automatically and generate the requests for green.
 Also, it is possible to get the count of pedestrians waiting for green and give them extra weight in order to get the
 green earlier. While crossing the street, we can count the pedestrians and extend the green time is necessary. 
+
+In order to process te camera-data properly we need to set up an AI-camera pipeline. In this setting the camera stream
+is directed to a processing unit which used AI-tools to detect pedestrians, cyclists on micro-mobility from the stream.
+The instructions for setting up the AI-camera pipeline can be found from "link".
+
+The user need to set up zones in the camera view, which denote the waiting areas and the crossing areas of the given
+pedestrian crossing. Based on the zone the AI-pipeline can compute the number of pedestrians at each zone, which can
+be used as an input for the traffic control. The actual outcome of the AI-pipeline is similator the one of radars,
+so that basically the output is a list of objects with some attributes like type, position etc. This list is sent
+to the traffic-indicators for processing the input for open controller. The list data may or may not involve attributes
+of the individual road users, but they are not necessarily needed and used. However, the count of of the objects,
+which is the lenght of the list is always provided. 
 
 ## Signal coordination
 
 Traffic signal coordination is used when certain routes over multiple intersections need to be favored. 
 Traditionally this is done by using common cycle time for all the intersections and the green starting
-at consecutive intersections are staggered to create a green wave. In open controller the signal coordination
-is implemented if different manner (at least so far). By default each intersection runs in isolated mode
+at consecutive intersections are staggered to create a green wave. In the open controller the signal coordination
+is implemented if different manner. By default each intersection runs in isolated mode
 using the smart extenders. Then the prioritized lanes on prioritized routes are given extra  weight. 
 This weight can either cut the conflicting green to start thee green when needed or to extend the the
 ongoing green. The difference to the isolated mode is that the request to start green or to extend the 
