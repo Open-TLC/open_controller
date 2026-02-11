@@ -439,11 +439,11 @@ green with weight 100 is not likely to be cut by any other approaches, even if t
 As soon as the tram has passed ist own signasl then the extension end and othe approaches may get green if requested.
 
 ```json
- "e3_J2_West":{
+ "e3_tram_north":{
               "type": "e3detector",
-              "sumo_id": "e3Det_J2_West",
+              "sumo_id": "e3det_tram_north",
               "group": "group1",
-              "vtype: "tram"
+              "vtype: "tram",
               "weight": 100
             },
 ```
