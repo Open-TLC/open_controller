@@ -438,12 +438,13 @@ approach can easily cut conflicting active greens to starts it own green earlier
 green with weight 100 is not likely to be cut by any other approaches, even if the tram is still waiting on station.
 As soon as the tram has passed ist own signasl then the extension end and othe approaches may get green if requested.
 
+Example of configurating priority for trams by smart extender
 ```json
  "e3_tram_north":{
               "type": "e3detector",
               "sumo_id": "e3det_tram_north",
               "group": "group1",
-              "vtypes": ["tram"],
+              "vtypes": ["tram_type"],
               "weight": 100
             },
 ```
