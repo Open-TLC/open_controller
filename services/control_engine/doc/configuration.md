@@ -436,7 +436,7 @@ predefined weight is associated with the vehicle. For example, if a weight 100 i
 open controller thinks that there is 100 passenger cars approaching or in a queue. This means the that the tram
 approach can easily cut conflicting active greens to starts it own green earlier. Also, as soon as started, the
 green with weight 100 is not likely to be cut by any other approaches, even if the tram is still waiting on station.
-As soon as the tram has passed ist own signasl then the extension end and othe approaches may get green if requested.
+As soon as the tram has passed its own signal then the extension ends and the approaches may get green if requested.
 
 Example of configurating priority for trams by smart extender
 ```json
@@ -448,6 +448,8 @@ Example of configurating priority for trams by smart extender
               "weight": 100
             },
 ```
+In the example above, there is an e3-detector similar to radar, which is configured to detect trams only and to give the 
+trams an extra weight of one hundred.
 
 ## Multi-modal traffic
 
