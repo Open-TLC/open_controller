@@ -430,13 +430,23 @@ An active green with higher priority level cannot be cut another request of same
 In practice the higher priority levels are given to public transport like trams only. However, in principle, it is
 possible to prioritize any other mode of traffic or any given approach. 
 
-The alternative approach is to use the smmart extender for priorities, too. This is done by configuring the smart
+The alternative approach is to use the smart extender for priorities, too. This is done by configuring the smart
 extender so, that it will give extra weight to a given vehicles type like tram. If a tram is regognized, then the
 predefined weight is associated with the vehicle. For example, if a weight 100 is configured to thr tram, then the
 open controller thinks that there is 100 passenger cars approaching or in a queue. This means the that the tram
 approach can easily cut conflicting active greens to starts it own green earlier. Also, as soon as started, the
 green with weight 100 is not likely to be cut by any other approaches, even if the tram is still waiting on station.
-As soon as the tram has passed ist own signasl then the extension end and othe approaches may get green if requested. 
+As soon as the tram has passed ist own signasl then the extension end and othe approaches may get green if requested.
+
+```json
+ "e3_J2_West":{
+              "type": "e3detector",
+              "sumo_id": "e3Det_J2_West",
+              "group": "group1",
+              **"vtype: "tram"
+              "weight": 100**
+            },
+```
 
 ## Multi-modal traffic
 
