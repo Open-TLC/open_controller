@@ -232,7 +232,7 @@ Instructions for configuration can be found here: [Configuration of the simengin
 The traffic indicators is a component that reads various sensor data and computes traffic situation indicators for the control engine. Currently traffic indicators can accept
 data from detectors, radars and AI-cameras. Hovever, in the future this component can extended to new sensor types and new data sources. The indicators for signal control currently
 involve queue counts (signal state red) and number of approaching vehicles (signal state green). These indicators can be enhanced int the future. 
-Furthe instructions can be found from [Configuration of the traffic indicators](https://github.com/Open-TLC/open_controller/blob/main/services/traffic_indicators/doc/configuration.md)
+Furthe instructions can be found from [Configuration of the traffic indicators](https://github.com/Open-TLC/open_controller/blob/main/services/indicators/doc/configuration.md)
 
 ## Control engine
 
