@@ -81,8 +81,8 @@ To run the opne controller in integrated mode, you call the controller in python
 command line parameter (see the example below). Open the console in your desktop. Go to the open_controller directory. 
 Copy the command below and press enter. The demo model is from the Jätkäsaari test region junction 270 (in front of the Clarion-hotel) with the smart green extension included.
 
-    python src/simengine/simengine_integrated.py  --conf-file models/JS270_DEMO/contr/JS270_DEMO.json --print-status --graph
-
+    python services/simengine/src/simengine_integrated.py  --conf-file models/JS270_DEMO/contr/JS270_DEMO.json --print-status --graph
+    
 The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file must
 be given within the open controller configuration file. The print-status-option sets open controller to print status data to the console.
 The graph-option puth the graphical mode on visualizing the intersection and traffic. The options can also be defined in the 
