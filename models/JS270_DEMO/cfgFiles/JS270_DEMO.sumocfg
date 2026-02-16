@@ -15,7 +15,7 @@
     </input>
     
     <output>
-        <output-prefix v="JS_"/>
+        <output-prefix>
         <summary-output/>
         <tripinfo-output/>
         <link-output/>
