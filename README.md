@@ -81,8 +81,9 @@ To run the opne controller in integrated mode, you call the controller in python
 command line parameter (see the example below). Open the console in your desktop. Go to the open_controller directory. 
 Copy the command below and press enter. The demo model is from the Jätkäsaari test region junction 270 (in front of the Clarion-hotel) with the smart green extension included.
 
-    python src/simengine/simengine_integrated.py  --conf-file models/JS270_DEMO/contr/JS270_DEMO.json --print-status --graph
-
+    cd "mydirectory"/open_controller
+    python services/simengine/src/simengine_integrated.py  --conf-file models/JS270_DEMO/contr/JS270_DEMO.json --print-status --graph
+    
 The configuration file involves everything needed to run the open controller with Sumo. The Sumo configuration file must
 be given within the open controller configuration file. The print-status-option sets open controller to print status data to the console.
 The graph-option puth the graphical mode on visualizing the intersection and traffic. The options can also be defined in the 
@@ -107,9 +108,9 @@ The multi-sumo version runs by default in the console mode only. This way it can
 If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py command. The demo model is from the Jätkäsaari test region junctions 266-267
 (266 is under the bridge) with the smart green extension included. In this demo the junctions are controlled without mutual coordination. 
  
-    python src/clockwork/multi_sumo_interface.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
-    python src/clockwork/multi_sumo_int_graph.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
-
+    cd "mydirectory"/open_controller
+    python services/simengine/src/multi_sumo_interface.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
+    python services/simengine/src/multi_sumo_int_graph.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
 
 ## Using the distributed version
 
@@ -228,9 +229,14 @@ Instructions for configuration can be found here: [Configuration of the simengin
 
 ## Traffic Indicators
 
-## The Controller (Clockwork)
+The traffic indicators is a component that reads various sensor data and computes traffic situation indicators for the control engine. Currently traffic indicators can accept
+data from detectors, radars and AI-cameras. Hovever, in the future this component can extended to new sensor types and new data sources. The indicators for signal control currently
+involve queue counts (signal state red) and number of approaching vehicles (signal state green). These indicators can be enhanced int the future. 
+Furthe instructions can be found from [Configuration of the traffic indicators](https://github.com/Open-TLC/open_controller/blob/main/services/indicators/doc/configuration.md)
 
-The traffic signal controller (also referred as the clockwork) can be configured by using the following instructions: 
+## Control engine
+
+The core component of the open controller is the signal group based control engine. The control engine (previously referrd as the clockwork) can be configured by using the following instructions: 
 [Configuration of the controller](https://github.com/Open-TLC/open_controller/blob/main/services/control_engine/doc/configuration.md)
 
 ## User Interface
