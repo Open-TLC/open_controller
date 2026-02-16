@@ -6,7 +6,7 @@
        <net-file value="../net/JS_266-267K.net.xml"/>
        <route-files value="../rou/JS_266-267_cars_trucks_real2.rou.xml"/>
        <additional-files value="../add/JS_266-267_stations.add.xml, ../add/JS_267_e1dets.add.xml, ../add/JS_266_e1dets.add.xml, ../add/JS_267_e3dets.add.xml, ../add/JS_266_e3dets.add.xml,
-                            ../tll/ft266_1.tll.xml, ../tll/ft267_1.tll.xml, ../add/generate_lane_data.xml, ../add/generate_edge_data.xml"/>
+                            ../tll/ft266_1.tll.xml, ../tll/ft267_1.tll.xml"/>
        <scale v="1.0"/>
        <seed v="5819"/>
        
@@ -22,7 +22,7 @@
     <output>
         <output-prefix v="JS_"/>
         <summary-output/>
-        <tripinfo-output v="../out/tripinfo.trip.xml"/>
+        <tripinfo-output/>
         <link-output/>
     </output>
 

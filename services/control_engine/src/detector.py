@@ -296,7 +296,9 @@ class e3Detector(Detector):
             vtype = self.det_vehicles_dict[vehid]['vtype']
             speed = self.det_vehicles_dict[vehid]['speed']  # DBIK202508 Key error ?
             self.speedsum += speed                      
+
             TLSdist = self.det_vehicles_dict[vehid]['TLSdist']  # DBIK202602 Omit vehicles further than the maximum distance
+            TLSno = self.det_vehicles_dict[vehid]['TLSno'] # DBIK202602 Set traffic signal number
             if TLSdist > self.MaxDist:
                 continue
             if (self.vtypes != []) and not(vtype in self.vtypes):

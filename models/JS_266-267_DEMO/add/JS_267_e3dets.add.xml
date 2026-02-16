@@ -2,7 +2,7 @@
 
 <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
 
-    <e3Detector id="e3Det_267_Mech_North" pos="4300,1600" freq="900.00" file="../out/e3Det_267_Mech_South.det.out.xml">      
+    <e3Detector id="e3Det_267_Mech_North" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Mech01_0"   pos="-40.00"/>
         <detEntry lane="Mech01_1"   pos="-40.00"/>
         <detEntry lane="Mech01_2"   pos="-40.00"/>
@@ -12,7 +12,7 @@
         <detExit  lane="Mech02_3"   pos="2.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_267_Mech_South" pos="4300,1600" freq="900.00" file="../out/e3Det_267_Mech_South.det.out.xml">      
+    <e3Detector id="e3Det_267_Mech_South" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="-Mech03_0"   pos="5.00"/>
         <detEntry lane="-Mech03_1"   pos="5.00"/>
         <detEntry lane="-Mech03_2"   pos="5.00"/>
@@ -21,27 +21,27 @@
         <detExit  lane="-Mech03_2"   pos="-2.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_267_Mech_Right_R" pos="4300,1620" freq="900.00" file="../out/e3Det_267_Mech_Right_R.det.out.xml">
+    <e3Detector id="e3Det_267_Mech_Right_R" pos="4300,1620" freq="900.00" file="NUL">
         <detEntry lane="-Mech_R03_0"   pos="5.00"/>
         <detExit  lane="-Mech_R03_0"   pos="-3.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_267_Mech_Left" pos="4300,1620" freq="900.00" file="../out/e3Det_267_Mech_Left.det.out.xml">
+    <e3Detector id="e3Det_267_Mech_Left" pos="4300,1620" freq="900.00" file="NUL">
         <detEntry lane="Mech02_3"   pos="10.00"/>
         <detExit  lane="Mech02_3"   pos="-3.00"/>
     </e3Detector>
     
-    <e3Detector id="e3Det_267_Itam_Right" pos="4300,1600" freq="900.00" file="../out/e3Det_267_Itam.det.out.xml">      
+    <e3Detector id="e3Det_267_Itam_Right" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Itam13_0"   pos="5.00"/>
         <detExit  lane="Itam13_0"   pos="-2.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_267_Itam_Left" pos="4300,1600" freq="900.00" file="../out/e3Det_267_Itam.det.out.xml">      
+    <e3Detector id="e3Det_267_Itam_Left" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Itam13_1"   pos="5.00"/>
         <detExit  lane="Itam13_1"   pos="-2.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_267_Itam_Left_R" pos="4300,1620" freq="900.00" file="../out/e3Det_267_Itam_Left_R.det.out.xml">
+    <e3Detector id="e3Det_267_Itam_Left_R" pos="4300,1620" freq="900.00" file="NUL">
         <detEntry lane="Itam_RB13_1"   pos="5.00"/>
         <detExit  lane="Itam_RB13_1"   pos="-3.00"/>
     </e3Detector>
