@@ -15,7 +15,7 @@
     </input>
     
     <output>
-        <output-prefix>
+        <output-prefix/>
         <summary-output/>
         <tripinfo-output/>
         <link-output/>
