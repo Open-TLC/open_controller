@@ -1,7 +1,0 @@
-
-grp:  group6 veh dict:  {'F_Sat2Jatk.0': {'vtype': 'car_type', 'speed': 1.8066652599322393}, 'F_Trucks2Jatk.0': {'vtype': 'truck', 'speed': 2.2968368113225446}, 'F_Trucks2Jatk.1': {'vtype': 'truck', 'speed': 2.4428747248073264}, 'F_Trucks2Jatk.2': {'vtype': 'truck', 'speed': 2.373868661983861}}     
-grp:  group7 veh dict:  {}
-grp:  group9 veh dict:  {'-7.0': {'vtype': 'ratikka', 'speed': 0.0}}
-grp:  group1 veh dict:  {}
-grp:  group3 veh dict:  {}
-grp:  group5 veh dict:  {'F_Jatk2Sat.0': {'vtype': 'car_type', 'speed': 0.1890917658222526}, 'F_Trucks2Sat.1': {'vtype': 'truck', 'speed': 0.0}, 'F_Trucks2Sat.2': {'vtype': 'truck', 'speed': 0.0012518982147099102}}
