@@ -109,7 +109,6 @@ If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py
 (266 is under the bridge) with the smart green extension included. In this demo the junctions are controlled without mutual coordination. 
  
     cd "mydirectory"/open_controller
-    python services/simengine/src/multi_sumo_interface.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
     python services/simengine/src/multi_sumo_int_graph.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
 
 ## Using the distributed version
