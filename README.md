@@ -52,6 +52,7 @@ The available modes for using open controller are the following:
 4) Live operation (controlling the traffic in the field).
 
 The easiest way to get started with the open controller is the option 1 (the integrated simulation), which is commonly used for evaluating the performance of the signal control.
+With the integrated simulation mode it is possible to run several open controllers in one simulation scenario.
 
 ![Integraated simulation](/doc/images/sim_integrated.png)
 *Figure x: Integrated simulation*
