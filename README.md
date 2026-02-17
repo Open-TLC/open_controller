@@ -26,7 +26,8 @@ After this you can setup the full Open Controller system and run it with a relat
 This script will in essence install four separate docker containers and run them, they are:
 
 - **Nats server**, a standard NATS message broker
-- **Clockwork**, the open source traffic light controller
+- **Control engine**, the open source traffic light controller
+- **Traffic indicators**, computing indicators from the sensor data
 - **Simengine**, a SUMO simulation platform with interfaces to access the open controller
 - **UI**, an user interface for the system
 
