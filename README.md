@@ -51,8 +51,8 @@ The available modes for using open controller are the following:
 3) Hardware-in-the-loop simulation
 4) Live operation (controlling the traffic in the field).
 
-The easiest way to get started with the open controller is the option 1 (the integrated simulation), which is commonly used for evaluating the performance of the signal control.
-With the integrated simulation mode it is possible to run several open controllers in one simulation scenario.
+A simple way to get started with the open controller is the option 1 (the integrated simulation), which is commonly used for evaluating the performance of the signal control.
+With the integrated simulation mode it is possible to run several open controllers in one simulation scenario. 
 
 ![Integraated simulation](/doc/images/sim_integrated.png)
 *Figure x: Integrated simulation*
@@ -80,7 +80,7 @@ reasons this component cannot be shared publicly. Only the City of Helsinki can 
 
 The most simple way of running open controller is so called integrated simulation. In this case, no communication channels are needed
 between the controller and simulation, because the the open controller access the simulator using direct commands through Traci-interface.
-In order to run the integrated version you need install Sumo, Python and some Python libraries:
+In order to run the integrated version you need install Sumo, Python and some Python libraries: (list here).
 
 To run the open controller in integrated mode, you call the controller in python and give a configuration file name and path as 
 command line parameter (see the example below). Open the console in your desktop. Go to the open_controller directory. 
