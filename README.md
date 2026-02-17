@@ -76,8 +76,9 @@ reasons this component cannot be shared publicly. Only the City of Helsinki can 
 
 The most simple way of running open controller is so called integrated simulation. In this case, no communication channels are needed
 between the controller and simulation, because the the open controller access the simulator using direct commands through Traci-interface.
+In order to run the integrated version you need install Sumo, Python and some Python libraries:
 
-To run the opne controller in integrated mode, you call the controller in python and give a configuration file name and path as 
+To run the open controller in integrated mode, you call the controller in python and give a configuration file name and path as 
 command line parameter (see the example below). Open the console in your desktop. Go to the open_controller directory. 
 Copy the command below and press enter. The demo model is from the Jätkäsaari test region junction 270 (in front of the Clarion-hotel) with the smart green extension included.
 
@@ -98,18 +99,22 @@ sumo-section of the open controller configuration (see below). Command-line opti
 ```
 
 The open controller takes a time step (default value = 0.1 sec), reads the detector data from Sumo and updates its own internal states. 
-Finally it send the new traffic signal states to the Sumo and continues with next update.
-The integrated simulation can be run in real-time or with full speed depending on timer setting (see the configuration section).
+Finally it send the new traffic signal states to the Sumo and continues with next update. The integrated simulation can be run in real-time 
+or with full speed depending on timer setting (see the configuration section).
 
 ## Running multiple Open Controllers
 
-In simulation it is possible to run several Open Controllers at the same time. In this case another Python script is used (multi_sumo_interface.py).
-The multi-sumo version runs by default in the console mode only. This way it can use the LibSumo component instead of Traci, which makes it much faster.
-If you want to run multi-sumo in graphical mode, use the multi_sumo_int_graph.py command. The demo model is from the Jätkäsaari test region junctions 266-267
-(266 is under the bridge) with the smart green extension included. In this demo the junctions are controlled without mutual coordination. 
+In simulation it is possible to run several open controllers at the same time. In this case the same python script can be used but the file format
+is different. The file that is given as command-line parameter has the basic definition of the simulation but the parameters for each controller
+are given in a separate files, which are defined in the main file. The demo model below is from the Jätkäsaari test region junctions 266-267
+(266 is under the bridge) with the smart green extension included. In this demo the junctions are controlled independenly without mutual coordination. 
  
     cd "mydirectory"/open_controller
     python services/simengine/src/multi_sumo_int_graph.py --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.json
+
+
+It is possible use an external LibSumo component instead of Traci, which makes the simulation much faster. However, the Libsumo does not support
+graphical mode and there can be some known issues with installation of Libsumo in Windows. 
 
 ## Using the distributed version
 
