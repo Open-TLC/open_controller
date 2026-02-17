@@ -1,81 +1,73 @@
 # -*- coding: utf-8 -*-
 """The traffic controller module.
 
-This module implements the traffic controller for signalgroup based 
+This module implements the traffic controller for signalgroup based
 control
 
 
 Design principles:
 1)  Each group connected to this unit is independent in operations
-2)  Operation is not based on "phases" as such but merely phasering that 
+2)  Operation is not based on "phases" as such but merely phasering that
     gives preference order of next groups to start
-3). The "preference" order is scanned based on requests, finding the next 
+3). The "preference" order is scanned based on requests, finding the next
     main phase with a request
-4)  Controller simply gives permissions to start, everything else 
-    (e.g. intergreens, end requests) are handled by the groups 
+4)  Controller simply gives permissions to start, everything else
+    (e.g. intergreens, end requests) are handled by the groups
 
 """
 # Copyright 2022 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 #
 
-#from transitions.extensions import GraphMachine as Machine
-from transitions import Machine as Machine
-from confread import GlobalConf # For testing
+# from transitions.extensions import GraphMachine as Machine
+import json
+import sys
+from typing import Any
+
 import pandas as pd
 
-from signal_group import SignalGroup
-from signal_group import value_is_number # Should be in utils unit or something
-from timer import Timer
-from stats import StatLogger
-from detector import Detector, ExtDetector, GrpDetector, e3Detector
-from extender import Extender, StaticExtender, e3Extender
-from lane import Lane
-import sys
-import json
+from .detector import Detector, ExtDetector, GrpDetector, e3Detector
+from .extender import Extender, StaticExtender, e3Extender
+from .lane import Lane
+from .signal_group import (
+    SignalGroup,
+    value_is_number,  # Should be in utils unit or something
+)
 
-MAX_SIM_TIME = 200 # seconds
-#DEFAULT_CONF_FILE = "testmodel/nats_controller.json" # Only for testiruns
+MAX_SIM_TIME = 200  # seconds
+# DEFAULT_CONF_FILE = "testmodel/nats_controller.json" # Only for testiruns
 DEFAULT_CONF_FILE = "../models/JS270_TBP/JS270TBPIDE2M2_flowmed.json"
-CACHE_MODEL_FILE = "../cache/model.json" # This is for storing changes made with UI
+CACHE_MODEL_FILE = "../cache/model.json"  # This is for storing changes made with UI
+
 
 def main():
     """
-        For testing, runs a simulation
-        Params from command line (seel --help for details)
+    For testing, runs a simulation
+    Params from command line (seel --help for details)
     """
 
     print("tst")
-    sys_cnf = GlobalConf(filename=DEFAULT_CONF_FILE).cnf
-    controller_cnf = sys_cnf['controller']
-    
-    timer_conf = sys_cnf['timer']
-    system_timer = Timer(timer_conf)
 
+    # datafreame = controller.get_group_params_as_df()
+    # print(controller.get_group_params_as_df())
+    # print("****")
+    # print(controller.get_intergreens_as_df())
+    # print("Intergreens from conf:")
+    # print(controller.intergreens)
+    # print("Intergreens from groups:")
+    # print(controller.get_intergreens_as_df())
+    # print("****")
+    # print(controller.get_phases_as_df())
+    # print(controller.get_lane_params_as_df())
+    # print(controller.phase_ring)
+    # print(controller.get_phases())
 
-    controller = PhaseRingController(controller_cnf, system_timer)
-    #datafreame = controller.get_group_params_as_df()
-    #print(controller.get_group_params_as_df())
-    #print("****")
-    #print(controller.get_intergreens_as_df())
-    #print("Intergreens from conf:")
-    #print(controller.intergreens)
-    #print("Intergreens from groups:")
-    #print(controller.get_intergreens_as_df())
-    #print("****")
-    #print(controller.get_phases_as_df())
-    #print(controller.get_lane_params_as_df())
-    #print(controller.phase_ring)
-    #print(controller.get_phases())
-
-
-    #print(json.dumps(controller.get_conf_as_dict(), indent=4))
+    # print(json.dumps(controller.get_conf_as_dict(), indent=4))
 
     # controller.simulate_operation()
 
 
-
-class SimplePhase():
+class SimplePhase:
     def __init__(self, name, groups, timer):
         self.groups = groups
         self.name = name
@@ -83,9 +75,8 @@ class SimplePhase():
     def __str__(self):
         ret = "PH:" + str(self.name)
         return ret
-    
 
-# Conditional functions for operating the main controller
+    # Conditional functions for operating the main controller
     # These will dictate state transfers
     #
 
@@ -95,45 +86,50 @@ class SimplePhase():
         for grp in self.groups:
             if grp.is_starting():
                 Phase_started = True
-        if Phase_started: 
+        if Phase_started:
             for grp in self.groups:
-                grp.phase_started_at = grp.system_timer.seconds                
-        return Phase_started # No greens found
+                grp.phase_started_at = grp.system_timer.seconds
+        return Phase_started  # No greens found
 
     def green_has_started(self):
         """returns true if any group in phase has green on"""
         for grp in self.groups:
             if grp.is_in_min_green():
                 return True
-        return False # No greens found
+        return False  # No greens found
 
     def one_min_green_has_ended(self):
         """returns True if one group is past min green in this phase"""
-        #print("**** one_min_green_has_ended")
+        # print("**** one_min_green_has_ended")
         for grp in self.groups:
-            if grp.is_not_in_min_green():            
-                print('Min Green Ended: ', grp.group_name)
+            if grp.is_not_in_min_green():
+                print("Min Green Ended: ", grp.group_name)
                 return True
-        return False # No greens found
-    
+        return False  # No greens found
+
     def all_min_greens_have_ended(self):
         """returns True if all groups are past min green in this phase"""
         MinGreensEnded = True
         for grp in self.groups:
-            if grp.is_in_min_green():            
-                return False        
+            if grp.is_in_min_green():
+                return False
         # print("All min greens have ended")
-        return MinGreensEnded  
-    
+        return MinGreensEnded
+
     def phase_min_time_reached(self):
         """returns True if all groups are past min green in this phase"""
         MinTimeReached = False
         for grp in self.groups:
-            phasemin = grp.phase_min_time_reached()  
-            if phasemin > 0: 
-                print("Phase min time reached: ", grp.group_name, " , ", round(phasemin,1))         
-                return True    
-        return MinTimeReached  
+            phasemin = grp.phase_min_time_reached()
+            if phasemin > 0:
+                print(
+                    "Phase min time reached: ",
+                    grp.group_name,
+                    " , ",
+                    round(phasemin, 1),
+                )
+                return True
+        return MinTimeReached
 
     def phase_has_a_request(self):
         """True if any group is requesting green"""
@@ -142,13 +138,13 @@ class SimplePhase():
                 return True
         return False
 
-# Control functions to groups
+    # Control functions to groups
     #
     def set_permit_greens(self, do_permit=True):
         """
-            Gives green permissions to all groups in this phase
-            Called when the next phase is selected 
-            (and groups in there are allowed to start)
+        Gives green permissions to all groups in this phase
+        Called when the next phase is selected
+        (and groups in there are allowed to start)
         """
         for grp in self.groups:
             grp.permit_green = do_permit
@@ -168,95 +164,93 @@ class SimplePhase():
         for grp in self.groups:
             if grp.has_green_request() and grp.conflicting_active_green_passed():
                 grp.permit_green = do_permit
-                grp.remove_conflicting_green_permissions() # DBIK231204 removes any previous green permission in conflict
+                grp.remove_conflicting_green_permissions()  # DBIK231204 removes any previous green permission in conflict
                 # green_permission_given = True
-        
+
         # DBIK231129 If one group is vien green permission, then other groups in the phase can be given, too
-        if green_permission_given: 
+        if green_permission_given:
             for grp in self.groups:
                 if grp.conflicting_active_green_passed():
                     grp.permit_green = do_permit
-                    grp.remove_conflicting_green_permissions() # DBIK231204 removes any previous green permission in conflict
-        
-         # DBIK231211 removes green permission from pedestrian groups if a yielding vehicle group has started    
+                    grp.remove_conflicting_green_permissions()  # DBIK231204 removes any previous green permission in conflict
+
+        # DBIK231211 removes green permission from pedestrian groups if a yielding vehicle group has started
         for grp in self.groups:
-            if grp.permit_green and grp.request_green and grp.group_name == 'group15':
+            if grp.permit_green and grp.request_green and grp.group_name == "group15":
                 for dgrp in grp.disabling_groups:
                     if dgrp.is_starting() or dgrp.group_green_or_amber():
                         # if grp.request_green == True:
-                            # print('Disable green permit of: ', grp.group_name,' by group: ', dgrp.group_name) # DBIK20240926 Send the message once only
+                        # print('Disable green permit of: ', grp.group_name,' by group: ', dgrp.group_name) # DBIK20240926 Send the message once only
                         grp.request_green = False  # DBIK231212 removes green request from pedestrian group if a yielding vehicle group has started
-                        grp.permit_green = False    
-                                               
+                        grp.permit_green = False
 
         return green_permission_given
-    
+
     # DBIK230908 New function for detectecting if active greens have ended
     def all_active_greens_have_ended(self):
-        """returns true if no group in current phase is extending """
+        """returns true if no group in current phase is extending"""
         for grp in self.groups:
-            if not(grp.active_green_passed()):
+            if not (grp.active_green_passed()):
                 return False
-        return True # No greens found
+        return True  # No greens found
+
 
 ###############################################################################################################
 
+
 class PhaseRingController:
     """PhaseRingController
-        This is a controller with flexible 'phaseless' operation
-        The phase ring defines only a round robin preference for the
-        groups to be started. Main tool for operation is the conflict matrix
-        and independend operation of groups
+    This is a controller with flexible 'phaseless' operation
+    The phase ring defines only a round robin preference for the
+    groups to be started. Main tool for operation is the conflict matrix
+    and independend operation of groups
     """
 
     # conf is a dictionary read from conf file
     # Note: currently there is not much  sanity check for the
     # Params, there should be
-    def __init__(self, conf, timer):
-        if "name" in conf:
-            self.name = conf['name']
-        else:
-            self.name = "unnamed"
+    def __init__(self, conf: dict[str, Any], timer):
+        """
+        @params:
+        conf: entire system configuration JSON read to a dictionary
+        timer: system timer created with the controller configuration
+        """
+        self.print_status = conf["sumo"]["print_status"]
 
-        if 'print_status' in conf:
-            self.print_status = conf['print_status']
-        else:
-            self.print_status = True
+        controller_conf = conf["controller"]
+        self.name = controller_conf["name"]
 
-        self.prev_status_string = 'start'
-        self.cur_status_string = 'start'
+        self.prev_status_string = "start"
+        self.cur_status_string = "start"
         self.last_print = 0
-
-        #print("Initializing a controller:", self.name)
 
         # This timer will be relayed to all the objects
         # i.e. groups and detectors
         self.timer = timer
         # Stat logger?
 
-        #phase_ring will be tuple of tuples
+        # phase_ring will be tuple of tuples
         new_phases = []
-        for conf_phase in conf['phases']:
+        for conf_phase in controller_conf["phases"]:
             new_phases.append(tuple(conf_phase))
-        phase_ring = tuple(new_phases) #immutable from now on
+        phase_ring = tuple(new_phases)  # immutable from now on
 
-        #intergreens will be tuple of tuples
+        # intergreens will be tuple of tuples
         new_intergreens = []
-        for from_group in conf['intergreens']:
+        for from_group in controller_conf["intergreens"]:
             new_intergreens.append(tuple(from_group))
         intergreens = tuple(new_intergreens)
 
         # We init the lanes
         self.lanes = []
-        if 'lanes' in conf:
-            for lane_id, lane_conf in conf['lanes'].items():
-                lane_conf['id'] = lane_id
+        if "lanes" in controller_conf:
+            for lane_id, lane_conf in controller_conf["lanes"].items():
+                lane_conf["id"] = lane_id
                 lane = Lane(lane_conf)
                 self.lanes.append(lane)
 
-
         # We map these groups to main phases (rows in phase ring)
-        self.group_list = conf['group_list']
+        self.group_list = controller_conf["group_list"]
         if not len(phase_ring[0]) == len(self.group_list):
             print("phases and groups not matching")
             sys.exit()
@@ -264,14 +258,17 @@ class PhaseRingController:
         groups = []
         controller_index = 0
         for group_id in self.group_list:
-            controller_index += 1 # Note: indexing starts from 1
-            conf_vals = conf['signal_groups'][group_id]
-            new_group = SignalGroup(self.timer, group_id, conf_vals, controller_index=controller_index)
-            #new_group.stat_logger = self.stat_logger
+            controller_index += 1  # Note: indexing starts from 1
+            conf_vals = controller_conf["signal_groups"][group_id]
+            new_group = SignalGroup(
+                self.timer, group_id, conf_vals, controller_index=controller_index
+            )
             groups.append(new_group)
         self.groups = tuple(groups)
 
-        self.set_conflict_groups(intergreens) # DBIK240807 Moved before extender creation
+        self.set_conflict_groups(
+            intergreens
+        )  # DBIK240807 Moved before extender creation
 
         # By default sumo ouptuts are the same as group list
         # i.e. for each group there is one output and the order
@@ -279,9 +276,8 @@ class PhaseRingController:
         # function set_sumo_outputs
         self.sumo_outputs = self.groups
 
-        #setup manin phases
+        # setup manin phases
         self.set_phase_ring(phase_ring)
-
 
         # We assign the detectors: extensiton detectors
         # ext_dets are later assigned to extenders
@@ -293,23 +289,15 @@ class PhaseRingController:
         self.e3detectors = []
         self.e3extenders = []
 
-        det_cnf = conf['detectors']
-        # Note: this is imitted if the unit is used as an web interface template, might find a better way
-        if self.timer:
-            time_step = self.timer.time_step # should be realayed as timer?
-        else:
-            time_step = 0.1
-
-        
+        det_cnf = controller_conf["detectors"]
 
         for det in det_cnf:
-
-            if det_cnf[det]['type'] == 'request':
+            if det_cnf[det]["type"] == "request":
                 new_det = Detector(self.timer, det, det_cnf[det])
-                new_det.set_request_groups(self.groups) # Into init?
-                self.req_dets.append(new_det) # Note: not used at the moment
+                new_det.set_request_groups(self.groups)  # Into init?
+                self.req_dets.append(new_det)  # Note: not used at the moment
 
-            if det_cnf[det]['type'] == 'extender':
+            if det_cnf[det]["type"] == "extender":
                 new_det = ExtDetector(self.timer, det, det_cnf[det])
                 self.ext_dets.append(new_det) # these are for detector extenders
             
@@ -317,10 +305,8 @@ class PhaseRingController:
                 new_det = Ext_Extender(self.timer, det, det_cnf[det])
                 self.ext_dets.append(new_det) # these are for detector extenders
 
-            if det_cnf[det]['type'] == 'groupext':
+            if det_cnf[det]["type"] == "groupext":
                 new_det = GrpDetector(self.timer, det, det_cnf[det])
-                # new_det.group = self.get_signal_group_object(new_det.group_name)
-                #new_det.owngroup_name = new_det.group_name  # DBIK231216
                 new_det.extgroup = self.get_signal_group_object(new_det.extgroup_name)
                 self.ext_groups.append(new_det) # these are for group extenders
                      
@@ -337,16 +323,18 @@ class PhaseRingController:
         for group in self.groups:
             dets = []
             e3dets = []
-            for det in self.ext_dets:               
+            for det in self.ext_dets:
                 if det.owngroup_name == group.group_name:
                     dets.append(det)
-            if (dets != []):   
-                new_ext = Extender(self.timer, group, dets, self.ext_groups, e3dets, ext_params)
+            if dets != []:
+                new_ext = Extender(
+                    self.timer, group, dets, self.ext_groups, e3dets, ext_params
+                )
                 self.extenders.append(new_ext)
-        
+
         extprm = False
-        if 'extenders' in conf:
-            ext_cnf = conf['extenders']
+        if "extenders" in controller_conf:
+            ext_cnf = controller_conf["extenders"]
             extprm = True
 
         # DBIK240803 Create e3extenders based on e3detectors
@@ -358,47 +346,48 @@ class PhaseRingController:
 
             if extprm:
                 for key in ext_cnf:
-                    grp = ext_cnf[key]['group']
+                    grp = ext_cnf[key]["group"]
                     if grp == group.group_name:
                         ext_params = ext_cnf[key]
                         DB = 1
 
-            for e3det in self.e3detectors:               
+            for e3det in self.e3detectors:
                 dgr = e3det.owngroup_name
                 grn = group.group_name
                 if e3det.owngroup_name == group.group_name:
                     e3dets.append(e3det)
 
-
-            if (e3dets != []):   
+            if e3dets != []:
                 new_ext = e3Extender(self.timer, group, dets, qdets, e3dets, ext_params)
                 self.e3extenders.append(new_ext)
 
         DB = 2
-        print('---------------------------------------------------------------')
-        print('Requesting e1 detecotrs set:  ')
-        print(self.req_dets)
-        print('Extending e1 detectors set:  ')
-        print(self.ext_dets)
-        print('Extending signal groups set:  ')
-        print(self.ext_groups)
-        print('e1 Extenders set: ')
-        print(self.extenders)
-        print('e3 Extenders set: ')
-        print(self.e3extenders)
-        print('---------------------------------------------------------------')
+        if self.print_status:
+            print("---------------------------------------------------------------")
+            print("Requesting e1 detecotrs set:  ")
+            print(self.req_dets)
+            print("Extending e1 detectors set:  ")
+            print(self.ext_dets)
+            print("Extending signal groups set:  ")
+            print(self.ext_groups)
+            print("e1 Extenders set: ")
+            print(self.extenders)
+            print("e3 Extenders set: ")
+            print(self.e3extenders)
+            print("---------------------------------------------------------------")
 
-        self.print_controller_params()
+        if self.print_status:
+            self.print_controller_params()
 
-        self.set_delay_groups() # DBIK231208  Start delays configuration
+        self.set_delay_groups()  # DBIK231208  Start delays configuration
 
-        self.set_side_requests() # DBIK231214 Side requests configuration
+        self.set_side_requests()  # DBIK231214 Side requests configuration
 
-        print('____')
+        if self.print_status:
+            print("____")
 
-        self.status = 'Scan'
-        self.prev_phase_order_str = ''
-
+        self.status = "Scan"
+        self.prev_phase_order_str = ""
 
     def tick(self):
         """This is the clocking function moving the group states and system timer
@@ -411,32 +400,28 @@ class PhaseRingController:
         # Sets the detector requests, if reset in previus cycle
         for det in self.req_dets:
             det.tick()
-            
+
         # DBIK240821 Updates the Multi-Entry/Exit (e3) Detectors
         for det in self.e3detectors:
             det.tick()
 
         for grp in self.groups:
-            grp.prev_state = grp.state # DBIK20231013 Save the previous states 
+            grp.prev_state = grp.state  # DBIK20231013 Save the previous states
 
         for grp in self.groups:
-            if grp.extender: 
-                grp.extender.tick() # DBIK230331 The extender update moved here
-            if grp.e3extender:     
-                grp.e3extender.tick() # DBIK240803 The e3extender update added
-            
+            if grp.extender:
+                grp.extender.tick()  # DBIK230331 The extender update moved here
+            if grp.e3extender:
+                grp.e3extender.tick()  # DBIK240803 The e3extender update added
+
             grp.tick()
-           
-    
-        # self.transfer_states() 
+
+        # self.transfer_states()
         self.update_states2()  # No more using the state machine
-        
+
         # self.timer.tick() DBIK230713 Commented out (double timer update per cycle)
 
-        
-        
         # All after this is run conditionally
-
 
     def find_the_next_main_phase(self):
         """Returns the next phase based pn ring and requests"""
@@ -448,11 +433,11 @@ class PhaseRingController:
         mph_current = []
         current_found = False
         for mph in self.main_phases:
-            #print("***", mph, " current:", self.current_main_phase)
-            if self.current_main_phase==mph:
+            # print("***", mph, " current:", self.current_main_phase)
+            if self.current_main_phase == mph:
                 current_found = True
                 mph_current.append(mph)
-                #print("       found")
+                # print("       found")
                 continue
             if not current_found:
                 mph_before.append(mph)
@@ -460,21 +445,31 @@ class PhaseRingController:
                 mph_after.append(mph)
 
         # phase_order = mph_after + mph_before
-        
-        phase_order = mph_current + mph_after + mph_before # DBIK241002 Current phase first in the phase order
+
+        phase_order = (
+            mph_current + mph_after + mph_before
+        )  # DBIK241002 Current phase first in the phase order
         # phase_order = mph_after + mph_before + mph_current # DBIK241002 Current phase last in the phase order
 
-        phase_order_str = self.name + ' phase order: '
+        phase_order_str = self.name + " phase order: "
         for mps in phase_order:
-            phase_order_str = phase_order_str + str(mps) + ' '
+            phase_order_str = phase_order_str + str(mps) + " "
 
         nextPH = None
         for mph in phase_order:
             if mph.phase_has_a_request():
                 nextPH = mph
                 break
-            
-        phase_order_str = self.timer.str_seconds() + ' ' + phase_order_str + ', curPH: ' + str(self.current_main_phase) + ', nextPH: ' + str(nextPH)
+
+        phase_order_str = (
+            self.timer.str_seconds()
+            + " "
+            + phase_order_str
+            + ", curPH: "
+            + str(self.current_main_phase)
+            + ", nextPH: "
+            + str(nextPH)
+        )
 
         if phase_order_str != self.prev_phase_order_str:
             if self.print_status:
@@ -482,128 +477,145 @@ class PhaseRingController:
                 # print(phase_order_str)
         self.prev_phase_order_str = phase_order_str
 
-        return nextPH # No requests -> No main phase
-  
+        return nextPH  # No requests -> No main phase
+
     def update_states2(self):
-        """  Scans for next phase and sets controller state transfer """
-        
-        if self.status == 'Scan':
+        """Scans for next phase and sets controller state transfer"""
+
+        if self.status == "Scan":
             self.next_main_phase = self.find_the_next_main_phase()
             if self.next_main_phase:
                 self.next_main_phase.set_signalgroup_green_permissions(do_permit=True)
-        
+
         for grp in self.groups:
-                if grp.is_in_min_green():
-                    grp.permit_green = False
-                    if grp.own_request_level > 2: 
-                        grp.own_request_level = 2   #DBIK241030 Reset priority request
-                        for confgrp in grp.conflicting_groups:
-                            confgrp['group'].other_request_level = 2  #DBIK241107 Reset conflict group priority request
-                
+            if grp.is_in_min_green():
+                grp.permit_green = False
+                if grp.own_request_level > 2:
+                    grp.own_request_level = 2  # DBIK241030 Reset priority request
+                    for confgrp in grp.conflicting_groups:
+                        confgrp[
+                            "group"
+                        ].other_request_level = (
+                            2  # DBIK241107 Reset conflict group priority request
+                        )
+
         if self.next_main_phase:
-            if self.next_main_phase.phase_has_started(): 
+            if self.next_main_phase.phase_has_started():
                 self.current_main_phase = self.next_main_phase
                 self.next_main_phase = None
                 if self.print_status:
-                    strout = self.timer.str_seconds() + ' ' + self.name + ' NEW PHASE STARTED: ' + str(self.current_main_phase)
+                    strout = (
+                        self.timer.str_seconds()
+                        + " "
+                        + self.name
+                        + " NEW PHASE STARTED: "
+                        + str(self.current_main_phase)
+                    )
                     print(strout)
-                self.status = 'Hold'
-        
-        if self.status == 'Hold':
-            if self.current_main_phase:
-                self.current_main_phase.set_signalgroup_green_permissions(do_permit=True)
-                if self.current_main_phase.all_min_greens_have_ended():
-                # if self.current_main_phase.phase_min_time_reached():  #DBIK 20240926 One group reached the phase min  
-                    self.status = 'Scan'
-                    if self.print_status:
-                        strout = self.timer.str_seconds() + ' ' + self.name + ' ALL MIN TIMES ENDED: ' + str(self.current_main_phase)      
-                        print(strout) 
-                
-             
+                self.status = "Hold"
 
+        if self.status == "Hold":
+            if self.current_main_phase:
+                self.current_main_phase.set_signalgroup_green_permissions(
+                    do_permit=True
+                )
+                if self.current_main_phase.all_min_greens_have_ended():
+                    # if self.current_main_phase.phase_min_time_reached():  #DBIK 20240926 One group reached the phase min
+                    self.status = "Scan"
+                    if self.print_status:
+                        strout = (
+                            self.timer.str_seconds()
+                            + " "
+                            + self.name
+                            + " ALL MIN TIMES ENDED: "
+                            + str(self.current_main_phase)
+                        )
+                        print(strout)
 
     def update_states(self):
-        """  Scans for next phase and sets controller state transfer """
-        
-        if self.status == 'Scan':
+        """Scans for next phase and sets controller state transfer"""
+
+        if self.status == "Scan":
             self.next_main_phase = self.find_the_next_main_phase()
             if self.next_main_phase:
                 self.next_main_phase.set_signalgroup_green_permissions(do_permit=True)
-        
+
         MultiPrio = False
         if MultiPrio:
             for grp in self.groups:
-                    if grp.min_green_start: # DBIK241107 State shift, under testing 
-                        grp.permit_green = False
-                        grp.own_request_level = 2   #DBIK241030 Reset priority request
-                        for confgrp in grp.conflicting_groups:
-                            OtherPrioReq = 2
-                            for conf2grp in confgrp.conflicting_groups: # DBIK241119 Check if there are other active priority requests
-                                if conf2grp.own_request_level > 2:
-                                    OtherPrioReq = conf2grp.own_request_level
-                            confgrp['group'].other_request_level = OtherPrioReq  #DBIK241107 Reset conflict group priority request
+                if grp.min_green_start:  # DBIK241107 State shift, under testing
+                    grp.permit_green = False
+                    grp.own_request_level = 2  # DBIK241030 Reset priority request
+                    for confgrp in grp.conflicting_groups:
+                        OtherPrioReq = 2
+                        for conf2grp in confgrp.conflicting_groups:  # DBIK241119 Check if there are other active priority requests
+                            if conf2grp.own_request_level > 2:
+                                OtherPrioReq = conf2grp.own_request_level
+                        confgrp[
+                            "group"
+                        ].other_request_level = OtherPrioReq  # DBIK241107 Reset conflict group priority request
         else:
             for grp in self.groups:
-                if grp.min_green_start: # DBIK241107 State shift, under testing 
+                if grp.min_green_start:  # DBIK241107 State shift, under testing
                     grp.permit_green = False
-                    grp.own_request_level = 2   #DBIK241030 Reset priority request
+                    grp.own_request_level = 2  # DBIK241030 Reset priority request
                     for confgrp in grp.conflicting_groups:
-                        confgrp['group'].other_request_level = 2  #DBIK241107 Reset conflict group priority request
-          
-            
-
+                        confgrp[
+                            "group"
+                        ].other_request_level = (
+                            2  # DBIK241107 Reset conflict group priority request
+                        )
 
         if self.next_main_phase:
-            if self.next_main_phase.phase_has_started(): 
+            if self.next_main_phase.phase_has_started():
                 self.current_main_phase = self.next_main_phase
                 self.next_main_phase = None
                 print("NEW PHASE STARTED:", self.current_main_phase)
-                self.status = 'Hold'
-        
-        if self.status == 'Hold':
+                self.status = "Hold"
+
+        if self.status == "Hold":
             if self.current_main_phase:
-                self.current_main_phase.set_signalgroup_green_permissions(do_permit=True)
-                if self.current_main_phase.all_min_greens_have_ended():  
-                # if self.current_main_phase.phase_min_time_reached():  #DBIK 20240926 One group reached the phase min  
-                        self.status = 'Scan'
-             
+                self.current_main_phase.set_signalgroup_green_permissions(
+                    do_permit=True
+                )
+                if self.current_main_phase.all_min_greens_have_ended():
+                    # if self.current_main_phase.phase_min_time_reached():  #DBIK 20240926 One group reached the phase min
+                    self.status = "Scan"
 
     def get_control_status(self):
-
         """Returns status info (time, phase, group states, requests)"""
 
         maxstr = 40
         # ExtOut = 'group'
-        ExtOut = 'group'
-        DetOut = 'req'
-        PermOut = 'perm_'
-        CutOut ='cut_'
-        CutOut ='prio2_'
+        ExtOut = "group"
+        DetOut = "req"
+        PermOut = "perm_"
+        CutOut = "cut_"
+        CutOut = "prio2_"
 
-        e3Cnt  = 'e3Cnt'
-        e3Conf  = 'e3confCnt_'
-        e3Ext  = 'e3crit2'
-
+        e3Cnt = "e3Cnt"
+        e3Conf = "e3confCnt_"
+        e3Ext = "e3crit2"
 
         sigstat = str(self.get_grp_states())
 
-        sig = ''
+        sig = ""
         col = 0
         for i in range(len(sigstat)):
             if col % 5 == 0:
-                sig += ' '
+                sig += " "
             col += 1
-            sig += sigstat[i] 
+            sig += sigstat[i]
 
         # controller_stat = str(self.timer.steps) + ' ' + sigstat[0:maxstr]
         controller_stat = sig[0:maxstr]  # DBIK230918 remove time stamp
-        
-        #cur_phase = self.get_state(self.state)
-        #sub_state = cur_phase.submachine.state
+
+        # cur_phase = self.get_state(self.state)
+        # sub_state = cur_phase.submachine.state
         cur_phase = str(self.current_main_phase)
-        nxt_phase = str(self.next_main_phase)  # DBIK: New ouput to status row 
-        
-        req = '' 
+        nxt_phase = str(self.next_main_phase)  # DBIK: New ouput to status row
+
+        req = ""
         loop_stat = ""
         det_stat = ""
         ext_stat = ""
@@ -614,45 +626,43 @@ class PhaseRingController:
         e3ext_stat = ""
 
         col = 0
-        if DetOut=='loop':
+        if DetOut == "loop":
             for det in self.req_dets:
                 if det.loop_on:
-                    loop_stat += '1'
+                    loop_stat += "1"
                 else:
-                    loop_stat += '0'
-            controller_stat += " LOOP:" + loop_stat[0:30] + ' '
-        
-        elif DetOut=='req':
+                    loop_stat += "0"
+            controller_stat += " LOOP:" + loop_stat[0:30] + " "
+
+        elif DetOut == "req":
             for grp in self.groups:
-                
                 if col % 5 == 0:
-                   req += ' '
+                    req += " "
                 col += 1
-                   
+
                 if grp.request_green:
-                    req += '1'
+                    req += "1"
                 else:
-                    req += '0'
-            controller_stat += " REQ:" + req[0:maxstr] + ' '
-        
-        elif DetOut=='reqprio':
+                    req += "0"
+            controller_stat += " REQ:" + req[0:maxstr] + " "
+
+        elif DetOut == "reqprio":
             for grp in self.groups:
-                
                 if col % 5 == 0:
-                   req += ' '
+                    req += " "
                 col += 1
-                   
+
                 if grp.request_green:
                     req += str(grp.own_request_level)
                 else:
-                    req += '0'
-            controller_stat += " REQ:" + req[0:maxstr] + ' '
-        
+                    req += "0"
+            controller_stat += " REQ:" + req[0:maxstr] + " "
+
         col = 0
-        if ExtOut=='group':
+        if ExtOut == "group":
             for grp in self.groups:
                 if col % 5 == 0:
-                   ext_stat += ' '
+                    ext_stat += " "
                 col += 1
                 if grp.extender or grp.e3extender:
                     if grp.extender:
@@ -664,141 +674,142 @@ class PhaseRingController:
                         if grp.e3extender.extend and grp.group_on:
                             ext_stat += "2"
                         else:
-                            ext_stat += "0"                  
-                else: ext_stat += "X"
-            controller_stat += " EXT:" + ext_stat[0:maxstr] + ' '
+                            ext_stat += "0"
+                else:
+                    ext_stat += "X"
+            controller_stat += " EXT:" + ext_stat[0:maxstr] + " "
         else:
             for det in self.ext_dets:
                 if det.is_extending():
-                   det_stat += "1"
+                    det_stat += "1"
                 else:
-                 det_stat += "0"
-            controller_stat += " DEXT: " + det_stat[0:maxstr] + ' '
+                    det_stat += "0"
+            controller_stat += " DEXT: " + det_stat[0:maxstr] + " "
             for gdet in self.ext_groups:
                 if gdet.is_extending():
-                   qdet_stat += "1"
+                    qdet_stat += "1"
                 else:
-                 qdet_stat += "0"
-            controller_stat += " QEXT: " + qdet_stat[0:maxstr] + ' '
+                    qdet_stat += "0"
+            controller_stat += " QEXT: " + qdet_stat[0:maxstr] + " "
 
         col = 0
-        if PermOut=='perm':
+        if PermOut == "perm":
             for grp in self.groups:
                 if col % 5 == 0:
-                   prm_stat += ' '
+                    prm_stat += " "
                 col += 1
                 if grp.permit_green:
-                    prm_stat += '1'
+                    prm_stat += "1"
                 else:
-                    prm_stat += '0'
-            controller_stat += " PERM:" + prm_stat[0:maxstr] + ' '
+                    prm_stat += "0"
+            controller_stat += " PERM:" + prm_stat[0:maxstr] + " "
 
         col = 0
-        if CutOut=='cut':
+        if CutOut == "cut":
             for grp in self.groups:
                 if col % 5 == 0:
-                   cut_stat += ' '
+                    cut_stat += " "
                 col += 1
-                if grp.end_conflicting_greens_status(): # and grp.group_on():
-                    cut_stat += '1'
+                if grp.end_conflicting_greens_status():  # and grp.group_on():
+                    cut_stat += "1"
                 else:
-                    cut_stat += '0'
-            controller_stat += " CUT:" + cut_stat[0:maxstr] + ' '
+                    cut_stat += "0"
+            controller_stat += " CUT:" + cut_stat[0:maxstr] + " "
 
         col = 0
-        if CutOut=='prio1':            
+        if CutOut == "prio1":
             for grp in self.groups:
                 if col % 5 == 0:
-                   cut_stat += ' '
+                    cut_stat += " "
                 col += 1
                 if grp.end_conflicting_greens_status() and grp.group_on():
                     cut_stat += str(grp.other_request_level)
                 else:
-                    cut_stat += '0'
-            controller_stat += " PRI:" + cut_stat[0:maxstr] + ' '
+                    cut_stat += "0"
+            controller_stat += " PRI:" + cut_stat[0:maxstr] + " "
 
         col = 0
-        if CutOut=='prio2':
-            for grp in self.groups: 
+        if CutOut == "prio2":
+            for grp in self.groups:
                 if col % 5 == 0:
-                   cut_stat += ' '
-                col += 1               
+                    cut_stat += " "
+                col += 1
                 cut_stat += str(grp.other_request_level)
-            controller_stat += " PRI:" + cut_stat[0:maxstr] + ' '
+            controller_stat += " PRI:" + cut_stat[0:maxstr] + " "
 
+        controller_stat += "(cur:{}, next:{})".format(cur_phase, nxt_phase)
 
-        controller_stat += '(cur:{}, next:{})'.format(cur_phase, nxt_phase)
+        if self.status == "Scan":
+            controller_stat += " S"
+        if self.status == "Hold":
+            controller_stat += " H"
 
-        if self.status == 'Scan':
-            controller_stat += ' S'
-        if self.status == 'Hold':
-            controller_stat += ' H'
-
-        if e3Cnt  == 'e3Cnt':
+        if e3Cnt == "e3Cnt":
             for e3det in self.e3detectors:
                 val = e3det.veh_count()
-                e3det_stat += str(val) + ','
-            controller_stat += " vehs: " + e3det_stat[0:maxstr] + ' '
+                e3det_stat += str(val) + ","
+            controller_stat += " vehs: " + e3det_stat[0:maxstr] + " "
 
-        if e3Conf  == 'e3confCnt':
+        if e3Conf == "e3confCnt":
             for e3ext in self.e3extenders:
                 val = e3ext.conf_sum
-                e3ext_stat += str(val) + ','
-            controller_stat += " conf: " + e3ext_stat[0:maxstr] + ' '
+                e3ext_stat += str(val) + ","
+            controller_stat += " conf: " + e3ext_stat[0:maxstr] + " "
 
-        if e3Ext  == 'e3crit':
+        if e3Ext == "e3crit":
             for e3ext in self.e3extenders:
                 if e3ext.extend:
                     val1 = e3ext.vehcount
                     val2 = e3ext.conf_sum
                     if val2 > 0:
-                        val = round(val1/val2, 2)
-                    else: 
+                        val = round(val1 / val2, 2)
+                    else:
                         val = -1
-                    e3ext_stat += str(val) + ','
-            controller_stat += " e3rel: " + e3ext_stat + ' '
+                    e3ext_stat += str(val) + ","
+            controller_stat += " e3rel: " + e3ext_stat + " "
 
-        grpno =0
-        if e3Ext  == 'e3crit2':
+        grpno = 0
+        if e3Ext == "e3crit2":
             for grp in self.groups:
                 grpno += 1
-                if grp.e3extender:                   
-                    if grp.get_grp_state() in ['5']:
+                if grp.e3extender:
+                    if grp.get_grp_state() in ["5"]:
                         val1 = grp.e3extender.vehcount
                         if grp.e3extender.ext_mode == 1:
                             val2 = 1.0
                         else:
                             val2 = grp.e3extender.conf_sum
-                        val3 = round(grp.e3extender.threshold,1)
+                        val3 = round(grp.e3extender.threshold, 1)
                         if val2 > 0:
-                            val = round(val1/val2,1)
-                        else: 
+                            val = round(val1 / val2, 1)
+                        else:
                             val = 10.0
-                        e3ext_stat += str(grpno) + ': '
-                        
-                        e3ext_stat += str(val1) + '/'
-                        e3ext_stat += str(val2) + ' '
+                        e3ext_stat += str(grpno) + ": "
+
+                        e3ext_stat += str(val1) + "/"
+                        e3ext_stat += str(val2) + " "
 
                         e3ext_stat += str(val)
                         if val > val3:
-                            ch = '>'
+                            ch = ">"
                         else:
-                            ch = '<'
+                            ch = "<"
                         e3ext_stat += ch
-                        e3ext_stat += str(val3) + '|'
+                        e3ext_stat += str(val3) + "|"
 
-            controller_stat += " SE: |" + e3ext_stat + ' '
+            controller_stat += " SE: |" + e3ext_stat + " "
 
         return controller_stat
 
     def start_a_new_phase(self):
         self.current_main_phase = self.next_main_phase
         self.next_main_phase = None
-        print("NEW PHASE STARTED:", self.current_main_phase)
-       
+        if self.print_status:
+            print("NEW PHASE STARTED:", self.current_main_phase)
+
     def next_phase_selected(self):
-        print("NEXT PHASE FIXED: ", self.next_main_phase)
-    
+        if self.print_status:
+            print("NEXT PHASE FIXED: ", self.next_main_phase)
 
     #
     # State transfer conditions
@@ -806,232 +817,242 @@ class PhaseRingController:
 
     def curr_phase_a_min_green_ended(self):
         """
-            Returns true if any min green has passed
-            by any of the groups in _current_ phase
+        Returns true if any min green has passed
+        by any of the groups in _current_ phase
         """
-        
+
         if self.current_main_phase:
             return self.current_main_phase.one_min_green_has_ended()
-        
+
         return False
 
     def next_phase_a_green_started(self):
         """
-            Returns true if a green has been started 
-            by any of the groups in _next_ phase
+        Returns true if a green has been started
+        by any of the groups in _next_ phase
         """
         if self.next_main_phase:
             # return self.next_main_phase.green_has_started()
-            return self.next_main_phase.green_has_started() # DBIK231129 Phase starts if any group at IG or Amber
-        
+            return (
+                self.next_main_phase.green_has_started()
+            )  # DBIK231129 Phase starts if any group at IG or Amber
+
         return False
-    
+
     def curr_phase_active_greens_ended(self):
         """
-            Returns true if there is no active green extension 
-            by any of the groups in _current_ phase
-        """        
+        Returns true if there is no active green extension
+        by any of the groups in _current_ phase
+        """
         if self.current_main_phase:
             return self.current_main_phase.all_active_greens_have_ended()
-        
+
         return False
 
-
-    #   
+    #
     # Controller operation
-    # 
+    #
     #
     # Init Functions
-    # 
+    #
 
     def set_conflict_groups(self, intergreens):
         """
-            We set the conflicting groups
-            These are based on intergreen matrix
+        We set the conflicting groups
+        These are based on intergreen matrix
         """
         # clear the previous conflicts
         for grp in self.groups:
             grp.conflicting_groups = []
             grp.non_conflicting_groups = []
 
-
         # FIXME: the naming is stupid, intergreens is used in the loop and means different thing
         for to_grp, intergreens in zip(self.groups, intergreens):
             # If there is integreen time from a group to this group (to_group)
             # We add this conflict to group
             for from_grp, intergreen in zip(self.groups, intergreens):
-                if not intergreen==0.0:
+                if not intergreen == 0.0:
                     to_grp.add_conflicting_group(from_grp, delay=intergreen)
-                else: 
-                    to_grp.add_non_conflicting_group(from_grp, delay=intergreen) # DBIK 230915 add to the list of non conflicting groups
-        
-
+                else:
+                    to_grp.add_non_conflicting_group(
+                        from_grp, delay=intergreen
+                    )  # DBIK 230915 add to the list of non conflicting groups
 
     def set_side_requests(self):
-        """ Set groups that will be requested, if this group gets request"""
-        print('Find side requests: ')
-        for grp in self.groups: 
-            if "side_requests" in grp.grp_conf:  
-                sidereqs = grp.grp_conf['side_requests']
+        """Set groups that will be requested, if this group gets request"""
+        if self.print_status:
+            print("Find side requests: ")
+        for grp in self.groups:
+            if "side_requests" in grp.grp_conf:
+                sidereqs = grp.grp_conf["side_requests"]
                 # print('Group:', grp.group_name, ', Side requests list: ', sidereqs)
-                if sidereqs: 
+                if sidereqs:
                     for sgrp_name in sidereqs:
                         sgrp = self.get_signal_group_object(sgrp_name)
-                        grp.side_requests.append(sgrp)        
-                    print('Group:', grp.group_name, ', Side requests: ', grp.side_requests)
+                        grp.side_requests.append(sgrp)
+                    print(
+                        "Group:", grp.group_name, ", Side requests: ", grp.side_requests
+                    )
 
-
-    def set_delay_groups(self):
-        """ Set groups that need to be waited"""
-        print('Find delay groups: ')
-        for grp in self.groups: 
+    def set_delay_groups(self, verbose: bool = False):
+        """Set groups that need to be waited"""
+        if verbose:
+            print("Find delay groups: ")
+        for grp in self.groups:
             dd = self.get_delay_dictionary(grp)
-            delgroups = self.set_starting_delays(grp,dd)
-            if delgroups: 
+            delgroups = self.set_starting_delays(grp, dd)
+            if delgroups:
                 for dgrp in delgroups:
                     grp.delaying_groups.append(dgrp)
                     dgrp.disabling_groups.append(grp)
-                print('Group:', grp.group_name, ', Delay groups: ', grp.delaying_groups, 'Disable groups: ', dgrp.disabling_groups)
-        
-    def get_delay_dictionary(self, grp):
-        deldict = {}  
-        if "delaying_groups" in grp.grp_conf:       
+                if verbose:
+                    print(
+                        "Group:",
+                        grp.group_name,
+                        ", Delay groups: ",
+                        grp.delaying_groups,
+                        "Disable groups: ",
+                        dgrp.disabling_groups,
+                    )
+
+    def get_delay_dictionary(self, grp, verbose: bool = False):
+        deldict = {}
+        if "delaying_groups" in grp.grp_conf:
             deldict = grp.grp_conf["delaying_groups"]
-            # print('Group', grp.group_name, ' delgroups: ', deldict)
+            if verbose:
+                print("Group", grp.group_name, " delgroups: ", deldict)
             return deldict
-        return None 
-            
-    def set_starting_delays(self,grp,deldict):
-        delgroups = []    
-        if not(deldict):
-            return None   
+        return None
+
+    def set_starting_delays(self, grp, deldict, verbose: bool = False):
+        delgroups = []
+        if not (deldict):
+            return None
         for delgroupname in deldict:
             delgroup = self.get_signal_group_object(delgroupname)
             delgroups.append(delgroup)
-        # print('Grp:', grp.group_name, ' Delay groups: ', delgroups)
+        if verbose:
+            print("Grp:", grp.group_name, " Delay groups: ", delgroups)
         return delgroups
-                    
-    def get_signal_group_object(self,grpname):
+
+    def get_signal_group_object(self, grpname):
         """Returns signal group object based on name"""
         for grp in self.groups:
             if grp.group_name == grpname:
                 return grp
         return None
-                
-        
-    def set_phase_ring(self, phase_ring):
+
+    def set_phase_ring(self, phase_ring, verbose: bool = False):
         "Defines the phase ring based on tuple of tuples (ie phase ring matrix)"
         self.main_phases = []
         ph_index = 1
         for row in phase_ring:
-            #print(row)
+            # print(row)
             groups_in_mp = []
             for grp, ph_stat in zip(self.groups, row):
-                if ph_stat==1:
+                if ph_stat == 1:
                     groups_in_mp.append(grp)
             new_main_phase = SimplePhase(ph_index, groups_in_mp, self.timer)
-            print("Phase: ",ph_index," ",groups_in_mp)
+            if verbose:
+                print("Phase: ", ph_index, " ", groups_in_mp)
             ph_index += 1
             self.main_phases.append(new_main_phase)
-        self.current_main_phase = None # we are not in any main phase
-        self.next_main_phase = None # Next scheduled main phase
+        self.current_main_phase = None  # we are not in any main phase
+        self.next_main_phase = None  # Next scheduled main phase
 
     # This is for mapping one controller for many sumo signalheads
-    def set_sumo_outputs(self, grouplist):
+    def set_sumo_outputs(self, grouplist, verbose: bool = False):
         """Overrides sumo outputlist defined in init"""
         groups = []
         for grp_name in grouplist:
             for grp in self.groups:
                 if grp.group_name == grp_name:
-                    print("FOUND:", grp_name)
+                    if verbose:
+                        print("FOUND:", grp_name)
                     groups.append(grp)
-        if len(groups)==len(grouplist):
+        if len(groups) == len(grouplist):
             self.sumo_outputs = groups
         else:
             print("WARNING: some sumo groups not found")
 
     #
     # Conf functions
-    # 
+    #
 
     def get_conf_as_dict(self):
         "Returns controller conf file as dictionary"
         conf = {}
-        conf['controller'] = {}
-        conf['controller']['name'] = "test"  #self.name
-    
+        conf["controller"] = {}
+        conf["controller"]["name"] = "test"  # self.name
+
         # Signal groups
-        conf['controller']['signal_groups'] = {}
+        conf["controller"]["signal_groups"] = {}
         for group in self.groups:
-            conf['controller']['signal_groups'][group.group_name] = group.get_params()
-    
+            conf["controller"]["signal_groups"][group.group_name] = group.get_params()
+
         # Detectors
-        conf['controller']['detectors'] = {}
+        conf["controller"]["detectors"] = {}
         for det in self.req_dets:
-            conf['controller']['detectors'][det.name] = det.get_params()
+            conf["controller"]["detectors"][det.name] = det.get_params()
         for det in self.ext_dets:
-            conf['controller']['detectors'][det.name] = det.get_params()
+            conf["controller"]["detectors"][det.name] = det.get_params()
         for det in self.ext_groups:
-            conf['controller']['detectors'][det.name] = det.get_params()
+            conf["controller"]["detectors"][det.name] = det.get_params()
 
         # Lanes
-        conf['controller']['lanes'] = {}
+        conf["controller"]["lanes"] = {}
         for lane in self.lanes:
-            conf['controller']['lanes'][lane.id] = lane.get_params()
-        
+            conf["controller"]["lanes"][lane.id] = lane.get_params()
+
         # group lista
-        conf['controller']['group_list'] = self.group_list
+        conf["controller"]["group_list"] = self.group_list
 
         # phases
-        conf['controller']['phases'] = []
+        conf["controller"]["phases"] = []
         for phase in self.get_phases():
-            conf['controller']['phases'].append(list(phase))
-
+            conf["controller"]["phases"].append(list(phase))
 
         # Intergreens
         ig_tuples = self.get_intergreens()
         intergreens = []
         for from_group in ig_tuples:
             intergreens.append(list(from_group))
-        conf['controller']['intergreens'] = intergreens
+        conf["controller"]["intergreens"] = intergreens
         return conf
-
 
     def process_new_conf(self, new_conf):
         "This is for processing new conf-coming from the UI as a dictionary"
-        
-        if not 'controller' in new_conf:
+
+        if "controller" not in new_conf:
             return "No controller in conf"
-        
-        
+
         # Signal groups
-        if not 'signal_groups' in new_conf['controller']:
+        if "signal_groups" not in new_conf["controller"]:
             return "No signal_groups in conf"
-        for conf_group in new_conf['controller']['signal_groups']:
+        for conf_group in new_conf["controller"]["signal_groups"]:
             for group in self.groups:
                 if group.group_name == conf_group:
-                    group.set_params(new_conf['controller']['signal_groups'][conf_group])
-        
+                    group.set_params(
+                        new_conf["controller"]["signal_groups"][conf_group]
+                    )
+
         # Intergreens, Note: this has not been tested in practice
-        if not 'intergreens' in new_conf['controller']:
+        if "intergreens" not in new_conf["controller"]:
             return "No intergreens in conf"
         new_intergreens = []
-        for from_group in new_conf['controller']['intergreens']:
+        for from_group in new_conf["controller"]["intergreens"]:
             new_intergreens.append(tuple(from_group))
         intergreens = tuple(new_intergreens)
         self.set_conflict_groups(intergreens)
 
-        
         return "Ok"
-
 
     def save_conf(self, filename=CACHE_MODEL_FILE):
         "Saves the controller conf to a file"
         conf = self.get_conf_as_dict()
-        with open(filename, 'w') as outfile:
+        with open(filename, "w") as outfile:
             json.dump(conf, outfile, indent=4)
 
-    
     def read_conf(self, filename=CACHE_MODEL_FILE):
         "Reads the controller conf from a file"
         with open(filename) as json_file:
@@ -1054,13 +1075,13 @@ class PhaseRingController:
         print("\nINTERGREENS")
         for to_group in self.get_intergreens():
             print(to_group)
-        
+
         print("\nGROUPS")
         print(self.groups)
 
         # for grp in self.groups:
         #     print('Grp: ', grp.group_name, 'Conf: ', grp.grp_conf)
-        
+
         print("\nREQUEST DETS")
         print(self.req_dets)
 
@@ -1081,11 +1102,9 @@ class PhaseRingController:
         print("\nMAIN PHASES")
         for mp in self.main_phases:
             print(mp)
-        print(self.main_phases)  # DBIK 20231010 
-
+        print(self.main_phases)  # DBIK 20231010
 
         print("___")
-
 
     def get_conflict_matrix(self):
         """Retunrs the conflict matrix as tuple"""
@@ -1100,51 +1119,47 @@ class PhaseRingController:
             matrix.append(tuple(line))
         return tuple(matrix)
 
-
-    def simulate_operation(self, max_ext=True):
+    def simulate_operation(self, max_ext=True, verbose: bool = False):
         """
-            Runs the simulation of the operation without any inputs
-            This is used for testing and will end after constant
-            MAX_SIM_TIME
+        Runs the simulation of the operation without any inputs
+        This is used for testing and will end after constant
+        MAX_SIM_TIME
         """
 
         static_extender = StaticExtender(max_ext)
 
-
-        print('Simulate the cycle')
+        print("Simulate the cycle")
         for grp in self.groups:
-            #grp.request_green = True
+            # grp.request_green = True
             grp.extender = static_extender
 
-
-        #self.stat_logger.reset()
+        # self.stat_logger.reset()
         self.timer.reset()
 
-
-        
         stop_sim = False
         while not stop_sim:
             self.tick()
-            print(self.get_grp_states(), "", self.timer)
+            if verbose:
+                print(self.get_grp_states(), "", self.timer)
             if self.timer.seconds >= MAX_SIM_TIME:
                 stop_sim = True
 
-        print('simulated:', self.timer)
-
+        if verbose:
+            print("simulated:", self.timer)
 
     def get_intergreens(self):
         "Returns the intergreen matrix as a tuple"
         intergreens = []
         group_count = len(self.groups)
         for group in self.groups:
-                blocking = [0.0] * group_count # by default, no intergreens
-                for conflicting in group.conflicting_groups:
-                    index = self.groups.index(conflicting['group'])
-                    blocking[index] = conflicting['delay']
-                intergreens. append(tuple(blocking))
+            blocking = [0.0] * group_count  # by default, no intergreens
+            for conflicting in group.conflicting_groups:
+                index = self.groups.index(conflicting["group"])
+                blocking[index] = conflicting["delay"]
+            intergreens.append(tuple(blocking))
 
         return tuple(intergreens)
-    
+
     def get_phases(self):
         "Returns the phase ring as a tuple"
         phases = []
@@ -1158,19 +1173,16 @@ class PhaseRingController:
             phases.append(tuple(phase_row))
         return tuple(phases)
 
-
-   
     #
     # Output functions
     #
 
-
     def get_status_as_dict(self):
         status = {}
-        status['step_count'] = self.timer.steps
-        status['group_states'] = self.get_grp_states()
-        status['current_phase'] = str(self.current_main_phase)
-        status['next_phase'] = str(self.next_main_phase)
+        status["step_count"] = self.timer.steps
+        status["group_states"] = self.get_grp_states()
+        status["current_phase"] = str(self.current_main_phase)
+        status["next_phase"] = str(self.next_main_phase)
         ext_stat = ""
         for grp in self.groups:
             if grp.extender:
@@ -1180,116 +1192,114 @@ class PhaseRingController:
                     ext_stat += "0"
             else:
                 ext_stat += "N"
-        status['extender_states'] = ext_stat
+        status["extender_states"] = ext_stat
         req_stat = ""
         for grp in self.groups:
             if grp.request_green:
                 req_stat += "1"
             else:
                 req_stat += "0"
-        status['request_states'] = req_stat
+        status["request_states"] = req_stat
 
         return status
-    
 
     def get_grp_states(self):
         """Returns group statuses as string in traditional format"""
-        sstats = ''
+        sstats = ""
 
         for grp in self.groups:
             sstats += grp.get_grp_state()
 
         return sstats
 
-
     def get_sumo_states(self):
         """Returns group statuses as string Sumo-format"""
-        sstats = ''
+        sstats = ""
 
         for grp in self.sumo_outputs:
             sstats += grp.get_sumo_state()
 
         return sstats
 
-    # 
+    #
     # UI functions
     #
 
-
-    def get_group_params_as_df(self):
-        'Returns group params as pandas dataframe'
+    def get_group_params_as_df(self, verbose: bool = False):
+        "Returns group params as pandas dataframe"
         all_groups = {}
         for group in self.groups:
-            #print("Name", group.name, "Params:",  group.get_params())
+            # print("Name", group.name, "Params:",  group.get_params())
             params = group.get_params()
             all_groups[group.name] = params
-        print(all_groups) 
+        if verbose:
+            print(all_groups)
         df = pd.DataFrame(all_groups)
-        
-        #print(df)
+
+        # print(df)
         df = df.transpose()
-        #df = df.reset_index()
-        #print(df)
+        # df = df.reset_index()
+        # print(df)
         cols = df.columns.tolist()
-        cols.pop(cols.index('name'))
+        cols.pop(cols.index("name"))
         cols = ["name"] + cols
         df = df.reindex(columns=cols)
-        #print(cols)
+        # print(cols)
         return df
 
     def get_lane_params_as_df(self):
         """Returns lane params as pandas dataframe"""
         all_lanes = {}
-        
+
         if not self.lanes:
-            return pd.DataFrame(all_lanes) # If lanes are not defined, return empty dataframe
-        
+            return pd.DataFrame(
+                all_lanes
+            )  # If lanes are not defined, return empty dataframe
+
         for lane in self.lanes:
-            #print("Name", group.name, "Params:",  group.get_params())
+            # print("Name", group.name, "Params:",  group.get_params())
             params = lane.get_params()
-            #We remove the coodintaes, since we don't want to show them
-            if 'coordinates' in params:
-                #coords = params['coordinates']
-                #params['coordinates'] = str(coords)
-                params.pop('coordinates')
+            # We remove the coodintaes, since we don't want to show them
+            if "coordinates" in params:
+                # coords = params['coordinates']
+                # params['coordinates'] = str(coords)
+                params.pop("coordinates")
             # we convert users as string, since we want a simplified UI
-            if 'users' in params:
-                users = params['users']
-                params['users'] = str(users)
+            if "users" in params:
+                users = params["users"]
+                params["users"] = str(users)
             all_lanes[lane.id] = params
         df = pd.DataFrame(all_lanes)
         df = df.transpose()
         cols = df.columns.tolist()
-        cols.pop(cols.index('id'))
-        #cols = ["id"] + cols    
+        cols.pop(cols.index("id"))
+        # cols = ["id"] + cols
         df = df.reindex(columns=cols)
         return df
-    
-    
+
     def get_intergreens_as_df(self):
-        'Returns intergreen matrix as pandas dataframe'
+        "Returns intergreen matrix as pandas dataframe"
         intergreen_table = {}
 
         # Note, the matrix order is based on the group list
         for to_grp, intergreens in zip(self.groups, self.get_intergreens()):
             to_name = to_grp.group_name
             new_row = {}
-            new_row['Starting group'] = to_name
+            new_row["Starting group"] = to_name
             for from_grp, intergreen in zip(self.groups, intergreens):
                 from_name = from_grp.group_name
                 new_row[from_name] = intergreen
             intergreen_table[to_name] = new_row
-        
-        #return intergreen_table
+
+        # return intergreen_table
 
         df = pd.DataFrame(intergreen_table)
-        
+
         df = df.transpose()
         cols = df.columns.tolist()
-        cols.pop(cols.index('Starting group'))
-        cols = ['Starting group'] + cols
+        cols.pop(cols.index("Starting group"))
+        cols = ["Starting group"] + cols
         df = df.reindex(columns=cols)
-        #print(cols)
         return df
 
     def get_phases_as_df(self):
@@ -1307,23 +1317,20 @@ class PhaseRingController:
         df = pd.DataFrame(phase_table)
         df = df.transpose()
         cols = df.columns.tolist()
-        cols.pop(cols.index('Phase'))
+        cols.pop(cols.index("Phase"))
         df = df.reindex(columns=cols)
 
         return df
 
     # Fix me
     def get_detector_params_as_df(self):
-        'Returns group params as pandas dataframe'
+        "Returns group params as pandas dataframe"
         detectors = {}
         for det in self.ext_dets:
-            #print("Name", group.name, "Params:",  group.get_params())
             params = det.get_params()
             detectors[det.name] = params
 
-        #print(cols)
         return None
-
 
     # Note: not in use
     def get_intergreens_as_dict(self):
@@ -1331,7 +1338,7 @@ class PhaseRingController:
         igs = []
         for row_index, row in enumerate(self.get_intergreens()):
             new_dict = {}
-            new_dict['index'] = row_index
+            new_dict["index"] = row_index
             for col_index, val in enumerate(row):
                 new_dict[col_index] = val
             igs.append(new_dict)
@@ -1340,25 +1347,22 @@ class PhaseRingController:
     def update_group_params(self, new_params):
         "Receives group params from the UI as list of dictonaries and updates them"
         # Note: now sure how to make sanity check for these
-        #print(new_params)
         for new_param in new_params:
             for group in self.groups:
-                if group.group_name == new_param['name']:
+                if group.group_name == new_param["name"]:
                     errors = group.set_params(new_param)
-                    if  errors:
+                    if errors:
                         return errors
-        return None # No errors
-
+        return None  # No errors
 
     def update_ig_params(self, new_params):
         "Receives intergreen params from the UI as list of dictonaries and updates them"
         # Note: now sure how to make sanity check for these
-        #print(new_params)
         new_intergreens = []
         for row in new_params:
             blocking = []
             ig_values = list(row.values())
-            ig_values.pop(0) # remove the index
+            ig_values.pop(0)  # remove the index
 
             for ig_val in ig_values:
                 if not value_is_number(ig_val):
@@ -1368,31 +1372,28 @@ class PhaseRingController:
         new_intergreens = tuple(new_intergreens)
         self.set_conflict_groups(new_intergreens)
 
-        return None # No errors
+        return None  # No errors
 
     # Note: this doesn't work yet, we get too mixed up ehen phases are changed midway
     # Likely an all red phase is needed
     def update_phase_params(self, new_params):
         "Receives intergreen params from the UI as list of dictonaries and updates them"
         # Note: now sure how to make sanity check for these
-        #print(new_params)
         new_phases = []
         for row in new_params:
             on_groups = list(row.values())
             new_on_groups = []
             for on_group in on_groups:
-                if not (on_group==1 or on_group==0 or on_group=="1" or on_group=="0"):
+                if not (
+                    on_group == 1 or on_group == 0 or on_group == "1" or on_group == "0"
+                ):
                     return "Only ones and zeroes allowed in phase matrix"
                 new_on_groups.append(int(on_group))
             new_phases.append(tuple(new_on_groups))
         new_phases = tuple(new_phases)
         self.set_phase_ring(new_phases)
-        return None # No errors
+        return None  # No errors
 
-
-
-    
 
 if __name__ == "__main__":
     main()
-

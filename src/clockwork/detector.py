@@ -8,7 +8,6 @@ This module implements detecors for traffic controllers
 # All Rights Reserved
 #
 # import traci
-from signal_group import SignalGroup
 #from timer import Timer
 
 
@@ -349,9 +348,7 @@ class e3Detector(Detector):
                 return self.vehcount
         else: 
             return 0
-    
 
-        
 
 if __name__ == "__main__":
     main()

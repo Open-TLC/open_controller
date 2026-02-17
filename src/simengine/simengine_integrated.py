@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """The sumo interface module
 
-This module operates Sumo simulator and applies controller to it 
+This module operates Sumo simulator and applies controller to it
 This is an integrated version that doesn't use NATS
 """
-# 
+#
 # Open Controller, an open source traffic signal control platform
 # URL: https://www.opencontroller.org
 # Copyright 2023 - 2024 by Conveqs Oy, Kari Koskinen and others
@@ -12,19 +12,20 @@ This is an integrated version that doesn't use NATS
 # URL: https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
 #
 
-import sys
 import os
+import sys
 import time
-from confread_integrated import GlobalConf
-from timer import Timer
-sys.path.append('src/clockwork')
-from signal_group_controller import PhaseRingController
-from extender import StaticExtender
+from typing import Optional
 
+from clockwork.signal_group_controller import PhaseRingController
+from optimus.sumo import simulation_is_finished
 
-
-# This will need:
-# export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
+from .confread_integrated import GlobalConf
+from .detector import (
+    DetectorConf,
+)
+from .logger import SimLogger
+from .timer import Timer, create_timer_from_conf
 
 # Alternatively:
 # we need to import python modules from the $SUMO_HOME/tools directory
@@ -46,71 +47,23 @@ SUMO_BIN_NAME = "sumo"
 SUMO_BIN_NAME_GRAPH = "sumo-gui"
 
 
-
 # We run the sumo model based on conf dictionery given as parameter
-def run_sumo(conf_filename=None, runlog=None):
+def run_sumo(conf_filename: str):
     """Run sumo with given configuration"""
     print("Running sumo with conf", conf_filename)
     unit_cnf = GlobalConf(filename=conf_filename)
 
     sys_cnf = unit_cnf.cnf
 
+    system_timer = create_timer_from_conf(sys_cnf)
 
-    sumo_name = "0" # FIX ME
-    if 'controller' in sys_cnf.keys():
-        if 'sumo_name' in sys_cnf['controller'].keys():
-            sumo_name = sys_cnf['controller']['sumo_name']
+    traffic_controller = PhaseRingController(sys_cnf, system_timer)
 
-    operating_mode = 'basic'
-    if 'operating_mode' in sys_cnf.keys():
-        operating_mode = sys_cnf['operating_mode']
-        
-    v2x_mode = False
-    if 'v2x_mode' in sys_cnf.keys():
-        if sys_cnf['v2x_mode'] == True:
-            v2x_mode = True
-
-    sumovismode = "No_visualization"
-    if 'vis_mode' in sys_cnf.keys():
-        sumovismode = sys_cnf['vis_mode']
-    
-    # Init system timer from config file DBIK 24.7.23
-    timer_mode = 'real'
-    time_step = 0.1
-    time_multiplier = 1.0
-
-    timer_prm = sys_cnf['timer']
-    timer_mode = timer_prm['timer_mode']
-    time_step = timer_prm['time_step']
-    time_multiplier = timer_prm['real_time_multiplier']
-
-    end_time = -1
-    if 'max_time' in timer_prm:
-        end_time = timer_prm['max_time']
-
-    print('Timer parameters: ', timer_prm)
-    
-
-    system_timer = Timer(timer_prm)
-    next_update_time = 0
-
-
-    controller_cnf = sys_cnf['controller']
-    
-    traffic_controller = PhaseRingController(controller_cnf, system_timer)
- 
-    
     # We override the outputs if given in conf
-    if 'group_outputs' in sys_cnf['sumo'].keys():
-        sumo_outputs = sys_cnf['sumo']['group_outputs']
-        print("We override the sumo outputs from conf with:", sumo_outputs)
-        traffic_controller.set_sumo_outputs(sumo_outputs)
-    
-    # Theese are detectors operating with SUMO model
-    e1dets = traffic_controller.req_dets + traffic_controller.ext_dets
-    e1exts = traffic_controller.extenders
-    e3dets = traffic_controller.e3detectors 
-
+    if "group_outputs" in sys_cnf["sumo"].keys():
+        sumo_outputs = sys_cnf["sumo"]["group_outputs"]
+        # print("We override the sumo outputs from conf with:", sumo_outputs)
+        traffic_controller.set_sumo_outputs(sumo_outputs, verbose=False)
 
     # Graph always if set in conf, and also if param says so
     display_available = os.environ.get('DISPLAY') is not None and os.environ.get('DISPLAY') is not ''
@@ -119,132 +72,21 @@ def run_sumo(conf_filename=None, runlog=None):
         sumo_bin = SUMO_BIN_NAME_GRAPH
     else:
         sumo_bin = SUMO_BIN_NAME
-    
-    # sumo_bin = SUMO_BIN_NAME # Debugging without graphics DBIK 24.7.23
 
     # Conf is defined in sumo section of conf
-    sumo_file = sys_cnf['sumo']['file_name']
+    sumo_file = sys_cnf["sumo"]["file_name"]
     try:
-        traci.start([sumo_bin, "-c", sumo_file,
-                "--start",
-                "--quit-on-end"])
+        traci.start([sumo_bin, "-c", sumo_file, "--start", "--quit-on-end"])
     except Exception as e:
         print("Sumo start failed:", e)
         return
 
-    sumo_to_e1dets = get_e1det_mapping(e1dets)
-    print('sumo to e1 dets: ')
-    print(sumo_to_e1dets)
-
-    sumo_to_e3dets = get_e3det_mapping(e3dets)
-    print('sumo to e3 dets: ')
-    print(sumo_to_e3dets)
-
-    sumo_loops = traci.inductionloop.getIDList()
-    print('sumo e1 loops: ')
-    print(sumo_loops)
-
-    sumo_e3dets = traci.multientryexit.getIDList()
-    print('sumo e1 loops: ')
-    print(sumo_loops)
-
-    # NEW UPDATE CYCLE   DBIK230724 
+    detector_conf = DetectorConf(traffic_controller, traci_connection=traci)
 
     # Start the actual simulation
-    step = 0 
-    sleep_count = 0
-    sleep_count = 0
     system_timer.reset()
-    real_time = system_timer.real_seconds # DBIK230713 
-    next_update_time = real_time  # DBIK230713
-    ChangesOnly = True
-    statusstring = ""
-    last_print = 0
-    BP2 = False
-    SUMOSIM = True
-    
-    print(system_timer.steps, real_time, next_update_time, sleep_count )
 
-    # traci.vehicle.setLaneChangeMode(vehicleId,256) # Disable lane changing except from Traci
-
-    while (traci.simulation.getMinExpectedNumber() > 0) and ((system_timer.steps/10 <= end_time) or (end_time < 0)):
-
-        for vehicleId in traci.vehicle.getIDList():
-            traci.vehicle.setSpeedMode(vehicleId,55) # disable right of way check, vehicles can enter the junction, despite queue end
-            # traci.vehicle.setColor(vehicleId,(255,0,0))
-
-        real_time = system_timer.real_seconds # DBIK230711  
-        
-        if real_time >= (next_update_time) or (timer_mode!="real"):  # DBIK230711  timer_mode added 
-
-            next_update_time = next_update_time + time_step # DBIK230720
-
-            if statusstring == "ebb50b REQ:000010  EXT: 000110  PERM:100110  CUT:111001 (cur:PH:1, next:PH:2) *":
-            # if statusstring == "c4ee5bc REQ:1000001  EXT: 0000100  PERM:1111000  OTH:1011101 (cur:PH:1, next:PH:2)":
-               BP1 = True
-
-            # MULTI: looping the controllers start here
-               
-            if SUMOSIM:
-                Sumo_e1detections_to_controller(sumo_loops, sumo_to_e1dets)
-                Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_e3dets, sumovismode, v2x_mode)
-            else:
-                pass
-                # Read detections from NATS
-            
-            traffic_controller.tick()   
-
-            prevstatusstring = statusstring
-            statusstring = traffic_controller.get_control_status()
-            # clk = str(round(system_timer.steps/10,1))
-            clk = system_timer.str_seconds()
-
-            if sys_cnf['sumo']['print_status']:
-               
-                if ChangesOnly: 
-                    if (prevstatusstring != statusstring) or ((system_timer.steps - last_print) > 10):
-                        print(clk + ' ' + statusstring)
-                        last_print = system_timer.steps
-
-                else: print(clk + ' ' + statusstring)
-
-            if runlog:
-                runlog.add_line(statusstring)
-
-            states = traffic_controller.get_sumo_states()
-            ocTLScount = len(states)
-            sumo_tls = traci.trafficlight.getControlledLinks(sumo_name)
-            SumoTLScount = len(sumo_tls)
-            if ocTLScount < SumoTLScount:
-                states = 'r' + states  # DBIK20250129 add group 0 ?
-            try:
-                traci.trafficlight.setRedYellowGreenState(sumo_name, states)
-            except:
-                print('Error in signal counts: OC count: ',ocTLScount, 'Sumo TLS: ', SumoTLScount)                
-                # for index, value in enumerate(sumo_tls):
-                #     print('Sumo TLS info: ', index, value)
-                #     DB1 = 1
-
-            
-            try:
-                traci.simulationStep()
-            except traci.exceptions.FatalTraCIError:
-                print("Fatal error in sumo, exiting")
-                break
-            
-            # print(system_timer.steps, '%.3f' % real_time, '%.3f' % next_update_time, sleep_count )
-
-            system_timer.tick() # DBIK230711 timer tick only in the main loop
-            
-            sleep_count = 0
-
-        else: 
-            time.sleep(0.01) # DBIK230711
-            sleep_count += 1 
-            system_timer.sleep_tick()
-            real_time = system_timer.real_seconds # DBIK230711
-            # print(sleep_count, real_time)
-
+    start_simulation(sys_cnf, system_timer, traffic_controller, detector_conf)
 
     print("Closing traci")
     try:
@@ -543,20 +385,78 @@ def print_det_status():
     for loop_id in loops:
         lane = traci.inductionloop.getLaneID(loop_id)
         avg_speed = traci.inductionloop.getLastStepMeanSpeed(loop_id)
-        avg_length = traci.inductionloop.getLastStepMeanLength(loop_id)
         occupancy = traci.inductionloop.getLastStepOccupancy(loop_id)
-        vehs = traci.inductionloop.getLastStepVehicleIDs(loop_id)
-        veh_count = traci.inductionloop.getLastStepVehicleNumber(loop_id)
-        veh_pos = traci.inductionloop.getPosition(loop_id)
-        time_since_det = traci.inductionloop.getTimeSinceDetection(loop_id)
-        vehdata = traci.inductionloop.getVehicleData(loop_id)
         print("lane:{}, a_speed:{}, occupancy:{}".format(lane, avg_speed, occupancy))
 
 
+def start_simulation(
+    cnf: dict,
+    timer: Timer,
+    controller: PhaseRingController,
+    det_conf: DetectorConf,
+    logger: Optional[SimLogger] = None,
+):
+    real_time = timer.real_seconds  # DBIK230713
+    next_update_time = real_time  # DBIK230713
+    SUMOSIM = True
+
+    sumo_name = cnf["controller"]["sumo_name"]
+
+    while not simulation_is_finished(traci, timer=timer):
+        cycle_start = time.time()
+        for vehicleId in traci.vehicle.getIDList():
+            traci.vehicle.setSpeedMode(
+                vehicleId, 55
+            )  # disable right of way check, vehicles can enter the junction, despite queue end
+
+        real_time = timer.real_seconds  # DBIK230711
+
+        if timer.mode == "real":
+            time.sleep(0.01)  # DBIK230711
+            timer.sleep_tick()
+            real_time = timer.real_seconds  # DBIK230711
+
+        next_update_time = next_update_time + timer.time_step  # DBIK230720
+
+        if SUMOSIM:
+            det_conf.sumo_e1detections_to_controller()
+            det_conf.sumo_e3detections_to_controller()
+
+        controller.tick()
+
+        if logger is not None:
+            statusstring = controller.get_control_status()
+            logger.log_status(statusstring, timer.steps, timer.str_seconds())
+
+        states = controller.get_sumo_states()
+        ocTLScount = len(states)
+        sumo_tls = traci.trafficlight.getControlledLinks(sumo_name)
+        SumoTLScount = len(sumo_tls)
+        if ocTLScount < SumoTLScount:
+            states = "r" + states  # DBIK20250129 add group 0 ?
+        try:
+            traci.trafficlight.setRedYellowGreenState(sumo_name, states)
+        except:
+            print(
+                "Error in signal counts: OC count: ",
+                ocTLScount,
+                "Sumo TLS: ",
+                SumoTLScount,
+            )
+
+        try:
+            traci.simulationStep()
+        except traci.exceptions.FatalTraCIError:
+            print("Fatal error in sumo, exiting")
+            break
+
+        timer.tick()  # DBIK230711 timer tick only in the main loop
+
+        if logger is not None:
+            cycle_end = time.time()
+            cycle_dur_ms = (cycle_end - cycle_start) * 1000
+            logger.log(f"Cycle took: {cycle_dur_ms} milliseconds")
+
 
 if __name__ == "__main__":
-    #main_runsumo()
-    #run_sumo("../models/4leg/4leg.json")
-    run_sumo()
-
-
+    run_sumo(os.path.join(MODEL_ROOT, "contr/e3.json"))

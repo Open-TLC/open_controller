@@ -4,22 +4,31 @@
 This module implements system timer for clockwork_tc
 
 """
+
 # Coopyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 #
-import time 
+import time
 
-class Timer():
+
+class Timer:
     """Timer for handling time steps and conversions"""
+
     def __init__(self, timer_prm):
-        self.time_step = timer_prm['time_step']
-        self.time_multiplier = timer_prm['real_time_multiplier']
+        self.time_step = timer_prm["time_step"]
+        self.time_multiplier = timer_prm["real_time_multiplier"]
+        self.mode = timer_prm["timer_mode"]
+        self.time_step = timer_prm["time_step"]
         self.start_rtime = time.time()
         self.cur_rtime = time.time()
+        self.end_time = -1
+        if "max_time" in timer_prm:
+            self.end_time = timer_prm["max_time"]
+
         self.steps = 0
         self.last_update = self.cur_rtime
         # This is used to compensate for the time drift as integrator
-        self.aggregate_time_drift = 0.0 
+        self.aggregate_time_drift = 0.0
 
     def __str__(self):
         return "Timer, {} steps and {} seconds".format(self.steps, self.seconds)
@@ -28,21 +37,20 @@ class Timer():
         """Starts the timer from zero"""
         self.steps = 0
         self.start_rtime = time.time()
-        self.cur_rtime = time.time()-self.start_rtime
+        self.cur_rtime = time.time() - self.start_rtime
 
     def tick(self):
         """One time step forward"""
         self.steps += 1
-        self.cur_rtime = (time.time()-self.start_rtime) * self.time_multiplier 
+        self.cur_rtime = (time.time() - self.start_rtime) * self.time_multiplier
         self.aggregate_time_drift += self.get_time_since_last_update() - self.time_step
 
-
     def sleep_tick(self):
-        self.cur_rtime = (time.time()-self.start_rtime) * self.time_multiplier 
+        self.cur_rtime = (time.time() - self.start_rtime) * self.time_multiplier
 
     def get_time_since_last_update(self):
         """Returns the last update time and updates the counter to current time
-           This is operated by the tick-function
+        This is operated by the tick-function
         """
         last_update_before_reset = self.last_update
         self.last_update = time.time()
@@ -51,14 +59,12 @@ class Timer():
 
     def reset_time_step(self):
         """Resets the aggregate time drift
-           This is called by the controller after it starts again after stopping
-           (by the UI)
+        This is called by the controller after it starts again after stopping
+        (by the UI)
         """
         self.aggregate_time_drift = 0.0
         self.last_update = time.time()
-        
-    
-    
+
     def get_next_time_step(self):
         """Returns the next time step in seconds"""
         # We compensate the time step with the aggregate time drift
@@ -67,26 +73,31 @@ class Timer():
         if next_corrected_time_step < 0.0:
             next_corrected_time_step = 0.0
         return next_corrected_time_step
-    
+
     def str_seconds(self):
         """Returns real time in seconds in string format"""
-        return str(round(self.steps/10,1))
+        return str(round(self.steps / 10, 1))
 
     @property
     def real_seconds(self):
         """Returns real time in seconds from simulation start"""
-        return(round(self.cur_rtime,5))
-        
+        return round(self.cur_rtime, 5)
 
     @property
     def seconds(self):
         """Returns time in seconds, rounded up to three decimals"""
         return round(self.steps * self.time_step, 5)
-      
-    
+
     @seconds.setter
     def seconds(self, new_seconds):
         # Sets _steps_ to closest second value
-        self.steps = round(new_seconds/self.time_step,5)  # one might consider flooring?
-       
-    
+        self.steps = round(
+            new_seconds / self.time_step, 5
+        )  # one might consider flooring?
+
+
+def create_timer_from_conf(conf: dict) -> Timer:
+    # Init system timer from config file DBIK 24.7.23
+    timer_prm = conf["timer"]
+
+    return Timer(timer_prm)

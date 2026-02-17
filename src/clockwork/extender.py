@@ -10,7 +10,6 @@ it easier to implement external control schemes
 # All Rights Reserved
 #
 
-from signal_group import SignalGroup
 import keyboard, time
 
 
@@ -81,9 +80,9 @@ class Extender:
                 
         for grp in self.group.conflicting_groups:
             self.conf_groups.append(grp) 
-            print('conf group added: ',grp)
+            # print('conf group added: ',grp)
 
-        print('Extender, group: ',self.group.group_name, 'Conf groups: ', self.conf_groups)
+        # print('Extender, group: ',self.group.group_name, 'Conf groups: ', self.conf_groups)
 
         """"
         for det in dets:
