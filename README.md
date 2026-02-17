@@ -125,7 +125,7 @@ graphical mode and there can be some known issues with installation of Libsumo i
 ### What comes with the package
 The open controller system consists of separate services communcating with each other via pub/sub messages (see Figure 2). The messaging broker used in the  implementation is [NATS](https://nats.io) service ran ion it's own docker container and standard port 4222. There are three services, each running in their own container:
 
-- **Clockwork**, the signal group control engine 
+- **Control Engine**, the signal group control engine 
 - **Simengine**, a sumo simulation environment with Open Controller interfaces
 - **Traffic Indicators**, processing the sensor data into traffic situation indicators 
 - **User Interface**, an user interfaces for monitoring and controlling the services
@@ -143,11 +143,11 @@ In addittion, simengine can also receive *Signal Group control* messsages dictat
 
 **Traffic Indicators** is processing the sensor data into traffic indicators which can be used as input for the signal control. Traffic indicators is not needed if only detector data is used as input. When rradar or camera data is used, then the traffic indicators component is needed.
 
-**Clockwork** is a signal group oriented control engine, which can operate in various modes. The basic mode is based on detector, detector logics and signal groups performing traffic light control similar to most controllers in use. 
+**Control Engine** is a signal group oriented control engine, which can operate in various modes. The basic mode is based on detector, detector logics and signal groups performing traffic light control similar to most controllers in use. 
 In the basic mode the green extension is based on detector logics, which is looking for gaps in the vehicle flow to terminate the active green signal. In smart extender mode the Clockwork is still based on flexible signal group phasing,
 but the timing is based on more holistic view of the traffic situation. The smart green extender can not only extend its own green, but also cut the conflicting active green in order to start earlier. 
 
-The Clockwork subscribes to data inputs (e.g. detector statuses) and provides signal contol commands (*Signal Group Control* messages) as an output. It should be noted that this unit can be used both with a simulator as well as with real traffic controllers, 
+The Control engine subscribes to data inputs (e.g. detector statuses) and provides signal contol commands (*Signal Group Control* messages) as an output. It should be noted that this unit can be used both with a simulator as well as with real traffic controllers, 
 given that there is an interface for relaying them to the controller (this part is not provided at the time of writing due to IP restrictions).
 
 **User Interfaces** are tools for monitoring and controlling the state of the open controller. User interfaces are either native programns or browser-based tools. Various user interfaces are available or under development. 
@@ -162,7 +162,7 @@ After this you can setup the full Open Controller system and run it with a relat
 This script will in essence install four separate docker containers and run them, they are:
 
 - Nats server, a standard [NATS](https://nats.io) message broker
-- Clockwork, the open source traffic light controller
+- Control engine, the open source traffic light controller
 - Simengine, a [SUMO](https://eclipse.dev/sumo/) simulation platform with interfaces to access the open controller
 - UI, an user interface for the system
 
