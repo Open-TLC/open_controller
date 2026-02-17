@@ -53,6 +53,9 @@ The available modes for using open controller are the following:
 
 The easiest way to get started with the open controller is the option 1 (the integrated simulation), which is commonly used for evaluating the performance of the signal control.
 
+![Integrated simulation](/doc/images/sim_integrated.png)
+*Figure x: Integrated simulation*
+
 The second option is to use the distributed simulation, in which the simulation is separated from the controller. This way it is possible 
 to test that the communication and messages needed in the actual signal control are working properly.
 
