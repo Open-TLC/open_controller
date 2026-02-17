@@ -145,7 +145,7 @@ In addittion, simengine can also receive *Signal Group control* messsages dictat
 **Traffic Indicators** is processing the sensor data into traffic indicators which can be used as input for the signal control. Traffic indicators is not needed if only detector data is used as input. When rradar or camera data is used, then the traffic indicators component is needed.
 
 **Control Engine** is a signal group oriented control engine, which can operate in various modes. The basic mode is based on detector, detector logics and signal groups performing traffic light control similar to most controllers in use. 
-In the basic mode the green extension is based on detector logics, which is looking for gaps in the vehicle flow to terminate the active green signal. In smart extender mode the Clockwork is still based on flexible signal group phasing,
+In the basic mode the green extension is based on detector logics, which is looking for gaps in the vehicle flow to terminate the active green signal. In smart extender mode the control engine is still based on flexible signal group phasing,
 but the timing is based on more holistic view of the traffic situation. The smart green extender can not only extend its own green, but also cut the conflicting active green in order to start earlier. 
 
 The Control engine subscribes to data inputs (e.g. detector statuses) and provides signal contol commands (*Signal Group Control* messages) as an output. It should be noted that this unit can be used both with a simulator as well as with real traffic controllers, 
@@ -191,8 +191,8 @@ Full list of channels are given in the table 1 and a more detailed desctiption o
 | detector.status  | simengine | detector.status.1-001        | Status of a deector (occupied or not) |
 | group.status     | simengine | group.status.270.1           | Status of a traffic light             |
 | radar            | simengine | radar.270.2.objects.json     | Radar object list                     |
-| controller       | clockwork | controller.status.270        | Open controller status                |
-| group.control    | clockwork | group.control.270.1          | Control message of a traffic light    |
+| controller       | control engine | controller.status.270        | Open controller status                |
+| group.control    | control engine | group.control.270.1          | Control message of a traffic light    |
 
 ## Installing and running individual components
 ### Two methods for operating the system
