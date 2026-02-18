@@ -92,12 +92,61 @@ In the example below, not all items withing the sections are shown to keep the f
    
     }
 }
+```
+## Running multiple controllers
 
+In simulation mode it is possible to run multiple open controller within one simulation scenario. 
+In this case the file given as input parameter has different format. 
+The file that is given as command-line parameter has the the same general definition of the simulation 
+as in the case of signle controller. 
+However, the parameters for each controller are given in a separate files, which are defined (path/name) 
+in the main parameter file (see example below). 
+The format of the "Controller" section remains similar to the one controller case, but the
+key value of the controller dictionary is the nhame of the controller in case of multiple controllers.
+
+```json
+{
+    "timer":{
+        "timer_mode": "fixed",
+        "time_step":0.1,
+        "real_time_multiplier":1,
+        "max_time":4000
+    },
+
+
+    "operation_mode":"multi",
+    "vis_mode": "main_states",
+    
+    "sumo":{
+        "graph" : true,
+        "file_name": "../testmodels/iisakki/2junc_DT/cfgFiles/2junc_4leg_DT.sumocfg"
+    
+    },
+
+"controller_list": ["controller_J1","controller_J2"],
+
+"controllers":{
+       
+    "controller_J1":{
+    
+        "controller_file": "../testmodels/iisakki/2junc_DT/contr/J1_ext3.json"
+
+        },
+
+    "controller_J2":{
+        
+        "controller_file": "../testmodels/iisakki/2junc_DT/contr/J2_ext3_coord3.json"
+
+        }
+
+    }
+
+}
 ```
 
 See below an example of controller file in case of multiple controllers.
 
-'''json
+```json
 {
        
     "controller_J2":{
@@ -111,7 +160,7 @@ See below an example of controller file in case of multiple controllers.
 
         ....
 
-'''
+```
 
 
 ## General settings
@@ -186,57 +235,6 @@ internal states of the traffic signals by coloring the vehicles controlled by th
 | "vis_mode" | "off" / "main_states" / "sub_states" | Visualizing the signal states by color of the controlled vehicles |
 
 
-## Running multiple controllers
-
-In simulation mode it is possible to run multiple open controller within one simulation scenario. 
-In this case the file given as input parameter has different format. 
-The file that is given as command-line parameter has the the same general definition of the simulation 
-as in the case of signle controller. 
-However, the parameters for each controller are given in a separate files, which are defined (path/name) 
-in the main parameter file (see example below). 
-The format of the "Controller" section remains similar to the one controller case, but the
-key value of the controller dictionary is the nhame of the controller in case of multiple controllers.
-
-
-```json
-{
-    "timer":{
-        "timer_mode": "fixed",
-        "time_step":0.1,
-        "real_time_multiplier":1,
-        "max_time":4000
-    },
-
-
-    "operation_mode":"multi",
-    "vis_mode": "main_states",
-    
-    "sumo":{
-        "graph" : true,
-        "file_name": "../testmodels/iisakki/2junc_DT/cfgFiles/2junc_4leg_DT.sumocfg"
-    
-    },
-
-"controller_list": ["controller_J1","controller_J2"],
-
-"controllers":{
-       
-    "controller_J1":{
-    
-        "controller_file": "../testmodels/iisakki/2junc_DT/contr/J1_ext3.json"
-
-        },
-
-    "controller_J2":{
-        
-        "controller_file": "../testmodels/iisakki/2junc_DT/contr/J2_ext3_coord3.json"
-
-        }
-
-    }
-
-}
-```
 
 
 
