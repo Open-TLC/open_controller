@@ -540,6 +540,28 @@ One signal group can have multiple smart extenders and in coordination the prior
 have extra extenders from the previous intersections.
 Therefore, you need to configure an extra smart extender between each coordinated signal group.
 
+In the example below there are two simple consecutive junctions (J1 and J2). 
+The priotized route is from west to east which is in both junctions controlled by the signal group 1. 
+An extra weight of 5 vehicles is given to any vehicle approaching the junction J2 from the west ("e3_J2_West").
+In addition, the number of vehicles (each added by 3) is added to the number of approaching/queueing vehicles
+of the second junction (J2). 
+
+```json
+        "e3_J2_West":{
+              "type": "e3detector",
+              "sumo_id": "e3Det_J2_West",
+              "group": "group1",
+              "weight": 5,              
+            },
+
+         "e3_J1_West":{
+              "type": "e3detector",
+              "sumo_id": "e3Det_J1_West",
+              "group": "group1",
+              "weight": 3
+            },
+```
+
 ## Multi-modal traffic
 
 The traffic in intersections consists of vehicles like car, trucks, buses and trams. However, the pedestrians, bicycles
