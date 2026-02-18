@@ -95,6 +95,25 @@ In the example below, not all items withing the sections are shown to keep the f
 
 ```
 
+See below an example of controller file in case of multiple controllers.
+
+'''json
+{
+       
+    "controller_J2":{
+        
+        "sumo_name": "N_J2",
+        
+        "print_status": true,
+        "group_outputs": ["group1", "group2", "group3", "group4"],
+       
+        "signal_groups":{
+
+        ....
+
+'''
+
+
 ## General settings
 
 General settings are related to the controller and simulation as a whole. They involve setting various features on and off.
