@@ -522,6 +522,24 @@ Example of configurating priority for trams by smart extender
 In the example above, there is an e3-detector similar to radar, which is configured to detect trams only and to give the 
 trams an extra weight of one hundred.
 
+## Signal coordination
+
+Traffic signal coordination is used when certain routes over multiple intersections need to be favored. 
+Traditionally this is done by using common cycle time for all the intersections and the green starting
+at consecutive intersections are staggered to create a green wave. 
+
+In the open controller the signal coordination is implemented if different manner. 
+By default each intersection runs in isolated mode using the smart extenders.
+In coordinated mode an extra weight can be given the prioritized lanes on prioritized routes. 
+This weight can either help cut the conflicting greens to start the coordinated green early 
+or to extend the ongoing green of the coordinated signal. 
+
+Another difference to the isolated mode is that the pressure to start green or to extend the 
+green can come from previous intersections. 
+One signal group can have multiple smart extenders and in coordination the prioritized signal groups 
+have extra extenders from the previous intersections.
+Therefore, you need to configure an extra smart extender between each coordinated signal group.
+
 ## Multi-modal traffic
 
 The traffic in intersections consists of vehicles like car, trucks, buses and trams. However, the pedestrians, bicycles
@@ -544,17 +562,6 @@ to the traffic-indicators for processing the input for open controller. The list
 of the individual road users, but they are not necessarily needed and used. However, the count of of the objects,
 which is the lenght of the list is always provided. 
 
-## Signal coordination
-
-Traffic signal coordination is used when certain routes over multiple intersections need to be favored. 
-Traditionally this is done by using common cycle time for all the intersections and the green starting
-at consecutive intersections are staggered to create a green wave. In the open controller the signal coordination
-is implemented if different manner. By default each intersection runs in isolated mode
-using the smart extenders. Then the prioritized lanes on prioritized routes are given extra  weight. 
-This weight can either cut the conflicting green to start thee green when needed or to extend the the
-ongoing green. The difference to the isolated mode is that the request to start green or to extend the 
-green can come from previous intersections. One signal head can have multiple smart extenders and the
-in coordination the prioritized signal groups have extra extenders from the previous intersections.
 
 
 
