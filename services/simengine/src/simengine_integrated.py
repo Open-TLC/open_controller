@@ -444,6 +444,7 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode, v2x_mode)
     for e3det_id_sumo in sumo_e3dets:
         
         det_obj = sumo_to_dets[e3det_id_sumo]
+        e3vehlist = []
 
         for e3det in sumo_to_dets[e3det_id_sumo]:     
             detlanes = e3det.lanes
