@@ -568,21 +568,23 @@ The traffic in intersections consists of vehicles like car, trucks, buses and tr
 and micro-mobility is often negleted in many ways. Usually pedestrians and bikers are not detected automatically like vehicles,
 which can be annoying espcially for cyclists. Also, the green start or green extension is usually not affected by the number of pedestrians. 
 
-By using the cameras, we can detect the pedestrians automatically and generate the requests for green.
+By using the AI-cameras, we can detect the pedestrians automatically and generate the requests for green.
 Also, it is possible to get the count of pedestrians waiting for green and give them extra weight in order to get the
 green earlier. While crossing the street, we can count the pedestrians and extend the green time is necessary. 
 
 In order to process te camera-data properly we need to set up an AI-camera pipeline. In this setting the camera stream
-is directed to a processing unit which used AI-tools to detect pedestrians, cyclists on micro-mobility from the stream.
-The instructions for setting up the AI-camera pipeline can be found from "link".
+is directed to a processing unit which used AI-tools to detect pedestrians, cyclists or micro-mobility from the stream.
+The instructions for setting up the AI-camera pipeline can be found from "add link".
 
 The user need to set up zones in the camera view, which denote the waiting areas and the crossing areas of the given
 pedestrian crossing. Based on the zone the AI-pipeline can compute the number of pedestrians at each zone, which can
-be used as an input for the traffic control. The actual outcome of the AI-pipeline is similator the one of radars,
-so that basically the output is a list of objects with some attributes like type, position etc. This list is sent
-to the traffic-indicators for processing the input for open controller. The list data may or may not involve attributes
-of the individual road users, but they are not necessarily needed and used. However, the count of of the objects,
-which is the lenght of the list is always provided. 
+be used as an input for the traffic control. The actual outcome of the AI-pipeline is similar to the one of radars,
+so that basically the output is a list of objects with some attributes like object type, position, speed etc. This list is sent
+to the traffic-indicators service for processing input for the open controller. The list data may or may not involve attributes
+of the individual road users, but they may not necessarily be needed or used. However, the count of of the objects,
+which is the lenght of the object list is always provided. 
+
+Further guidelines will be provided shortly.
 
 
 
