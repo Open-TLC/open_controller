@@ -546,19 +546,25 @@ An extra weight of 5 vehicles is given to any vehicle approaching the junction J
 In addition, the number of vehicles (each added by 3) is added to the number of approaching/queueing vehicles
 of the second junction (J2). 
 
+In simulation mode the "sumo_id" is used to identify the source of the data stream (object lists).
+However, in case of real control or distributed (hardare-in-the-loop) simulation the name of NATS-channel
+is defining the input data stream from the appropriate radar or AI-camera. 
+
 ```json
         "e3_J2_West":{
               "type": "e3detector",
               "sumo_id": "e3Det_J2_West",
               "group": "group1",
-              "weight": 5,              
+              "weight": 5,
+              "channel": "group.e3.266.1"              
             },
 
          "e3_J1_West":{
               "type": "e3detector",
               "sumo_id": "e3Det_J1_West",
               "group": "group1",
-              "weight": 3
+              "weight": 3,
+              "channel": "group.e3.267.1"
             },
 ```
 
