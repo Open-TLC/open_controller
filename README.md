@@ -12,7 +12,7 @@ The Open controller was developed in [Smart Junction](https://www.aalto.fi/en/de
 which is based on holistic undestanding of the traffic situation in real-time. 
 The holistic traffic situation is based on ordinary detectors and on new sensor types like radars, cameras and V2X.
 
-![Open Controller Overview](/doc/images/OpenController_Overview.png)
+![open_controller_overview](/doc/images/open_controller_overview.png)
 *Figure 1: Overview of the Open Controller*
 
 # Quickstart
@@ -55,7 +55,7 @@ The available modes for using open controller are the following:
 A simple way to get started with the open controller is the option 1 (the integrated simulation), which is commonly used for evaluating the performance of the signal control.
 With the integrated simulation mode it is possible to run several open controllers in one simulation scenario. 
 
-![Integraated simulation](/doc/images/sim_integrated.png)
+![sim_integrated](/doc/images/sim_integrated.png)
 *Figure x: Integrated simulation*
 
 The second option is to use the distributed simulation, in which the simulation is separated from the controller. This way it is possible 
@@ -64,13 +64,13 @@ to test that the communication and messages needed in the actual signal control 
 The third option is the Hardware-in-the-loop simulation, which is similar to the distributed simulation, except thast the actual signal controller
 device is included in the control loop. This way everything can be tested to the last detail before live operation.
 
-![Hardware-in-the-loop simulation](/doc/images/hwil_sim.png)
+![hwil_sim](/doc/images/hwil_sim.png)
 *Figure x: Hardware-in-the-loop simulation*
 
 The last option is live signal control in the field, in which the simulagtor is no more involved. All the inputs are coming from real sensors and the signal control
 output commands are sent the the actual road side device, which carries out the control of the real traffic.
 
-![Live signal control in the field](/doc/images/live_control.png)
+![live_control](/doc/images/live_control.png)
 *Figure x: Live signal control in the field*
 
 It should be noted that the options 3 and 4 cannot be used without an interface component to the signal controller device. For safety
