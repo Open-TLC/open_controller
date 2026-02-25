@@ -353,7 +353,7 @@ class e3Detector(Detector):
                                 
                                 leaderSpeed = self.det_vehicles_dict[vehid]['leaderSpeed']
                                 VX2newSpeed = leaderSpeed - 5.0
-                                VX2newSpeed = 10.0
+                                # VX2newSpeed = 10.0
                                 if VX2newSpeed > 4.0:
                                     self.det_vehicles_dict[vehid]['vspeed'] = VX2newSpeed   # V2X vehicle slow down
                                     
