@@ -259,7 +259,7 @@ class e3Extender(Extender):
         # DBIK20250213 Safety extension update added
         self.prev_status = self.ext3_status
         
-        if (self.group.name == 'group11: '):
+        if (self.group.name == 'group1: '):
             DB1 = 1 
         
         if self.ext3_status in [0,1,4]:

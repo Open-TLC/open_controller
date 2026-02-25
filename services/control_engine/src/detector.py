@@ -315,8 +315,7 @@ class e3Detector(Detector):
                 self.vehcount +=3 # DBIK240923 Add extra weight for trucks 1 truck = 3 vehs
             elif  vtype == 'tram_type':
                 self.vehcount +=100  # DBIK240923 Add extra weight for trams 1 tram = 100 vehs
-
-
+            
 
             elif  vtype == 'bike_type':
                 self.vehcount += 0
@@ -337,9 +336,10 @@ class e3Detector(Detector):
 
             
             elif (vtype == 'v2x_type'):
+                self.vehcount +=1 # DBIK202602 Give the weight for V2X_type
                 if self.v2x_ON:                 
                     self.det_vehicles_dict[vehid]['vcolor'] = 'blue'  # V2X vehicle detected   
-                    if (TLSno == 11) and (TLSdist < self.MaxOZ) and (TLSdist > self.MinOZ):  
+                    if (TLSno == 1) and (TLSdist < self.MaxOZ) and (TLSdist > self.MinOZ):  
                         self.det_vehicles_dict[vehid]['vcolor'] = 'green'  # V2X veh at option-zone
 
                         leaderDist = self.det_vehicles_dict[vehid]['leaderDist']
@@ -349,7 +349,7 @@ class e3Detector(Detector):
             
                             if self.SafeExtOn:
                                 self.det_vehicles_dict[vehid]['vcolor'] = 'red'    # Safety extension ON for V2X veh
-                                curspeed = self.det_vehicles_dict[vehid]['vspeed']
+                                curspeed = self.det_vehicles_dict[vehid]['speed']
                                 
                                 leaderSpeed = self.det_vehicles_dict[vehid]['leaderSpeed']
                                 VX2newSpeed = leaderSpeed - 5.0
