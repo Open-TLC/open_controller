@@ -248,7 +248,13 @@ class e3Extender(Extender):
         else:
             for e3det in self.e3dets:
                 e3det.SafeExtOn = False
-            print('Signal X: Safety extension of ', round(safety_ext_time,1), ' seconds ended at: ',round(self.system_timer.seconds,1))
+            safety_ext_time = round(safety_ext_time,1)
+            curtime = round(self.system_timer.seconds,1)    
+            print('Signal X: Safety extension of ', safety_ext_time, ' seconds ended at: ', curtime)
+            
+            with open("v2x_file.txt", "a") as f:
+                f.writelines(f'Signal X: Safety extension of {safety_ext_time} seconds ended at: {curtime}  \n')
+
             # Demo feature
             # time.sleep(1.00) 
             return 4

@@ -520,13 +520,16 @@ def Sumo_e3detections_to_controller(sumo_e3dets, sumo_to_dets,vismode, v2x_mode)
                     if vehcolor == 'red':
                         
                         try:
-                            vehspeed = round(e3det.det_vehicles_dict[veh]['vspeed'],1)
+                            vehspeed = round(e3det.det_vehicles_dict[veh]['set_speed'],1)
                             traci.vehicle.setSpeed(veh,vehspeed)
                             curspeed = round(traci.vehicle.getSpeed(veh),1)
                             vehdist = round(e3det.det_vehicles_dict[veh]['leaderDist'],1)
                             print('Vehicle: ',veh,' Speed now: ', curspeed,' Set speed to: ',vehspeed, ' Distance:', vehdist)
                         except:
                             print('Veh speed error: ', veh)
+
+                        with open("v2x_file.txt", "a") as f:
+                            f.writelines(f'Vehicle: {veh} Speed:  {curspeed}  SetSpeed: {vehspeed} Distance: {vehdist}  \n')
                     else:
                         try:
                             traci.vehicle.setSpeed(veh,-1)
