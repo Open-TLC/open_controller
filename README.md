@@ -12,7 +12,7 @@ Open Controller was developed in the [Smart Junction](https://www.aalto.fi/en/de
 which is based on a holistic understanding of the traffic situation in real time.
 The holistic traffic situation is based on ordinary detectors and on new sensor types like radars, cameras and V2X.
 
-![open_controller_overview](/doc/images/open_controller_overview.png)
+![open_controller_overview](/doc/images/open_controller_overview2.png)
 *Figure 1: Overview of the Open Controller*
 
 # Quickstart
