@@ -6,15 +6,14 @@ This module operates Sumo simulator and applies controller to it
 # Copyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 #rt random
+from genericpath import exists
 import sys 
 import os
 import time
 from confread_ms import GlobalConf
-# from traffic_controller import TrafficController
-sys.path.append('services/control_engine/src')
-from signal_group_controller import PhaseRingController
+
 from timer import Timer
-from extender import StaticExtender
+
 
 
 # This will need:
@@ -58,6 +57,19 @@ def run_sumo(conf_filename=None, runlog=None):
     """Run sumo with given configuration"""
     print("Running sumo with conf", conf_filename)
     unit_cnf = GlobalConf(filename=conf_filename) # objekti
+    
+    # Imprtinc components from control_engine
+    # FIXME:We should not use paths, insteead different sercives should
+    # Be properly modularized and imported as modules
+    if 'control_engine_path' in unit_cnf.cnf:
+        engine_path = unit_cnf.cnf['control_engine_path']
+    else:
+        engine_path = 'services/control_engine/src' #Standard installation
+    sys.path.append(engine_path)
+    from signal_group_controller import PhaseRingController
+    from extender import StaticExtender
+    
+    
     controllers_dict = {}
 
     sys_cnf = unit_cnf.cnf  # dictionary

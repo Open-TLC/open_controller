@@ -99,6 +99,10 @@ class GlobalConf:
                                       '(default: client_conf.json)',
                                  required=False)
 
+        self.parser.add_argument('--control-engine-path',
+                                    help='Path to control engine, needed for some special installation setups',
+                                    required=False)
+        
         self.parser.add_argument('--graph',
                                  help='If set, run graphical version of sumo',
                                  action='store_true',
