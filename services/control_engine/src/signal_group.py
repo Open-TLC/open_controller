@@ -570,7 +570,7 @@ class SignalGroup(Machine):
 
     # DBIK20231207 Testing start delay
     def start_delay_not_passed(self, grp_conf):  
-        """Returns true if start delay of pedestrian signals have passed"""
+        """Returns true if start delay of pedestrian signals have not passed"""
         if not 'delaying_groups' in grp_conf:
             return False
             # Fixed that this will not grash if not configured 
@@ -579,9 +579,11 @@ class SignalGroup(Machine):
         if  self.delaying_groups:
             for dgrp in self.delaying_groups:
                     startdelay = grp_conf['delaying_groups'][dgrp.group_name]
+            
                     if self.system_timer.seconds < (dgrp.green_started_at + startdelay): 
-                        # print('Wait group: ', self.group_name, 'Deley group: ',dgrp.group_name, 'Delay started: ', dgrp.green_started_at, 'Start delay: ', startdelay)  
-                        return True # Start delay passed
+                        time_left = round((dgrp.green_started_at + startdelay) - self.system_timer.seconds,1) 
+                        print('Wait group: ', self.group_name, 'Delay group: ',dgrp.group_name, 'Delay started: ', dgrp.green_started_at, 'Start delay: ', startdelay, 'Delay left: ', time_left) #DBIK20260326 Debugged
+                        return True # Start delay not passed
         return False
     
     #
