@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 08/12/20 13:19:21 by Eclipse SUMO netedit Version 1.6.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+
+    <busStop id="H0215" lane="Itam_RB13_1"  startPos="27.13" endPos="57.13" name="Itämerenkatu" lines="8 20 21"/>
+    <busStop id="H0216" lane="-Itam_RB13_1" startPos="1.14"  endPos="31.14" name="Itämerenkatu" friendlyPos="1" lines="8 20 21"/>
+
+</additional>

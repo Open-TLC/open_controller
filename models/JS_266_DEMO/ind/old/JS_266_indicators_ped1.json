@@ -1,0 +1,455 @@
+{
+"connectivity":{
+	"notes": "This is for accessing the data",
+	"nats": {
+		"server": "localhost",
+		"port": 4222
+    },
+    "hsl": {
+        "server": "to be defined",
+        "port": 8080
+    }
+},
+
+"input_streams":{
+    "sig_inputs": {
+        "connection": "nats",
+        "type": "groups",
+        "subtype": "sumo",
+        "nats_subject": "group.status.266.*",
+        "notes": "Will subscribe to all groups sent by sumo"
+    },
+    "det_inputs": {
+        "connection": "nats",
+        "type": "detectors",
+        "subtype": "sumo",
+        "nats_subject": "detector.status.*",
+        "notes": "Will subscribe to all detectors sent by sumo"
+        },    
+    "radar266.1": {
+        "connection": "nats",
+        "type": "radar",
+        "subtype": "sumo",
+        "nats_subject": "radar.266.1.objects_port.json",
+        "notes": "Will subscribe to radar pointing north"
+        },
+    "radar266.2": {
+        "connection": "nats",        
+        "type": "radar",
+        "subtype": "sumo",
+        "nats_subject": "radar.266.2.objects_port.json",
+        "notes": "Will subscribe to radar pointing west (arriving)"
+        },
+    "radar266.3": {
+        "connection": "nats",
+        "type": "radar",
+        "subtype": "sumo",
+        "nats_subject": "radar.266.3.objects_port.json",
+        "notes": "Will subscribe to radar pointing west (departing)"
+        },
+
+    "radar266.4": {
+        "connection": "nats",
+        "type": "radar",
+        "subtype": "sumo",
+        "nats_subject": "radar.266.4.objects_port.json",
+        "notes": "Will subscribe to radar 266 north south in middle"
+        },
+    "radar266.5": {
+        "connection": "nats",
+        "type": "radar",
+        "subtype": "sumo",
+        "nats_subject": "radar.266.5.objects_port.json",
+        "notes": "Will subscribe to radar 266 south"
+        },
+    "radar266.7": {
+        "connection": "nats",
+        "type": "radar",
+        "subtype": "sumo",
+        "nats_subject": "radar.266.7.objects_port.json",
+        "notes": "Will subscribe to radar 266 south pedestrian"
+        }
+    },
+
+"detlogics":{
+    "tram9_request_detlogic":{
+        "type": "two_det_switch",
+        "notes": "One detector swithces the request on, another off",
+        "detectors": {
+            "request": "R8PY",
+            "clear": "R8KU"
+        },
+        "request_trigger": "rising_edge",
+        "clear_trigger": "falling_edge"
+        }
+    },
+
+"inputs":{
+    "dets":{
+        "266_1118A": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "266_1118A"
+        },
+        "266_1118B": {
+            "type": "rising_edge",
+            "stream": "det_inputs",
+            "name": "266_1118B"
+        },
+        "266_1102A": {
+            "type": "falling_edge",
+            "stream": "det_inputs",
+            "name": "266_1102A"
+        },
+        "266_1102B": {
+            "type": "falling_edge",
+            "stream": "det_inputs",
+            "name": "266_1102B"
+        }
+    },
+
+    "object_filters":{
+        "266_1_0": {
+            "type": "simple",
+            "stream": "radar266.1",
+            "lane": "0"
+        },
+        "266_1_1": {
+            "type": "simple",
+            "stream": "radar266.1",
+            "lane": "1"
+        },
+         "266_1_2": {
+            "type": "simple",
+            "stream": "radar266.1",
+            "lane": "2"
+        },
+        "266_1_3": {
+            "type": "simple",
+            "stream": "radar266.1",
+            "lane": "3"
+        },
+
+        "266_2_0": {
+            "type": "simple",
+            "stream": "radar266.2",
+            "lane": "0"
+        },
+        "266_2_1": {
+            "type": "simple",
+            "stream": "radar266.2",
+            "lane": "1"
+        },
+
+        "266_2_2": {
+            "type": "simple",
+            "stream": "radar266.2",
+            "lane": "2"
+        },
+        "266_2_3": {
+            "type": "simple",
+            "stream": "radar266.2",
+            "lane": "3"
+        },
+
+        "266_4_0": {
+            "type": "simple",
+            "stream": "radar266.4",
+            "lane": "0"
+        },
+        "266_4_1": {
+            "type": "simple",
+            "stream": "radar266.4",
+            "lane": "1"
+        },
+        "266_4_2": {
+            "type": "simple",
+            "stream": "radar266.4",
+            "lane": "2"
+        },
+        "266_4_3": {
+            "type": "simple",
+            "stream": "radar266.4",
+            "lane": "3"
+        },
+
+        "266_5_0": {
+            "type": "simple",
+            "stream": "radar266.5",
+            "lane": "0"
+        },
+        "266_5_1": {
+            "type": "simple",
+            "stream": "radar266.5",
+            "lane": "1"
+        },
+        "266_5_2": {
+            "type": "simple",
+            "stream": "radar266.5",
+            "lane": "2"
+        },
+        "266_5_3": {
+            "type": "simple",
+            "stream": "radar266.5",
+            "lane": "3"
+        },
+        "266_7_0": {
+            "type": "simple",
+            "stream": "radar266.7",
+            "lane": "0"
+        }      
+    },
+
+    "groups": {
+        "group1": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "1"
+        },
+        "group2": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "2"
+        },
+        "group3": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "3"
+        },
+            "group4": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "4"
+        },
+        "group9": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "9"
+        },
+        "group11": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "11"
+        },
+        "group12": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "12"
+        },
+        "group13": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "13"
+        },
+        "group15": {
+            "type": "simple",
+            "stream": "sig_inputs",
+            "group": "15"
+        }
+    }
+},
+
+"lanes":{
+    "grp1_0":{
+        "name": "Group 1 lane 0",
+        "object_lists":["266_5_0"],
+        "notes": "Approach from South"
+    },
+    "grp1_1":{
+        "name": "Group 1 lane 1",
+        "object_lists":["266_5_1"],
+        "notes": "Approach from South"
+    },
+
+    "grp2_2":{
+        "name": "Group 2 lane 2",
+        "object_lists":["266_5_2"],
+        "notes": "Approach from South"
+    },
+    "grp2_3":{
+        "name": "Group 2 lane 3",
+        "object_lists":["266_5_3"],
+        "notes": "Approach from South"
+    },
+
+    "grp3_2":{
+        "name": "Group 3 lane 2",
+        "object_lists":["266_1_2"],
+        "notes": "Approach from North"
+    },
+    "grp3_3":{
+        "name": "Group 3 lane 3",
+        "object_lists":["266_1_3"],
+        "notes": "Approach from North"
+    },
+
+    "grp4_0":{
+        "name": "Group 4 lane 0",
+        "object_lists":["266_1_0"],
+        "notes": "Approach from North"
+    },
+    "grp4_1":{
+        "name": "Group 4 lane 1",
+        "object_lists":["266_1_1"],
+        "notes": "Approach from North"
+    },
+
+    "grp4_0":{
+        "name": "Group 4 lane 0",
+        "object_lists":["266_1_0"],
+        "notes": "Approach from North"
+    },
+
+    "grp9_2":{
+        "name": "Group 9 lane 2",
+        "object_lists":["266_4_2"],
+        "notes": "Approach from South middle"
+    },
+    "grp9_3":{
+        "name": "Group 9 lane 3",
+        "object_lists":["266_4_3"],
+        "notes": "Approach from South middle"
+    },
+
+    "grp11_1":{
+        "name": "Group 11 lane 1",
+        "object_lists":["266_2_0"],
+        "notes": "Approach from West"
+    },
+    "grp11_2":{
+        "name": "Group 11 lane 2",
+        "object_lists":["266_2_1"],
+        "notes": "Approach from West"
+    },
+
+    "grp12_3":{
+        "name": "Group 12 lane 3",
+        "object_lists":["266_2_2"],
+        "notes": "Approach from West"
+    },
+    "grp12_4":{
+        "name": "Group 12 lane 4",
+        "object_lists":["266_2_3"],
+        "notes": "Approach from West"
+    },
+
+    "grp13_0":{
+        "name": "Group 13 lane 0",
+        "object_lists":["266_4_0"],
+        "notes": "Approach from South middle"
+    },
+    "grp13_1":{
+        "name": "Group 13 lane 1",
+        "object_lists":["266_4_1"],
+        "notes": "Approach from South middle"
+    },
+    "grp15_0":{
+        "name": "Group 15 ped lane 0 south",
+        "object_lists":["266_7_0"], 
+        "notes": "Bikes from South"
+    }
+},
+
+"outputs":{
+
+    "group1_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.266.1",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["grp1_0", "grp1_1"],
+        "group": "group1",
+        "notes": "From Mech to North lanes 0-1"
+        },
+
+    "group2_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.266.2",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["grp2_2", "grp2_3"],
+        "group": "group2",
+        "notes": "From Mech to North lanes 2-3"
+        },
+    
+    "group3_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.266.3",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["grp3_2", "grp3_3"],
+        "group": "group3",
+        "notes": "From Mech to South lanes 2-3"
+        },
+
+    "group4_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.266.4",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["grp4_0", "grp4_1"],
+        "group": "group4",
+        "notes": "From Mech to South lanes 0-1"
+        },
+    
+    "group9_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.266.9",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["grp9_2", "grp9_3"],
+        "group": "group9",
+        "notes": "From Mech to Pork lanes 2-3"
+        },
+
+    "group11_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.266.11",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["grp11_1", "grp11_2"],
+        "group": "group11", 
+        "notes": "From Pork to Mech lanes 1-2"
+        },
+
+    "group12_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.266.12",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["grp12_3", "grp12_4"],
+        "group": "group12",
+        "notes": "From Pork to Mech lanes 3-4"
+        },
+    
+    "group13_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.266.13",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["grp13_0", "grp13_1"],
+        "group": "group13",
+        "notes": "From Mech middle to North lanes 0-1"
+        },
+    
+    "group15_view":{
+        "connection": "nats",
+        "type": "e3",
+        "nats_output_subject": "group.e3.266.15",
+        "trigger": "time",
+        "trigger_time": 1.0,
+        "lanes": ["grp15_0"],
+        "group": "group15",
+        "notes": "From Mech South to Ped Grp 15"
+        }
+
+    }
+}
