@@ -1163,14 +1163,20 @@ class PhaseRingController:
     #
     # Output functions
     #
-
-
+    def get_OC_status_short(self):
+        status = {}
+        status['step_count'] = self.timer.steps
+        status['current_phase'] = str(self.current_main_phase)
+        status['next_phase'] = str(self.next_main_phase)
+        return status
+    
     def get_status_as_dict(self):
         status = {}
         status['step_count'] = self.timer.steps
         status['group_states'] = self.get_grp_states()
         status['current_phase'] = str(self.current_main_phase)
         status['next_phase'] = str(self.next_main_phase)
+               
         ext_stat = ""
         for grp in self.groups:
             if grp.extender:

@@ -406,6 +406,8 @@ async def main(conf_filename=None, set_controller_requests=False):
     #import time
     #update_count = 0
     #start_time = time.time()
+    update_count = 0
+
     while True:
         
         # If run updates is off, we just sleep and wait for the next command
@@ -419,14 +421,18 @@ async def main(conf_filename=None, set_controller_requests=False):
             print(traffic_controller.get_control_status())
         
         # status will be sent to its own channer every time step
-        controller_stat = traffic_controller.get_status_as_dict()
-        if sys_cnf['nats']['mode'] == 'update':
-            await nats.publish(status_channel, json.dumps(controller_stat).encode())
         
-        if sys_cnf['nats']['mode'] == 'change':
-            await nats.publish(status_channel, json.dumps(controller_stat).encode())
-        
+        if update_count > 10: 
+            # controller_stat = traffic_controller.get_status_as_dict()
+            controller_stat = traffic_controller.get_OC_status_short()
 
+            if sys_cnf['nats']['mode'] == 'update':
+                await nats.publish(status_channel, json.dumps(controller_stat).encode())    
+            if sys_cnf['nats']['mode'] == 'change':
+                await nats.publish(status_channel, json.dumps(controller_stat).encode())
+            update_count = 0
+        else:
+            update_count +=1
 
         # For sending the groups statuses to the nats server if requested in conf
         if sys_cnf['nats']['mode'] == 'update':
