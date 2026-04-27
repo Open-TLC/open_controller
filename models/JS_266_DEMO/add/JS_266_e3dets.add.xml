@@ -2,76 +2,76 @@
 
 <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
 
-    <e3Detector id="e3Det_266_Mech_North" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Mech_North.det.out.xml">      
+    <e3Detector id="e3Det_266_Mech_North" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Mech04_0"   pos="14.00"/>
         <detEntry lane="Mech04_1"   pos="14.00"/>
         <detExit  lane="Mech04_0"   pos="-2.00"/>
         <detExit  lane="Mech04_1"   pos="-2.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_266_Mech_North_R" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Mech_North_R.det.out.xml">      
+    <e3Detector id="e3Det_266_Mech_North_R" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Mech_R04_0"   pos="4.00"/>
         <detExit  lane="Mech_R04_0"   pos="-2.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_266_Mech_Left" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Mech_Left.det.out.xml">      
+    <e3Detector id="e3Det_266_Mech_Left" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Mech04_2"   pos="15.00"/>
         <detEntry lane="Mech04_3"   pos="15.00"/>
         <detExit  lane="Mech04_2"   pos="-2.00"/>
         <detExit  lane="Mech04_3"   pos="-2.00"/>
     </e3Detector>
     
-     <e3Detector id="e3Det_266_Mid_North" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Mid_North.det.out.xml">      
+     <e3Detector id="e3Det_266_Mid_North" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Mech05_0"   pos="2.00"/>
         <detEntry lane="Mech05_1"   pos="2.00"/>
         <detExit  lane="Mech05_0"   pos="-2.00"/>
         <detExit  lane="Mech05_1"   pos="-2.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_266_Mid_North_R" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Mid_North_R.det.out.xml">      
+    <e3Detector id="e3Det_266_Mid_North_R" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Mech_R05_0"   pos="2.00"/>
         <detExit  lane="Mech_R05_0"   pos="-2.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_266_Mid_Left" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Mid_Left.det.out.xml">      
+    <e3Detector id="e3Det_266_Mid_Left" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Mech05_2"   pos="3.00"/>
         <detEntry lane="Mech05_3"   pos="3.00"/>
         <detExit  lane="Mech05_2"   pos="-2.00"/>
         <detExit  lane="Mech05_3"   pos="-2.00"/>
     </e3Detector>
     
-    <e3Detector id="e3Det_266_Mid_South" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Mid_South.det.out.xml">      
+    <e3Detector id="e3Det_266_Mid_South" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="-Mech05_0"   pos="2.00"/>
         <detExit  lane="-Mech05_0"   pos="-2.00"/> 
     </e3Detector>
 
-    <e3Detector id="e3Det_266_Mid_South_R" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Mid_South_R.det.out.xml">      
+    <e3Detector id="e3Det_266_Mid_South_R" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="-Mech05_1"   pos="2.00"/>
         <detExit  lane="-Mech05_1"   pos="-2.00"/> 
     </e3Detector>
     
-    <e3Detector id="e3Det_266_Ramp_Right" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Ramp_Right.det.out.xml">      
+    <e3Detector id="e3Det_266_Ramp_Right" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Mech_ramppi02_0"   pos="-40.00"/>
         <detEntry lane="Mech_ramppi02_1"   pos="-40.00"/>
         <detExit  lane="Mech_ramppi03_0"   pos="-2.00"/>
         <detExit  lane="Mech_ramppi03_1"   pos="-2.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_266_Ramp_Left" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Ramp_Left.det.out.xml">      
+    <e3Detector id="e3Det_266_Ramp_Left" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="Mech_ramppi02_2"   pos="-35.00"/>
         <detEntry lane="Mech_ramppi02_3"   pos="-35.00"/>
         <detExit  lane="Mech_ramppi03_2"   pos="-2.00"/>
         <detExit  lane="Mech_ramppi03_3"   pos="-2.00"/>
     </e3Detector>
     
-    <e3Detector id="e3Det_266_Mech_South" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Mech_South.det.out.xml">      
+    <e3Detector id="e3Det_266_Mech_South" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="-Mech07_2"   pos="4.00"/>
         <detEntry lane="-Mech07_3"   pos="4.00"/>
         <detExit  lane="-Mech06_2"   pos="-2.00"/>
         <detExit  lane="-Mech06_3"   pos="-2.00"/>
     </e3Detector>
 
-    <e3Detector id="e3Det_266_Mech_Right" pos="4300,1600" freq="900.00" file="../out/e3Det_266_Mech_Right.det.out.xml">      
+    <e3Detector id="e3Det_266_Mech_Right" pos="4300,1600" freq="900.00" file="NUL">      
         <detEntry lane="-Mech07_0"   pos="5.00"/>
         <detEntry lane="-Mech07_1"   pos="5.00"/>
         <detExit  lane="-Mech06_0"   pos="-2.00"/>
