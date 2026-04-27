@@ -1,0 +1,744 @@
+{
+  "timer": {
+    "timer_mode": "fixed",
+    "time_step": 0.1,
+    "real_time_multiplier": 1
+  },
+  "operation_mode": "test",
+  "nats": {
+    "server": "localhost",
+    "port": "4222",
+    "mode": "change"
+  },
+  "sumo": {
+    "__TODO__file_name": "../models/266/<intersection>.sumocfg",
+    "graph": false,
+    "print_status": true,
+    "group_outputs": [
+      "group1",
+      "group2",
+      "group3",
+      "group4",
+      "group5",
+      "group6",
+      "group7",
+      "group8",
+      "group9",
+      "group10",
+      "group11",
+      "group12",
+      "group13",
+      "group14",
+      "group15",
+      "group16",
+      "group17",
+      "group19",
+      "group20",
+      "group21"
+    ]
+  },
+  "controller": {
+    "name": "266",
+    "sumo_name": "__TODO__266_<sumo_junction_name>",
+    "signal_groups": {
+      "group1": {
+        "min_green": 8.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "after-ext",
+        "channel": "__TODO__group.control.266.1"
+      },
+      "group2": {
+        "min_green": 6.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "after-ext",
+        "channel": "__TODO__group.control.266.2"
+      },
+      "group3": {
+        "min_green": 8.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "after-ext",
+        "channel": "__TODO__group.control.266.3"
+      },
+      "group4": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "after-ext",
+        "channel": "__TODO__group.control.266.4"
+      },
+      "group5": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "remain",
+        "channel": "__TODO__group.control.266.5"
+      },
+      "group6": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "remain",
+        "channel": "__TODO__group.control.266.6"
+      },
+      "group7": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "fixed",
+        "phase_request": false,
+        "green_end": "remain",
+        "channel": "__TODO__group.control.266.7"
+      },
+      "group8": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "remain",
+        "channel": "__TODO__group.control.266.8"
+      },
+      "group9": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "after-ext",
+        "channel": "__TODO__group.control.266.9"
+      },
+      "group10": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "after-ext",
+        "channel": "__TODO__group.control.266.10"
+      },
+      "group11": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "after-ext",
+        "channel": "__TODO__group.control.266.11"
+      },
+      "group12": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "after-ext",
+        "channel": "__TODO__group.control.266.12"
+      },
+      "group13": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "after-ext",
+        "channel": "__TODO__group.control.266.13"
+      },
+      "group14": {
+        "min_green": 5.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "after-ext",
+        "channel": "__TODO__group.control.266.14"
+      },
+      "group15": {
+        "min_green": 10.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 3.0,
+        "request_type": "fixed",
+        "phase_request": false,
+        "green_end": "remain",
+        "channel": "__TODO__group.control.266.15"
+      },
+      "group16": {
+        "min_green": 10.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 3.0,
+        "request_type": "fixed",
+        "phase_request": false,
+        "green_end": "remain",
+        "channel": "__TODO__group.control.266.16"
+      },
+      "group17": {
+        "min_green": 10.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 3.0,
+        "request_type": "fixed",
+        "phase_request": false,
+        "green_end": "remain",
+        "channel": "__TODO__group.control.266.17"
+      },
+      "group19": {
+        "min_green": 10.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 3.0,
+        "request_type": "fixed",
+        "phase_request": false,
+        "green_end": "remain",
+        "channel": "__TODO__group.control.266.19"
+      },
+      "group20": {
+        "min_green": 10.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "remain",
+        "channel": "__TODO__group.control.266.20"
+      },
+      "group21": {
+        "min_green": 10.0,
+        "min_amber_red": 1.0,
+        "min_red": 5.0,
+        "min_amber": 3.0,
+        "max_green": 30,
+        "max_amber_red": 1.0,
+        "max_red": -1,
+        "max_amber": 6.0,
+        "request_type": "detector",
+        "phase_request": false,
+        "green_end": "remain",
+        "channel": "__TODO__group.control.266.21"
+      }
+    },
+    "detectors": {
+      "req1_1_050": {
+        "type": "request",
+        "sumo_id": "1-050",
+        "channel": "__TODO__detector.status.266_1-050",
+        "request_groups": [
+          "group1"
+        ]
+      },
+      "ext1_1_050": {
+        "type": "extender",
+        "sumo_id": "1-050",
+        "channel": "__TODO__detector.status.266_1-050",
+        "group": "group1",
+        "ext_time": 4.0
+      },
+      "req2_1_020": {
+        "type": "request",
+        "sumo_id": "1-020",
+        "channel": "__TODO__detector.status.266_1-020",
+        "request_groups": [
+          "group1"
+        ]
+      },
+      "ext2_1_020": {
+        "type": "extender",
+        "sumo_id": "1-020",
+        "channel": "__TODO__detector.status.266_1-020",
+        "group": "group1",
+        "ext_time": 2.0
+      },
+      "req3_2_050": {
+        "type": "request",
+        "sumo_id": "2-050",
+        "channel": "__TODO__detector.status.266_2-050",
+        "request_groups": [
+          "group2"
+        ]
+      },
+      "ext3_2_050": {
+        "type": "extender",
+        "sumo_id": "2-050",
+        "channel": "__TODO__detector.status.266_2-050",
+        "group": "group2",
+        "ext_time": 4.0
+      },
+      "req4_2_020": {
+        "type": "request",
+        "sumo_id": "2-020",
+        "channel": "__TODO__detector.status.266_2-020",
+        "request_groups": [
+          "group2"
+        ]
+      },
+      "ext4_2_020": {
+        "type": "extender",
+        "sumo_id": "2-020",
+        "channel": "__TODO__detector.status.266_2-020",
+        "group": "group2",
+        "ext_time": 2.0
+      },
+      "req5_1_050": {
+        "type": "request",
+        "sumo_id": "1-050",
+        "channel": "__TODO__detector.status.266_1-050",
+        "request_groups": [
+          "group2"
+        ]
+      },
+      "ext5_1_050": {
+        "type": "extender",
+        "sumo_id": "1-050",
+        "channel": "__TODO__detector.status.266_1-050",
+        "group": "group2",
+        "ext_time": 4.0
+      },
+      "req6_1_020": {
+        "type": "request",
+        "sumo_id": "1-020",
+        "channel": "__TODO__detector.status.266_1-020",
+        "request_groups": [
+          "group2"
+        ]
+      },
+      "ext6_1_020": {
+        "type": "extender",
+        "sumo_id": "1-020",
+        "channel": "__TODO__detector.status.266_1-020",
+        "group": "group2",
+        "ext_time": 2.0
+      },
+      "req7_2_050": {
+        "type": "request",
+        "sumo_id": "2-050",
+        "channel": "__TODO__detector.status.266_2-050",
+        "request_groups": [
+          "group1"
+        ]
+      },
+      "ext7_2_050": {
+        "type": "extender",
+        "sumo_id": "2-050",
+        "channel": "__TODO__detector.status.266_2-050",
+        "group": "group1",
+        "ext_time": 4.0
+      },
+      "req8_2_020": {
+        "type": "request",
+        "sumo_id": "2-020",
+        "channel": "__TODO__detector.status.266_2-020",
+        "request_groups": [
+          "group1"
+        ]
+      },
+      "ext8_2_020": {
+        "type": "extender",
+        "sumo_id": "2-020",
+        "channel": "__TODO__detector.status.266_2-020",
+        "group": "group1",
+        "ext_time": 2.0
+      },
+      "req9_3_010": {
+        "type": "request",
+        "sumo_id": "3-010",
+        "channel": "__TODO__detector.status.266_3-010",
+        "request_groups": [
+          "group3"
+        ]
+      },
+      "ext9_3_010": {
+        "type": "extender",
+        "sumo_id": "3-010",
+        "channel": "__TODO__detector.status.266_3-010",
+        "group": "group3",
+        "ext_time": 2.0
+      },
+      "req10_3_060": {
+        "type": "request",
+        "sumo_id": "3-060",
+        "channel": "__TODO__detector.status.266_3-060",
+        "request_groups": [
+          "group3"
+        ]
+      },
+      "ext10_3_060": {
+        "type": "extender",
+        "sumo_id": "3-060",
+        "channel": "__TODO__detector.status.266_3-060",
+        "group": "group3",
+        "ext_time": 6.0
+      },
+      "req11_4_010": {
+        "type": "request",
+        "sumo_id": "4-010",
+        "channel": "__TODO__detector.status.266_4-010",
+        "request_groups": [
+          "group4"
+        ]
+      },
+      "ext11_4_010": {
+        "type": "extender",
+        "sumo_id": "4-010",
+        "channel": "__TODO__detector.status.266_4-010",
+        "group": "group4",
+        "ext_time": 2.0
+      },
+      "req12_4_060": {
+        "type": "request",
+        "sumo_id": "4-060",
+        "channel": "__TODO__detector.status.266_4-060",
+        "request_groups": [
+          "group4"
+        ]
+      },
+      "ext12_4_060": {
+        "type": "extender",
+        "sumo_id": "4-060",
+        "channel": "__TODO__detector.status.266_4-060",
+        "group": "group4",
+        "ext_time": 6.0
+      },
+      "req13_9_020": {
+        "type": "request",
+        "sumo_id": "9-020",
+        "channel": "__TODO__detector.status.266_9-020",
+        "request_groups": [
+          "group9"
+        ]
+      },
+      "ext13_9_020": {
+        "type": "extender",
+        "sumo_id": "9-020",
+        "channel": "__TODO__detector.status.266_9-020",
+        "group": "group9",
+        "ext_time": 2.0
+      },
+      "req14_11_020": {
+        "type": "request",
+        "sumo_id": "11-020",
+        "channel": "__TODO__detector.status.266_11-020",
+        "request_groups": [
+          "group11"
+        ]
+      },
+      "ext14_11_020": {
+        "type": "extender",
+        "sumo_id": "11-020",
+        "channel": "__TODO__detector.status.266_11-020",
+        "group": "group11",
+        "ext_time": 2.0
+      },
+      "req15_11_040": {
+        "type": "request",
+        "sumo_id": "11-040",
+        "channel": "__TODO__detector.status.266_11-040",
+        "request_groups": [
+          "group11"
+        ]
+      },
+      "ext15_11_040": {
+        "type": "extender",
+        "sumo_id": "11-040",
+        "channel": "__TODO__detector.status.266_11-040",
+        "group": "group11",
+        "ext_time": 3.0
+      },
+      "req18_12_020": {
+        "type": "request",
+        "sumo_id": "12-020",
+        "channel": "__TODO__detector.status.266_12-020",
+        "request_groups": [
+          "group12"
+        ]
+      },
+      "ext18_12_020": {
+        "type": "extender",
+        "sumo_id": "12-020",
+        "channel": "__TODO__detector.status.266_12-020",
+        "group": "group12",
+        "ext_time": 2.0
+      },
+      "req19_12_040": {
+        "type": "request",
+        "sumo_id": "12-040",
+        "channel": "__TODO__detector.status.266_12-040",
+        "request_groups": [
+          "group12"
+        ]
+      },
+      "ext19_12_040": {
+        "type": "extender",
+        "sumo_id": "12-040",
+        "channel": "__TODO__detector.status.266_12-040",
+        "group": "group12",
+        "ext_time": 3.0
+      },
+      "req22_14_002A": {
+        "type": "request",
+        "sumo_id": "14-002A",
+        "channel": "__TODO__detector.status.266_14-002A",
+        "request_groups": [
+          "group14"
+        ]
+      },
+      "ext22_14_002A": {
+        "type": "extender",
+        "sumo_id": "14-002A",
+        "channel": "__TODO__detector.status.266_14-002A",
+        "group": "group14",
+        "ext_time": 2.0
+      },
+      "req23_14_002B": {
+        "type": "request",
+        "sumo_id": "14-002B",
+        "channel": "__TODO__detector.status.266_14-002B",
+        "request_groups": [
+          "group14"
+        ]
+      },
+      "ext23_14_002B": {
+        "type": "extender",
+        "sumo_id": "14-002B",
+        "channel": "__TODO__detector.status.266_14-002B",
+        "group": "group14",
+        "ext_time": 2.0
+      },
+      "ext24_20_025": {
+        "type": "extender",
+        "sumo_id": "20-025",
+        "channel": "__TODO__detector.status.266_20-025",
+        "group": "group20",
+        "ext_time": 5.0
+      },
+      "req25_14_015A": {
+        "type": "request",
+        "sumo_id": "14-015A",
+        "channel": "__TODO__detector.status.266_14-015A",
+        "request_groups": [
+          "group14"
+        ]
+      },
+      "ext25_14_015A": {
+        "type": "extender",
+        "sumo_id": "14-015A",
+        "channel": "__TODO__detector.status.266_14-015A",
+        "group": "group14",
+        "ext_time": 2.0
+      },
+      "req26_14_015B": {
+        "type": "request",
+        "sumo_id": "14-015B",
+        "channel": "__TODO__detector.status.266_14-015B",
+        "request_groups": [
+          "group14"
+        ]
+      },
+      "ext26_14_015B": {
+        "type": "extender",
+        "sumo_id": "14-015B",
+        "channel": "__TODO__detector.status.266_14-015B",
+        "group": "group14",
+        "ext_time": 2.0
+      },
+      "ext27_21_015": {
+        "type": "extender",
+        "sumo_id": "21-015",
+        "channel": "__TODO__detector.status.266_21-015",
+        "group": "group21",
+        "ext_time": 4.0
+      },
+      "ext41_VpRv5": {
+        "type": "extender",
+        "sumo_id": "VpRv5",
+        "channel": "__TODO__detector.status.266_VpRv5",
+        "group": "group5",
+        "ext_time": 0.2
+      },
+      "ext42_VpRv5": {
+        "type": "extender",
+        "sumo_id": "VpRv5",
+        "channel": "__TODO__detector.status.266_VpRv5",
+        "group": "group3",
+        "ext_time": 0.2
+      },
+      "ext43_VpRv7": {
+        "type": "extender",
+        "sumo_id": "VpRv7",
+        "channel": "__TODO__detector.status.266_VpRv7",
+        "group": "group6",
+        "ext_time": 0.2
+      },
+      "ext44_VpRv7": {
+        "type": "extender",
+        "sumo_id": "VpRv7",
+        "channel": "__TODO__detector.status.266_VpRv7",
+        "group": "group3",
+        "ext_time": 0.2
+      },
+      "ext53_smart": {
+        "type": "extender",
+        "sumo_id": "smart",
+        "channel": "__TODO__detector.status.266_smart",
+        "group": "group11",
+        "ext_time": 0.2
+      },
+      "ext54_smart": {
+        "type": "extender",
+        "sumo_id": "smart",
+        "channel": "__TODO__detector.status.266_smart",
+        "group": "group11",
+        "ext_time": 0.2
+      }
+    },
+    "group_list": [
+      "group1",
+      "group2",
+      "group3",
+      "group4",
+      "group5",
+      "group6",
+      "group7",
+      "group8",
+      "group9",
+      "group10",
+      "group11",
+      "group12",
+      "group13",
+      "group14",
+      "group15",
+      "group16",
+      "group17",
+      "group19",
+      "group20",
+      "group21"
+    ],
+    "phases": "__TODO__phases matrix — configure manually or decode F14 opcode 4 (itc3: not yet auto-derivable)",
+    "intergreens": [
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 7.0, 0.0, 0.0, 0.0, 6.0, 5.0, 0.0],
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 7.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 7.0, 7.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.1, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 4.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 5.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 6.0, 8.0, 3.0, 4.0, 6.0, 5.0, 0.0, 5.0, 0.0, 0.0, 0.0, 3.0, 0.0, 9.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 5.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 4.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [9.0, 9.0, 2.0, 0.0, 6.0, 6.0, 2.0, 5.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 10.0, 9.0, 0.0],
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 6.0, 8.0, 0.0, 5.0, 6.0, 0.0, 6.0, 0.0, 0.0, 0.1, 4.0, 0.0, 0.0, 9.0, 4.0, 0.0, 0.0, 4.0],
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 12.0, 12.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0, 7.0, 0.0, 0.0, 0.0, 0.0, 7.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    ]
+  }
+}

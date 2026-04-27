@@ -50,9 +50,9 @@
             },
 
         "group1":{
-            "min_green": 10,
+            "min_green": 8.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5,
             "min_amber": 3,
             "max_green": 30,
             "max_amber_red": 1,
@@ -65,9 +65,9 @@
             },
  
         "group2":{
-            "min_green": 10,
+            "min_green": 6.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
             "max_green": 30,
             "max_amber_red": 1,
@@ -81,9 +81,9 @@
         },
 
         "group3":{
-            "min_green": 5,
+            "min_green": 8.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
             "max_green": 30,
             "max_amber_red": 1,
@@ -97,9 +97,9 @@
         },
 
         "group4":{
-            "min_green": 5,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
             "max_green": 30,
             "max_amber_red": 1,
@@ -113,11 +113,11 @@
         },
 
         "group5":{
-            "min_green": 5,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
-            "max_green": 10,
+            "max_green": 30,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -129,11 +129,11 @@
         },
 
         "group6":{
-            "min_green": 5,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
-            "max_green": 10,
+            "max_green": 30,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -145,11 +145,11 @@
         },
 
         "group7":{
-            "min_green": 5,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
-            "max_green": 10,
+            "max_green": 30,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -161,11 +161,11 @@
         },
 
         "group8":{
-            "min_green": 5,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
-            "max_green": 10,
+            "max_green": 30,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -177,9 +177,9 @@
         },
 
         "group9":{
-            "min_green": 20,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
             "max_green": 30,
             "max_amber_red": 1,
@@ -193,9 +193,9 @@
         },
 
         "group10":{
-            "min_green": 8,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
             "max_green": 30,
             "max_amber_red": 1,
@@ -209,9 +209,9 @@
         },
         
         "group11":{
-            "min_green": 8,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
             "max_green": 30,
             "max_amber_red": 1,
@@ -225,9 +225,9 @@
         },
 
         "group12":{
-            "min_green": 8,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
             "max_green": 30,
             "max_amber_red": 1,
@@ -241,9 +241,9 @@
         },
 
         "group13":{
-            "min_green": 8,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
             "max_green": 30,
             "max_amber_red": 1,
@@ -257,9 +257,9 @@
         },
 
         "group14":{
-            "min_green": 8,
+            "min_green": 5.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
             "max_green": 10,
             "max_amber_red": 1,
@@ -273,11 +273,11 @@
         },
 
         "group15":{
-            "min_green": 8,
+            "min_green": 10.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
-            "max_green": 10,
+            "max_green": 30,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -289,11 +289,11 @@
         },
 
         "group16":{
-            "min_green": 8,
+            "min_green": 10.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
-            "max_green": 10,
+            "max_green": 30,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -305,11 +305,11 @@
         },
 
         "group17":{
-            "min_green": 8,
+            "min_green": 10.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
-            "max_green": 10,
+            "max_green": 30,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -321,9 +321,9 @@
         },
 
         "group18":{
-            "min_green": 8,
+            "min_green": 2,
             "min_amber_red": 1,
-            "min_red": 10,
+            "min_red": 2,
             "min_amber": 3,
             "max_green": 10,
             "max_amber_red": 1,
@@ -337,11 +337,11 @@
         },
 
         "group19":{
-            "min_green": 8,
+            "min_green": 10.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
-            "max_green": 10,
+            "max_green": 30,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -352,11 +352,11 @@
         },
 
         "group20":{
-            "min_green": 8,
+            "min_green": 10.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
-            "max_green": 10,
+            "max_green": 30,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,
@@ -367,11 +367,11 @@
         },
 
         "group21":{
-            "min_green": 8,
+            "min_green": 10.0,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5.0,
             "min_amber": 3,
-            "max_green": 10,
+            "max_green": 30,
             "max_amber_red": 1,
             "max_red": -1,
             "max_amber": 3,

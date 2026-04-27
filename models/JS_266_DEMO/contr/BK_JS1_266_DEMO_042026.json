@@ -257,7 +257,7 @@
         },
 
         "group14":{
-            "min_green": 8,
+            "min_green": 12,
             "min_amber_red": 1,
             "min_red": 20,
             "min_amber": 3,

@@ -4,31 +4,24 @@ import subprocess
 import sys
 import nats
 
-NATS_SERVER = "nats://10.8.0.36:4222"
+NATS_SERVER = "nats://10.8.0.204:4222"
 SUBJECT = "oc.status.266"
 WORKDIR = r"C:\DEVE\open_controller"
 
 CREATE_NEW_CONSOLE = subprocess.CREATE_NEW_CONSOLE
 
 cmds = [
-    [
-        sys.executable,
-        "C:/DEVE/open_controller/services/simengine/src/simengine.py",
-        "--nats-server", "10.8.0.36",
-        "--conf", "models/JS_266_DEMO/sim/JS_266_sim_hwil_demo.json",
-        "--sumo-conf", "models/JS_266_DEMO/cfgFiles/JS_266-267_HWIL.sumocfg",
-        "--graph"
-    ],
+    
     [
         sys.executable,
         "C:/DEVE/open_controller/services/control_engine/src/clockwork.py",
-        "--nats-server", "10.8.0.36",
+        "--nats-server", "10.8.0.204",
         "--conf-file=models/JS_266_DEMO/contr/JS1_266_DEMO_042026IG.json"
     ],
     [
         sys.executable,
         "C:/DEVE/open_controller/services/indicators/src/traffic_indicators.py",
-        "--nats-server", "10.8.0.36",
+        "--nats-server", "10.8.0.204",
         "--conf", "models/JS_266_DEMO/ind/JS_266-267_live_radars.json"
     ]
 ]
