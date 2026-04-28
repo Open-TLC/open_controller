@@ -23,7 +23,7 @@ cmds = [
         sys.executable,
         "C:/DEVE/open_controller/services/control_engine/src/clockwork.py",
         "--nats-server", "10.8.0.36",
-        "--conf-file=models/JS_266_DEMO/contr/JS1_266_DEMO_042026IG.json"
+        "--conf-file=models/JS_266_DEMO/contr/JS1_266_DEMO_042026.json"
     ],
     [
         sys.executable,

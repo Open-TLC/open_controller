@@ -307,7 +307,7 @@
         "group17":{
             "min_green": 8,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5,
             "min_amber": 3,
             "max_green": 10,
             "max_amber_red": 1,
@@ -339,7 +339,7 @@
         "group19":{
             "min_green": 8,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5,
             "min_amber": 3,
             "max_green": 10,
             "max_amber_red": 1,
@@ -354,7 +354,7 @@
         "group20":{
             "min_green": 8,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5,
             "min_amber": 3,
             "max_green": 10,
             "max_amber_red": 1,
@@ -369,7 +369,7 @@
         "group21":{
             "min_green": 8,
             "min_amber_red": 1,
-            "min_red": 20,
+            "min_red": 5,
             "min_amber": 3,
             "max_green": 10,
             "max_amber_red": 1,
