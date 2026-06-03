@@ -1,0 +1,18 @@
+[project]
+name = "open-controller"
+version = "0.1.0"
+description = "Open Controller is an open source signal controller"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "jsmin>=3.0.1",
+    "keyboard>=0.13.5",
+    "nats-py>=2.14.0",
+    "numpy>=2.4.6",
+    "pandas>=3.0.3",
+    "python-dateutil>=2.9.0.post0",
+    "pytz>=2026.2",
+    "six>=1.17.0",
+    "transitions>=0.9.3",
+    "tzdata>=2026.2",
+]
