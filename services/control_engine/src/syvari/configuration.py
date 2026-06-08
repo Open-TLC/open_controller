@@ -10,8 +10,6 @@ class SyvariControllerConfiguration:
         self.name = controller_configuration["name"]
         self.sumo_name = controller_configuration["sumo_name"]
 
-        self.group_confs: list[SyvariGroupConfiguration] = []
-
         # This is a list of group names used to assign an index to all groups.
         groups_order: list[str] = controller_configuration["group_list"]
         # This is a phase count * group count matrix of 0 and 1 depending on if group is green or not in a phase.
@@ -27,6 +25,12 @@ class SyvariControllerConfiguration:
         # Group names are easier to handle later.
         self.phases = _get_active_groups_by_phase(groups_order, phases_matrix)
 
+        self.group_confs: list[SyvariGroupConfiguration] = []
+
+        det_confs_by_group = _get_detector_configurations_by_group(
+            controller_configuration["detectors"]
+        )
+
         i: int = 0
         for signal_group in controller_configuration["signal_groups"]:
             name: str = signal_group["name"]
@@ -34,7 +38,6 @@ class SyvariControllerConfiguration:
             sync_end: float = signal_group["sync_end"]
             min_green: float = signal_group["min_green"]
             min_guaranteed: float = signal_group["min_guaranteed"]
-            detector_confs: dict[str, Any] = signal_group["detectors"]
 
             # Get the names of conflicting groups based on intergreens for the target group
             conflict_groups = _get_conflicting_groups(
@@ -48,7 +51,7 @@ class SyvariControllerConfiguration:
                 sync_end,
                 min_green,
                 min_guaranteed,
-                detector_confs,
+                det_confs_by_group[name],
             )
 
             self.group_confs.append(group_conf)
@@ -116,6 +119,42 @@ def _get_active_groups_by_phase(
         active_groups_per_phase.append(phase_active_groups)
 
     return active_groups_per_phase
+
+
+def _get_detector_configurations_by_group(
+    detector_configurations: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    """
+    Converts detector configurations to a dictionary of with signal group name as the key.
+    This makes it easy to get detectors for a specific signal group.
+
+    Args:
+        detector_configurations: Detector configuration dictionary read from controller configuration JSON.
+
+    Returns:
+        Dictionary with mappings from signal group name to a dictionary of detector configurations.
+    """
+
+    detector_confs_by_group: dict[str, dict[str, Any]] = {}
+
+    for det_name, det_data in detector_configurations.items():
+        groups: list[str] = []
+
+        single_group = det_data.get("group")
+        if single_group:
+            groups.append(single_group)
+
+        request_groups = det_data.get("request_groups")
+        if request_groups:
+            groups.extend(request_groups)
+
+        for group in groups:
+            if group not in detector_confs_by_group:
+                detector_confs_by_group[group] = {}
+
+            detector_confs_by_group[group][det_name] = det_data
+
+    return detector_confs_by_group
 
 
 class SyvariGroupConfiguration:
@@ -296,6 +335,62 @@ class TestSyvariConfiguration(unittest.TestCase):
 
         result = _get_active_groups_by_phase(empty_groups, empty_matrix)
         self.assertEqual(result, [])
+
+    # ==========================================
+    # Tests for get_detector_configurations_by_group
+    # ==========================================
+
+    def test_valid_detector_confs(self):
+        """Test that passes valid detector configurations to function."""
+        detector_confs: dict[str, Any] = {
+            "det_1": {  # Simple loop detector for three signal groups
+                "type": "request",
+                "sumo_id": "abc",
+                "request_groups": ["group_1", "group_2"],
+            },
+            "det_2": {  # e3 detector for existing group
+                "type": "e3detector",
+                "sumo_id": "def",
+                "group": "group_1",
+            },
+            "det_3": {  # e3 detector for a new group
+                "type": "e3detector",
+                "sumo_id": "def",
+                "group": "group_3",
+            },
+        }
+
+        expected: dict[str, dict[str, Any]] = {
+            "group_1": {  # Group with 2 detectors
+                "det_1": {
+                    "type": "request",
+                    "sumo_id": "abc",
+                    "request_groups": ["group_1", "group_2"],
+                },
+                "det_2": {
+                    "type": "e3detector",
+                    "sumo_id": "def",
+                    "group": "group_1",
+                },
+            },
+            "group_2": {  # Group with one detector
+                "det_1": {
+                    "type": "request",
+                    "sumo_id": "abc",
+                    "request_groups": ["group_1", "group_2"],
+                },
+            },
+            "group_3": {  # Group with one detector
+                "det_3": {
+                    "type": "e3detector",
+                    "sumo_id": "def",
+                    "group": "group_3",
+                },
+            },
+        }
+
+        result = _get_detector_configurations_by_group(detector_confs)
+        self.assertEqual(result, expected)
 
 
 if __name__ == "__main__":

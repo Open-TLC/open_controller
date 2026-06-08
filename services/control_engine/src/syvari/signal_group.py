@@ -104,9 +104,19 @@ class SignalGroup:
         # TODO: Implement a way to accept priority requests
         self._is_priority_requesting: bool = False
 
-        # TODO: Populate detector lists
         self._e3_detectors: list[e3Detector] = []
         self._loop_detectors: list[Detector] = []
+
+        for det_name in conf.detector_confs:
+            det_type: str = conf.detector_confs[det_name]["type"]
+            if det_type == "request":
+                det = Detector(self._timer, det_name, conf.detector_confs[det_name])
+                self._loop_detectors.append(det)
+            elif det_type == "e3detector":
+                det = e3Detector(self._timer, det_name, conf.detector_confs[det_name])
+                self._e3_detectors.append(det)
+            else:
+                raise Exception(f"Unknown detector type for {det_name}: {det_type}")
 
     @property
     def name(self) -> str:
