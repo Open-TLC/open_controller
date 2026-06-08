@@ -1,3 +1,5 @@
+from typing import Any
+
 from src.timer import Timer
 
 
@@ -7,7 +9,7 @@ class CycleTimer(Timer):
     of the current cycle phase across multiple connected controllers.
     """
 
-    def __init__(self, timer_prm, cycle_length: float):
+    def __init__(self, timer_prm: dict[str, Any], cycle_length: float):
         """
         Args:
             timer_prm: Dictionary of Timer object parameters.

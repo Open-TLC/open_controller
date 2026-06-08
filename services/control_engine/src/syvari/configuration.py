@@ -34,6 +34,7 @@ class SyvariControllerConfiguration:
             sync_end: float = signal_group["sync_end"]
             min_green: float = signal_group["min_green"]
             min_guaranteed: float = signal_group["min_guaranteed"]
+            detector_confs: dict[str, Any] = signal_group["detectors"]
 
             # Get the names of conflicting groups based on intergreens for the target group
             conflict_groups = _get_conflicting_groups(
@@ -41,7 +42,13 @@ class SyvariControllerConfiguration:
             )
 
             group_conf = SyvariGroupConfiguration(
-                name, conflict_groups, sync_start, sync_end, min_green, min_guaranteed
+                name,
+                conflict_groups,
+                sync_start,
+                sync_end,
+                min_green,
+                min_guaranteed,
+                detector_confs,
             )
 
             self.group_confs.append(group_conf)
@@ -124,6 +131,7 @@ class SyvariGroupConfiguration:
         sync_end: float,
         min_green: float,
         min_guaranteed: float,
+        detector_confs: dict[str, Any],
         priority_max: float | None = None,
     ) -> None:
         self.name = name
@@ -132,6 +140,7 @@ class SyvariGroupConfiguration:
         self.sync_end = sync_end
         self.min_green = min_green
         self.min_guaranteed = min_guaranteed
+        self.detector_confs = detector_confs
         self.priority_max = priority_max
 
 
@@ -181,8 +190,8 @@ class TestSyvariConfiguration(unittest.TestCase):
 
     def test_contains_conflicting_phase_empty(self):
         """An empty phase list should evaluate to False."""
-        phases = []
-        intergreens = []
+        phases: list[list[int]] = []
+        intergreens: list[list[float]] = []
         self.assertFalse(_contains_conflicting_phase(phases, intergreens))
 
     # ==========================================
@@ -219,8 +228,8 @@ class TestSyvariConfiguration(unittest.TestCase):
 
     def test_get_conflicting_groups_empty(self):
         """Test behavior with empty inputs."""
-        groups = []
-        group_intergreens = []
+        groups: list[str] = []
+        group_intergreens: list[float] = []
 
         expected = []
         result = _get_conflicting_groups(groups, group_intergreens)
@@ -263,7 +272,7 @@ class TestSyvariConfiguration(unittest.TestCase):
             [0, 0, 0, 0, 0, 0],  # All red / clearance interval
         ]
 
-        expected = [
+        expected: list[list[str]] = [
             ["G1"],
             [],  # Should result in a clean, empty sublist for that phase
         ]
@@ -282,8 +291,8 @@ class TestSyvariConfiguration(unittest.TestCase):
 
     def test_empty_inputs(self):
         """Test that passing empty configurations gracefully handles the loop and returns empty list."""
-        empty_groups = []
-        empty_matrix = []
+        empty_groups: list[str] = []
+        empty_matrix: list[list[int]] = []
 
         result = _get_active_groups_by_phase(empty_groups, empty_matrix)
         self.assertEqual(result, [])

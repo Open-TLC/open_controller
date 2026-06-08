@@ -8,11 +8,11 @@ from .cycle_timer import CycleTimer
 
 
 class GroupState(Enum):
-    RED = 1
-    AMBER = 2
-    ACTIVE_GREEN = 3
-    PASSIVE_GREEN = 4
-    YELLOW = 5
+    RED = "r"
+    AMBER = "u"
+    ACTIVE_GREEN = "G"
+    PASSIVE_GREEN = "g"
+    YELLOW = "y"
 
 
 def group_state_to_string(state: GroupState) -> str:
@@ -25,16 +25,7 @@ def group_state_to_string(state: GroupState) -> str:
     Returns:
         state string: The character representation of the state.
     """
-    if state == GroupState.ACTIVE_GREEN:
-        return "G"
-    elif state == GroupState.PASSIVE_GREEN:
-        return "g"
-    elif state == GroupState.YELLOW:
-        return "y"
-    elif state == GroupState.RED:
-        return "r"
-    elif state == GroupState.AMBER:
-        return "u"
+    return state.value
 
 
 # TODO: Read extension from configuration
