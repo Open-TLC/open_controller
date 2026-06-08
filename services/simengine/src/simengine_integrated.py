@@ -6,16 +6,14 @@ This module operates Sumo simulator and applies controller to it
 
 # Copyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
-#rt random
-from genericpath import exists
-import sys 
+# rt random
 import os
+import sys
 import time
+from typing import Any
+
 from confread_ms import GlobalConf
-
 from timer import Timer
-
-
 
 # This will need:
 # export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
@@ -39,39 +37,43 @@ DEFAULT_SUMO_CNF = "testmodel/cross.sumocfg"
 SUMO_BIN_NAME = "sumo"
 SUMO_BIN_NAME_GRAPH = "sumo-gui"
 
+# Imprtinc components from control_engine
+# FIXME:We should not use paths, insteead different sercives should
+# Be properly modularized and imported as modules
+engine_path = "services/control_engine/src"  # Standard installation
+sys.path.append(engine_path)
+from signal_group_controller import PhaseRingController
+
 
 def read_conf(file_name):
-        """Opens the file and returns values as a dictionary"""
-        config = {}
-        try:
-            with open(file_name) as json_cnf_file:
-                config = json.loads(jsmin(json_cnf_file.read()))
-        except FileNotFoundError:
-            print('File does not exist:', file_name)
-            print('Exiting...')
-            sys.exit()
-        # Should we add sanity check for input?
-        return config
+    """Opens the file and returns values as a dictionary"""
+    config = {}
+    try:
+        with open(file_name) as json_cnf_file:
+            config = json.loads(jsmin(json_cnf_file.read()))
+    except FileNotFoundError:
+        print("File does not exist:", file_name)
+        print("Exiting...")
+        sys.exit()
+    # Should we add sanity check for input?
+    return config
 
 
 # We run the sumo model based on conf dictionery given as parameter
 def run_sumo(conf_filename: str | None = None, runlog=None):
     """Run sumo with given configuration"""
     print("Running sumo with conf", conf_filename)
-    unit_cnf = GlobalConf(filename=conf_filename) # objekti
-    
+    unit_cnf = GlobalConf(filename=conf_filename)  # objekti
+
     # Imprtinc components from control_engine
     # FIXME:We should not use paths, insteead different sercives should
     # Be properly modularized and imported as modules
-    if 'control_engine_path' in unit_cnf.cnf:
-        engine_path = unit_cnf.cnf['control_engine_path']
+    if "control_engine_path" in unit_cnf.cnf:
+        engine_path = unit_cnf.cnf["control_engine_path"]
     else:
-        engine_path = 'services/control_engine/src' #Standard installation
+        engine_path = "services/control_engine/src"  # Standard installation
     sys.path.append(engine_path)
-    from signal_group_controller import PhaseRingController
-    from extender import StaticExtender
-    
-    
+
     controllers_dict = {}
 
     sys_cnf = unit_cnf.cnf  # dictionary
@@ -202,10 +204,13 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
         ):  # DBIK230711  timer_mode added
             next_update_time = next_update_time + time_step  # DBIK230720
 
-            # Conditional BREAKPOINT  
-            if statusstring == "ebb50b REQ:000010  EXT: 000110  PERM:100110  CUT:111001 (cur:PH:1, next:PH:2) *":
-            # if statusstring == "c4ee5bc REQ:1000001  EXT: 0000100  PERM:1111000  OTH:1011101 (cur:PH:1, next:PH:2)":
-               BP1 = True
+            # Conditional BREAKPOINT
+            if (
+                statusstring
+                == "ebb50b REQ:000010  EXT: 000110  PERM:100110  CUT:111001 (cur:PH:1, next:PH:2) *"
+            ):
+                # if statusstring == "c4ee5bc REQ:1000001  EXT: 0000100  PERM:1111000  OTH:1011101 (cur:PH:1, next:PH:2)":
+                BP1 = True
 
             # MULTI: looping the controllers start here
 
