@@ -1,6 +1,6 @@
 from typing import Any
 
-from src.timer import Timer
+from ..timer import Timer
 
 
 class CycleTimer(Timer):

@@ -1,5 +1,4 @@
-from src.signal_controller import SignalController
-
+from ..signal_controller import SignalController
 from .configuration import SyvariControllerConfiguration
 from .cycle_timer import CycleTimer
 from .signal_group import GroupState, SignalGroup, group_state_to_string
@@ -26,7 +25,7 @@ class SyvariController(SignalController):
             raise ValueError("Controller doesn't have signal groups configured.")
 
         # Create signal groups
-        self._signal_groups: dict[str, SignalGroup]
+        self._signal_groups: dict[str, SignalGroup] = {}
         for group_conf in conf.group_confs:
             group = SignalGroup(timer, group_conf)
             self._signal_groups[group.name] = group
@@ -106,3 +105,68 @@ class SyvariController(SignalController):
                 break
 
         return current_phase_active
+
+
+import unittest
+
+
+class TestSyvariConfiguration(unittest.TestCase):
+    def test_create_controller(self):
+        timer_prm = {
+            "timer_mode": "fixed",
+            "time_step": 0.1,
+            "real_time_multiplier": 1,
+        }
+        cycle_length = 60
+        timer = CycleTimer(timer_prm, cycle_length)
+
+        controller_params = {  # Very minimal SYVARI controller configuration
+            "name": "example_controller",
+            "sumo_name": "controller_1",
+            "signal_groups": {
+                "group_1": {
+                    "name": "group_1",
+                    "sync_start": 0,
+                    "sync_end": 30,
+                    "min_green": 5,
+                    "min_guaranteed": 15,
+                },
+                "group_2": {
+                    "name": "group_2",
+                    "sync_start": 30,
+                    "sync_end": 59,
+                    "min_green": 5,
+                    "min_guaranteed": 15,
+                },
+            },
+            "detectors": {
+                "detector_1": {
+                    "type": "e3detector",
+                    "sumo_id": "abc",
+                    "group": "group_1",
+                },
+                "detector_2": {
+                    "type": "request",
+                    "sumo_id": "def",
+                    "request_groups": ["group_2"],
+                },
+            },
+            "group_list": ["group_1", "group_2"],
+            "phases": [
+                [1, 0],
+                [0, 1],
+            ],
+            "intergreens": [
+                [0, 3],
+                [3, 0],
+            ],
+        }
+
+        controller_conf = SyvariControllerConfiguration(controller_params)
+        controller = SyvariController(controller_conf, timer)
+
+        self.assertNotEqual(controller, None)
+
+
+if __name__ == "__main__":
+    unittest.main()

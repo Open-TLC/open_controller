@@ -32,7 +32,7 @@ class SyvariControllerConfiguration:
         )
 
         i: int = 0
-        for signal_group in controller_configuration["signal_groups"]:
+        for signal_group in controller_configuration["signal_groups"].values():
             name: str = signal_group["name"]
             sync_start: float = signal_group["sync_start"]
             sync_end: float = signal_group["sync_end"]
