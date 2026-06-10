@@ -7,10 +7,13 @@ This module operates Sumo simulator and applies controller to it
 # Copyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 # rt random
+import json
 import os
 import sys
 import time
 from typing import Any
+
+from jsmin import jsmin
 
 from .confread_ms import GlobalConf
 from .timer import Timer
