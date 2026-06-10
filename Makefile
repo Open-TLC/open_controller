@@ -18,5 +18,5 @@ test: build-test
 	# Run integration tests with the test model mounted to a volume.
 	# This will try to run models/test/simple with simengine_integrated.
 	# Test fails, if the run crashes.
-	@docker run --rm --name $(INTEGRATION_TEST_CONTAINER) -v $(pwd)/models/test/simple:/model $(INTEGRATION_TEST_IMAGE)
+	@docker run --rm --name $(INTEGRATION_TEST_CONTAINER) -v $(PWD)/models/test/simple:/model $(INTEGRATION_TEST_IMAGE)
 

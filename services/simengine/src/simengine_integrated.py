@@ -12,8 +12,8 @@ import sys
 import time
 from typing import Any
 
-from confread_ms import GlobalConf
-from timer import Timer
+from .confread_ms import GlobalConf
+from .timer import Timer
 
 # This will need:
 # export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
