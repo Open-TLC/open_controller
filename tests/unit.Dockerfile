@@ -26,7 +26,7 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-# Install project dependencies 
+# Install project dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
 	--mount=type=bind,source=uv.lock,target=uv.lock \
 	--mount=type=bind,source=pyproject.toml,target=pyproject.toml \
@@ -42,7 +42,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # This can prevent "ghost" logs not showing up
 # when running int Docker
 ENV PYTHONUNBUFFERED=1
-
 
 # Run all unit tests inside "open_controller/tests"
 CMD ["uv", "run", "-m", "unittest", "discover", "-s", "tests"]
