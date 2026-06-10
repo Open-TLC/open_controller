@@ -1,8 +1,7 @@
 from enum import Enum
 
-from services.control_engine.src.syvari.configuration import SyvariGroupConfiguration
-
 from ..detector import Detector, e3Detector
+from .configuration import SyvariGroupConfiguration
 from .cycle_timer import CycleTimer
 
 
