@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 from pathlib import Path
 from typing import Any
@@ -69,9 +70,13 @@ class GeneralConfiguration:
     def _write_cleaned_conf_to_file(self, filename: str) -> None:
         original_file_path = Path(filename)
 
-        cleaned_filename: str = (
+        directory = original_file_path.parent
+
+        cleaned_filename = (
             f"{original_file_path.stem}_cleaned{original_file_path.suffix}"
         )
+
+        full_output_path = os.path.join(directory, cleaned_filename)
 
         cleaned_conf = {
             "timer": self.timer,
@@ -79,10 +84,10 @@ class GeneralConfiguration:
             "active_controllers": self.active_controllers,
             "controllers": self.controllers,
         }
-        json_conf = json.dumps(cleaned_conf)
+        json_conf = json.dumps(cleaned_conf, indent=4)
 
         # Create or overwrite the cleaned configuration file.
-        with open(cleaned_filename, "w") as f:
+        with open(full_output_path, "w") as f:
             f.write(json_conf)
 
     def _parse_conf(self, conf: dict[str, Any]) -> dict[str, Any]:
@@ -302,7 +307,7 @@ class TestGeneralConfiguration(unittest.TestCase):
         self.assertNotIn("extra_junk", config.controllers["controller_1"])
 
         # Check that it attempted to write the *_cleaned.json file
-        mock_file.assert_any_call("config_cleaned.json", "w")
+        mock_file.assert_any_call("./config_cleaned.json", "w")
 
     @patch("builtins.open", new_callable=mock_open)
     @patch("__main__.jsmin", side_effect=lambda x: x)
