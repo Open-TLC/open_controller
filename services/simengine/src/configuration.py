@@ -271,12 +271,12 @@ class TestGeneralConfiguration(unittest.TestCase):
                     "print_status": True,
                     "group_outputs": ["group1", "group1", "group2"],
                     "signal_groups": [],
-                    "extra_junk": 123,
                     "detectors": {"det1": {}},
                     "extenders": {"ext1": {}},
                     "group_list": ["group1", "group2"],
                     "phases": [[1, 0], [0, 1]],
-                    "intergeens": [[0, 3], [3, 0]],
+                    "intergreens": [[0, 3], [3, 0]],
+                    "extra_junk": 123,
                 }
             },
         }
@@ -297,6 +297,8 @@ class TestGeneralConfiguration(unittest.TestCase):
         self.assertEqual(config.sumo["graph"], True)
         self.assertEqual(config.active_controllers, ["controller_1"])
         self.assertIn("controller_1", config.controllers)
+        self.assertIn("sumo_name", config.controllers["controller_1"])
+        self.assertIn("intergreens", config.controllers["controller_1"])
         self.assertNotIn("extra_junk", config.controllers["controller_1"])
 
         # Check that it attempted to write the *_cleaned.json file
