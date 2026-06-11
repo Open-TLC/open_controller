@@ -7,35 +7,23 @@ This module operates Sumo simulator and applies controller to it
 # Copyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 # rt random
+import argparse
 import os
 import sys
 import time
 from typing import Any
 
-from .confread_ms import GlobalConf
+from .configuration import GeneralConfiguration
 from .timer import Timer
 
-# This will need:
-# export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
-
-# Alternatively:
-# we need to import python modules from the $SUMO_HOME/tools directory
+# Import python modules from the $SUMO_HOME/tools directory
 if "SUMO_HOME" in os.environ:
     SUMO_TOOLS = os.path.join(os.environ["SUMO_HOME"], "tools")
     sys.path.append(SUMO_TOOLS)
     import traci
     # import libsumo as traci
 else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
-
-# from sumolib import checkBinary  # noqa
-
-
-# Note these are not in use at sig-group
-DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
-DEFAULT_SUMO_CNF = "testmodel/cross.sumocfg"
-SUMO_BIN_NAME = "sumo"
-SUMO_BIN_NAME_GRAPH = "sumo-gui"
+    raise Exception("SUMO_HOME not configured")
 
 # Imprtinc components from control_engine
 # FIXME:We should not use paths, insteead different sercives should
@@ -44,68 +32,39 @@ engine_path = "services/control_engine/src"  # Standard installation
 sys.path.append(engine_path)
 from signal_group_controller import PhaseRingController
 
+SUMO_BIN_NAME = "sumo"
+SUMO_BIN_NAME_GRAPH = "sumo-gui"
 
-def read_conf(file_name):
-    """Opens the file and returns values as a dictionary"""
-    config = {}
-    try:
-        with open(file_name) as json_cnf_file:
-            config = json.loads(jsmin(json_cnf_file.read()))
-    except FileNotFoundError:
-        print("File does not exist:", file_name)
-        print("Exiting...")
-        sys.exit()
-    # Should we add sanity check for input?
-    return config
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--conf-file", help="Config file: open_controller_config.json", required=True
+    )
+
+    args = parser.parse_args()
+
+    conf_filename: str = args.conf_file
+
+    run_sumo(conf_filename)
 
 
 # We run the sumo model based on conf dictionery given as parameter
-def run_sumo(conf_filename: str | None = None, runlog=None):
+def run_sumo(conf_filename: str, runlog=None):
     """Run sumo with given configuration"""
-    print("Running sumo with conf", conf_filename)
-    unit_cnf = GlobalConf(filename=conf_filename)  # objekti
-
-    # Imprtinc components from control_engine
-    # FIXME:We should not use paths, insteead different sercives should
-    # Be properly modularized and imported as modules
-    if "control_engine_path" in unit_cnf.cnf:
-        engine_path = unit_cnf.cnf["control_engine_path"]
-    else:
-        engine_path = "services/control_engine/src"  # Standard installation
-    sys.path.append(engine_path)
-
-    controllers_dict = {}
-
-    sys_cnf = unit_cnf.cnf  # dictionary
-
-    # Init system timer from config file DBIK 24.7.23
-
-    timer_mode = "real"
-    time_step = 0.1
-
-    timer_prm = sys_cnf["timer"]
-    timer_mode = timer_prm["timer_mode"]
-    time_step = timer_prm["time_step"]
+    try:
+        sys_cnf = GeneralConfiguration(conf_filename)
+    except Exception as e:
+        raise Exception(f"Failed to read configuration: {e}")
 
     end_time = -1
-    if "max_time" in timer_prm:
-        end_time = timer_prm["max_time"]
+    if "max_time" in sys_cnf.timer:
+        end_time = sys_cnf.timer["max_time"]
 
-    print("Timer parameters: ", timer_prm)
+    system_timer = Timer(sys_cnf.timer)
 
-    system_timer = Timer(timer_prm)
-    next_update_time = 0
-
-    v2x_mode = False
-    if "v2x_mode" in sys_cnf.keys():
-        if sys_cnf["v2x_mode"] == True:
-            v2x_mode = True
-
-    sumovismode = "No_visualization"
-    if "vis_mode" in sys_cnf.keys():
-        sumovismode = sys_cnf["vis_mode"]
-
-    controllers_dict = _create_controllers(sys_cnf, system_timer)
+    controllers_dict = _create_controllers(sys_cnf.controllers, system_timer)
 
     e1dets = []
     e3dets = []
@@ -124,28 +83,17 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
 
         print("exts: ", exts)
 
-    sumo_name = "0"  # DEBUG POINT, INIT OK
-
-    # Check whether the display is available before using gui
-    display_available = (
-        os.environ.get("DISPLAY") is not None and os.environ.get("DISPLAY") != ""
-    )
-
-    # Graph always if set in conf, and also if param says so, but not if display is not available
-    if sys_cnf["sumo"]["graph"]:
+    if sys_cnf.sumo["graph"]:
         sumo_bin = SUMO_BIN_NAME_GRAPH
     else:
         sumo_bin = SUMO_BIN_NAME
 
-    # sumo_bin = SUMO_BIN_NAME # Debugging without graphics DBIK 24.7.23
-
     # Conf is defined in sumo section of conf
-    sumo_file = sys_cnf["sumo"]["file_name"]
+    sumo_file = sys_cnf.sumo["file_name"]
     try:
         traci.start([sumo_bin, "-c", sumo_file, "--start", "--quit-on-end"])
     except Exception as e:
-        print("Sumo start failed:", e)
-        return
+        raise Exception(f"Failed to start SUMO with traci: {e}")
 
     sumo_to_e1dets = get_e1det_mapping(e1dets)
     print("sumo to e1 dets: ")
@@ -163,24 +111,18 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
     print("sumo e1 loops: ")
     print(sumo_loops)
 
-    # NEW UPDATE CYCLE   DBIK230724
-
     # Start the actual simulation
-    step = 0
-    sleep_count = 0
     sleep_count = 0
     system_timer.reset()
     real_time = system_timer.real_seconds  # DBIK230713
     next_update_time = real_time  # DBIK230713
     ChangesOnly = True
     statusstring = ""
-    BP2 = False
-    SUMOSIM = True
-    last_print = 0
+
+    SUMO_VIS_MODE = False
+    V2X_MODE = False
 
     print(system_timer.steps, real_time, next_update_time, sleep_count)
-
-    # traci.vehicle.setLaneChangeMode(vehicleId,256) # Disable lane changing except from Traci
 
     #######SIMULATION STARTS################################################
 
@@ -200,19 +142,11 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
         real_time = system_timer.real_seconds  # DBIK230711
 
         if real_time >= (next_update_time) or (
-            timer_mode != "real"
+            sys_cnf.timer["timer_mode"] != "real"
         ):  # DBIK230711  timer_mode added
-            next_update_time = next_update_time + time_step  # DBIK230720
-
-            # Conditional BREAKPOINT
-            if (
-                statusstring
-                == "ebb50b REQ:000010  EXT: 000110  PERM:100110  CUT:111001 (cur:PH:1, next:PH:2) *"
-            ):
-                # if statusstring == "c4ee5bc REQ:1000001  EXT: 0000100  PERM:1111000  OTH:1011101 (cur:PH:1, next:PH:2)":
-                BP1 = True
-
-            # MULTI: looping the controllers start here
+            next_update_time = (
+                next_update_time + sys_cnf.timer["time_step"]
+            )  # DBIK230720
 
             for key in controllers_dict:
                 # Update signal controllers DBIK 20240411
@@ -221,7 +155,6 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
                 sumo_name = controllers_dict[key]["sumo_name"]
 
                 # Fixing the potential error in signal count
-
                 ocTLScount = len(states)
                 sumo_tls = traci.trafficlight.getControlledLinks(sumo_name)
                 SumoTLScount = len(sumo_tls)
@@ -229,26 +162,14 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
                     states = "r" + states  # DBIK20250129 add group 0 ?
                 try:
                     traci.trafficlight.setRedYellowGreenState(sumo_name, states)
-                except:
+                except Exception as e:
                     print(
                         "Error in signal counts: OC count: ",
                         ocTLScount,
                         "Sumo TLS: ",
                         SumoTLScount,
                     )
-
-                    # traci.trafficlight.setRedYellowGreenState(sumo_name, states)
-
-                    print(
-                        "Error in signal counts: OC count: ",
-                        ocTLScount,
-                        "Sumo TLS: ",
-                        SumoTLScount,
-                    )
-
-                traci.trafficlight.setRedYellowGreenState(sumo_name, states)
-
-                # Run-time outputs DBIK 20240411
+                    raise e
 
                 if controllers_dict[key]["print_status"]:
                     controllers_dict[key][
@@ -281,15 +202,10 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
                     if runlog:
                         runlog.add_line(statusstring)
 
-            # detections_to_controller(sumo_loops, sumo_to_dets)
-            if SUMOSIM:
-                Sumo_e1detections_to_controller(sumo_loops, sumo_to_e1dets)
-                Sumo_e3detections_to_controller(
-                    sumo_e3dets, sumo_to_e3dets, sumovismode, v2x_mode
-                )
-            else:
-                pass
-                # Read detections from NATS
+            Sumo_e1detections_to_controller(sumo_loops, sumo_to_e1dets)
+            Sumo_e3detections_to_controller(
+                sumo_e3dets, sumo_to_e3dets, SUMO_VIS_MODE, V2X_MODE
+            )
 
             try:
                 traci.simulationStep()
@@ -321,20 +237,8 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
 
 
 def _create_controllers(
-    sys_conf: dict[str, Any], system_timer: Timer
+    controller_confs: dict[str, Any], system_timer: Timer
 ) -> dict[str, dict[str, Any]]:
-    # Dictionary holding all controller configurations
-    controller_confs: dict[str, Any] = {}
-
-    if "controllers" in sys_conf:
-        controller_confs = sys_conf["controllers"]
-
-    # If configuration includes only 1 controller, it needs
-    # to be converted to multi controller configuration format
-    # with a made up "controller1" name.
-    if "controller" in sys_conf:
-        controller_confs = {"controller1": {}}
-
     # Dictionary of created controllers
     controllers: dict[str, dict[str, Any]] = {}
 
@@ -342,27 +246,10 @@ def _create_controllers(
     for controller_name in controller_confs:
         controllers[controller_name] = {}
 
-        controller_params: dict[str, Any] = {}
+        controller_params: dict[str, Any] = controller_confs[controller_name]
 
-        # Configure controller based on file
-        if "controller_file" in controller_confs[controller_name]:
-            # Single controller configuration
-            controller_conf: GlobalConf = GlobalConf(
-                controller_confs[controller_name]["controller_file"]
-            )
-            controller_params = controller_conf.get_controller_params()
-        elif "controller" in sys_conf:
-            controller_params = sys_conf["controller"]
-
-        controller_params["name"] = controller_name
-
+        controllers[controller_name]["print_status"] = controller_params["print_status"]
         controllers[controller_name]["sumo_name"] = controller_params["sumo_name"]
-
-        # print_status defaults to True
-        print_status: bool = True
-        if "print_status" in controller_params:
-            print_status = controller_params["print_status"]
-        controllers[controller_name]["print_status"] = print_status
 
         # Create controller object from params
         controller = PhaseRingController(controller_params, system_timer)
@@ -726,6 +613,4 @@ def print_det_status():
 
 
 if __name__ == "__main__":
-    # main_runsumo()
-    # run_sumo("../models/4leg/4leg.json")
-    run_sumo()
+    main()
