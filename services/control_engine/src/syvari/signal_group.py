@@ -9,6 +9,7 @@ from .cycle_timer import CycleTimer
 class GroupState(Enum):
     RED = "r"
     AMBER = "u"
+    PRIORITY_GREEN = "G"
     ACTIVE_GREEN = "G"
     PASSIVE_GREEN = "g"
     YELLOW = "y"
@@ -105,7 +106,6 @@ class SignalGroup:
 
         self._cur_state = GroupState.RED
         self._is_requesting: bool = False
-        # TODO: Implement a way to accept priority requests
         self._is_priority_requesting: bool = False
 
         self._e3_detectors: list[e3Detector] = []
@@ -133,6 +133,10 @@ class SignalGroup:
     @property
     def is_requesting(self) -> bool:
         return self._is_requesting
+
+    @property
+    def is_priority_requesting(self) -> bool:
+        return self._is_priority_requesting
 
     @property
     def e1_detectors(self) -> Sequence[Detector]:
@@ -163,6 +167,7 @@ class SignalGroup:
 
         if self._cur_state == GroupState.RED:
             self._is_requesting = self._has_vehicles()
+            self._is_priority_requesting = self._has_priority_vehicles()
 
         # Only active green needs to handle extension logic
         if self._cur_state != GroupState.ACTIVE_GREEN:
@@ -268,3 +273,13 @@ class SignalGroup:
                 break
 
         return veh_count > 0 or has_loop_activations
+
+    def _has_priority_vehicles(self) -> bool:
+        # Gather e3 detector readings
+        veh_count: int = 0
+        for det in self._e3_detectors:
+            veh_count += det.veh_count()
+
+        # Currently e3 detectors count transit vehicles as 100 vehicles each.
+        # TODO: Fix detector to return true/false if detects priority vehicles.
+        return veh_count >= 100
