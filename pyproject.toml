@@ -44,6 +44,13 @@ select = [
 #   "ANN",   # flake8-annotations (strict typing)
 ]
 
+ignore = [
+    "PLR0913", # Too many arguments in function definition
+    "D100",    # Missing docstring in public module
+    "D104",    # Missing docstring in public package
+    "D107",    # Missing docstring in __init__
+]
+
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "double"
 multiline-quotes = "double"
