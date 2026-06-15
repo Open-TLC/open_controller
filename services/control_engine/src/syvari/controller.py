@@ -95,15 +95,10 @@ class SyvariController(SignalController):
         if self._current_groups_in_guaranteed_green():
             return self._get_group_states()
 
-        # If a group in the next phase is priority requesting, controller moves to next phase.
-        next_phase_idx = self._get_next_phase_idx()
-        pending_priority_requests = False
-        for group in self._phases[next_phase_idx]:
-            if self._signal_groups[group].is_priority_requesting:
-                pending_priority_requests = True
-                break
-
-        if pending_priority_requests:
+        if (
+            self._future_priority_request_exists()
+            and not self._current_groups_priority_extending()
+        ):
             _ = self._move_to_next_phase()
             return self._get_group_states()
 
@@ -192,6 +187,30 @@ class SyvariController(SignalController):
             self._signal_groups[group_name].has_guaranteed_green_left
             for group_name in self._phases[self._cur_phase_idx]
         )
+
+    def _current_groups_priority_extending(self) -> bool:
+        """Checks if any group in the current phase is priority extending.
+
+        Returns:
+            True if a current group has a priority extension.
+        """
+        return any(
+            self._signal_groups[group_name].is_priority_extending
+            for group_name in self._phases[self._cur_phase_idx]
+        )
+
+    def _future_priority_request_exists(self) -> bool:
+        phase_count = len(self._phases)
+
+        for offset in range(1, phase_count):
+            idx = (self._cur_phase_idx + offset) % phase_count
+
+            if any(
+                self._signal_groups[g].is_priority_requesting for g in self._phases[idx]
+            ):
+                return True
+
+        return False
 
 
 import unittest

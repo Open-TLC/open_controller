@@ -46,6 +46,7 @@ class SyvariControllerConfiguration:
             sync_end: float = signal_groups[group_name]["sync_end"]
             min_green: float = signal_groups[group_name]["min_green"]
             min_guaranteed: float = signal_groups[group_name]["min_guaranteed"]
+            priority_max: float = signal_groups[group_name].get("priority_max")
 
             # Get the green end yellow time based on the phases and intergreens.
             green_end_yellow_time: float = _get_green_end_yellow_time(
@@ -60,6 +61,7 @@ class SyvariControllerConfiguration:
                 min_guaranteed,
                 green_end_yellow_time,
                 det_confs_by_group[group_name],
+                priority_max=priority_max,
             )
 
             self.group_confs.append(group_conf)

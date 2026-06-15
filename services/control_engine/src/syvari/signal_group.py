@@ -40,13 +40,7 @@ class SignalGroup:
         """
         Args:
             timer: Cycle timer used by the controller.
-            sync_start: Target green start time for the group (point in cycle).
-            sync_end: Target green end time for the group (point in cycle).
-            min_green: Minimum green phase duration (seconds).
-            min_guaranteed: Minimum time that the group is guaranteed to have.
-                            Doesn't have to be used fully. (Takuumaksimi) (seconds).
-            priority_max: Maximum extension duration allowed when processing
-                            public transit priority requests (Etuusmaksimi) (seconds).
+            conf: Signal group configuration.
 
         Raises:
             ValueError
@@ -76,8 +70,8 @@ class SignalGroup:
 
         if conf.min_guaranteed < conf.min_green:
             raise ValueError(
-                f"Invalid params: min_guaranteed ({conf.min_guaranteed}s) must be greater than "
-                f"or equal to min_green ({conf.min_green}s)."
+                f"Invalid params: min_guaranteed ({conf.min_guaranteed}s) can't be "
+                f"smaller than min_green ({conf.min_green}s)."
             )
         self._min_green = conf.min_green
         self._min_guaranteed = conf.min_guaranteed
@@ -119,7 +113,7 @@ class SignalGroup:
                 det = e3Detector(self._timer, det_name, conf.detector_confs[det_name])
                 self._e3_detectors.append(det)
             else:
-                raise Exception(f"Unknown detector type for {det_name}: {det_type}")
+                raise TypeError(f"Unknown detector type for {det_name}: {det_type}")
 
     @property
     def name(self) -> str:
@@ -138,8 +132,12 @@ class SignalGroup:
         return self._is_priority_requesting
 
     @property
+    def is_priority_extending(self) -> bool:
+        return self._is_priority_extending()
+
+    @property
     def has_guaranteed_green_left(self) -> bool:
-        if not self._green_start_time:
+        if self._green_start_time is None:
             return False
 
         time_since_green = (
@@ -218,9 +216,12 @@ class SignalGroup:
             self._timer.cycle_phase - self._green_start_time
         ) % self._timer.cycle_length
 
-        # If minimum green hasn't been used, group remains in the same state.
+        # If minimum green hasn't been used, group remains in active green.
         if time_since_start < self._min_green:
-            return self._cur_state
+            return GroupState.ACTIVE_GREEN
+
+        if self._is_priority_extending() and time_since_start < self._priority_max:
+            return GroupState.ACTIVE_GREEN
 
         max_sync_duration = (
             self._sync_end - self._green_start_time
@@ -266,6 +267,9 @@ class SignalGroup:
 
         # If the gap between vehicles is smaller than our threshold, keep extending
         return time_since_last_vehicle < EXTENSION_LENGTH
+
+    def _is_priority_extending(self) -> bool:
+        return self._has_priority_vehicles()
 
     def _has_vehicles(self) -> bool:
         veh_count = sum(det.veh_count() for det in self._e3_detectors)
