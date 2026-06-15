@@ -6,9 +6,12 @@ class SyvariControllerConfiguration:
     Configuration object for SYVARI signal controller.
     """
 
-    def __init__(self, controller_configuration: dict[str, Any]) -> None:
-        self.name = controller_configuration["name"]
+    def __init__(self, name: str, controller_configuration: dict[str, Any]) -> None:
+        self.name = name
         self.sumo_name = controller_configuration["sumo_name"]
+
+        # This is a list of group names used to translate signal group states to SUMO signal groups.
+        self.state_format = controller_configuration["group_outputs"]
 
         # This is a list of group names used to assign an index to all groups.
         groups_order: list[str] = controller_configuration["group_list"]
@@ -16,6 +19,11 @@ class SyvariControllerConfiguration:
         phases_matrix: list[list[int]] = controller_configuration["phases"]
         # Group count * group count matrix of intergreen times between groups.
         intergreen_matrix: list[list[float]] = controller_configuration["intergreens"]
+
+        # Intergreen times by group name.
+        intergreens_by_name: dict[str, list[float]] = _get_intergreens_by_group(
+            groups_order, intergreen_matrix
+        )
 
         # Safety check for conflicting phases
         if _contains_conflicting_phase(phases_matrix, intergreen_matrix):
@@ -32,26 +40,26 @@ class SyvariControllerConfiguration:
         )
 
         i: int = 0
-        for signal_group in controller_configuration["signal_groups"].values():
-            name: str = signal_group["name"]
-            sync_start: float = signal_group["sync_start"]
-            sync_end: float = signal_group["sync_end"]
-            min_green: float = signal_group["min_green"]
-            min_guaranteed: float = signal_group["min_guaranteed"]
+        signal_groups = controller_configuration["signal_groups"]
+        for group_name in signal_groups:
+            sync_start: float = signal_groups[group_name]["sync_start"]
+            sync_end: float = signal_groups[group_name]["sync_end"]
+            min_green: float = signal_groups[group_name]["min_green"]
+            min_guaranteed: float = signal_groups[group_name]["min_guaranteed"]
 
-            # Get the names of conflicting groups based on intergreens for the target group
-            conflict_groups = _get_conflicting_groups(
-                groups_order, intergreen_matrix[i]
+            # Get the green end yellow time based on the phases and intergreens.
+            green_end_yellow_time: float = _get_green_end_yellow_time(
+                group_name, intergreens_by_name
             )
 
             group_conf = SyvariGroupConfiguration(
-                name,
-                conflict_groups,
+                group_name,
                 sync_start,
                 sync_end,
                 min_green,
                 min_guaranteed,
-                det_confs_by_group[name],
+                green_end_yellow_time,
+                det_confs_by_group[group_name],
             )
 
             self.group_confs.append(group_conf)
@@ -78,6 +86,23 @@ def _contains_conflicting_phase(
                     return True
 
     return False
+
+
+def _get_intergreens_by_group(
+    groups: list[str], intergreens: list[list[float]]
+) -> dict[str, list[float]]:
+    res: dict[str, list[float]] = {}
+    for i in range(len(groups)):
+        res[groups[i]] = intergreens[i]
+
+    return res
+
+
+def _get_green_end_yellow_time(
+    group_name: str,
+    intergreens_by_group: dict[str, list[float]],
+) -> float:
+    return max(intergreens_by_group[group_name])
 
 
 def _get_conflicting_groups(
@@ -165,20 +190,20 @@ class SyvariGroupConfiguration:
     def __init__(
         self,
         name: str,
-        conflict_group_names: list[str],
         sync_start: float,
         sync_end: float,
         min_green: float,
         min_guaranteed: float,
+        green_end_yellow: float,
         detector_confs: dict[str, Any],
         priority_max: float | None = None,
     ) -> None:
         self.name = name
-        self.conflict_groups = conflict_group_names
         self.sync_start = sync_start
         self.sync_end = sync_end
         self.min_green = min_green
         self.min_guaranteed = min_guaranteed
+        self.yellow = green_end_yellow
         self.detector_confs = detector_confs
         self.priority_max = priority_max
 

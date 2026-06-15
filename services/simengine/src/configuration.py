@@ -1,11 +1,32 @@
 import json
 import os
+import sys
 import unittest
 from pathlib import Path
 from typing import Any
 from unittest.mock import mock_open, patch
 
 from jsmin import jsmin
+
+from services.control_engine.src.signal_controller import SignalController
+from services.control_engine.src.syvari.configuration import (
+    SyvariControllerConfiguration,
+)
+from services.control_engine.src.syvari.controller import SyvariController
+from services.control_engine.src.syvari.cycle_timer import CycleTimer
+from services.control_engine.src.timer import Timer
+
+# Import traci from $SUMO_HOME/tools
+if "SUMO_HOME" in os.environ:
+    SUMO_TOOLS = os.path.join(os.environ["SUMO_HOME"], "tools")
+    sys.path.append(SUMO_TOOLS)
+    import traci
+else:
+    raise Exception("SUMO_HOME not configured")
+
+
+SUMO_HEADLESS_BIN = "sumo"
+SUMO_GUI_BIN = "sumo-gui"
 
 
 class GeneralConfiguration:
@@ -22,6 +43,79 @@ class GeneralConfiguration:
 
         # Save the cleaned and joined configuration to a new file.
         self._write_cleaned_conf_to_file(filename)
+
+    def create_timer(self) -> Timer:
+        timer: Timer
+        timer_type: str | None = self.timer.get("timer_type")
+
+        # If timer_type is not specified, return default timer.
+        if timer_type is None:
+            timer = Timer(self.timer)
+        # fixed timer is actually the same as default
+        # timer but handled here for clarity.
+        elif timer_type == "fixed":
+            timer = Timer(self.timer)
+        elif timer_type == "cycle":
+            if not self.timer["cycle_length"]:
+                raise Exception("Error no cycle_length declared for cycle timer")
+            timer = CycleTimer(self.timer, self.timer["cycle_length"])
+        else:
+            raise Exception(f"Unknown timer_type {timer_type}")
+
+        return timer
+
+    def start_traci(self) -> None:
+        """
+        This starts the simulation and traci connection to SUMO. After
+        calling this, you can call methods on traci anywhere in Python.
+        The default option for running SUMO is headless. Set "sumo":
+        "graph": true in configuration to run simulation in GUI mode.
+        """
+        sumo_bin: str = SUMO_HEADLESS_BIN
+        try:
+            if self.sumo["graph"]:
+                sumo_bin = SUMO_GUI_BIN
+        except KeyError:
+            pass
+
+        traci.start(
+            [sumo_bin, "-c", self.sumo["file_name"], "--start", "--quit-on-end"]
+        )
+
+    def create_controllers(self, timer: Timer) -> dict[str, SignalController]:
+        """
+        Creates controllers based on configurations.
+
+        Args:
+            timer: Timer used for all controllers.
+
+        Returns:
+            Dictionary of controllers by name.
+        """
+        controllers: dict[str, SignalController] = {}
+        for controller_name in self.controllers:
+            controller_type: str = "default"
+            try:
+                controller_type = self.controllers[controller_name]["type"]
+            except KeyError:
+                pass
+
+            controller: SignalController
+            if controller_type == "syvari":
+                conf = SyvariControllerConfiguration(
+                    controller_name, self.controllers[controller_name]
+                )
+                if not isinstance(timer, CycleTimer):
+                    raise Exception(
+                        "Can't create SYVARI controller without a cycle timer"
+                    )
+                controller = SyvariController(conf, timer)
+            else:
+                raise Exception(f"Unknown controller_type {controller_type}")
+
+            controllers[controller_name] = controller
+
+        return controllers
 
     def _is_valid(self, conf: dict[str, Any]) -> bool:
         """
@@ -146,7 +240,7 @@ class GeneralConfiguration:
         """
         result: dict[str, Any] = {}
         for option in conf:
-            if option == "timer_mode":
+            if option == "timer_type":
                 result[option] = conf[option]
 
             if option == "time_step":
@@ -159,7 +253,7 @@ class GeneralConfiguration:
                 result[option] = conf[option]
 
             # This is only relevant if timer_mode is set to cycle.
-            if option == "cycle_time":
+            if option == "cycle_length":
                 result[option] = conf[option]
 
         return result
@@ -230,6 +324,9 @@ class GeneralConfiguration:
                 result[option] = conf[option]
 
             if option == "print_status":
+                result[option] = conf[option]
+
+            if option == "type":
                 result[option] = conf[option]
 
             if option == "group_outputs":

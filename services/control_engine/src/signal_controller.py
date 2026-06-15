@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from services.control_engine.src.detector import Detector
+
 
 class SignalController(ABC):
     """
@@ -17,3 +19,15 @@ class SignalController(ABC):
     @property
     @abstractmethod
     def name(self) -> str: ...
+
+    @property
+    @abstractmethod
+    def sumo_name(self) -> str: ...
+
+    @property
+    @abstractmethod
+    def e1_detectors(self) -> list[Detector]: ...
+
+    @property
+    @abstractmethod
+    def e3_detectors(self) -> list[Detector]: ...

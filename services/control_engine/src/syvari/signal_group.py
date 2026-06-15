@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Sequence
 
 from ..detector import Detector, e3Detector
 from .configuration import SyvariGroupConfiguration
@@ -52,7 +53,7 @@ class SignalGroup:
         """
         self._timer = timer
         self._name = conf.name
-        self._conflict_groups = conf.conflict_groups
+        self._yellow = conf.yellow
 
         if (
             max(conf.sync_start, conf.sync_end) >= timer.cycle_length
@@ -62,7 +63,8 @@ class SignalGroup:
                 "Invalid params: sync_start and sync_end must be between 0 and cycle_length."
             )
         self._sync_start = conf.sync_start
-        self._sync_end = conf.sync_end
+        # Group has to end its green enough in advance to have the time for a yellow
+        self._sync_end = conf.sync_end - self._yellow
 
         target_phase_duration = (conf.sync_end - conf.sync_start) % timer.cycle_length
 
@@ -92,6 +94,10 @@ class SignalGroup:
 
         # Keeps track of the current phases start time
         self._green_start_time: float | None = None
+
+        # Keeps track of the yellow start.
+        # This is used to transition from yellow to red.
+        self._yellow_start_time: float | None = None
 
         # Keeps track of the last time at which an extension pulse was received.
         # This will be set to None when group ends its active green.
@@ -128,11 +134,33 @@ class SignalGroup:
     def is_requesting(self) -> bool:
         return self._is_requesting
 
+    @property
+    def e1_detectors(self) -> Sequence[Detector]:
+        return self._loop_detectors
+
+    @property
+    def e3_detectors(self) -> Sequence[Detector]:
+        return self._e3_detectors
+
     def tick(self) -> None:
         """
         tick advances the group by one step. This updates the
         groups state based on the latest detector readings.
         """
+        if self._cur_state == GroupState.YELLOW:
+            # If group is on yellow but the start time hasn't been recorded.
+            # it will start now.
+            if self._yellow_start_time is None:
+                self._yellow_start_time = self._timer.cycle_phase
+
+            time_since_yellow = (
+                self._timer.cycle_phase - self._yellow_start_time
+            ) % self._timer.cycle_length
+
+            # If group has spent enough time on yellow, it will transition to red.
+            if time_since_yellow >= self._yellow:
+                self._cur_state = GroupState.RED
+
         if self._cur_state == GroupState.RED:
             self._is_requesting = self._has_vehicles()
 
@@ -143,7 +171,8 @@ class SignalGroup:
         # Extender timer must be updated before getting new state
         self._update_extenders()
 
-        self._cur_state = self._get_new_state()
+        new_state = self._get_new_state()
+        self._cur_state = new_state
 
     def start_green(self) -> None:
         """
@@ -154,6 +183,14 @@ class SignalGroup:
         self._green_start_time = self._timer.cycle_phase
 
         self._is_requesting = False
+
+    def end_green(self) -> None:
+        """
+        Puts the group to yellow. The group will switch to red itself.
+        """
+        if self._cur_state in (GroupState.PASSIVE_GREEN, GroupState.ACTIVE_GREEN):
+            self._cur_state = GroupState.YELLOW
+            self._yellow_start_time = self._timer.cycle_phase
 
     def _get_new_state(self) -> GroupState:
         # Only active green will be changed depending on traffic situation.
@@ -173,7 +210,7 @@ class SignalGroup:
         ) % self._timer.cycle_length
 
         # If group has exceeded its sync_end, it must end its active green.
-        if time_since_start >= max_sync_duration:
+        if time_since_start >= max_sync_duration - self._yellow:
             return GroupState.PASSIVE_GREEN
 
         min_sync_duration = (

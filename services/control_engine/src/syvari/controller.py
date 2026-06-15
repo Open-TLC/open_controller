@@ -1,3 +1,4 @@
+from ..detector import Detector
 from ..signal_controller import SignalController
 from .configuration import SyvariControllerConfiguration
 from .cycle_timer import CycleTimer
@@ -12,6 +13,7 @@ class SyvariController(SignalController):
     def __init__(self, conf: SyvariControllerConfiguration, timer: CycleTimer) -> None:
         """
         Args:
+            name: Arbitrary name for the controller.
             conf: Configuration used for the controller instance. This must be initialized before creating controller.
             timer: System timer used for the entire scenario.
         """
@@ -20,6 +22,9 @@ class SyvariController(SignalController):
         self._name = conf.name
         self._sumo_name = conf.sumo_name
         self._timer: CycleTimer = timer
+
+        # List of signal group names that determines the output state string format
+        self._state_format = conf.state_format
 
         if len(conf.group_confs) == 0:
             raise ValueError("Controller doesn't have signal groups configured.")
@@ -32,6 +37,10 @@ class SyvariController(SignalController):
 
         # Matrix of active group names per phase
         self._phases = conf.phases
+
+        # Signal groups in the first phase start their greens.
+        for group_name in self._phases[0]:
+            self._signal_groups[group_name].start_green()
 
         # Current phase index
         self._cur_phase_idx: int = 0
@@ -52,6 +61,24 @@ class SyvariController(SignalController):
     def sumo_name(self) -> str:
         return self._sumo_name
 
+    @property
+    def e1_detectors(self) -> list[Detector]:
+        detectors: list[Detector] = []
+
+        for group in self._signal_groups.values():
+            detectors.extend(group.e1_detectors)
+
+        return detectors
+
+    @property
+    def e3_detectors(self) -> list[Detector]:
+        detectors: list[Detector] = []
+
+        for group in self._signal_groups.values():
+            detectors.extend(group.e3_detectors)
+
+        return detectors
+
     def tick(self) -> str:
         """
         tick advances the controller by a single time step. It reads the detector
@@ -70,6 +97,11 @@ class SyvariController(SignalController):
             return self._get_group_states()
 
         # If all groups in the current phase have ended their active green, controller moves to the next phase.
+        for group in self._phases[self._cur_phase_idx]:
+            self._signal_groups[group].end_green()
+
+        if not self._current_groups_red():
+            return self._get_group_states()
 
         # Move to the next phase or loop back to the first
         if self._cur_phase_idx < len(self._phases) - 1:
@@ -84,8 +116,10 @@ class SyvariController(SignalController):
 
     def _get_group_states(self) -> str:
         states: str = ""
-        for group in self._signal_groups.values():
-            states = states + group_state_to_string(group.state)
+        for group_name in self._state_format:
+            group = self._signal_groups[group_name]
+            group_state = group_state_to_string(group.state)
+            states = states + group_state
 
         return states
 
@@ -100,11 +134,31 @@ class SyvariController(SignalController):
         current_phase_active = False
 
         for group in self._phases[self._cur_phase_idx]:
-            if self._signal_groups[group].state == GroupState.ACTIVE_GREEN:
+            state = self._signal_groups[group].state
+            if state == GroupState.ACTIVE_GREEN:
                 current_phase_active = True
                 break
 
         return current_phase_active
+
+    def _current_groups_red(self) -> bool:
+        """
+        Checks if all groups in the current phase are red.
+        This is used to start the next phase.
+
+        Returns:
+            If all groups in the current phase are in red.
+        """
+
+        current_phase_red = True
+
+        for group in self._phases[self._cur_phase_idx]:
+            state = self._signal_groups[group].state
+            if state != GroupState.RED:
+                current_phase_red = False
+                break
+
+        return current_phase_red
 
 
 import unittest
@@ -162,7 +216,9 @@ class TestSyvariConfiguration(unittest.TestCase):
             ],
         }
 
-        controller_conf = SyvariControllerConfiguration(controller_params)
+        controller_conf = SyvariControllerConfiguration(
+            controller_params["name"], controller_params
+        )
         controller = SyvariController(controller_conf, timer)
 
         self.assertNotEqual(controller, None)
