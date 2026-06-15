@@ -35,6 +35,13 @@ select = [
     "ASYNC", # flake8-async (async/await checks)
     "FURB",  # refurb (modernizing code)
     "RUF",   # Ruff-specific rules
+    "RET",   # flake8-return
+    "TID",   # flake8-tidy-imports
+    "DOC",   # pydoclint (strict docstrings)
+    "D",     # pydocstyle (strict docstrings)
+    "PL",    # pylint
+    "ERA",   # eradicate (commented out code)
+#   "ANN",   # flake8-annotations (strict typing)
 ]
 
 [tool.ruff.lint.flake8-quotes]
