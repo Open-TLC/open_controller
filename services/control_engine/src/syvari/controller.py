@@ -13,7 +13,6 @@ class SyvariController(SignalController):
     def __init__(self, conf: SyvariControllerConfiguration, timer: CycleTimer) -> None:
         """
         Args:
-            name: Arbitrary name for the controller.
             conf: Configuration used for the controller instance. This must be initialized before creating controller.
             timer: System timer used for the entire scenario.
         """
@@ -38,12 +37,12 @@ class SyvariController(SignalController):
         # Matrix of active group names per phase
         self._phases = conf.phases
 
+        # Current phase index.
+        self._cur_phase_idx: int = 0
+
         # Signal groups in the first phase start their greens.
         for group_name in self._phases[0]:
             self._signal_groups[group_name].start_green()
-
-        # Current phase index
-        self._cur_phase_idx: int = 0
 
     @property
     def status(self) -> str:
@@ -51,7 +50,7 @@ class SyvariController(SignalController):
         Open Controller signal controller status string.
         """
         # TODO: Implement the method
-        raise Exception("SyvariController.status not implemented")
+        raise NotImplementedError("SyvariController.status not implemented")
 
     @property
     def name(self) -> str:
@@ -81,7 +80,7 @@ class SyvariController(SignalController):
 
     def tick(self) -> str:
         """
-        tick advances the controller by a single time step. It reads the detector
+        Advance the controller by a single time step. It reads the detector
         data, decides the new signal states and returns them as a string.
 
         Returns:
@@ -92,25 +91,28 @@ class SyvariController(SignalController):
         for group in self._signal_groups.values():
             group.tick()
 
+        # If current phase has groups with guaranteed green left, controller can't advance.
+        if self._current_groups_in_guaranteed_green():
+            return self._get_group_states()
+
+        # If a group in the next phase is priority requesting, controller moves to next phase.
+        next_phase_idx = self._get_next_phase_idx()
+        pending_priority_requests = False
+        for group in self._phases[next_phase_idx]:
+            if self._signal_groups[group].is_priority_requesting:
+                pending_priority_requests = True
+                break
+
+        if pending_priority_requests:
+            _ = self._move_to_next_phase()
+            return self._get_group_states()
+
         # If current phase still has groups in active green, the existing state is returned.
         if self._current_groups_in_active_green():
             return self._get_group_states()
 
-        # If all groups in the current phase have ended their active green, controller moves to the next phase.
-        for group in self._phases[self._cur_phase_idx]:
-            self._signal_groups[group].end_green()
-
-        if not self._current_groups_red():
-            return self._get_group_states()
-
-        # Move to the next phase or loop back to the first
-        if self._cur_phase_idx < len(self._phases) - 1:
-            self._cur_phase_idx += 1
-        else:
-            self._cur_phase_idx = 0
-
-        for group in self._phases[self._cur_phase_idx]:
-            self._signal_groups[group].start_green()
+        # If all groups in the current phase have ended their active green, controller tries to move to the next phase.
+        _ = self._move_to_next_phase()
 
         return self._get_group_states()
 
@@ -123,42 +125,73 @@ class SyvariController(SignalController):
 
         return states
 
-    def _current_groups_in_active_green(self) -> bool:
-        """
-        Checks if any group in the current phase is in active green.
+    def _move_to_next_phase(self) -> bool:
+        """Move to the next phase if possible.
+        Controller tries to advance its state, but fails if previous groups are still active.
 
         Returns:
-            If any group in the current phase is in active green.
+            Whether phase changed.
         """
-
-        current_phase_active = False
-
         for group in self._phases[self._cur_phase_idx]:
-            state = self._signal_groups[group].state
-            if state == GroupState.ACTIVE_GREEN:
-                current_phase_active = True
-                break
+            self._signal_groups[group].end_green()
 
-        return current_phase_active
+        # If a group is still yellow, controller can't advance.
+        if not self._current_groups_red():
+            return False
+
+        # Controller moves to the next phase.
+        self._cur_phase_idx = self._get_next_phase_idx()
+
+        # Signal groups in the new phase start their greens.
+        for group in self._phases[self._cur_phase_idx]:
+            self._signal_groups[group].start_green()
+
+        return True
+
+    def _get_next_phase_idx(self) -> int:
+        """Determines the index of the next scheduled phase in the sequence loop.
+
+        Returns:
+            The index integer of the upcoming phase, handling boundary wrap-arounds.
+        """
+        if self._cur_phase_idx < len(self._phases) - 1:
+            return self._cur_phase_idx + 1
+        return 0
+
+    def _current_groups_in_active_green(self) -> bool:
+        """Checks if any group in the current phase is currently running an active green.
+
+        Returns:
+            True if at least one group is in GroupState.ACTIVE_GREEN, False otherwise.
+        """
+        return any(
+            self._signal_groups[group].state == GroupState.ACTIVE_GREEN
+            for group in self._phases[self._cur_phase_idx]
+        )
 
     def _current_groups_red(self) -> bool:
-        """
-        Checks if all groups in the current phase are red.
-        This is used to start the next phase.
+        """Checks if all groups in the current phase have transitioned completely to red.
+
+        Used to ensure a completely safe clearance interval before launching conflicting greens.
 
         Returns:
-            If all groups in the current phase are in red.
+            True if every group in the current phase is GroupState.RED, False otherwise.
         """
+        return all(
+            self._signal_groups[group].state == GroupState.RED
+            for group in self._phases[self._cur_phase_idx]
+        )
 
-        current_phase_red = True
+    def _current_groups_in_guaranteed_green(self) -> bool:
+        """Checks if any group in the current phase is protected by guaranteed minimum green requirements.
 
-        for group in self._phases[self._cur_phase_idx]:
-            state = self._signal_groups[group].state
-            if state != GroupState.RED:
-                current_phase_red = False
-                break
-
-        return current_phase_red
+        Returns:
+            True if a current group is locked into its minimum green phase time constraint.
+        """
+        return any(
+            self._signal_groups[group_name].has_guaranteed_green_left
+            for group_name in self._phases[self._cur_phase_idx]
+        )
 
 
 import unittest

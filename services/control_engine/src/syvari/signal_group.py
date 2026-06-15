@@ -9,7 +9,6 @@ from .cycle_timer import CycleTimer
 class GroupState(Enum):
     RED = "r"
     AMBER = "u"
-    PRIORITY_GREEN = "G"
     ACTIVE_GREEN = "G"
     PASSIVE_GREEN = "g"
     YELLOW = "y"
@@ -102,7 +101,7 @@ class SignalGroup:
 
         # Keeps track of the last time at which an extension pulse was received.
         # This will be set to None when group ends its active green.
-        self._last_extended: float | None = 0
+        self._last_extended: float | None = None
 
         self._cur_state = GroupState.RED
         self._is_requesting: bool = False
@@ -139,6 +138,17 @@ class SignalGroup:
         return self._is_priority_requesting
 
     @property
+    def has_guaranteed_green_left(self) -> bool:
+        if not self._green_start_time:
+            return False
+
+        time_since_green = (
+            self._timer.cycle_phase - self._green_start_time
+        ) % self._timer.cycle_length
+
+        return time_since_green < self._min_guaranteed
+
+    @property
     def e1_detectors(self) -> Sequence[Detector]:
         return self._loop_detectors
 
@@ -152,8 +162,6 @@ class SignalGroup:
         groups state based on the latest detector readings.
         """
         if self._cur_state == GroupState.YELLOW:
-            # If group is on yellow but the start time hasn't been recorded.
-            # it will start now.
             if self._yellow_start_time is None:
                 self._yellow_start_time = self._timer.cycle_phase
 
@@ -164,20 +172,21 @@ class SignalGroup:
             # If group has spent enough time on yellow, it will transition to red.
             if time_since_yellow >= self._yellow:
                 self._cur_state = GroupState.RED
+                self._yellow_start_time = None
 
-        if self._cur_state == GroupState.RED:
-            self._is_requesting = self._has_vehicles()
-            self._is_priority_requesting = self._has_priority_vehicles()
+        elif self._cur_state == GroupState.RED:
+            # Requests persist until the group gets a green.
+            self._is_requesting = self._is_requesting or self._has_vehicles()
+            self._is_priority_requesting = (
+                self._is_priority_requesting or self._has_priority_vehicles()
+            )
 
         # Only active green needs to handle extension logic
         if self._cur_state != GroupState.ACTIVE_GREEN:
             return
 
-        # Extender timer must be updated before getting new state
         self._update_extenders()
-
-        new_state = self._get_new_state()
-        self._cur_state = new_state
+        self._cur_state = self._get_new_state()
 
     def start_green(self) -> None:
         """
@@ -186,8 +195,10 @@ class SignalGroup:
         """
         self._cur_state = GroupState.ACTIVE_GREEN
         self._green_start_time = self._timer.cycle_phase
+        self._last_extended = None
 
         self._is_requesting = False
+        self._is_priority_requesting = False
 
     def end_green(self) -> None:
         """
@@ -196,6 +207,7 @@ class SignalGroup:
         if self._cur_state in (GroupState.PASSIVE_GREEN, GroupState.ACTIVE_GREEN):
             self._cur_state = GroupState.YELLOW
             self._yellow_start_time = self._timer.cycle_phase
+            self._green_start_time = None
 
     def _get_new_state(self) -> GroupState:
         # Only active green will be changed depending on traffic situation.
@@ -215,7 +227,7 @@ class SignalGroup:
         ) % self._timer.cycle_length
 
         # If group has exceeded its sync_end, it must end its active green.
-        if time_since_start >= max_sync_duration - self._yellow:
+        if time_since_start >= max_sync_duration:
             return GroupState.PASSIVE_GREEN
 
         min_sync_duration = (
@@ -244,11 +256,7 @@ class SignalGroup:
         """
         Checks if the group is currently trying to extend its active green.
         """
-        if self._cur_state != GroupState.ACTIVE_GREEN:
-            return False
-
-        # If we haven't seen a single vehicle yet this entire green phase
-        if self._last_extended is None:
+        if self._cur_state != GroupState.ACTIVE_GREEN or self._last_extended is None:
             return False
 
         # Calculate exactly how many seconds have flown by since the last vehicle reset
@@ -260,25 +268,15 @@ class SignalGroup:
         return time_since_last_vehicle < EXTENSION_LENGTH
 
     def _has_vehicles(self) -> bool:
-        # Gather e3 detector readings
-        veh_count: int = 0
-        for det in self._e3_detectors:
-            veh_count += det.veh_count()
+        veh_count = sum(det.veh_count() for det in self._e3_detectors)
 
-        has_loop_activations: bool = False
-        # Check if any request detectors have requests
-        for det in self._loop_detectors:
-            if det.loop_on:
-                has_loop_activations = True
-                break
+        # Evaluate if any short loop request channels are closed/on
+        has_loop_activations = any(det.loop_on for det in self._loop_detectors)
 
         return veh_count > 0 or has_loop_activations
 
     def _has_priority_vehicles(self) -> bool:
-        # Gather e3 detector readings
-        veh_count: int = 0
-        for det in self._e3_detectors:
-            veh_count += det.veh_count()
+        veh_count = sum(det.veh_count() for det in self._e3_detectors)
 
         # Currently e3 detectors count transit vehicles as 100 vehicles each.
         # TODO: Fix detector to return true/false if detects priority vehicles.
