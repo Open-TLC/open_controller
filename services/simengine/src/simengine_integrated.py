@@ -141,6 +141,8 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
 
     # Conf is defined in sumo section of conf
     sumo_file = sys_cnf["sumo"]["file_name"]
+    if not os.path.isfile(sumo_file):
+        raise FileNotFoundError("sumocfg doesn't exist: ", sumo_file)
     try:
         traci.start([sumo_bin, "-c", sumo_file, "--start", "--quit-on-end"])
     except Exception as e:
