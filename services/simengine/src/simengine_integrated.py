@@ -8,28 +8,25 @@ This module operates Sumo simulator and applies controller to it
 # All Rights Reserved
 # rt random
 import os
+import platform
 import sys
 import time
 from typing import Any
 
+# Prefer libsumo when available because it avoids TraCI's socket
+# communication overhead and is significantly faster for simulation-heavy
+# workloads. The code aliases the selected backend as `traci` because both
+# libraries expose nearly identical APIs.
+if platform.system() == "Windows":
+    import traci
+elif platform.system() in ("Linux", "Darwin"):
+    import libsumo as traci
+else:
+    raise SystemError("Unknown operating system: ", platform.system())
+
+
 from confread_ms import GlobalConf
 from timer import Timer
-
-# This will need:
-# export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
-
-# Alternatively:
-# we need to import python modules from the $SUMO_HOME/tools directory
-if "SUMO_HOME" in os.environ:
-    SUMO_TOOLS = os.path.join(os.environ["SUMO_HOME"], "tools")
-    sys.path.append(SUMO_TOOLS)
-    import traci
-    # import libsumo as traci
-else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
-
-# from sumolib import checkBinary  # noqa
-
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
