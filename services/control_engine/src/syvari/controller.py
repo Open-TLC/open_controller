@@ -91,10 +91,17 @@ class SyvariController(SignalController):
         for group in self._signal_groups.values():
             group.tick()
 
+        # If current groups are amber (i.e. they are just starting to turn green)
+        # controller can't advance.
+        if self._current_groups_in_amber():
+            return self._get_group_states()
+
         # If current phase has groups with guaranteed green left, controller can't advance.
         if self._current_groups_in_guaranteed_green():
             return self._get_group_states()
 
+        # If another group in the future has a priority request and none of the current
+        # groups are priority extending, the controller advances.
         if (
             self._future_priority_request_exists()
             and not self._current_groups_priority_extending()
@@ -161,6 +168,17 @@ class SyvariController(SignalController):
         """
         return any(
             self._signal_groups[group].state == GroupState.ACTIVE_GREEN
+            for group in self._phases[self._cur_phase_idx]
+        )
+
+    def _current_groups_in_amber(self) -> bool:
+        """Check if any group in the current phase is currently amber.
+
+        Returns:
+            True if at least one group is in GroupState.AMBER, False otherwise.
+        """
+        return any(
+            self._signal_groups[group].state == GroupState.AMBER
             for group in self._phases[self._cur_phase_idx]
         )
 
