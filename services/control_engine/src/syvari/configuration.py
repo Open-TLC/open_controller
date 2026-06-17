@@ -1,5 +1,7 @@
 from typing import Any
 
+AMBER_LENGTH: float = 1
+
 
 class SyvariControllerConfiguration:
     """
@@ -60,6 +62,7 @@ class SyvariControllerConfiguration:
                 min_green,
                 min_guaranteed,
                 green_end_yellow_time,
+                AMBER_LENGTH,  # TODO: Read amber length from configuration file
                 det_confs_by_group[group_name],
                 priority_max=priority_max,
             )
@@ -197,6 +200,7 @@ class SyvariGroupConfiguration:
         min_green: float,
         min_guaranteed: float,
         green_end_yellow: float,
+        red_end_yellow: float,
         detector_confs: dict[str, Any],
         priority_max: float | None = None,
     ) -> None:
@@ -206,6 +210,7 @@ class SyvariGroupConfiguration:
         self.min_green = min_green
         self.min_guaranteed = min_guaranteed
         self.yellow = green_end_yellow
+        self.amber = red_end_yellow
         self.detector_confs = detector_confs
         self.priority_max = priority_max
 

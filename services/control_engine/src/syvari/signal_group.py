@@ -47,7 +47,8 @@ class SignalGroup:
         """
         self._timer = timer
         self._name = conf.name
-        self._yellow = conf.yellow
+        self._yellow_length = conf.yellow
+        self._amber_length = conf.amber
 
         if (
             max(conf.sync_start, conf.sync_end) >= timer.cycle_length
@@ -56,11 +57,11 @@ class SignalGroup:
             raise ValueError(
                 "Invalid params: sync_start and sync_end must be between 0 and cycle_length."
             )
-        self._sync_start = conf.sync_start
+        self._sync_start = conf.sync_start + conf.amber
         # Group has to end its green enough in advance to have the time for a yellow
-        self._sync_end = conf.sync_end - self._yellow
+        self._sync_end = conf.sync_end - self._yellow_length
 
-        target_phase_duration = (conf.sync_end - conf.sync_start) % timer.cycle_length
+        target_phase_duration = (self._sync_end - self._sync_start) % timer.cycle_length
 
         if conf.min_green > target_phase_duration:
             raise ValueError(
@@ -86,12 +87,8 @@ class SignalGroup:
         else:
             self._priority_max = conf.priority_max
 
-        # Keeps track of the current phases start time
-        self._green_start_time: float | None = None
-
-        # Keeps track of the yellow start.
-        # This is used to transition from yellow to red.
-        self._yellow_start_time: float | None = None
+        # Keep track of the current phases start time.
+        self._cur_start_time: float = 0
 
         # Keeps track of the last time at which an extension pulse was received.
         # This will be set to None when group ends its active green.
@@ -138,11 +135,11 @@ class SignalGroup:
 
     @property
     def has_guaranteed_green_left(self) -> bool:
-        if self._green_start_time is None:
+        if self._cur_state != GroupState.ACTIVE_GREEN:
             return False
 
         time_since_green = (
-            self._timer.cycle_phase - self._green_start_time
+            self._timer.cycle_phase - self._cur_start_time
         ) % self._timer.cycle_length
 
         return time_since_green < self._min_guaranteed
@@ -163,22 +160,26 @@ class SignalGroup:
         # This will update the extension logic if necessary.
         self._update_extension()
 
-        # If group is in yellow and has been yellow for long enough, it will transition to red.
-        if self._cur_state == GroupState.YELLOW:
-            self._tick_on_yellow()
-
-        # If group is in red, it updates its request states.
-        elif self._cur_state == GroupState.RED:
-            self._tick_on_red()
-
         # If group is in passive green, it will do nothing.
-        elif self._cur_state == GroupState.PASSIVE_GREEN:
+        if self._cur_state == GroupState.PASSIVE_GREEN:
             pass
 
         # If group is in green, it will check, whether to
         # extend its active green or transition to passive.
         elif self._cur_state == GroupState.ACTIVE_GREEN:
             self._tick_on_green()
+
+        # If group is in yellow and has been yellow for long enough, it will transition to red.
+        elif self._cur_state == GroupState.YELLOW:
+            self._tick_on_yellow()
+
+        # If group is in red, it updates its request states.
+        elif self._cur_state == GroupState.RED:
+            self._tick_on_red()
+
+        # If group is in red, it updates its request states.
+        elif self._cur_state == GroupState.AMBER:
+            self._tick_on_amber()
 
         else:
             raise ValueError("Unknown group state: ", self._cur_state)
@@ -188,11 +189,18 @@ class SignalGroup:
         Puts the group to active green. The group will be responsible
         for returning to passive green after the conditions are met.
         """
-        # If group is already in active green, it will remain like this
+        # If group is already starting it's green, it will remain unchanged.
+        if self._cur_state == GroupState.AMBER:
+            return
+
+        # If group is already in active green, it will remain like this.
         if self._cur_state == GroupState.ACTIVE_GREEN:
             return
-        self._cur_state = GroupState.ACTIVE_GREEN
-        self._green_start_time = self._timer.cycle_phase
+
+        # Group will first enter amber and automatically transition
+        # to active green after the a certain time.
+        self._cur_state = GroupState.AMBER
+        self._cur_start_time = self._timer.cycle_phase
         self._last_extended = None
         self._last_priority_extended = None
 
@@ -205,41 +213,11 @@ class SignalGroup:
         """
         if self._cur_state in (GroupState.PASSIVE_GREEN, GroupState.ACTIVE_GREEN):
             self._cur_state = GroupState.YELLOW
-            self._yellow_start_time = self._timer.cycle_phase
-            self._green_start_time = None
-
-    def _tick_on_red(self) -> None:
-        """Update group while on red.
-        This will update group's request status depending on detectors.
-        """
-        self._is_requesting = self._is_requesting or self._has_vehicles()
-        self._is_priority_requesting = (
-            self._is_priority_requesting or self._has_priority_vehicles()
-        )
-
-    def _tick_on_yellow(self) -> None:
-        """Update group while yellow.
-        This will check if group should turn red and update it's state according
-        to it.
-        """
-        if self._yellow_start_time is None:
-            self._yellow_start_time = self._timer.cycle_phase
-
-        time_since_yellow = (
-            self._timer.cycle_phase - self._yellow_start_time
-        ) % self._timer.cycle_length
-
-        if time_since_yellow >= self._yellow:
-            self._cur_state = GroupState.RED
-            self._yellow_start_time = None
+            self._cur_start_time = self._timer.cycle_phase
 
     def _tick_on_green(self) -> None:
-        # If green start time hasn't been recorded, it is set to current cycle phase.
-        if self._green_start_time is None:
-            self._green_start_time = self._timer.cycle_phase
-
         time_since_start = (
-            self._timer.cycle_phase - self._green_start_time
+            self._timer.cycle_phase - self._cur_start_time
         ) % self._timer.cycle_length
 
         # If minimum green hasn't been used, group remains in active green.
@@ -254,7 +232,7 @@ class SignalGroup:
         # This could be calculated once every green,
         # but is done here to simplify the logic.
         max_sync_duration = (
-            self._sync_end - self._green_start_time
+            self._sync_end - self._cur_start_time
         ) % self._timer.cycle_length
 
         # If group has exceeded its sync_end, it must end its active green.
@@ -265,7 +243,7 @@ class SignalGroup:
         # This could be calculated once every green,
         # but is done here to simplify the logic.
         min_sync_duration = (
-            self._min_end - self._green_start_time
+            self._min_end - self._cur_start_time
         ) % self._timer.cycle_length
 
         # If group doesn't want to extend and has passed
@@ -273,6 +251,43 @@ class SignalGroup:
         if not self._is_extending() and time_since_start >= min_sync_duration:
             self._cur_state = GroupState.PASSIVE_GREEN
             return
+
+    def _tick_on_yellow(self) -> None:
+        """Update group while yellow.
+        This will check if group should turn red and update it's state according
+        to it.
+        """
+        time_since_yellow = (
+            self._timer.cycle_phase - self._cur_start_time
+        ) % self._timer.cycle_length
+
+        # Automatically transition to red after long enough yellow.
+        if time_since_yellow >= self._yellow_length:
+            self._cur_state = GroupState.RED
+            self._cur_start_time = self._timer.cycle_phase
+
+    def _tick_on_red(self) -> None:
+        """Update group while on red.
+        This will update group's request status depending on detectors.
+        """
+        self._is_requesting = self._is_requesting or self._has_vehicles()
+        self._is_priority_requesting = (
+            self._is_priority_requesting or self._has_priority_vehicles()
+        )
+
+    def _tick_on_amber(self) -> None:
+        """Update group while amber.
+        This will check if group should turn green and update it's state according
+        to it.
+        """
+        time_since_amber = (
+            self._timer.cycle_phase - self._cur_start_time
+        ) % self._timer.cycle_length
+
+        # Automatically transition to active green after long enough amber.
+        if time_since_amber >= self._amber_length:
+            self._cur_state = GroupState.ACTIVE_GREEN
+            self._cur_start_time = self._timer.cycle_phase
 
     def _update_extension(self) -> None:
         """
