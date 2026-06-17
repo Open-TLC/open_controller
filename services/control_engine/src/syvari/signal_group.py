@@ -96,6 +96,7 @@ class SignalGroup:
         # Keeps track of the last time at which an extension pulse was received.
         # This will be set to None when group ends its active green.
         self._last_extended: float | None = None
+        self._last_priority_extended: float | None = None
 
         self._cur_state = GroupState.RED
         self._is_requesting: bool = False
@@ -159,41 +160,41 @@ class SignalGroup:
         tick advances the group by one step. This updates the
         groups state based on the latest detector readings.
         """
+        # This will update the extension logic if necessary.
+        self._update_extension()
+
+        # If group is in yellow and has been yellow for long enough, it will transition to red.
         if self._cur_state == GroupState.YELLOW:
-            if self._yellow_start_time is None:
-                self._yellow_start_time = self._timer.cycle_phase
+            self._tick_on_yellow()
 
-            time_since_yellow = (
-                self._timer.cycle_phase - self._yellow_start_time
-            ) % self._timer.cycle_length
-
-            # If group has spent enough time on yellow, it will transition to red.
-            if time_since_yellow >= self._yellow:
-                self._cur_state = GroupState.RED
-                self._yellow_start_time = None
-
+        # If group is in red, it updates its request states.
         elif self._cur_state == GroupState.RED:
-            # Requests persist until the group gets a green.
-            self._is_requesting = self._is_requesting or self._has_vehicles()
-            self._is_priority_requesting = (
-                self._is_priority_requesting or self._has_priority_vehicles()
-            )
+            self._tick_on_red()
 
-        # Only active green needs to handle extension logic
-        if self._cur_state != GroupState.ACTIVE_GREEN:
-            return
+        # If group is in passive green, it will do nothing.
+        elif self._cur_state == GroupState.PASSIVE_GREEN:
+            pass
 
-        self._update_extenders()
-        self._cur_state = self._get_new_state()
+        # If group is in green, it will check, whether to
+        # extend its active green or transition to passive.
+        elif self._cur_state == GroupState.ACTIVE_GREEN:
+            self._tick_on_green()
+
+        else:
+            raise ValueError("Unknown group state: ", self._cur_state)
 
     def start_green(self) -> None:
         """
         Puts the group to active green. The group will be responsible
         for returning to passive green after the conditions are met.
         """
+        # If group is already in active green, it will remain like this
+        if self._cur_state == GroupState.ACTIVE_GREEN:
+            return
         self._cur_state = GroupState.ACTIVE_GREEN
         self._green_start_time = self._timer.cycle_phase
         self._last_extended = None
+        self._last_priority_extended = None
 
         self._is_requesting = False
         self._is_priority_requesting = False
@@ -207,10 +208,35 @@ class SignalGroup:
             self._yellow_start_time = self._timer.cycle_phase
             self._green_start_time = None
 
-    def _get_new_state(self) -> GroupState:
-        # Only active green will be changed depending on traffic situation.
-        if self._cur_state != GroupState.ACTIVE_GREEN or self._green_start_time is None:
-            return self._cur_state
+    def _tick_on_red(self) -> None:
+        """Update group while on red.
+        This will update group's request status depending on detectors.
+        """
+        self._is_requesting = self._is_requesting or self._has_vehicles()
+        self._is_priority_requesting = (
+            self._is_priority_requesting or self._has_priority_vehicles()
+        )
+
+    def _tick_on_yellow(self) -> None:
+        """Update group while yellow.
+        This will check if group should turn red and update it's state according
+        to it.
+        """
+        if self._yellow_start_time is None:
+            self._yellow_start_time = self._timer.cycle_phase
+
+        time_since_yellow = (
+            self._timer.cycle_phase - self._yellow_start_time
+        ) % self._timer.cycle_length
+
+        if time_since_yellow >= self._yellow:
+            self._cur_state = GroupState.RED
+            self._yellow_start_time = None
+
+    def _tick_on_green(self) -> None:
+        # If green start time hasn't been recorded, it is set to current cycle phase.
+        if self._green_start_time is None:
+            self._green_start_time = self._timer.cycle_phase
 
         time_since_start = (
             self._timer.cycle_phase - self._green_start_time
@@ -218,58 +244,80 @@ class SignalGroup:
 
         # If minimum green hasn't been used, group remains in active green.
         if time_since_start < self._min_green:
-            return GroupState.ACTIVE_GREEN
+            return
 
+        # If group is priority extending and hasn't used the
+        # priority max time, it will continue it's extension.
         if self._is_priority_extending() and time_since_start < self._priority_max:
-            return GroupState.ACTIVE_GREEN
+            return
 
+        # This could be calculated once every green,
+        # but is done here to simplify the logic.
         max_sync_duration = (
             self._sync_end - self._green_start_time
         ) % self._timer.cycle_length
 
         # If group has exceeded its sync_end, it must end its active green.
         if time_since_start >= max_sync_duration:
-            return GroupState.PASSIVE_GREEN
+            self._cur_state = GroupState.PASSIVE_GREEN
+            return
 
+        # This could be calculated once every green,
+        # but is done here to simplify the logic.
         min_sync_duration = (
             self._min_end - self._green_start_time
         ) % self._timer.cycle_length
 
-        # If group doesn't want to extend and has passed min_end, it can end its active green.
+        # If group doesn't want to extend and has passed
+        # min_end, it can end its active green.
         if not self._is_extending() and time_since_start >= min_sync_duration:
-            return GroupState.PASSIVE_GREEN
+            self._cur_state = GroupState.PASSIVE_GREEN
+            return
 
-        # Otherwise the group stays active
-        return GroupState.ACTIVE_GREEN
-
-    def _update_extenders(self) -> None:
+    def _update_extension(self) -> None:
         """
         Updates the extension timer based on state and detector readings.
         """
         if self._cur_state != GroupState.ACTIVE_GREEN:
             self._last_extended = None
+            self._last_priority_extended = None
             return
 
+        # Update regular extension timer.
         if self._has_vehicles():
             self._last_extended = self._timer.cycle_phase
 
+        # Update priority extension timer.
+        if self._has_priority_vehicles():
+            self._last_priority_extended = self._timer.cycle_phase
+
     def _is_extending(self) -> bool:
-        """
-        Checks if the group is currently trying to extend its active green.
-        """
+        """Check if the group is currently trying to extend its active green."""
         if self._cur_state != GroupState.ACTIVE_GREEN or self._last_extended is None:
             return False
 
-        # Calculate exactly how many seconds have flown by since the last vehicle reset
+        # Calculate exactly how many seconds have flown by since the last vehicle.
         time_since_last_vehicle = (
             self._timer.cycle_phase - self._last_extended
         ) % self._timer.cycle_length
 
-        # If the gap between vehicles is smaller than our threshold, keep extending
+        # If the gap between vehicles is smaller than our threshold, keep extending.
         return time_since_last_vehicle < EXTENSION_LENGTH
 
     def _is_priority_extending(self) -> bool:
-        return self._has_priority_vehicles()
+        """Check if the group is currently trying to priority extend its active green."""
+        if self._last_priority_extended is None:
+            return False
+
+        # Calculate exactly how many seconds have
+        # flown by since the last priority vehicle
+        time_since_last_priority_vehicle = (
+            self._timer.cycle_phase - self._last_priority_extended
+        ) % self._timer.cycle_length
+
+        # If the gap between priority vehicles is
+        # smaller than our threshold, keep extending
+        return time_since_last_priority_vehicle < EXTENSION_LENGTH
 
     def _has_vehicles(self) -> bool:
         veh_count = sum(det.veh_count() for det in self._e3_detectors)
