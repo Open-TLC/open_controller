@@ -5,6 +5,7 @@ description = "Open Controller is an open source signal controller"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "gymnasium>=1.3.0",
     "jsmin>=3.0.1",
     "keyboard>=0.13.5",
     "libsumo>=1.27.0",
