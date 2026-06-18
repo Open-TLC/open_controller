@@ -4,6 +4,7 @@ from typing import Any
 import gymnasium
 import numpy as np
 
+from .configuration import TrafficEnvConf
 from .safety_controller import SafetyController
 from .simengine import SimEngine
 
@@ -17,19 +18,19 @@ class TrafficEnv(gymnasium.Env):
     conflicting signal phases.
     """
 
-    def __init__(self, simengine: SimEngine, conf: dict) -> None:
+    def __init__(self, simengine: SimEngine, conf: TrafficEnvConf) -> None:
         self._simengine = simengine
-        self._controller_id: str = conf["sumo_name"]
+        self._controller_id: str = conf.sumo_name
 
         # How many simulation steps to advance per one environment step.
-        self._simulation_steps_per_step: int = conf["simulation_step_count"]
+        self._simulation_steps_per_step: int = conf.simulation_step_count
 
         # Length of the simulated step in seconds.
         self._step_length: float = (
             self._simengine.get_step_length() * self._simulation_steps_per_step
         )
 
-        self._intergreens = np.array(conf["intergreens"])
+        self._intergreens = np.array(conf.intergreens)
 
         # List of all legal state combinations.
         self._phases: np.ndarray = self._get_possible_phases(self._intergreens)
@@ -39,6 +40,9 @@ class TrafficEnv(gymnasium.Env):
 
         # Action space maps a discrete number to a possible phase.
         self._action_space = gymnasium.spaces.Discrete(self._phases.shape[0])
+
+        # Track the state of the controller.
+        self._cur_phase_idx = 0
 
     def reset(
         self, *, options: dict | None = None, seed: int | None = None
@@ -52,11 +56,13 @@ class TrafficEnv(gymnasium.Env):
         # Reset the controller.
         self._safety_controller = SafetyController(self._intergreens, self._step_length)
 
+        self._cur_phase_idx = 0
         observation: np.ndarray = self._get_observation()
         info: dict[str, Any] = {"message": "Not implemented"}
         return observation, info
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        self._cur_phase_idx = action
         # TODO: Currently signal group states are only updated once per step. This
         # doesn't take into consideration that the intergreen times can expire between
         # simulation steps. This isn't likely a major problem, since once per sec is
@@ -86,9 +92,15 @@ class TrafficEnv(gymnasium.Env):
         self._simengine.close()
 
     def _get_observation(self) -> np.ndarray:
-        traffic_state = self._simengine.get_traffic_state()
+        self._detector_readings = self._simengine.get_detector_readings()
 
-        return np.array([list(area.values()) for area in traffic_state.values()])
+        traffic_information = np.array(
+            [list(area.values()) for area in self._detector_readings]
+        )
+
+        # Current phase is added so agent can know
+        # the previous state of the controller.
+        return np.append(traffic_information, self._cur_phase_idx)
 
     def _get_group_states(self, phase_idx: int) -> str:
         new_phase: np.ndarray = self._phases[phase_idx]
@@ -102,10 +114,9 @@ class TrafficEnv(gymnasium.Env):
         Returns:
             Reward as a negative number. Higher means better performance.
         """
-        # TODO: Decide which vehicles to get.
-        vehicle_ids: list[str] = []
-
-        wait_times = np.array(self._simengine.get_wait_times(vehicle_ids))
+        wait_times = np.array(
+            [reading["average_time_loss"] for reading in self._detector_readings]
+        )
 
         if wait_times.size == 0:
             return 0.0
