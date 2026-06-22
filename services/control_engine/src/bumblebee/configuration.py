@@ -7,6 +7,7 @@ from services.control_engine.src.detectors.configuration import (
 
 class TrainerConf:
     def __init__(self, conf: dict[str, Any]) -> None:
+        self.algorithm: str = conf["algorithm"]
         self.total_steps: int = conf["training_steps"]
         self.traffic_env = TrafficEnvConf(conf["traffic_env"])
         self.simengine = SimEngineConf(conf["simengine"])
@@ -31,7 +32,7 @@ class SimEngineConf:
 
 class BumblebeeControllerConf:
     def __init__(self, conf: dict[str, Any]) -> None:
-        self.model_type = conf["model_type"]
+        self.algorithm = conf["algorithm"]
         self.model_path = conf["model_path"]
 
         # Length of a tick in seconds.

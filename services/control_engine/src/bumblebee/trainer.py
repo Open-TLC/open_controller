@@ -1,7 +1,8 @@
 import argparse
 import json
 
-from stable_baselines3 import DQN
+from stable_baselines3 import DQN, PPO
+from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.env_checker import check_env
 
 from .configuration import TrainerConf
@@ -41,7 +42,14 @@ def main() -> None:
     print("Environment checked!")
 
     print("Starting model training...")
-    model = DQN("MlpPolicy", env, verbose=1)
+    model: BaseAlgorithm
+    if conf.algorithm == "dqn":
+        model = DQN("MlpPolicy", env, verbose=1)
+    elif conf.algorithm == "ppo":
+        model = PPO("MlpPolicy", env, verbose=1)
+    else:
+        raise ValueError("Unknown RL algorithm: ", conf.algorithm)
+
     model.learn(total_timesteps=conf.total_steps, progress_bar=True)
     print("Model trained!")
 
