@@ -101,8 +101,6 @@ class TrafficEnv(gymnasium.Env):
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         self._cur_step += 1
-        if self._cur_phase_idx != action:
-            print(f"{self._cur_step}")
         self._cur_phase_idx = action
         # TODO: Currently signal group states are only updated once per step. This
         # doesn't take into consideration that the intergreen times can expire between
@@ -147,11 +145,9 @@ class TrafficEnv(gymnasium.Env):
 
         readings = get_detector_readings(self._detectors)
 
-        wait_times = np.array([reading["average_time_loss"] for reading in readings])
+        queue_lengths = np.array([reading["vehicle_count"] for reading in readings])
 
-        if wait_times.size == 0:
+        if queue_lengths.size == 0:
             return reward
 
-        mean_square = np.mean(wait_times)
-
-        return reward - float(mean_square)
+        return reward - float(np.sum(queue_lengths))
