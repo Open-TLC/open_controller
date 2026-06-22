@@ -4,6 +4,8 @@ from .area_detector import AreaDetector
 
 
 class E3AreaDetector(AreaDetector):
+    """AreaDetector implementation using SUMO's E3 detector."""
+
     def __init__(self, detector_id: str) -> None:
         super().__init__()
 
