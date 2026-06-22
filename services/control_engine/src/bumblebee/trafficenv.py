@@ -1,10 +1,14 @@
-from itertools import product
 from typing import Any
 
 import gymnasium
 import numpy as np
 
+from services.control_engine.src.detectors.area_detector import AreaDetector
+from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
+from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
+
 from .configuration import TrafficEnvConf
+from .rl_util import get_detector_readings, get_observation
 from .safety_controller import SafetyController
 from .simengine import SimEngine
 
@@ -18,8 +22,13 @@ class TrafficEnv(gymnasium.Env):
     conflicting signal phases.
     """
 
-    def __init__(self, simengine: SimEngine, conf: TrafficEnvConf) -> None:
+    def __init__(
+        self,
+        simengine: SimEngine,
+        conf: TrafficEnvConf,
+    ) -> None:
         self._simengine = simengine
+        self._simengine.reset()
         self._controller_id: str = conf.sumo_name
 
         # How many simulation steps to advance per one environment step.
@@ -32,23 +41,50 @@ class TrafficEnv(gymnasium.Env):
 
         self._intergreens = np.array(conf.intergreens)
 
-        # List of all legal state combinations.
-        self._phases: np.ndarray = self._get_possible_phases(self._intergreens)
-
         # Safety controller for handling conflicting phases and intergreens.
         self._safety_controller = SafetyController(self._intergreens, self._step_length)
 
         # Action space maps a discrete number to a possible phase.
-        self._action_space = gymnasium.spaces.Discrete(self._phases.shape[0])
+        self.action_space = gymnasium.spaces.Discrete(
+            self._safety_controller.phase_count
+        )
+
+        self._detectors: list[AreaDetector] = []
+        for detector_conf in conf.detector_confs:
+            detector: AreaDetector
+            det_type: str = detector_conf.type
+            det_id: str = detector_conf.id
+            if det_type == "e2_detector":
+                detector = E2AreaDetector(det_id)
+            elif det_type == "e3_detector":
+                detector = E3AreaDetector(det_id)
+            else:
+                raise ValueError(
+                    f"Unknown detector type for detector {det_id}: {det_type}"
+                )
+            self._detectors.append(detector)
+
+        # Each detector 3 values + 1 value from current controller state.
+        obs_dim = (3 * len(self._detectors)) + 1
+
+        self.observation_space = gymnasium.spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(obs_dim,),
+            dtype=np.float32,
+        )
 
         # Track the state of the controller.
         self._cur_phase_idx = 0
+
+        # Keep track of steps.
+        self._cur_step = 0
+        self._episode_max_steps = conf.episode_steps
 
     def reset(
         self, *, options: dict | None = None, seed: int | None = None
     ) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
-        print(options)
 
         # Reset the simulation.
         self._simengine.reset()
@@ -57,11 +93,16 @@ class TrafficEnv(gymnasium.Env):
         self._safety_controller = SafetyController(self._intergreens, self._step_length)
 
         self._cur_phase_idx = 0
-        observation: np.ndarray = self._get_observation()
-        info: dict[str, Any] = {"message": "Not implemented"}
+        self._cur_step = 0
+
+        observation: np.ndarray = get_observation(self._cur_phase_idx, self._detectors)
+        info: dict[str, Any] = {"status": "initialized"}
         return observation, info
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        self._cur_step += 1
+        if self._cur_phase_idx != action:
+            print(f"{self._cur_step}")
         self._cur_phase_idx = action
         # TODO: Currently signal group states are only updated once per step. This
         # doesn't take into consideration that the intergreen times can expire between
@@ -69,7 +110,7 @@ class TrafficEnv(gymnasium.Env):
         # still frequent enough and intergreen times are usually full seconds.
 
         # Turn action to SUMO state string.
-        new_states = self._get_group_states(action)
+        new_states = self._safety_controller.step(action)
 
         # Set signal group states in simulation to the new states.
         self._simengine.set_signal_group_states(self._controller_id, new_states)
@@ -77,11 +118,14 @@ class TrafficEnv(gymnasium.Env):
         # Advance the simulation.
         self._simengine.step(self._simulation_steps_per_step)
 
-        observation: np.ndarray = self._get_observation()
+        observation: np.ndarray = get_observation(self._cur_phase_idx, self._detectors)
         reward: float = self._reward()
-        terminated: bool = len(self._simengine.get_teleported()) > 0
-        truncated: bool = len(self._simengine.get_teleported()) > 0
-        info: dict[str, Any] = {"message": "Not implemented"}
+        terminated: bool = (
+            len(self._simengine.get_teleported()) > 0
+            or self._cur_step > self._episode_max_steps
+        )
+        truncated: bool = False
+        info: dict[str, Any] = {"current_phase": action}
 
         return observation, reward, terminated, truncated, info
 
@@ -91,78 +135,23 @@ class TrafficEnv(gymnasium.Env):
     def close(self) -> None:
         self._simengine.close()
 
-    def _get_observation(self) -> np.ndarray:
-        self._detector_readings = self._simengine.get_detector_readings()
-
-        traffic_information = np.array(
-            [list(area.values()) for area in self._detector_readings]
-        )
-
-        # Current phase is added so agent can know
-        # the previous state of the controller.
-        return np.append(traffic_information, self._cur_phase_idx)
-
-    def _get_group_states(self, phase_idx: int) -> str:
-        new_phase: np.ndarray = self._phases[phase_idx]
-        new_states = self._safety_controller.step(new_phase)
-
-        return new_states
-
     def _reward(self) -> float:
         """Calculate reward for last step.
 
         Returns:
             Reward as a negative number. Higher means better performance.
         """
-        wait_times = np.array(
-            [reading["average_time_loss"] for reading in self._detector_readings]
-        )
+        teleported: int = len(self._simengine.get_teleported())
+
+        reward = teleported * (-1000)
+
+        readings = get_detector_readings(self._detectors)
+
+        wait_times = np.array([reading["average_time_loss"] for reading in readings])
 
         if wait_times.size == 0:
-            return 0.0
+            return reward
 
-        mean_square = np.mean(wait_times**2)
+        mean_square = np.mean(wait_times)
 
-        return -float(mean_square)
-
-    def _get_possible_phases(self, intergreens: np.ndarray) -> np.ndarray:
-        """Get all possible phases based on the intergreen matrix.
-
-        Args:
-            intergreens: Intergreen times as a matrix. Each row represents an
-                origin group and each column the target group. Each element is
-                the shortest time between the origin and target group.
-
-        Returns:
-            List of possible phases as a 2D matrix. 1 means green and 0 means red.
-        """
-        num_groups = intergreens.shape[0]
-
-        # Groups conflict if either origin->target or
-        # target->origin requires intergreen time > 0.
-        conflict_matrix = (intergreens > 0) | (intergreens.T > 0)
-
-        # Group doesn't conflict with itself.
-        np.fill_diagonal(conflict_matrix, False)
-
-        possible_phases = []
-
-        # Generate all possible binary combinations for groups.
-        for phase in product([0, 1], repeat=num_groups):
-            phase_arr = np.array(phase)
-
-            # Get indices of all groups that want to be green (1).
-            green_indices = np.where(phase_arr == 1)[0]
-
-            # Extract conflicts between green groups from conflict matrix.
-            conflicting_greens = conflict_matrix[np.ix_(green_indices, green_indices)]
-
-            # If phase doesn't contain conflicting green's,
-            # it is added to the list of possible phases.
-            if not np.any(conflicting_greens):
-                possible_phases.append(phase_arr)
-
-        if len(possible_phases) == 0:
-            raise ValueError("No possible phases in intergreen matrix")
-
-        return np.array(possible_phases)
+        return reward - float(mean_square)

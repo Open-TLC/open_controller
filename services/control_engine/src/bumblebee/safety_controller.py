@@ -1,3 +1,5 @@
+from itertools import product
+
 import numpy as np
 
 
@@ -37,7 +39,14 @@ class SafetyController:
         # How long to remain not green.
         self._lockout_timers = np.zeros(self._num_groups)
 
-    def step(self, new_phase: np.ndarray) -> str:
+        # Numpy matrix representing all possible phases the controller can have.
+        self._phases = self._get_possible_phases()
+
+    @property
+    def phase_count(self) -> int:
+        return self._phases.shape[0]
+
+    def step(self, new_phase_idx: int) -> str:
         """Advance controller by one time step.
 
         Args:
@@ -47,6 +56,7 @@ class SafetyController:
         Returns:
             SUMO signal group state string.
         """
+        new_phase = self._phases[new_phase_idx]
 
         # Green -> Red transitions.
         for i in range(self._num_groups):
@@ -104,3 +114,45 @@ class SafetyController:
                         self._yellow_timers[j] = 0.0
 
         return "".join(self._current_group_states)
+
+    def _get_possible_phases(self) -> np.ndarray:
+        """Get all possible phases based on the intergreen matrix.
+
+        Args:
+            intergreens: Intergreen times as a matrix. Each row represents an
+                origin group and each column the target group. Each element is
+                the shortest time between the origin and target group.
+
+        Returns:
+            List of possible phases as a 2D matrix. 1 means green and 0 means red.
+        """
+        num_groups = self._intergreens.shape[0]
+
+        # Groups conflict if either origin->target or
+        # target->origin requires intergreen time > 0.
+        conflict_matrix = (self._intergreens > 0) | (self._intergreens.T > 0)
+
+        # Group doesn't conflict with itself.
+        np.fill_diagonal(conflict_matrix, False)
+
+        possible_phases = []
+
+        # Generate all possible binary combinations for groups.
+        for phase in product([0, 1], repeat=num_groups):
+            phase_arr = np.array(phase)
+
+            # Get indices of all groups that want to be green (1).
+            green_indices = np.where(phase_arr == 1)[0]
+
+            # Extract conflicts between green groups from conflict matrix.
+            conflicting_greens = conflict_matrix[np.ix_(green_indices, green_indices)]
+
+            # If phase doesn't contain conflicting green's,
+            # it is added to the list of possible phases.
+            if not np.any(conflicting_greens):
+                possible_phases.append(phase_arr)
+
+        if len(possible_phases) == 0:
+            raise ValueError("No possible phases in intergreen matrix")
+
+        return np.array(possible_phases)

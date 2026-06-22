@@ -15,6 +15,7 @@ dependencies = [
     "python-dateutil>=2.9.0.post0",
     "pytz>=2026.2",
     "six>=1.17.0",
+    "stable-baselines3[extra]>=2.9.0",
     "traci>=1.27.0",
     "transitions>=0.9.3",
     "tzdata>=2026.2",
