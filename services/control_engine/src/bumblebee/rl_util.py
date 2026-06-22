@@ -17,11 +17,9 @@ def get_observation(
     Returns:
         Detector readings and phase index in a numpy array.
     """
-    readings = get_detector_readings(detectors)
-
-    obs_list = []
-    for area in readings:
-        obs_list.extend(area.values())
+    obs_list: list[float] = []
+    for detector in detectors:
+        obs_list.append(detector.vehicle_count())
 
     obs_list.append(current_phase_idx)
 

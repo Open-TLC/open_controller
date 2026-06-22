@@ -64,8 +64,8 @@ class TrafficEnv(gymnasium.Env):
                 )
             self._detectors.append(detector)
 
-        # Each detector 3 values + 1 value from current controller state.
-        obs_dim = (3 * len(self._detectors)) + 1
+        # Each detector provides 1 value and current phase is added on top.
+        obs_dim = len(self._detectors) + 1
 
         self.observation_space = gymnasium.spaces.Box(
             low=-np.inf,
