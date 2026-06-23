@@ -42,25 +42,10 @@ sys.path.append(engine_path)
 from signal_group_controller import PhaseRingController
 
 
-def read_conf(file_name):
-    """Opens the file and returns values as a dictionary"""
-    config = {}
-    try:
-        with open(file_name) as json_cnf_file:
-            config = json.loads(jsmin(json_cnf_file.read()))
-    except FileNotFoundError:
-        print("File does not exist:", file_name)
-        print("Exiting...")
-        sys.exit()
-    # Should we add sanity check for input?
-    return config
-
-
 # We run the sumo model based on conf dictionery given as parameter
-def run_sumo(conf_filename: str | None = None, runlog=None):
+def run_sumo():
     """Run sumo with given configuration"""
-    print("Running sumo with conf", conf_filename)
-    unit_cnf = GlobalConf(filename=conf_filename)  # objekti
+    unit_cnf = GlobalConf()  # Open Controller configuration.
 
     # Imprtinc components from control_engine
     # FIXME:We should not use paths, insteead different sercives should
@@ -277,8 +262,6 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
                             ].last_print = system_timer.steps
                     else:
                         print(clk + " " + key + " " + statusstring)
-                    if runlog:
-                        runlog.add_line(statusstring)
 
             # detections_to_controller(sumo_loops, sumo_to_dets)
             if SUMOSIM:
@@ -725,6 +708,4 @@ def print_det_status():
 
 
 if __name__ == "__main__":
-    # main_runsumo()
-    # run_sumo("../models/4leg/4leg.json")
     run_sumo()

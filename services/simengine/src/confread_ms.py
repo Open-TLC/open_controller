@@ -1,153 +1,101 @@
-""" -*- coding: utf-8 -*-
-This unti handles the reading of configuration
-from file (client_conf.json by default)
+"""This module provides an object for configuring Open Controller for running
+in integrated simulation mode. It will read command line arguments and configuration
+file specified in CLI args.
 """
 
 # Copyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 #
 
-import json
 import argparse
-import sys
-from jsmin import jsmin
+import json
+from typing import Any
 
-# Default values
-DEFAULT_FILENAME = "client_conf.json"
-IMPL_VERSION = "0.1"
-SOFTWARE_NAME = "TrafficController"
+from jsmin import jsmin
 
 
 class GlobalConf:
-    "Class for handling all the software configuration (read only)"
+    """Open Controller configuration object for runnin integrated simulations.
 
-    def __init__(self, filename=None):
+    This contains configurable options for the simulation, timer, and controller."""
 
-        # To store command line settings
-        self.command_line = {}
+    def __init__(self):
+        # Step 1: read the command line params.
+        command_line_params = self._read_command_line()
 
-        # To store settings given by conf-file
-        self.file_conf = {}
+        # Step 2: read configuration from the file specified in command line.
+        file_conf = self._read_conf(command_line_params["conf_file"])
 
-        # Combination of file and command line, this is the settings
-        # to be used
-        # note: this should NOT changed after the initial read
-        self.cnf = {}
-        self.parser = None
-        if not filename:
-            # Read conf from command line + given file/default file
-            self.set_conf_parameters()
-        else:
-            # Simply read the params from given file
-            self.cnf = self.read_conf(filename)
+        # Step 3: set the initial configuration to the file config.
+        conf = file_conf
 
-
-    def set_conf_parameters(self):
-        """Sets up all the conf in self.cnf
-        This happens by reading both the command line
-        and configuration file. The self.cnf should
-        not be tampered with after this"""
-
-        # Step 1: read the command line params
-        command_line_params = self.read_command_line()
-        self.command_line = vars(command_line_params)
-
-        # Add sumo params as subdictionary, an example
-        #self.command_line['sumo'] = {'graph': self.command_line['graph']}
-
-        # Step 2: read conf-file (as defined in command line, if defined)
-        if command_line_params.conf_file:
-            self.file_conf = self.read_conf(command_line_params.conf_file)
-        else:
-            self.file_conf = self.read_conf(DEFAULT_FILENAME)
-
-        # Step 3: combine both to CLOBAL_CONF
-        self.cnf = self.file_conf
-
-        # print(self.command_line)
-        # remove keys not set at command line
+        # Step 4: remove empty options from command line.
         none_keys = []
-        for k, v in self.command_line.items():
+        for k, v in command_line_params.items():
             if v is None:
                 none_keys.append(k)
         for k in none_keys:
-            del self.command_line[k]
+            del command_line_params[k]
 
-        self.cnf.update(self.command_line)
-        # Note: this will replace file settings with command line
-        # Given that they have the same name. Won't work with
-        # a more complicated set up (not to be used without conf?)
+        # Step 5: override file options with command line options.
+        conf["sumo"].update(command_line_params)
 
-    def read_command_line(self):
-        """Returns parsed command line arguments
-        used for client serving data from nats to db
-        """
-        operation_description = """
-        Service for connecting to the NATS reading data, manipulating it
-        and inserting the data into a db
+        self.cnf = conf
+
+    def _read_command_line(self) -> dict[str, Any]:
+        """Read command line arguments.
+
+        Returns:
+            Command line arguments as a dictionary.
         """
 
-        self.parser = argparse.ArgumentParser(
-            description=operation_description)
+        parser = argparse.ArgumentParser()
 
-        vers = SOFTWARE_NAME + " v. " + IMPL_VERSION
-        self.parser.add_argument('--version', action='version', version=vers)
+        parser.add_argument(
+            "--conf-file",
+            help="Open Controller configuration file (JSON)",
+            required=True,
+        )
 
+        parser.add_argument(
+            "--control-engine-path",
+            help="Path to control engine, needed for some special installation setups",
+            required=False,
+        )
 
-        self.parser.add_argument('--conf-file',
-                                 help='Config file '
-                                      '(default: client_conf.json)',
-                                 required=False)
+        parser.add_argument(
+            "--graph",
+            help="If set, run graphical version of sumo",
+            action="store_true",
+            required=False,
+        )
 
-        self.parser.add_argument('--control-engine-path',
-                                    help='Path to control engine, needed for some special installation setups',
-                                    required=False)
-        
-        self.parser.add_argument('--graph',
-                                 help='If set, run graphical version of sumo',
-                                 action='store_true',
-                                 required=False)
+        parser.add_argument(
+            "--print-status",
+            help="If set, prints status info in every update",
+            action="store_true",
+            required=False,
+        )
 
+        args = parser.parse_args()
 
-        self.parser.add_argument('--print-status',
-                                 help='If set, prints status info in every update',
-                                 action='store_true',
-                                 required=False)
+        return vars(args)
 
-
-        args = self.parser.parse_args()
-
-        return args
-
-
-    def read_conf(self, file_name):
+    def _read_conf(self, filename: str) -> dict[str, Any]:
         """Opens the file and returns values as a dictionary"""
-        config = {}
-        try:
-            with open(file_name) as json_cnf_file:
-                print('File found:', file_name)
-                config = json.loads(jsmin(json_cnf_file.read()))
-        except FileNotFoundError:
-            print('File does not exist:', file_name)
-            print('Exiting...')
-            sys.exit()
+        config: dict[str, Any] = {}
+        with open(filename) as json_cnf_file:
+            config = json.loads(jsmin(json_cnf_file.read()))
 
-        # Should we add sanity check for input?
+        if len(config.keys()) == 0:
+            raise ValueError("No configurations in file: ", filename)
+
         return config
 
     def get_controller_params(self):
-        print('controller params: ', self.cnf)
-        print('keys: ', self.cnf.keys())
+        print("controller params: ", self.cnf)
+        print("keys: ", self.cnf.keys())
         controller_names = list(self.cnf.keys())
         first_controller_name = controller_names[0]
         controller_params = self.cnf[first_controller_name]
         return controller_params
-    
-
-
-if __name__ == '__main__':
-    print("testing for the confread")
-    test_cnf = GlobalConf()
-#    test_cnf.set_conf_parameters()
-
-    print(test_cnf.cnf)
