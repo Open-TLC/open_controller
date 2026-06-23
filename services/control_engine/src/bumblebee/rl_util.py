@@ -1,5 +1,5 @@
 import numpy as np
-from stable_baselines3 import DQN, PPO, SAC
+from stable_baselines3 import DQN, PPO
 from stable_baselines3.common.base_class import BaseAlgorithm
 
 from services.control_engine.src.detectors.area_detector import AreaDetector
@@ -56,16 +56,14 @@ def load_model(model_type: str, filename: str) -> BaseAlgorithm:
     """Load StableBaselines3 model from a file.
 
     Args:
-        model_type: Model algorithm (currently supported: sac, ppo, dqn).
+        model_type: Model algorithm (currently supported: ppo, dqn).
         filename: Path to the saved model file.
 
     Returns:
         Model object loaded from the file.
     """
     model: BaseAlgorithm
-    if model_type == "sac":
-        model = SAC.load(filename)
-    elif model_type == "ppo":
+    if model_type == "ppo":
         model = PPO.load(filename)
     elif model_type == "dqn":
         model = DQN.load(filename)
