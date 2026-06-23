@@ -17,7 +17,10 @@ class TrafficEnvConf:
     def __init__(self, conf: dict[str, Any]) -> None:
         self.episode_steps: int = int(conf["episode_steps"])
         self.sumo_name: str = str(conf["sumo_name"])
-        self.simulation_step_count: int = int(conf["simulation_step_count"])
+        # Length of a training step in seconds.
+        # Defaults to 1 s.
+        val = conf.get("step_length")
+        self.step_length: float = float(val) if val is not None else 1.0
         self.intergreens: list[list[float]] = conf["intergreens"]
 
         self.detector_confs: list[AreaDetectorConfiguration] = []
@@ -28,6 +31,10 @@ class TrafficEnvConf:
 class SimEngineConf:
     def __init__(self, conf: dict[str, Any]) -> None:
         self.sumo_file: str = conf["sumo_file"]
+        # Length of a simulation step in seconds.
+        # Defaults to 0.1 s.
+        val = conf.get("step_length")
+        self.step_length: float = float(val) if val is not None else 0.1
 
 
 class BumblebeeControllerConf:
@@ -36,7 +43,8 @@ class BumblebeeControllerConf:
         self.model_path = conf["model_path"]
 
         # Length of a tick in seconds.
-        self.step_length: float = float(conf["step_length"])
+        val = conf.get("step_length")
+        self.step_length: float = float(val) if val is not None else 1.0
 
         self.intergreens: list[list[float]] = conf["intergreens"]
 

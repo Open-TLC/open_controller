@@ -14,22 +14,33 @@ class SimEngine:
 
     def __init__(self, conf: SimEngineConf) -> None:
         self._sumo_file = conf.sumo_file
+        if conf.step_length <= 0:
+            raise ValueError(f"Step length ({conf.step_length}) must be greater than 0")
+        self._step_length = conf.step_length
+        self._sumo_running: bool = False
 
     def reset(self) -> None:
         """Reset the simulation to its original state."""
+
         sumo_args = [
+            "sumo",
             "-c",
             self._sumo_file,
             "--quit-on-end",
             "--no-warnings",
             "--step-length",
-            "0.1",
+            str(self._step_length),
         ]
+
         try:
-            libsumo.load(sumo_args)
+            if not self._sumo_running:
+                libsumo.start(sumo_args)
+                self._sumo_running = True
+            else:
+                # If SUMO is already running, the executable name is skipped.
+                libsumo.load(sumo_args[1:])
         except Exception as e:
-            print(f"Error restarting SUMO {e}")
-            libsumo.start(sumo_args)
+            raise libsumo.FatalTraCIError(f"Starting SUMO failed: {e}")
 
     def step(self, time_step_count: int) -> None:
         """Advance the simulation by specified time steps."""
@@ -39,6 +50,7 @@ class SimEngine:
 
     def close(self) -> None:
         libsumo.close()
+        self._sumo_running = False
 
     def set_signal_group_states(
         self, signal_controller_id: str, new_states: str
@@ -54,9 +66,9 @@ class SimEngine:
 
         return libsumo.vehicle.getTeleportingIDList()
 
-    def get_step_length(self) -> float:
-        delta_t = libsumo.simulation.getDeltaT()
-        return delta_t
+    @property
+    def step_length(self) -> float:
+        return self._step_length
 
     def get_simulation_time(self) -> float:
         return libsumo.simulation.getTime()

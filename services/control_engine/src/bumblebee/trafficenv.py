@@ -1,3 +1,4 @@
+from math import isclose
 from typing import Any
 
 import gymnasium
@@ -28,21 +29,41 @@ class TrafficEnv(gymnasium.Env):
         conf: TrafficEnvConf,
     ) -> None:
         self._simengine = simengine
-        self._simengine.reset()
         self._controller_id: str = conf.sumo_name
 
-        # How many simulation steps to advance per one environment step.
-        self._simulation_steps_per_step: int = conf.simulation_step_count
+        # Length of a training step in seconds.
+        if conf.step_length <= 0:
+            raise ValueError(f"Step length ({conf.step_length}) must be greater than 0")
 
-        # Length of the simulated step in seconds.
-        self._step_length: float = (
-            self._simengine.get_step_length() * self._simulation_steps_per_step
+        if conf.step_length < self._simengine.step_length:
+            raise ValueError(
+                f"Environment step length ({conf.step_length}s) cannot be smaller than "
+                f"SimEngine step length ({self._simengine.step_length}s)."
+            )
+        self._step_length: float = conf.step_length
+
+        remainder = self._step_length % self._simengine.step_length
+        if not (
+            isclose(remainder, 0, abs_tol=1e-9)
+            or isclose(remainder, self._simengine.step_length, abs_tol=1e-9)
+        ):
+            raise ValueError(
+                f"Environment step length ({self._step_length}s) must be a perfect multiple "
+                f"of SimEngine step length ({self._simengine.step_length}s). "
+                f"Resulting steps would be a fractional {self._step_length / self._simengine.step_length}."
+            )
+
+        # How many simulation steps to advance per one environment step.
+        self._simulation_steps_per_step: int = round(
+            conf.step_length / self._simengine.step_length
         )
 
         self._intergreens = np.array(conf.intergreens)
 
         # Safety controller for handling conflicting phases and intergreens.
-        self._safety_controller = SafetyController(self._intergreens, self._step_length)
+        self._safety_controller = SafetyController(
+            self._intergreens, self._simengine.step_length
+        )
 
         # Action space maps a discrete number to a possible phase.
         self.action_space = gymnasium.spaces.Discrete(
@@ -74,11 +95,7 @@ class TrafficEnv(gymnasium.Env):
             dtype=np.float32,
         )
 
-        # Track the state of the controller.
-        self._cur_phase_idx = 0
-
         # Keep track of steps.
-        self._cur_step = 0
         self._episode_max_steps = conf.episode_steps
 
     def reset(
@@ -90,7 +107,9 @@ class TrafficEnv(gymnasium.Env):
         self._simengine.reset()
 
         # Reset the controller.
-        self._safety_controller = SafetyController(self._intergreens, self._step_length)
+        self._safety_controller = SafetyController(
+            self._intergreens, self._simengine.step_length
+        )
 
         self._cur_phase_idx = 0
         self._cur_step = 0
