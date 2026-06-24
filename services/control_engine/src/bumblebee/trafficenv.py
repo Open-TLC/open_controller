@@ -9,7 +9,7 @@ from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetecto
 from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
 
 from .configuration import TrafficEnvConf
-from .rl_util import get_detector_readings, get_observation
+from .rl_util import get_observation
 from .safety_controller import SafetyController
 from .simengine import SimEngine
 
@@ -203,15 +203,22 @@ class TrafficEnv(gymnasium.Env):
         Returns:
             Reward as a negative number. Higher means better performance.
         """
-        teleported: int = self._simengine.get_teleported_count
+        teleport_penalty = self._simengine.get_teleported_count * -1000
 
-        reward = teleported * (-1000)
+        queue_lengths = np.array(
+            [d.vehicle_count() for d in self._detectors], dtype=np.float32
+        )
 
-        readings = get_detector_readings(self._detectors)
+        # This is a threshold for approximating the number of cars that fit in
+        # a detectors area. If this is exceeded, the queue spills out of the
+        # detection area and the reward is adjusted to prevent this.
+        QUEUE_THRESHOLD: float = 8
 
-        queue_lengths = np.array([reading["vehicle_count"] for reading in readings])
+        exceeds_mask = queue_lengths > QUEUE_THRESHOLD
+        penalties = np.where(
+            exceeds_mask,
+            QUEUE_THRESHOLD + (queue_lengths - QUEUE_THRESHOLD) ** 2,
+            queue_lengths,
+        )
 
-        if queue_lengths.size == 0:
-            return reward
-
-        return reward - float(np.sum(queue_lengths))
+        return teleport_penalty - float(np.sum(penalties))

@@ -42,6 +42,10 @@ class SimEngine:
             "--no-warnings",
             "--step-length",
             str(self._step_length),
+            "--default.action-step-length",
+            "1.0",
+            "--time-to-teleport",
+            "120",
         ]
 
         try:
