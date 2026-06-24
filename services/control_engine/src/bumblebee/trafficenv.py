@@ -85,23 +85,38 @@ class TrafficEnv(gymnasium.Env):
                 )
             self._detectors.append(detector)
 
-        # Each detector provides 1 value and current phase is added on top.
-        obs_dim = len(self._detectors) + 1
+        # Detectors provide 1 reading each and phase is one-hot encoded on top.
+        obs_dim = len(self._detectors) + self._safety_controller.phase_count
 
         self.observation_space = gymnasium.spaces.Box(
-            low=-np.inf,
+            low=0,
             high=np.inf,
             shape=(obs_dim,),
             dtype=np.float32,
         )
 
         # Keep track of steps.
+        self._cur_step: int = 0
         self._episode_max_steps = conf.episode_steps
+
+        # Keep track of teleportations.
+        self._episode_teleported: int = 0
+
+        # Keep track of total travel time.
+        self._episode_travel_time: float = 0
+
+        # Keep track of finished vehicles count.
+        self._episode_vehicles: int = 0
 
     def reset(
         self, *, options: dict | None = None, seed: int | None = None
     ) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
+
+        self._episode_teleported = 0
+
+        self._episode_travel_time = 0
+        self._episode_vehicles = 0
 
         # Reset the simulation.
         self._simengine.reset()
@@ -114,7 +129,14 @@ class TrafficEnv(gymnasium.Env):
         self._cur_phase_idx = 0
         self._cur_step = 0
 
-        observation: np.ndarray = get_observation(self._cur_phase_idx, self._detectors)
+        observation_buffer = np.zeros(
+            len(self._detectors) + self._safety_controller.phase_count, dtype=np.float32
+        )
+
+        observation: np.ndarray = get_observation(
+            self._cur_phase_idx, self._detectors, observation_buffer
+        )
+
         info: dict[str, Any] = {"status": "initialized"}
         return observation, info
 
@@ -135,14 +157,35 @@ class TrafficEnv(gymnasium.Env):
         # Advance the simulation.
         self._simengine.step(self._simulation_steps_per_step)
 
-        observation: np.ndarray = get_observation(self._cur_phase_idx, self._detectors)
-        reward: float = self._reward()
-        terminated: bool = (
-            len(self._simengine.get_teleported()) > 0
-            or self._cur_step > self._episode_max_steps
+        observation_buffer = np.zeros(
+            len(self._detectors) + self._safety_controller.phase_count, dtype=np.float32
         )
+
+        observation: np.ndarray = get_observation(
+            self._cur_phase_idx, self._detectors, observation_buffer
+        )
+
+        reward: float = self._reward()
+
+        # Gather metric data.
+        self._episode_teleported += self._simengine.get_teleported_count
+        self._episode_travel_time += self._simengine.get_finished_travel_time
+        self._episode_vehicles += self._simengine.get_finished_vehicles_count
+
+        terminated: bool = self._cur_step > self._episode_max_steps
         truncated: bool = False
-        info: dict[str, Any] = {"current_phase": action}
+
+        info = {}
+
+        if terminated or truncated:
+            info["traffic"] = {
+                "teleported": self._episode_teleported,
+                "avg_travel_time": (
+                    self._episode_travel_time / self._episode_vehicles
+                    if self._episode_vehicles > 0
+                    else 0
+                ),
+            }
 
         return observation, reward, terminated, truncated, info
 
@@ -158,7 +201,7 @@ class TrafficEnv(gymnasium.Env):
         Returns:
             Reward as a negative number. Higher means better performance.
         """
-        teleported: int = len(self._simengine.get_teleported())
+        teleported: int = self._simengine.get_teleported_count
 
         reward = teleported * (-1000)
 

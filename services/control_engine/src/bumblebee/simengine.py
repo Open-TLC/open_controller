@@ -19,8 +19,20 @@ class SimEngine:
         self._step_length = conf.step_length
         self._sumo_running: bool = False
 
+        # Metric tracking variables
+        self._num_teleported_last_step: int = 0
+        self._finished_travel_time_last_step: float = 0.0
+        self._finished_vehicles_count_last_step: int = 0
+
+        # State tracking memory to map: { vehicle_id: departure_simulation_time }
+        self._departure_times: dict[str, float] = {}
+
     def reset(self) -> None:
         """Reset the simulation to its original state."""
+        self._num_teleported_last_step = 0
+        self._finished_travel_time_last_step = 0.0
+        self._finished_vehicles_count_last_step = 0
+        self._departure_times.clear()
 
         sumo_args = [
             "sumo",
@@ -39,14 +51,40 @@ class SimEngine:
             else:
                 # If SUMO is already running, the executable name is skipped.
                 libsumo.load(sumo_args[1:])
+
+            current_time = libsumo.simulation.getTime()
+            for veh_id in libsumo.vehicle.getIDList():
+                try:
+                    self._departure_times[veh_id] = libsumo.vehicle.getDeparture(veh_id)
+                except Exception:
+                    self._departure_times[veh_id] = current_time
         except Exception as e:
             raise libsumo.FatalTraCIError(f"Starting SUMO failed: {e}")
 
     def step(self, time_step_count: int) -> None:
         """Advance the simulation by specified time steps."""
+        self._num_teleported_last_step = 0
+        self._finished_travel_time_last_step = 0.0
+        self._finished_vehicles_count_last_step = 0
 
         for _ in range(time_step_count):
             libsumo.simulationStep()
+            current_time = libsumo.simulation.getTime()
+
+            self._num_teleported_last_step += (
+                libsumo.simulation.getStartingTeleportNumber()
+            )
+
+            for veh_id in libsumo.simulation.getDepartedIDList():
+                self._departure_times[veh_id] = current_time
+
+            for veh_id in libsumo.simulation.getArrivedIDList():
+                if veh_id in self._departure_times:
+                    depart_time = self._departure_times.pop(veh_id)
+                    travel_time = current_time - depart_time
+
+                    self._finished_travel_time_last_step += travel_time
+                    self._finished_vehicles_count_last_step += 1
 
     def close(self) -> None:
         libsumo.close()
@@ -57,14 +95,25 @@ class SimEngine:
     ) -> None:
         libsumo.trafficlight.setRedYellowGreenState(signal_controller_id, new_states)
 
-    def get_teleported(self) -> list[str]:
-        """Get IDs of vehicles that teleported in the last step.
+    @property
+    def get_teleported_count(self) -> int:
+        """Get the number of vehicles that teleported in the last step.
 
         Returns:
-            List of vehicle IDs that have teleported during the last step.
+            Number of vehicle that have teleported during the last step.
         """
 
-        return libsumo.vehicle.getTeleportingIDList()
+        return self._num_teleported_last_step
+
+    @property
+    def get_finished_travel_time(self) -> float:
+        """Get the total accumulated travel time of vehicles that finished in the last step."""
+        return self._finished_travel_time_last_step
+
+    @property
+    def get_finished_vehicles_count(self) -> int:
+        """Get the total number of vehicles that finished in the last step."""
+        return self._finished_vehicles_count_last_step
 
     @property
     def step_length(self) -> float:
