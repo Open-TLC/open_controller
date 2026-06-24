@@ -6,29 +6,29 @@ from services.control_engine.src.detectors.area_detector import AreaDetector
 
 
 def get_observation(
-    current_phase_idx: int, detectors: list[AreaDetector], obs_buffer: np.ndarray
+    current_phase_idx: int, phase_count: int, detectors: list[AreaDetector]
 ) -> np.ndarray:
     """Get observation in Bumblebee standard format.
 
     Args:
         current_phase_idx: The index of the controllers current phase.
+        phase_count: Number of phases in the controller.
         detectors: Detectors from which to get data from.
-        obs_buffer: Pre-allocated NumPy array for the observation.
-            Note that the size should be: number of detectors + number of phases.
 
     Returns:
         Logarithmically scaled vehicle counts and one-hot encoded phase in an array.
     """
     num_detectors = len(detectors)
-    for i in range(num_detectors):
-        obs_buffer[i] = detectors[i].vehicle_count()
+    obs = np.zeros(num_detectors + phase_count, dtype=np.float32)
 
-    np.log1p(obs_buffer[:num_detectors], out=obs_buffer[:num_detectors])
+    for i, d in enumerate(detectors):
+        obs[i] = d.vehicle_count()
 
-    obs_buffer[num_detectors:] = 0.0
-    obs_buffer[num_detectors + current_phase_idx] = 1.0
+    np.log1p(obs[:num_detectors], out=obs[:num_detectors])
 
-    return obs_buffer
+    obs[len(detectors) + current_phase_idx] = 1.0
+
+    return obs
 
 
 def get_detector_readings(detectors: list[AreaDetector]) -> list[dict[str, float]]:

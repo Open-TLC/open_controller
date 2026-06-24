@@ -134,12 +134,8 @@ class TrafficEnv(gymnasium.Env):
         self._cur_phase_idx = 0
         self._cur_step = 0
 
-        observation_buffer = np.zeros(
-            len(self._detectors) + self._safety_controller.phase_count, dtype=np.float32
-        )
-
         observation: np.ndarray = get_observation(
-            self._cur_phase_idx, self._detectors, observation_buffer
+            self._cur_phase_idx, self._safety_controller.phase_count, self._detectors
         )
 
         info: dict[str, Any] = {"status": "initialized"}
@@ -162,12 +158,8 @@ class TrafficEnv(gymnasium.Env):
         # Advance the simulation.
         self._simengine.step(self._simulation_steps_per_step)
 
-        observation_buffer = np.zeros(
-            len(self._detectors) + self._safety_controller.phase_count, dtype=np.float32
-        )
-
         observation: np.ndarray = get_observation(
-            self._cur_phase_idx, self._detectors, observation_buffer
+            self._cur_phase_idx, self._safety_controller.phase_count, self._detectors
         )
 
         reward: float = self._reward()
