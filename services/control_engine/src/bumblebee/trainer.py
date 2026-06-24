@@ -2,7 +2,7 @@ import argparse
 import json
 
 from gymnasium.wrappers import RecordEpisodeStatistics
-from stable_baselines3 import DQN, PPO
+from stable_baselines3 import A2C, DQN, PPO
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.env_checker import check_env
@@ -63,6 +63,12 @@ def main() -> None:
         )
     elif conf.algorithm == "ppo":
         model = PPO(
+            "MlpPolicy",
+            env,
+            tensorboard_log=(tensorboard_dir if tensorboard_dir else None),
+        )
+    elif conf.algorithm == "a2c":
+        model = A2C(
             "MlpPolicy",
             env,
             tensorboard_log=(tensorboard_dir if tensorboard_dir else None),
