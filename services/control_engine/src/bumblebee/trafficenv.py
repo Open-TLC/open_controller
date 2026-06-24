@@ -108,6 +108,9 @@ class TrafficEnv(gymnasium.Env):
         # Keep track of finished vehicles count.
         self._episode_vehicles: int = 0
 
+        # Keep track of cumulative reward.
+        self._episode_reward: float = 0
+
     def reset(
         self, *, options: dict | None = None, seed: int | None = None
     ) -> tuple[np.ndarray, dict[str, Any]]:
@@ -117,6 +120,8 @@ class TrafficEnv(gymnasium.Env):
 
         self._episode_travel_time = 0
         self._episode_vehicles = 0
+
+        self._episode_reward = 0
 
         # Reset the simulation.
         self._simengine.reset()
@@ -171,6 +176,7 @@ class TrafficEnv(gymnasium.Env):
         self._episode_teleported += self._simengine.get_teleported_count
         self._episode_travel_time += self._simengine.get_finished_travel_time
         self._episode_vehicles += self._simengine.get_finished_vehicles_count
+        self._episode_reward += reward
 
         terminated: bool = self._cur_step > self._episode_max_steps
         truncated: bool = False
@@ -180,11 +186,15 @@ class TrafficEnv(gymnasium.Env):
         if terminated or truncated:
             info["traffic"] = {
                 "teleported": self._episode_teleported,
+                "finished": self._episode_vehicles,
                 "avg_travel_time": (
                     self._episode_travel_time / self._episode_vehicles
                     if self._episode_vehicles > 0
                     else 0
                 ),
+            }
+            info["metrics"] = {
+                "reward": self._episode_reward,
             }
 
         return observation, reward, terminated, truncated, info

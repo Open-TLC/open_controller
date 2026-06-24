@@ -96,10 +96,14 @@ class TrafficStatsCallback(BaseCallback):
                 traffic = info["traffic"]
 
                 self.logger.record("traffic/teleported", traffic.get("teleported"))
+                self.logger.record("traffic/finished", traffic.get("finished"))
 
                 self.logger.record(
                     "traffic/avg_travel_time", traffic.get("avg_travel_time")
                 )
+
+            if "metrics" in info:
+                self.logger.record("metrics/reward", info["metrics"].get("reward"))
 
         return True
 
