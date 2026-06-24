@@ -23,9 +23,14 @@ def main() -> None:
         "--model-file", help="File to save the trained model", required=True
     )
 
+    parser.add_argument(
+        "--tensorboard", help="Tensorboard log directory", required=False
+    )
+
     args = parser.parse_args()
     conf_filename: str = args.conf_file  # Configuration file location.
     model_file: str = args.model_file  # Target location for trained model.
+    tensorboard_dir: str = args.tensorboard  # Tensorboard log directory.
 
     try:
         with open(conf_filename, mode="r") as f:
@@ -37,7 +42,11 @@ def main() -> None:
 
     simengine = SimEngine(conf.simengine)
     env = TrafficEnv(simengine, conf.traffic_env)
-    env = RecordEpisodeStatistics(env)
+
+    # If tensorboard directory exists, environment is wrapped in a logging wrapper.
+    if tensorboard_dir != "":
+        env = RecordEpisodeStatistics(env)
+
     print("Environment created!")
 
     print("Checking environment...")
@@ -47,9 +56,17 @@ def main() -> None:
     print("Starting model training...")
     model: BaseAlgorithm
     if conf.algorithm == "dqn":
-        model = DQN("MlpPolicy", env, tensorboard_log="./tensorboard/")
+        model = DQN(
+            "MlpPolicy",
+            env,
+            tensorboard_log=(tensorboard_dir if tensorboard_dir else None),
+        )
     elif conf.algorithm == "ppo":
-        model = PPO("MlpPolicy", env, tensorboard_log="./tensorboard/")
+        model = PPO(
+            "MlpPolicy",
+            env,
+            tensorboard_log=(tensorboard_dir if tensorboard_dir else None),
+        )
     else:
         raise ValueError("Unknown RL algorithm: ", conf.algorithm)
 
