@@ -2,48 +2,90 @@
 
 ## TrafficEnv
 
-Bumblebee's TrafficEnv is a Gymnasium environment used to train and evaluate RL models on traffic signal control. The environment can provide observations and statistics about the traffic situation and execute signal states on configured signal groups.
-
-### Observation
-
-The environment can be configured to return various observations from the simulation, depending on the sensors in use and the specific data you want to utilize. Possible categories include (as sensor-specific averages):
-
-- Number of vehicles
-- Vehicle speed
-- Vehicle delay (time loss)
-- Number of vehicle stops
-- Number of heavy traffic vehicles
-- Number of public transit vehicles
-- Number of rail traffic vehicles
-- Loop occupancy rate
-- Loop vehicle length
-- Signal state (one-hot encoded)
-- Duration of the current signal state
-
-The desired observations are returned as a list of numerical values. The model must support a continuous observation space, though in practice, nearly all commonly used algorithms support this.
-
-### Reward
-
-A reward function is passed to the environment during initialization. This function has access to all the observations specified in the configuration. A set of pre-built reward functions must be available out of the box.
-
-### Action
-
-When the environment is initialized, it automatically generates a list of all possible allowed signal phases. Each phase is assigned its own integer index. The agent's task is to return the index of its desired phase, after which the environment will attempt to transition the simulation to that target state. The environment is responsible for translating this phase into signal states that SUMO can understand, as well as handling the assignment of intermediate yellow and red-yellow transition phases. The length of each step—meaning how frequently the states are updated—is also configured during the environment's initialization.
-
-The action space for this type of environment is discrete. The number of available actions is exactly equal to the number of possible phases.
+Bumblebee's TrafficEnv is a Gymnasium environment used to train and evaluate RL models on traffic signal control. The environment provides observations about the traffic situation and execute signal states on configured signal groups.
 
 ## SimEngine
 
-SimEngine is a simulation runner that is designed to work in RL applications. It can run simulations in steps to allow for neural network training which requires fine grained control over environment. SimEngine is designed to be used through Bumblebee's TrafficEnv environment. SimEngine can run in both headless and GUI mode to allow for quick training and visual debugging with the same environment.
+SimEngine is a simulation runner that is designed to work in RL applications. It can run simulations in steps to allow for neural network training which requires fine grained control over environment. SimEngine is designed to be used through Bumblebee's TrafficEnv environment.
 
 ## Trainer
 
-Script used for training models.
+Trainer, as the name suggests, is a training script for Bumblebee models. It will train a model with specified algorithm and for specified number of steps with a specified SUMO configuration.
 
-## Evaluator
+To run trainer, you need to have:
 
-Script used for evaluating models.
+1. `uv` [installed](https://docs.astral.sh/uv/getting-started/installation/) and added to path.
+2. SUMO configuration with at least one signallized intersection. Make sure to include E2 or E3 detectors for **ALL** approaching lanes.
+3. Bumblebee configuration file in the following format.
+
+```json
+{
+	"algorithm": "ppo",  // This can be either PPO, DQN or A2C
+	"training_steps": 100000,  // Should be above 10^5 for simple situation and higher for more complex intersections or traffic flows
+	"simengine": {
+		"sumo_file": "path/to/simulation.sumocfg",
+		"step_length": 1  // Single simulation step simulates 1 second of traffic
+	},
+	"traffic_env": {
+		"episode_steps": 3600,  // One episode simulates 3600 agent steps
+		"sumo_name": "controller1",  // SUMO ID of the traffic controller
+		"step_length": 1,  // One agent step advances the simulation by 1 step
+
+        // Regular intergreen matrix
+		"intergreens": [
+			[0, 0, 0, 3, 0, 0],
+			[0, 0, 0, 3, 3, 3],
+			[0, 0, 0, 0, 0, 3],
+			[3, 3, 0, 0, 0, 3],
+			[0, 3, 0, 0, 0, 0],
+			[0, 3, 3, 3, 0, 0]
+		],
+
+        // Detector configurations in the AreaDetector configuration format
+		"detectors": [
+			{
+				"type": "e2_detector",  // Can be either e2_detector or e3_detector
+				"id": "e2_0"  // SUMO ID of the detector
+			},
+			{
+				"type": "e2_detector",
+				"id": "e2_1"
+			},
+			{
+				"type": "e2_detector",
+				"id": "e2_2"
+			},
+			{
+				"type": "e2_detector",
+				"id": "e2_3"
+			},
+			{
+				"type": "e2_detector",
+				"id": "e2_4"
+			},
+			{
+				"type": "e2_detector",
+				"id": "e2_5"
+			}
+		]
+	}
+}
+```
+
+To install project dependencies run the following command in Open Controller project root.
+
+```bash
+uv sync
+```
+
+To train the model, run the following command in Open Controller project root.
+
+```bash
+uv run -m services.control_engine.src.bumblebee.trainer --conf-file path/to/bumblebee/conf.json --model-file path/to/result/file.zip --tensorboard path/to/training/log/dir/
+```
 
 ## Controller
 
 Signal controller that uses a trained model to decide signal timings.
+
+#opencontroller
