@@ -20,7 +20,7 @@ def main() -> None:
     )
 
     parser.add_argument(
-        "--model-file", help="File to save the trained model", required=True
+        "--model-file", help="File to save the trained model", required=False
     )
 
     parser.add_argument(
@@ -83,8 +83,9 @@ def main() -> None:
     )
     print("Model trained!")
 
-    model.save(model_file)
-    print("Model saved!")
+    if model_file:
+        model.save(model_file)
+        print("Model saved!")
 
 
 class TrafficStatsCallback(BaseCallback):
