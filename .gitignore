@@ -187,3 +187,6 @@ Pipfile
 
 # Dia 
 .$*.bkp
+
+# Neural network log files
+tensorboard
