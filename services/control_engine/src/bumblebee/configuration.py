@@ -21,6 +21,7 @@ class TrafficEnvConf:
         # Defaults to 1 s.
         val = conf.get("step_length")
         self.step_length: float = float(val) if val is not None else 1.0
+        self.group_outputs: list[int] = conf["group_outputs"]
         self.intergreens: list[list[float]] = conf["intergreens"]
 
         self.detector_confs: list[AreaDetectorConfiguration] = []

@@ -31,7 +31,7 @@ To run trainer, you need to have:
 		"sumo_name": "controller1",  // SUMO ID of the traffic controller
 		"step_length": 1,  // One agent step advances the simulation by 1 step
 
-        // Regular intergreen matrix
+		// Regular intergreen matrix (N x N, where N = number of logical signal groups)
 		"intergreens": [
 			[0, 0, 0, 3, 0, 0],
 			[0, 0, 0, 3, 3, 3],
@@ -40,6 +40,11 @@ To run trainer, you need to have:
 			[0, 3, 0, 0, 0, 0],
 			[0, 3, 3, 3, 0, 0]
 		],
+
+		// Mapping of physical SUMO signal links to logical signal groups.
+		// - Index of this list: The specific signal link ID in the SUMO network.
+		// - Value at index: The corresponding logical group index (from the intergreen matrix).
+		"group_outputs": [0, 1, 2, 3, 4, 5],
 
         // Detector configurations in the AreaDetector configuration format
 		"detectors": [

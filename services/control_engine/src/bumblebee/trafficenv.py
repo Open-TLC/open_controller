@@ -59,10 +59,11 @@ class TrafficEnv(gymnasium.Env):
         )
 
         self._intergreens = np.array(conf.intergreens)
+        self._group_outputs = conf.group_outputs
 
         # Safety controller for handling conflicting phases and intergreens.
         self._safety_controller = SafetyController(
-            self._intergreens, self._simengine.step_length
+            self._intergreens, self._group_outputs, self._simengine.step_length
         )
 
         # Action space maps a discrete number to a possible phase.
@@ -128,7 +129,7 @@ class TrafficEnv(gymnasium.Env):
 
         # Reset the controller.
         self._safety_controller = SafetyController(
-            self._intergreens, self._simengine.step_length
+            self._intergreens, self._group_outputs, self._simengine.step_length
         )
 
         self._cur_phase_idx = 0
