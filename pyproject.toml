@@ -25,3 +25,45 @@ dependencies = [
 dev = [
     "tensorboard>=2.20.0",
 ]
+
+[tool.ruff.lint]
+select = [
+    "A",     # flake8-builtins
+    "B",     # flake8-bugbear
+    "E",     # pycodestyle errors
+    "F",     # Pyflakes
+    "Q",     # flake8-quotes
+    "N",     # pep8-naming
+    "SLF",   # flake8-self
+    "COM",   # flake8-commas
+    "I",     # isort (import sorting)
+    "UP",    # pyupgrade (modern Python syntax)
+    "C4",    # flake8-comprehensions
+    "SIM",   # flake8-simplify
+    "S",     # flake8-bandit (security)
+    "ASYNC", # flake8-async (async/await checks)
+    "FURB",  # refurb (modernizing code)
+    "RUF",   # Ruff-specific rules
+    "RET",   # flake8-return
+    "TID",   # flake8-tidy-imports
+    "DOC",   # pydoclint (strict docstrings)
+    "D",     # pydocstyle (strict docstrings)
+    "PL",    # pylint
+    "ERA",   # eradicate (commented out code)
+#   "ANN",   # flake8-annotations (strict typing)
+]
+
+ignore = [
+    "PLR0913", # Too many arguments in function definition
+    "D100",    # Missing docstring in public module
+    "D104",    # Missing docstring in public package
+    "D107",    # Missing docstring in __init__
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+multiline-quotes = "double"
+docstring-quotes = "double"
+
+[tool.ruff.format]
+quote-style = "double"
