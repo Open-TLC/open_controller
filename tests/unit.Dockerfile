@@ -4,8 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install necessary system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	ca-certificates software-properties-common \
-	&& rm -rf /var/lib/apt/lists/*
+	ca-certificates software-properties-common
 
 # Install uv using the installation script
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -13,8 +12,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Add SUMO PPA and install
 RUN add-apt-repository ppa:sumo/stable && \
 	apt-get update && apt-get install -y --no-install-recommends \
-	sumo sumo-tools sumo-doc \
-	&& rm -rf /var/lib/apt/lists/*
+	sumo sumo-tools sumo-doc
 
 # Export SUMO_HOME so traci and libsumo can be found in python
 ENV SUMO_HOME="/usr/share/sumo"
@@ -30,8 +28,9 @@ ENV UV_LINK_MODE=copy
 COPY pyproject.toml /app
 RUN	uv sync --no-dev
 
-# Copy rest of the project and install rest of the dependencies
+# Copy rest of the project
 COPY . /app
+RUN uv sync --no-dev
 
 # Send python output directly to stdout or stderr
 # instead of writing to an intermediate buffer.

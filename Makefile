@@ -15,8 +15,5 @@ build-test:
 
 test: build-test
 	@docker run --rm --name $(UNIT_TEST_CONTAINER) $(UNIT_TEST_IMAGE)
-	# Run integration tests with the test model mounted to a volume.
-	# This will try to run models/test/simple with simengine_integrated.
-	# Test fails, if the run crashes.
 	@docker run --rm --name $(INTEGRATION_TEST_CONTAINER) $(INTEGRATION_TEST_IMAGE)
 
