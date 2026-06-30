@@ -138,5 +138,6 @@ class SafetyController:
 
         # All phases are combined.
         final_phases = np.vstack([maximal_phases, single_phases, all_red])
+
         # Duplicates are removed.
         return np.unique(final_phases, axis=0)

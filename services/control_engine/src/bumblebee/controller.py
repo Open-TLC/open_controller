@@ -47,7 +47,9 @@ class BumblebeeController:
         Returns:
             New states for signal groups in the SUMO format."""
 
-        obs = get_observation(self._cur_phase_idx, self._detectors)
+        obs = get_observation(
+            self._cur_phase_idx, len(self._detectors), self._detectors
+        )
         action, _ = self._model.predict(obs)
         self._cur_phase_idx = int(action.item())
 

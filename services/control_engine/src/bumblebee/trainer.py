@@ -16,11 +16,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--conf-file", help="Bumblebee trainer configuration file (JSON)", required=True
+        "--conf-file", help="Bumblebee trainer configuration file (json)", required=True
     )
 
     parser.add_argument(
-        "--model-file", help="File to save the trained model", required=False
+        "--model-file", help="File to save the trained model (zip)", required=False
     )
 
     parser.add_argument(
