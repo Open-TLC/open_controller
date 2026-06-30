@@ -24,6 +24,31 @@ class SignalController(ABC):
         """
         ...
 
+    @abstractmethod
+    def reset(self) -> None:
+        """Reset controller state.
+        All configurations are persisted.
+        """
+        ...
+
+    @abstractmethod
+    def reload(self) -> None:
+        """Reload controller from configuration."""
+        ...
+
+    @abstractmethod
+    def save(self, filename: str) -> None:
+        """Save current configuration to a file."""
+        ...
+
+    @abstractmethod
+    def all_red(self) -> None:
+        """Transition to all red.
+        Gracefully transition to all red and remain there indefinitely.
+        This is a safety feature used for unexpected situations (alien attack?).
+        """
+        ...
+
     @property
     @abstractmethod
     def status(self) -> ControllerStatus:
