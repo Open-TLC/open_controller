@@ -8,7 +8,7 @@ from services.control_engine.src.detectors.area_detector import AreaDetector
 from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
 from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
 
-from .configuration import TrafficEnvConf
+from .configuration import ControllerConf, TrafficEnvConf
 from .rl_util import get_observation
 from .safety_controller import SafetyController
 from .simengine import SimEngine
@@ -26,21 +26,24 @@ class TrafficEnv(gymnasium.Env):
     def __init__(
         self,
         simengine: SimEngine,
-        conf: TrafficEnvConf,
+        env_conf: TrafficEnvConf,
+        contr_conf: ControllerConf,
     ) -> None:
         self._simengine = simengine
-        self._controller_id: str = conf.sumo_name
+        self._controller_id: str = contr_conf.name
 
         # Length of a training step in seconds.
-        if conf.step_length <= 0:
-            raise ValueError(f"Step length ({conf.step_length}) must be greater than 0")
-
-        if conf.step_length < self._simengine.step_length:
+        if env_conf.step_length <= 0:
             raise ValueError(
-                f"Environment step length ({conf.step_length}s) cannot be smaller than "
+                f"Step length ({env_conf.step_length}) must be greater than 0"
+            )
+
+        if env_conf.step_length < self._simengine.step_length:
+            raise ValueError(
+                f"Environment step length ({env_conf.step_length}s) cannot be smaller than "
                 f"SimEngine step length ({self._simengine.step_length}s)."
             )
-        self._step_length: float = conf.step_length
+        self._step_length: float = env_conf.step_length
 
         remainder = self._step_length % self._simengine.step_length
         if not (
@@ -55,11 +58,11 @@ class TrafficEnv(gymnasium.Env):
 
         # How many simulation steps to advance per one environment step.
         self._simulation_steps_per_step: int = round(
-            conf.step_length / self._simengine.step_length
+            env_conf.step_length / self._simengine.step_length
         )
 
-        self._intergreens = np.array(conf.intergreens)
-        self._group_outputs = conf.group_outputs
+        self._intergreens = np.array(contr_conf.intergreens)
+        self._group_outputs = contr_conf.group_outputs
 
         # Safety controller for handling conflicting phases and intergreens.
         self._safety_controller = SafetyController(
@@ -72,7 +75,7 @@ class TrafficEnv(gymnasium.Env):
         )
 
         self._detectors: list[AreaDetector] = []
-        for detector_conf in conf.detector_confs:
+        for detector_conf in contr_conf.detector_confs:
             detector: AreaDetector
             det_type: str = detector_conf.type
             det_id: str = detector_conf.id
@@ -98,7 +101,7 @@ class TrafficEnv(gymnasium.Env):
 
         # Keep track of steps.
         self._cur_step: int = 0
-        self._episode_max_steps = conf.episode_steps
+        self._episode_max_steps = env_conf.episode_steps
 
         # Keep track of teleportations.
         self._episode_teleported: int = 0
