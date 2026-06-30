@@ -7,6 +7,7 @@ This module operates Sumo simulator and applies controller to it
 # Copyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 # rt random
+import json
 import os
 import platform
 import sys
