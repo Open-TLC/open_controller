@@ -3,7 +3,7 @@ name = "open-controller"
 version = "0.1.0"
 description = "Open Controller is an open source signal controller"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13, <3.14"
 dependencies = [
     "jsmin>=3.0.1",
     "keyboard>=0.13.5",

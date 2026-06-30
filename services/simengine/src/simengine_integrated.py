@@ -26,8 +26,8 @@ else:
     raise SystemError("Unknown operating system: ", platform.system())
 
 
-from confread_ms import GlobalConf
-from timer import Timer
+from .confread_ms import GlobalConf
+from .timer import Timer
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
