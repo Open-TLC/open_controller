@@ -1,0 +1,205 @@
+{
+	"timer": {
+		"timer_mode": "fixed",
+		"time_step": 1,
+		"real_time_multiplier": 1
+	},
+
+	"sumo": {
+		"graph": false,
+		"file_name": "./models/test/simple/simple.sumocfg",
+		"group_outputs": ["east-r", "east-l", "south-r", "south-l", "west-r", "west-l"],
+		"print_status": false
+	},
+
+	"controller": {
+		"name": "Simple 3-phase controller",
+		"sumo_name": "J1",
+		"print_status": false,
+
+		"signal_groups": {
+			"east-r": {
+				"min_green": 3,
+				"min_amber_red": 0,
+				"min_red": 3,
+				"min_amber": 3,
+				"max_green": 30,
+				"request_type": "detector",
+				"green_end": "after_ext"
+			},
+			"east-l": {
+				"min_green": 3,
+				"min_amber_red": 0,
+				"min_red": 3,
+				"min_amber": 3,
+				"max_green": 30,
+				"request_type": "detector",
+				"green_end": "after_ext"
+			},
+
+			"south-r": {
+				"min_green": 3,
+				"min_amber_red": 0,
+				"min_red": 3,
+				"min_amber": 3,
+				"max_green": 30,
+				"request_type": "detector",
+				"green_end": "after_ext"
+			},
+			"south-l": {
+				"min_green": 3,
+				"min_amber_red": 0,
+				"min_red": 3,
+				"min_amber": 3,
+				"max_green": 30,
+				"request_type": "detector",
+				"green_end": "after_ext"
+			},
+
+			"west-r": {
+				"min_green": 3,
+				"min_amber_red": 0,
+				"min_red": 3,
+				"min_amber": 3,
+				"max_green": 30,
+				"request_type": "detector",
+				"green_end": "after_ext"
+			},
+			"west-l": {
+				"min_green": 3,
+				"min_amber_red": 0,
+				"min_red": 3,
+				"min_amber": 3,
+				"max_green": 30,
+				"request_type": "detector",
+				"green_end": "after_ext"
+			}
+		},
+
+		"detectors": {
+			"e1_east_1": {
+				"type": "request",
+				"sumo_id": "e1_0",
+				"request_groups": ["east-r"]
+			},
+			"e1_east_2": {
+				"type": "request",
+				"sumo_id": "e1_1",
+				"request_groups": ["east-l"]
+			},
+
+			"e1_south_1": {
+				"type": "request",
+				"sumo_id": "e1_2",
+				"request_groups": ["south-r"]
+			},
+			"e1_south_2": {
+				"type": "request",
+				"sumo_id": "e1_3",
+				"request_groups": ["south-l"]
+			},
+
+			"e1_west_1": {
+				"type": "request",
+				"sumo_id": "e1_4",
+				"request_groups": ["west-r"]
+			},
+			"e1_west_2": {
+				"type": "request",
+				"sumo_id": "e1_5",
+				"request_groups": ["west-l"]
+			},
+
+			"e3_east_r": {
+				"type": "e3detector",
+    			"sumo_id": "e3_east_r",
+        		"group": "east-r"
+			},
+			"e3_east_l": {
+				"type": "e3detector",
+    			"sumo_id": "e3_east_l",
+        		"group": "east-l"
+			},
+
+			"e3_south_r": {
+				"type": "e3detector",
+    			"sumo_id": "e3_south_r",
+        		"group": "south-r"
+			},
+			"e3_south_l": {
+				"type": "e3detector",
+    			"sumo_id": "e3_south_l",
+        		"group": "south-l"
+			},
+
+			"e3_west_r": {
+				"type": "e3detector",
+    			"sumo_id": "e3_west_r",
+        		"group": "west-r"
+			},
+			"e3_west_l": {
+				"type": "e3detector",
+    			"sumo_id": "e3_west_l",
+        		"group": "west-l"
+			}
+		},
+
+		"extenders": {
+		  "ext_east_r": {
+			"group": "east-r",
+			"ext_mode": 4,
+			"ext_threshold": 0.25,
+			"time_discount": 60
+		  },
+		  "ext_east_l": {
+			"group": "east-l",
+			"ext_mode": 4,
+			"ext_threshold": 0.25,
+			"time_discount": 60
+		  },
+
+		  "ext_south_r": {
+			"group": "south-r",
+			"ext_mode": 4,
+			"ext_threshold": 0.25,
+			"time_discount": 60
+		  },
+		  "ext_south_l": {
+			"group": "south-l",
+			"ext_mode": 4,
+			"ext_threshold": 0.25,
+			"time_discount": 60
+		  },
+
+		  "ext_west_r": {
+			"group": "west-r",
+			"ext_mode": 4,
+			"ext_threshold": 0.25,
+			"time_discount": 60
+		  },
+		  "ext_west_l": {
+			"group": "west-l",
+			"ext_mode": 4,
+			"ext_threshold": 0.25,
+			"time_discount": 60
+		  }
+		},
+
+		"group_list": ["east-r", "east-l", "south-r", "south-l", "west-r", "west-l"],
+
+		"phases": [
+			[1, 1, 0, 0, 0, 0],
+			[0, 0, 1, 1, 0, 0],
+			[0, 0, 0, 0, 1, 1]
+		],
+
+		"intergreens": [
+			[0, 0, 0, 3, 0, 0],
+			[0, 0, 0, 3, 3, 3],
+			[0, 0, 0, 0, 0, 3],
+			[3, 3, 0, 0, 0, 3],
+			[0, 3, 0, 0, 0, 0],
+			[0, 3, 3, 3, 0, 0]
+		]
+	}
+}

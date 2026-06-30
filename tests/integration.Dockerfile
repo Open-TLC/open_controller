@@ -39,4 +39,4 @@ RUN uv sync --no-dev
 ENV PYTHONUNBUFFERED=1
 
 # Try to run a simulation with Open Controller. Test fails if program crashes.
-CMD ["uv", "run", "-m", "services.simengine.src.simengine_integrated", "--conf-file", "/app/models/testmodel/oc_demo_basic.json"]
+CMD ["uv", "run", "-m", "services.simengine.src.simengine_integrated", "--conf-file", "/app/models/test/simple/contr.json"]
