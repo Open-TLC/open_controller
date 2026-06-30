@@ -9,30 +9,25 @@ This module operates Sumo simulator and applies controller to it
 # rt random
 import json
 import os
+import platform
 import sys
 import time
 from typing import Any
 
-from jsmin import jsmin
-
-from .confread_ms import GlobalConf
-from .timer import Timer
-
-# This will need:
-# export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
-
-# Alternatively:
-# we need to import python modules from the $SUMO_HOME/tools directory
-if "SUMO_HOME" in os.environ:
-    SUMO_TOOLS = os.path.join(os.environ["SUMO_HOME"], "tools")
-    sys.path.append(SUMO_TOOLS)
+# Prefer libsumo when available because it avoids TraCI's socket
+# communication overhead and is significantly faster for simulation-heavy
+# workloads. The code aliases the selected backend as `traci` because both
+# libraries expose nearly identical APIs.
+if platform.system() == "Windows":
     import traci
-    # import libsumo as traci
+elif platform.system() in ("Linux", "Darwin"):
+    import libsumo as traci
 else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
+    raise SystemError("Unknown operating system: ", platform.system())
 
-# from sumolib import checkBinary  # noqa
 
+from confread_ms import GlobalConf
+from timer import Timer
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
@@ -48,25 +43,10 @@ sys.path.append(engine_path)
 from signal_group_controller import PhaseRingController
 
 
-def read_conf(file_name):
-    """Opens the file and returns values as a dictionary"""
-    config = {}
-    try:
-        with open(file_name) as json_cnf_file:
-            config = json.loads(jsmin(json_cnf_file.read()))
-    except FileNotFoundError:
-        print("File does not exist:", file_name)
-        print("Exiting...")
-        sys.exit()
-    # Should we add sanity check for input?
-    return config
-
-
 # We run the sumo model based on conf dictionery given as parameter
-def run_sumo(conf_filename: str | None = None, runlog=None):
+def run_sumo():
     """Run sumo with given configuration"""
-    print("Running sumo with conf", conf_filename)
-    unit_cnf = GlobalConf(filename=conf_filename)  # objekti
+    unit_cnf = GlobalConf()  # Open Controller configuration.
 
     # Imprtinc components from control_engine
     # FIXME:We should not use paths, insteead different sercives should
@@ -144,6 +124,8 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
 
     # Conf is defined in sumo section of conf
     sumo_file = sys_cnf["sumo"]["file_name"]
+    if not os.path.isfile(sumo_file):
+        raise FileNotFoundError("sumocfg doesn't exist: ", sumo_file)
     try:
         traci.start([sumo_bin, "-c", sumo_file, "--start", "--quit-on-end"])
     except Exception as e:
@@ -281,8 +263,6 @@ def run_sumo(conf_filename: str | None = None, runlog=None):
                             ].last_print = system_timer.steps
                     else:
                         print(clk + " " + key + " " + statusstring)
-                    if runlog:
-                        runlog.add_line(statusstring)
 
             # detections_to_controller(sumo_loops, sumo_to_dets)
             if SUMOSIM:
@@ -729,6 +709,4 @@ def print_det_status():
 
 
 if __name__ == "__main__":
-    # main_runsumo()
-    # run_sumo("../models/4leg/4leg.json")
     run_sumo()
