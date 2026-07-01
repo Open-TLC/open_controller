@@ -22,7 +22,7 @@ from .simengine import SimEngine
 from .trafficenv import TrafficEnv
 
 
-def main() -> None:
+def _main() -> None:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -51,8 +51,10 @@ def main() -> None:
     try:
         with open(conf_filename) as f:
             conf_dict = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        raise ValueError(f"Configuration file could not be read or is invalid: {e}")
+    except FileNotFoundError as e:
+        raise ValueError(f"Configuration file not found at '{conf_filename}'.") from e
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Configuration file contains invalid JSON syntax: {e}") from e
 
     conf = TrainerConf(conf_dict)
 
@@ -87,7 +89,7 @@ def _train_single_agent(
     model.learn(
         total_timesteps=conf.total_steps,
         progress_bar=True,
-        callback=TrafficStatsCallback(),
+        callback=_TrafficStatsCallback(),
     )
     print("Model trained!")
 
@@ -97,7 +99,9 @@ def _train_single_agent(
 
 
 def _train_multi_agent(
-    conf: TrainerConf, tensorboard_dir: str, model_file: str
+    conf: TrainerConf,
+    tensorboard_dir: str,
+    model_file: str,
 ) -> None:
     print("Initializing Multi-Agent Environment...")
 
@@ -177,7 +181,7 @@ def _env_creator(env_config):
     return MultiTrafficEnv(local_simengine, conf.traffic_env, conf.controllers)
 
 
-def _map_agent_to_policy(agent_id: AgentID, episode: EpisodeType, **kwargs) -> str:
+def _map_agent_to_policy(agent_id: AgentID, episode: EpisodeType) -> str:
     return str(agent_id)
 
 
@@ -211,7 +215,7 @@ def _create_model(
     return model
 
 
-class TrafficStatsCallback(BaseCallback):
+class _TrafficStatsCallback(BaseCallback):
     def _on_step(self):
         infos = self.locals["infos"]
 
@@ -234,4 +238,4 @@ class TrafficStatsCallback(BaseCallback):
 
 
 if __name__ == "__main__":
-    main()
+    _main()
