@@ -3,6 +3,13 @@ from typing import Any
 
 
 class ControllerStatus:
+    """Controller status object.
+
+    Status objects are a way of passing information about controllers internal state
+    to other parts of the program. It is easier and safer to use than dictionaries,
+    which is why it is preferred over them.
+    """
+
     def __init__(self, step_count: int, current_phase: str, next_phase: str) -> None:
         self.step_count: int = step_count
         self.current_phase: str = current_phase
@@ -20,6 +27,7 @@ class SignalController(ABC):
     @abstractmethod
     def tick(self) -> None:
         """Advance the controller by one step.
+
         This updates detections and signal states.
         """
         ...
@@ -27,6 +35,7 @@ class SignalController(ABC):
     @abstractmethod
     def reset(self) -> None:
         """Reset controller state.
+
         All configurations are persisted.
         """
         ...
@@ -44,6 +53,7 @@ class SignalController(ABC):
     @abstractmethod
     def all_red(self) -> None:
         """Transition to all red.
+
         Gracefully transition to all red and remain there indefinitely.
         This is a safety feature used for unexpected situations (alien attack?).
         """
