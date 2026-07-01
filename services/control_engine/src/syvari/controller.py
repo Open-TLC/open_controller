@@ -1,26 +1,35 @@
-from ..detector import Detector
-from ..signal_controller import SignalController
+from typing import Any
+
+from services.control_engine.src.signal_controller import (
+    ControllerStatus,
+    SignalController,
+)
+
 from .configuration import SyvariControllerConfiguration
 from .cycle_timer import CycleTimer
 from .signal_group import GroupState, SignalGroup, group_state_to_string
 
 
 class SyvariController(SignalController):
-    """
-    Implementation of SignalController base class. Follows the control logic of SYVARI.
+    """Implementation of SignalController base class.
+
+    Follows the control logic of SYVARI.
     """
 
     def __init__(self, conf: SyvariControllerConfiguration, timer: CycleTimer) -> None:
-        """
-        Args:
-            conf: Configuration used for the controller instance. This must be initialized before creating controller.
-            timer: System timer used for the entire scenario.
-        """
+        """Create new SyvariController.
 
+        Args:
+            conf: Configuration used for the controller instance.
+                This must be initialized before creating controller.
+            timer: System timer used for the entire scenario.
+
+        """
         # Save configuration and timer objects
         self._name = conf.name
         self._sumo_name = conf.sumo_name
         self._timer: CycleTimer = timer
+        self._conf = conf
 
         # List of signal group names that determines the output state string format
         self._state_format = conf.state_format
@@ -40,52 +49,20 @@ class SyvariController(SignalController):
         # Current phase index.
         self._cur_phase_idx: int = 0
 
+        # Keep track of performed steps
+        self._step_count: int = 0
+
         # Signal groups in the first phase start their greens.
         for group_name in self._phases[0]:
             self._signal_groups[group_name].start_green()
 
-    @property
-    def status(self) -> str:
+    def tick(self) -> None:
+        """Advance the controller by a single time step.
+
+        It reads the detector data, decides the new
+        signal states and updates its state.
         """
-        Open Controller signal controller status string.
-        """
-        # TODO: Implement the method
-        raise NotImplementedError("SyvariController.status not implemented")
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def sumo_name(self) -> str:
-        return self._sumo_name
-
-    @property
-    def e1_detectors(self) -> list[Detector]:
-        detectors: list[Detector] = []
-
-        for group in self._signal_groups.values():
-            detectors.extend(group.e1_detectors)
-
-        return detectors
-
-    @property
-    def e3_detectors(self) -> list[Detector]:
-        detectors: list[Detector] = []
-
-        for group in self._signal_groups.values():
-            detectors.extend(group.e3_detectors)
-
-        return detectors
-
-    def tick(self) -> str:
-        """
-        Advance the controller by a single time step. It reads the detector
-        data, decides the new signal states and returns them as a string.
-
-        Returns:
-            states: Signal states as a SUMO string. This can be passed to the traffic controller.
-        """
+        self._step_count += 1
 
         # Update all signal groups
         for group in self._signal_groups.values():
@@ -94,11 +71,12 @@ class SyvariController(SignalController):
         # If current groups are amber (i.e. they are just starting to turn green)
         # controller can't advance.
         if self._current_groups_in_amber():
-            return self._get_group_states()
+            return
 
-        # If current phase has groups with guaranteed green left, controller can't advance.
+        # If current phase has groups with guaranteed
+        # green left, controller can't advance.
         if self._current_groups_in_guaranteed_green():
-            return self._get_group_states()
+            return
 
         # If another group in the future has a priority request and none of the current
         # groups are priority extending, the controller advances.
@@ -107,18 +85,78 @@ class SyvariController(SignalController):
             and not self._current_groups_priority_extending()
         ):
             _ = self._move_to_next_phase()
-            return self._get_group_states()
+            return
 
-        # If current phase still has groups in active green, the existing state is returned.
+        # If current phase still has groups in active
+        # green, the existing state is returned.
         if self._current_groups_in_active_green():
-            return self._get_group_states()
+            return
 
-        # If all groups in the current phase have ended their active green, controller tries to move to the next phase.
+        # If all groups in the current phase have ended their active
+        # green, controller tries to move to the next phase.
         _ = self._move_to_next_phase()
 
-        return self._get_group_states()
+    def reset(self) -> None:
+        """Reset controller to default state.
 
-    def _get_group_states(self) -> str:
+        As SyvariController can't be modified during running,
+        this is the same as reloading it from configuration.
+        """
+        return self.reload()
+
+    def reload(self) -> None:
+        """Reload controller from original configuration."""
+        self.__init__(self._conf, self._timer)
+
+    def save(self, filename: str) -> None:
+        """Save controller configuration.
+
+        As SyvariController can't be modified during running,
+        doesn't do anything. It is still required to implement
+        the abstract SignalController class.
+        """
+        pass
+
+    def all_red(self) -> None:
+        """Transition to all red.
+
+        Gracefully transition to all red and remain there indefinitely.
+        This is a safety feature used for unexpected situations (alien attack?).
+        """
+        for group_name in self._phases[self._cur_phase_idx]:
+            self._signal_groups[group_name].end_green()
+
+        # -1 is a special locked red state. The controller will not try to transition
+        # away from it and will stay red until it is reset.
+        self._cur_phase_idx = -1
+
+    @property
+    def status(self) -> ControllerStatus:
+        """Current controller status."""
+        return ControllerStatus(
+            self._step_count,
+            self.signal_states_sumo,
+            f"Next phase index is {self._get_next_phase_idx()}",
+        )
+
+    @property
+    def status_dict(self) -> dict[str, Any]:
+        """Controllers internal status as a dictionary."""
+        status = self.status
+        return {
+            "step_count": status.step_count,
+            "current_phase": status.current_phase,
+            "next_phase": status.next_phase,
+        }
+
+    @property
+    def signal_states(self) -> str:
+        """Signal states in Open Controller format."""
+        raise NotImplementedError
+
+    @property
+    def signal_states_sumo(self) -> str:
+        """Signal states in SUMO format."""
         states: str = ""
         for group_name in self._state_format:
             group = self._signal_groups[group_name]
@@ -129,10 +167,13 @@ class SyvariController(SignalController):
 
     def _move_to_next_phase(self) -> bool:
         """Move to the next phase if possible.
-        Controller tries to advance its state, but fails if previous groups are still active.
+
+        Controller tries to advance its state, but
+        fails if previous groups are still active.
 
         Returns:
             Whether phase changed.
+
         """
         for group in self._phases[self._cur_phase_idx]:
             self._signal_groups[group].end_green()
@@ -151,20 +192,27 @@ class SyvariController(SignalController):
         return True
 
     def _get_next_phase_idx(self) -> int:
-        """Determines the index of the next scheduled phase in the sequence loop.
+        """Determine the index of the next scheduled phase in the sequence loop.
 
         Returns:
             The index integer of the upcoming phase, handling boundary wrap-arounds.
+
         """
+        # -1 is a special locked red state. The controller will not try to transition
+        # away from it and will stay red until it is reset.
+        if self._cur_phase_idx == -1:
+            return -1
+
         if self._cur_phase_idx < len(self._phases) - 1:
             return self._cur_phase_idx + 1
         return 0
 
     def _current_groups_in_active_green(self) -> bool:
-        """Checks if any group in the current phase is currently running an active green.
+        """Check if any group in the current phase is currently running an active green.
 
         Returns:
             True if at least one group is in GroupState.ACTIVE_GREEN, False otherwise.
+
         """
         return any(
             self._signal_groups[group].state == GroupState.ACTIVE_GREEN
@@ -176,6 +224,7 @@ class SyvariController(SignalController):
 
         Returns:
             True if at least one group is in GroupState.AMBER, False otherwise.
+
         """
         return any(
             self._signal_groups[group].state == GroupState.AMBER
@@ -183,12 +232,14 @@ class SyvariController(SignalController):
         )
 
     def _current_groups_red(self) -> bool:
-        """Checks if all groups in the current phase have transitioned completely to red.
+        """Check if all groups in the current phase have transitioned completely to red.
 
-        Used to ensure a completely safe clearance interval before launching conflicting greens.
+        Used to ensure a completely safe clearance
+        interval before launching conflicting greens.
 
         Returns:
             True if every group in the current phase is GroupState.RED, False otherwise.
+
         """
         return all(
             self._signal_groups[group].state == GroupState.RED
@@ -196,10 +247,12 @@ class SyvariController(SignalController):
         )
 
     def _current_groups_in_guaranteed_green(self) -> bool:
-        """Checks if any group in the current phase is protected by guaranteed minimum green requirements.
+        """Check if any group in the current phase is protected by guaranteed minimum green requirements.
 
         Returns:
-            True if a current group is locked into its minimum green phase time constraint.
+            True if a current group is locked into its
+                minimum green phase time constraint.
+
         """
         return any(
             self._signal_groups[group_name].has_guaranteed_green_left
@@ -207,10 +260,11 @@ class SyvariController(SignalController):
         )
 
     def _current_groups_priority_extending(self) -> bool:
-        """Checks if any group in the current phase is priority extending.
+        """Check if any group in the current phase is priority extending.
 
         Returns:
             True if a current group has a priority extension.
+
         """
         return any(
             self._signal_groups[group_name].is_priority_extending
@@ -287,7 +341,8 @@ class TestSyvariConfiguration(unittest.TestCase):
         }
 
         controller_conf = SyvariControllerConfiguration(
-            controller_params["name"], controller_params
+            controller_params["name"],
+            controller_params,
         )
         controller = SyvariController(controller_conf, timer)
 
