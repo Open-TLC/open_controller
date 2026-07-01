@@ -15,11 +15,10 @@ import asyncio
 import argparse
 from nats.aio.client import Client as NATS
 import json
+from timer import Timer
+from confread import GlobalConf
+from outputs import DetStorage, GroupStorage, RadarStorage
 
-from .confread import GlobalConf
-from .outputs import DetStorage, GroupStorage, RadarStorage
-
-from services.control_engine.src.timer import Timer
 
 SOFTWARE_NAME = "SUMO Simulation enngine"
 IMPL_VERSION = "0.1"

@@ -7,150 +7,130 @@ This module operates Sumo simulator and applies controller to it
 # Copyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 # rt random
-import argparse
+import json
 import os
+import platform
 import sys
 import time
 from typing import Any
 
-from services.control_engine.src.detector import Detector
-from services.control_engine.src.signal_controller import SignalController
-
-from .configuration import GeneralConfiguration
-
-# Import python modules from the $SUMO_HOME/tools directory
-if "SUMO_HOME" in os.environ:
-    SUMO_TOOLS = os.path.join(os.environ["SUMO_HOME"], "tools")
-    sys.path.append(SUMO_TOOLS)
+# Prefer libsumo when available because it avoids TraCI's socket
+# communication overhead and is significantly faster for simulation-heavy
+# workloads. The code aliases the selected backend as `traci` because both
+# libraries expose nearly identical APIs.
+if platform.system() == "Windows":
     import traci
+elif platform.system() in ("Linux", "Darwin"):
+    import libsumo as traci
 else:
-    raise Exception("SUMO_HOME not configured")
+    raise SystemError("Unknown operating system: ", platform.system())
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
+from .confread_ms import GlobalConf
+from .timer import Timer
 
-    parser.add_argument(
-        "--conf-file", help="Config file: open_controller_config.json", required=True
-    )
+# Note these are not in use at sig-group
+DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
+DEFAULT_SUMO_CNF = "testmodel/cross.sumocfg"
+SUMO_BIN_NAME = "sumo"
+SUMO_BIN_NAME_GRAPH = "sumo-gui"
 
-    args = parser.parse_args()
-
-    conf_filename: str = args.conf_file
-
-    sim_env = SimulationEnvironment(conf_filename)
-
-    sim_env.run()
-
-
-class SimulationEnvironment:
-    def __init__(self, conf_filename) -> None:
-        conf: GeneralConfiguration
-        try:
-            conf = GeneralConfiguration(conf_filename)
-        except Exception as e:
-            raise Exception(f"Failed to read configuration: {e}")
-        self.conf = conf
-
-        self.conf.start_traci()
-
-        self._timer = conf.create_timer()
-
-        self._controllers: dict[str, SignalController] = conf.create_controllers(
-            self._timer
-        )
-
-        e1dets = []
-        e3dets = []
-
-        for controller in self._controllers.values():
-            e1dets.extend(controller.e1_detectors)
-            e3dets.extend(controller.e3_detectors)
-
-        self._sumo_to_e1dets: dict[str, Detector] = get_e1det_mapping(e1dets)
-
-        self._sumo_to_e3dets: dict[str, Detector] = get_e3det_mapping(e3dets)
-
-        self._sumo_e1_ids: list[str] = traci.inductionloop.getIDList()
-
-        self._sumo_e3_ids: list[str] = traci.multientryexit.getIDList()
-
-    def run(self) -> None:
-        while traci.simulation.getMinExpectedNumber() != 0:
-            for vehicleId in traci.vehicle.getIDList():
-                traci.vehicle.setSpeedMode(
-                    vehicleId, 55
-                )  # disable right of way check, vehicles can enter the junction, despite queue end
-                vehlen = traci.vehicle.getLength(vehicleId)
-                if vehlen > 10.0:
-                    traci.vehicle.setLaneChangeMode(
-                        vehicleId, 1
-                    )  # Disable lane changing except from Traci
-
-            for controller in self._controllers.values():
-                # Update signal controllers DBIK 20240411
-                states: str = controller.tick()
-                sumo_name = controller.sumo_name
-
-                # Fixing the potential error in signal count
-                ocTLScount = len(states)
-                sumo_tls = traci.trafficlight.getControlledLinks(sumo_name)
-                SumoTLScount = len(sumo_tls)
-                if ocTLScount < SumoTLScount:
-                    states = "r" + states  # DBIK20250129 add group 0 ?
-                try:
-                    traci.trafficlight.setRedYellowGreenState(sumo_name, states)
-                except Exception as e:
-                    print(
-                        "Error in signal counts: OC count: ",
-                        ocTLScount,
-                        "Sumo TLS: ",
-                        SumoTLScount,
-                    )
-                    raise e
-
-            Sumo_e1detections_to_controller(self._sumo_e1_ids, self._sumo_to_e1dets)
-            Sumo_e3detections_to_controller(
-                self._sumo_e3_ids, self._sumo_to_e3dets, False, False
-            )
-
-            try:
-                traci.simulationStep()
-            except traci.FatalTraCIError:
-                print("Fatal error in sumo, exiting")
-                break
-
-            self._timer.tick()  # DBIK230711 imer tick only in the main loop
-
-        print("Closing traci")
-        try:
-            traci.close()
-        except Exception as e:
-            print("Traci closed failed:", e)
+# Imprtinc components from control_engine
+# FIXME:We should not use paths, insteead different sercives should
+# Be properly modularized and imported as modules
+engine_path = "services/control_engine/src"  # Standard installation
+sys.path.append(engine_path)
+from signal_group_controller import PhaseRingController
 
 
 # We run the sumo model based on conf dictionery given as parameter
-def run_sumo(conf_filename: str):
+def run_sumo():
     """Run sumo with given configuration"""
-    try:
-        sys_cnf = GeneralConfiguration(conf_filename)
-    except Exception as e:
-        raise Exception(f"Failed to read configuration: {e}")
+    unit_cnf = GlobalConf()  # Open Controller configuration.
+
+    # Imprtinc components from control_engine
+    # FIXME:We should not use paths, insteead different sercives should
+    # Be properly modularized and imported as modules
+    if "control_engine_path" in unit_cnf.cnf:
+        engine_path = unit_cnf.cnf["control_engine_path"]
+    else:
+        engine_path = "services/control_engine/src"  # Standard installation
+    sys.path.append(engine_path)
+
+    controllers_dict = {}
+
+    sys_cnf = unit_cnf.cnf  # dictionary
+
+    # Init system timer from config file DBIK 24.7.23
+
+    timer_mode = "real"
+    time_step = 0.1
+
+    timer_prm = sys_cnf["timer"]
+    timer_mode = timer_prm["timer_mode"]
+    time_step = timer_prm["time_step"]
 
     end_time = -1
-    if "max_time" in sys_cnf.timer:
-        end_time = sys_cnf.timer["max_time"]
+    if "max_time" in timer_prm:
+        end_time = timer_prm["max_time"]
 
-    system_timer = sys_cnf.create_timer()
+    print("Timer parameters: ", timer_prm)
 
-    controllers_dict = sys_cnf.create_controllers(system_timer)
+    system_timer = Timer(timer_prm)
+    next_update_time = 0
+
+    v2x_mode = False
+    if "v2x_mode" in sys_cnf.keys():
+        if sys_cnf["v2x_mode"] == True:
+            v2x_mode = True
+
+    sumovismode = "No_visualization"
+    if "vis_mode" in sys_cnf.keys():
+        sumovismode = sys_cnf["vis_mode"]
+
+    controllers_dict = _create_controllers(sys_cnf, system_timer)
 
     e1dets = []
     e3dets = []
 
-    for controller in controllers_dict.values():
-        e1dets.extend(controller.e1_detectors)
-        e3dets.extend(controller.e3_detectors)
+    exts = []
+
+    for controller_name in controllers_dict:
+        e1dets += controllers_dict[controller_name]["controller"].req_dets
+        print("dets: ", e1dets)
+        e1dets += controllers_dict[controller_name]["controller"].ext_dets
+        print("dets: ", e1dets)
+
+        exts += controllers_dict[controller_name]["controller"].extenders
+
+        e3dets += controllers_dict[controller_name]["controller"].e3detectors
+
+        print("exts: ", exts)
+
+    sumo_name = "0"  # DEBUG POINT, INIT OK
+
+    # Check whether the display is available before using gui
+    display_available = (
+        os.environ.get("DISPLAY") is not None and os.environ.get("DISPLAY") != ""
+    )
+
+    # Graph always if set in conf, and also if param says so, but not if display is not available
+    if sys_cnf["sumo"]["graph"]:
+        sumo_bin = SUMO_BIN_NAME_GRAPH
+    else:
+        sumo_bin = SUMO_BIN_NAME
+
+    # sumo_bin = SUMO_BIN_NAME # Debugging without graphics DBIK 24.7.23
+
+    # Conf is defined in sumo section of conf
+    sumo_file = sys_cnf["sumo"]["file_name"]
+    if not os.path.isfile(sumo_file):
+        raise FileNotFoundError("sumocfg doesn't exist: ", sumo_file)
+    try:
+        traci.start([sumo_bin, "-c", sumo_file, "--start", "--quit-on-end"])
+    except Exception as e:
+        print("Sumo start failed:", e)
+        return
 
     sumo_to_e1dets = get_e1det_mapping(e1dets)
     print("sumo to e1 dets: ")
@@ -168,19 +148,28 @@ def run_sumo(conf_filename: str):
     print("sumo e1 loops: ")
     print(sumo_loops)
 
+    # NEW UPDATE CYCLE   DBIK230724
+
     # Start the actual simulation
+    step = 0
+    sleep_count = 0
+    sleep_count = 0
     system_timer.reset()
     real_time = system_timer.real_seconds  # DBIK230713
     next_update_time = real_time  # DBIK230713
+    ChangesOnly = True
+    statusstring = ""
+    BP2 = False
+    SUMOSIM = True
+    last_print = 0
 
-    SUMO_VIS_MODE = False
-    V2X_MODE = False
+    print(system_timer.steps, real_time, next_update_time, sleep_count)
 
-    print(system_timer.steps, real_time, next_update_time)
+    # traci.vehicle.setLaneChangeMode(vehicleId,256) # Disable lane changing except from Traci
 
     #######SIMULATION STARTS################################################
 
-    while (traci.simulation.getMinExpectedNumber() != 0) and (
+    while (traci.simulation.getMinExpectedNumber() > 0) and (
         (system_timer.steps / 10 <= end_time) or (end_time < 0)
     ):
         for vehicleId in traci.vehicle.getIDList():
@@ -196,18 +185,28 @@ def run_sumo(conf_filename: str):
         real_time = system_timer.real_seconds  # DBIK230711
 
         if real_time >= (next_update_time) or (
-            sys_cnf.timer["timer_mode"] != "real"
+            timer_mode != "real"
         ):  # DBIK230711  timer_mode added
-            next_update_time = (
-                next_update_time + sys_cnf.timer["time_step"]
-            )  # DBIK230720
+            next_update_time = next_update_time + time_step  # DBIK230720
 
-            for controller_name in controllers_dict:
+            # Conditional BREAKPOINT
+            if (
+                statusstring
+                == "ebb50b REQ:000010  EXT: 000110  PERM:100110  CUT:111001 (cur:PH:1, next:PH:2) *"
+            ):
+                # if statusstring == "c4ee5bc REQ:1000001  EXT: 0000100  PERM:1111000  OTH:1011101 (cur:PH:1, next:PH:2)":
+                BP1 = True
+
+            # MULTI: looping the controllers start here
+
+            for key in controllers_dict:
                 # Update signal controllers DBIK 20240411
-                states: str = controllers_dict[controller_name].tick()
-                sumo_name = controllers_dict[controller_name].sumo_name
+                controllers_dict[key]["controller"].tick()
+                states = controllers_dict[key]["controller"].get_sumo_states()
+                sumo_name = controllers_dict[key]["sumo_name"]
 
                 # Fixing the potential error in signal count
+
                 ocTLScount = len(states)
                 sumo_tls = traci.trafficlight.getControlledLinks(sumo_name)
                 SumoTLScount = len(sumo_tls)
@@ -215,32 +214,84 @@ def run_sumo(conf_filename: str):
                     states = "r" + states  # DBIK20250129 add group 0 ?
                 try:
                     traci.trafficlight.setRedYellowGreenState(sumo_name, states)
-                except Exception as e:
+                except:
                     print(
                         "Error in signal counts: OC count: ",
                         ocTLScount,
                         "Sumo TLS: ",
                         SumoTLScount,
                     )
-                    raise e
 
-            Sumo_e1detections_to_controller(sumo_loops, sumo_to_e1dets)
-            Sumo_e3detections_to_controller(
-                sumo_e3dets, sumo_to_e3dets, SUMO_VIS_MODE, V2X_MODE
-            )
+                    # traci.trafficlight.setRedYellowGreenState(sumo_name, states)
+
+                    print(
+                        "Error in signal counts: OC count: ",
+                        ocTLScount,
+                        "Sumo TLS: ",
+                        SumoTLScount,
+                    )
+
+                traci.trafficlight.setRedYellowGreenState(sumo_name, states)
+
+                # Run-time outputs DBIK 20240411
+
+                if controllers_dict[key]["print_status"]:
+                    controllers_dict[key][
+                        "controller"
+                    ].prev_status_string = controllers_dict[key][
+                        "controller"
+                    ].cur_status_string
+                    controllers_dict[key][
+                        "controller"
+                    ].cur_status_string = controllers_dict[key][
+                        "controller"
+                    ].get_control_status()
+                    clk = system_timer.str_seconds()
+
+                    if ChangesOnly:
+                        prev_stat = controllers_dict[key][
+                            "controller"
+                        ].prev_status_string
+                        cur_stat = controllers_dict[key]["controller"].cur_status_string
+                        if (prev_stat != cur_stat) or (
+                            system_timer.steps
+                            - controllers_dict[key]["controller"].last_print
+                        ) > 10:
+                            print(clk + " " + key + " " + cur_stat)
+                            controllers_dict[key][
+                                "controller"
+                            ].last_print = system_timer.steps
+                    else:
+                        print(clk + " " + key + " " + statusstring)
+
+            # detections_to_controller(sumo_loops, sumo_to_dets)
+            if SUMOSIM:
+                Sumo_e1detections_to_controller(sumo_loops, sumo_to_e1dets)
+                Sumo_e3detections_to_controller(
+                    sumo_e3dets, sumo_to_e3dets, sumovismode, v2x_mode
+                )
+            else:
+                pass
+                # Read detections from NATS
 
             try:
                 traci.simulationStep()
-            except traci.FatalTraCIError:
+            except traci.exceptions.FatalTraCIError:
                 print("Fatal error in sumo, exiting")
                 break
 
+            # print(system_timer.steps, '%.3f' % real_time, '%.3f' % next_update_time, sleep_count, '%.3f' % last_print )
+
             system_timer.tick()  # DBIK230711 imer tick only in the main loop
+
+            sleep_count = 0
 
         else:
             time.sleep(0.01)  # DBIK230711
+            sleep_count += 1
             system_timer.sleep_tick()
             real_time = system_timer.real_seconds  # DBIK230711
+            # print(sleep_count, real_time)
 
     print("Closing traci")
     try:
@@ -249,8 +300,68 @@ def run_sumo(conf_filename: str):
         print("Traci closed failed:", e)
     sys.stdout.flush()
 
+    print("exit  ")
 
-def get_e1det_mapping(all_dets) -> dict[str, Any]:
+
+def _create_controllers(
+    sys_conf: dict[str, Any], system_timer: Timer
+) -> dict[str, dict[str, Any]]:
+    # Dictionary holding all controller configurations
+    controller_confs: dict[str, Any] = {}
+
+    if "controllers" in sys_conf:
+        controller_confs = sys_conf["controllers"]
+
+    # If configuration includes only 1 controller, it needs
+    # to be converted to multi controller configuration format
+    # with a made up "controller1" name.
+    if "controller" in sys_conf:
+        controller_confs = {"controller1": {}}
+
+    # Dictionary of created controllers
+    controllers: dict[str, dict[str, Any]] = {}
+
+    # Create controller for all controllers in configuration
+    for controller_name in controller_confs:
+        controllers[controller_name] = {}
+
+        controller_params: dict[str, Any] = {}
+
+        # Configure controller based on file
+        if "controller_file" in controller_confs[controller_name]:
+            # Single controller configuration
+            controller_conf: GlobalConf = GlobalConf(
+                controller_confs[controller_name]["controller_file"]
+            )
+            controller_params = controller_conf.get_controller_params()
+        elif "controller" in sys_conf:
+            controller_params = sys_conf["controller"]
+
+        controller_params["name"] = controller_name
+
+        controllers[controller_name]["sumo_name"] = controller_params["sumo_name"]
+
+        # print_status defaults to True
+        print_status: bool = True
+        if "print_status" in controller_params:
+            print_status = controller_params["print_status"]
+        controllers[controller_name]["print_status"] = print_status
+
+        # Create controller object from params
+        controller = PhaseRingController(controller_params, system_timer)
+        # Set controller name
+        controller.name = controller_name
+
+        if "group_outputs" in controller_params:
+            controller.set_sumo_outputs(controller_params["group_outputs"])
+
+        # Set controller object to result dictionary
+        controllers[controller_name]["controller"] = controller
+
+    return controllers
+
+
+def get_e1det_mapping(all_dets):
     loops = traci.inductionloop.getIDList()
     ret = {}
     for loop in loops:
@@ -260,10 +371,11 @@ def get_e1det_mapping(all_dets) -> dict[str, Any]:
                 mapped_dets.append(det)
         ret[loop] = mapped_dets
 
+    # print ('Loops: ', loops)
     return ret
 
 
-def get_e3det_mapping(all_dets) -> dict[str, Any]:
+def get_e3det_mapping(all_dets):
     e3dets = traci.multientryexit.getIDList()
     ret = {}
     for e3det in e3dets:
@@ -272,7 +384,7 @@ def get_e3det_mapping(all_dets) -> dict[str, Any]:
             if dete3.sumo_id == e3det:
                 mapped_e3dets.append(dete3)
         ret[e3det] = mapped_e3dets
-
+    print("e3dets: ", e3dets)
     return ret
 
 
@@ -280,15 +392,37 @@ def get_e3det_mapping(all_dets) -> dict[str, Any]:
 def Sumo_e1detections_to_controller(sumo_loops, sumo_to_dets):
     """Passes the Sumo e1-detector info to the controller detector objects"""
 
+    occlist = []
+    loop_stat = "Loops: "
+    loop_out_list = ["269_R702R", "269_601A"]
+
     for det_id_sumo in sumo_loops:
         vehnum = traci.inductionloop.getLastStepVehicleNumber(det_id_sumo)
         occup = traci.inductionloop.getLastStepOccupancy(det_id_sumo)
 
+        # DBIK  02/2023 Make the detector status list
+        # if (occup > 0):
+        #    occlist.append(1)
+        # else:
+        #    occlist.append(0)
+
+        occstr = "x"
         for det in sumo_to_dets[det_id_sumo]:
             if (vehnum > 0) or (occup > 0):  # DBIK 10.22  or (occup > 0):
                 det.loop_on = True
+                occstr = "1"
+                occlist.append(1)  # DBIK 03.23 (det output list to correct place)
             else:
                 det.loop_on = False
+                occstr = "0"
+                occlist.append(0)
+
+        # loop_stat += det_id_sumo + ' ' + occstr + ', '
+
+        # print(loop_stat)
+
+    # print("SUMO occup:", occlist, end='')
+    # print("SUMO loops:", loop_stat, end='')
 
 
 def Sumo_e3detections_to_controller(
@@ -575,4 +709,4 @@ def print_det_status():
 
 
 if __name__ == "__main__":
-    main()
+    run_sumo()

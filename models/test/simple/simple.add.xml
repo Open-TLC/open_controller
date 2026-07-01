@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-06-25 09:45:29 by Eclipse SUMO netedit Version 1.18.0
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <!-- Detectors -->
+    <inductionLoop id="e1_0" lane="E6_0" pos="71.03" period="300.00" file="e1_0.xml"/>
+    <inductionLoop id="e1_1" lane="E6_1" pos="70.07" period="300.00" file="e1_1.xml"/>
+    <inductionLoop id="e1_2" lane="-E5_0" pos="53.99" period="300.00" file="e1_2.xml"/>
+    <inductionLoop id="e1_3" lane="-E5_1" pos="53.85" period="300.00" file="e1_3.xml"/>
+    <inductionLoop id="e1_4" lane="E0_0" pos="51.85" period="300.00" file="e1_4.xml"/>
+    <inductionLoop id="e1_5" lane="E0_1" pos="51.79" period="300.00" file="e1_5.xml"/>
+    <laneAreaDetector id="e2_0" lane="E0_1" pos="55.74" length="30.00" period="300.00" file="e2_0.xml"/>
+    <laneAreaDetector id="e2_1" lane="E0_0" pos="55.74" length="30.00" period="300.00" file="e2_1.xml"/>
+    <laneAreaDetector id="e2_2" lane="-E5_0" pos="57.15" length="30.00" period="300.00" file="e2_2.xml"/>
+    <laneAreaDetector id="e2_3" lane="-E5_1" pos="57.15" length="30.00" period="300.00" file="e2_3.xml"/>
+    <laneAreaDetector id="e2_4" lane="E6_0" pos="73.51" length="30.00" period="300.00" file="e2_4.xml"/>
+    <laneAreaDetector id="e2_5" lane="E6_1" pos="73.74" length="30.00" period="300.00" file="e2_5.xml"/>
+    <entryExitDetector id="e3_0" pos="109.91,74.11" period="300.00" file="e3_0.xml">
+        <detEntry lane="E6_0" pos="73.98"/>
+        <detEntry lane="E6_1" pos="74.06"/>
+        <detExit lane="E6_1" pos="104.00"/>
+        <detExit lane="E6_0" pos="104.02"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_1" pos="99.93,30.09" period="300.00" file="e3_1.xml">
+        <detEntry lane="-E5_0" pos="57.31"/>
+        <detEntry lane="-E5_1" pos="57.35"/>
+        <detExit lane="-E5_1" pos="86.75"/>
+        <detExit lane="-E5_0" pos="86.90"/>
+    </entryExitDetector>
+    <entryExitDetector id="e3_2" pos="53.85,41.58" period="300.00" file="e3_2.xml">
+        <detEntry lane="E0_0" pos="55.78"/>
+        <detEntry lane="E0_1" pos="55.63"/>
+        <detExit lane="E0_0" pos="85.37"/>
+        <detExit lane="E0_1" pos="85.31"/>
+    </entryExitDetector>
+</additional>
