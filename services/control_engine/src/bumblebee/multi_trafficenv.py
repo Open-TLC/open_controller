@@ -3,7 +3,8 @@ from typing import Any
 
 import numpy as np
 from gymnasium import spaces
-from pettingzoo import ParallelEnv
+from ray.rllib.env.multi_agent_env import MultiAgentEnv
+from ray.rllib.utils.typing import AgentID
 
 from services.control_engine.src.detectors.area_detector import AreaDetector
 from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
@@ -15,7 +16,7 @@ from .safety_controller import SafetyController
 from .simengine import SimEngine
 
 
-class MultiTrafficEnv(ParallelEnv):
+class MultiTrafficEnv(MultiAgentEnv):
     def __init__(
         self,
         simengine: SimEngine,
@@ -57,9 +58,9 @@ class MultiTrafficEnv(ParallelEnv):
         )
 
         # Create safety controllers.
-        self._controllers: dict[str, SafetyController] = {}
+        self._controllers: dict[AgentID, SafetyController] = {}
         # Create detectors.
-        self._detectors: dict[str, list[AreaDetector]] = {}
+        self._detectors: dict[AgentID, list[AreaDetector]] = {}
 
         for conf in contr_confs:
             intergreens = np.array(conf.intergreens)
@@ -90,8 +91,10 @@ class MultiTrafficEnv(ParallelEnv):
             self._detectors[conf.name] = detectors
 
         # IDs of all controllers, i.e. agents.
-        self.possible_agents: list[str] = list(self._controllers.keys())
-        self.agents: list[str] = self.possible_agents[:]
+        self.possible_agents: list[AgentID] = list(self._controllers.keys())
+        self.agents: list[AgentID] = self.possible_agents[:]
+
+        self._agent_ids = set(self.possible_agents)
 
         # Agents have individually shaped action spaces, depending
         # on the number of phases the agent can choose from.
@@ -102,7 +105,7 @@ class MultiTrafficEnv(ParallelEnv):
 
         # Agents have individually shaped observation spaces,
         # depending on the number of detectors and phases.
-        obs_dims: dict[str, int] = {}
+        obs_dims: dict[AgentID, int] = {}
         for aid in self._detectors:
             # Observation space for a controller consists of three things:
             # 1. Vehicle counts read from detectors.
@@ -127,18 +130,34 @@ class MultiTrafficEnv(ParallelEnv):
 
         # Agents need to know each others' previous actions.
         # All actions are updated here after each step.
-        self._actions: dict[str, int] = dict.fromkeys(self.agents, 0)
+        self._actions: dict[AgentID, int] = dict.fromkeys(self.agents, 0)
 
         # Keeps track of episode lengths.
         self._cur_step: int = 0
         self._episode_steps = env_conf.episode_steps
 
+        # Keep track of teleportations.
+        self._episode_teleported: int = 0
+
+        # Keep track of total travel time.
+        self._episode_travel_time: float = 0
+
+        # Keep track of finished vehicles count.
+        self._episode_vehicles: int = 0
+
     def reset(
         self,
+        *,
         seed: int | None = None,
         options: dict | None = None,
-    ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
+    ) -> tuple[dict[AgentID, np.ndarray], dict[AgentID, Any]]:
+        super().reset(seed=seed, options=options)
+
         self._cur_step: int = 0
+
+        self._episode_teleported = 0
+        self._episode_travel_time = 0
+        self._episode_vehicles = 0
 
         # Activate all agents.
         self.agents = self.possible_agents[:]
@@ -158,46 +177,66 @@ class MultiTrafficEnv(ParallelEnv):
 
             self._controllers[conf.name] = safety_controller
 
-        self._actions: dict[str, int] = dict.fromkeys(self.agents, 0)
+        self._actions: dict[AgentID, int] = dict.fromkeys(self.agents, 0)
 
-        return self._get_observations(), {}
+        observations = self._get_observations()
+        infos = {aid: {} for aid in self.agents}
+
+        return observations, infos
 
     def step(
         self,
-        actions: dict[str, int],
+        action_dict: dict[AgentID, int],
     ) -> tuple[
-        dict[str, np.ndarray],
-        dict[str, float],
-        dict[str, bool],
-        dict[str, bool],
-        dict[str, dict],
+        dict[AgentID, np.ndarray],
+        dict[AgentID, float],
+        dict[AgentID, bool],
+        dict[AgentID, bool],
+        dict[AgentID, dict],
     ]:
         self._cur_step += 1
 
         # Apply actions to all controllers.
         for aid in self.agents:
-            if aid in actions:
-                new_states: str = self._controllers[aid].step(actions[aid])
-                self._simengine.set_signal_group_states(aid, new_states)
+            if aid in action_dict:
+                new_states: str = self._controllers[aid].step(action_dict[aid])
+                self._simengine.set_signal_group_states(str(aid), new_states)
 
         # Advance the simulation.
         self._simengine.step(self._simulation_steps_per_step)
 
         # Save previous actions.
-        self._actions = actions
+        self._actions = action_dict
+
+        # Gather metric data.
+        self._episode_teleported += self._simengine.get_teleported_count
+        self._episode_travel_time += self._simengine.get_finished_travel_time
+        self._episode_vehicles += self._simengine.get_finished_vehicles_count
 
         is_truncated = self._cur_step > self._episode_steps
 
         observations = self._get_observations()
         rewards = self._get_rewards()
-        terminations = dict.fromkeys(self.agents, False)
-        truncations = dict.fromkeys(self.agents, is_truncated)
+
+        terminateds = dict.fromkeys(self.agents, False)
+        terminateds["__all__"] = False
+
+        truncateds = dict.fromkeys(self.agents, is_truncated)
+        truncateds["__all__"] = is_truncated
+
         infos = {aid: {} for aid in self.agents}
 
         if is_truncated:
             self.agents = []
+            print(
+                "Average travel time: ",
+                self._episode_travel_time / self._episode_vehicles
+                if self._episode_vehicles > 0
+                else 0,
+            )
+            print("Vehicles teleported: ", self._episode_teleported)
 
-        return observations, rewards, terminations, truncations, infos
+        return observations, rewards, terminateds, truncateds, infos
 
     def render(self) -> None:
         raise NotImplementedError
@@ -205,8 +244,8 @@ class MultiTrafficEnv(ParallelEnv):
     def close(self) -> None:
         self._simengine.close()
 
-    def _get_observations(self) -> dict[str, np.ndarray]:
-        observations: dict[str, np.ndarray] = {}
+    def _get_observations(self) -> dict[AgentID, np.ndarray]:
+        observations: dict[AgentID, np.ndarray] = {}
         for aid in self.agents:
             cur_phase_idx = self._actions[aid]
             phase_count = self._controllers[aid].phase_count
@@ -227,7 +266,7 @@ class MultiTrafficEnv(ParallelEnv):
 
         return observations
 
-    def _get_rewards(self) -> dict[str, float]:
+    def _get_rewards(self) -> dict[AgentID, float]:
         """Calculate reward for the last step for all agents.
 
         Returns:

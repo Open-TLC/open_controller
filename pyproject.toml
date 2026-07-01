@@ -12,7 +12,6 @@ dependencies = [
     "nats-py>=2.14.0",
     "numpy>=2.4.6",
     "pandas>=3.0.3",
-    "pettingzoo>=1.26.1",
     "python-dateutil>=2.9.0.post0",
     "pytz>=2026.2",
     "ray[rllib]>=2.56.0",

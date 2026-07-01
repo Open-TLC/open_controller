@@ -14,6 +14,7 @@ class SimEngine:
 
     def __init__(self, conf: SimEngineConf) -> None:
         self._sumo_file = conf.sumo_file
+
         if conf.step_length <= 0:
             raise ValueError(f"Step length ({conf.step_length}) must be greater than 0")
         self._step_length = conf.step_length
@@ -46,22 +47,19 @@ class SimEngine:
             "120",
         ]
 
-        try:
-            if not self._sumo_running:
-                libsumo.start(sumo_args)
-                self._sumo_running = True
-            else:
-                # If SUMO is already running, the executable name is skipped.
-                libsumo.load(sumo_args[1:])
+        if not self._sumo_running:
+            libsumo.start(sumo_args)
+            self._sumo_running = True
+        else:
+            # If SUMO is already running, the executable name is skipped.
+            libsumo.load(sumo_args[1:])
 
-            current_time = libsumo.simulation.getTime()
-            for veh_id in libsumo.vehicle.getIDList():
-                try:
-                    self._departure_times[veh_id] = libsumo.vehicle.getDeparture(veh_id)
-                except Exception:
-                    self._departure_times[veh_id] = current_time
-        except Exception as e:
-            raise libsumo.FatalTraCIError(f"Starting SUMO failed: {e}")
+        current_time = libsumo.simulation.getTime()
+        for veh_id in libsumo.vehicle.getIDList():
+            try:
+                self._departure_times[veh_id] = libsumo.vehicle.getDeparture(veh_id)
+            except Exception:
+                self._departure_times[veh_id] = current_time
 
     def step(self, time_step_count: int) -> None:
         """Advance the simulation by specified time steps."""
@@ -93,7 +91,9 @@ class SimEngine:
         self._sumo_running = False
 
     def set_signal_group_states(
-        self, signal_controller_id: str, new_states: str
+        self,
+        signal_controller_id: str,
+        new_states: str,
     ) -> None:
         libsumo.trafficlight.setRedYellowGreenState(signal_controller_id, new_states)
 
@@ -103,8 +103,8 @@ class SimEngine:
 
         Returns:
             Number of vehicle that have teleported during the last step.
-        """
 
+        """
         return self._num_teleported_last_step
 
     @property
