@@ -1,10 +1,11 @@
 import argparse
+import datetime
 import json
 import os
-from pprint import pprint
-from typing import cast
+from typing import Any, cast
 
 import gymnasium
+import numpy as np
 import ray
 from gymnasium.wrappers import RecordEpisodeStatistics
 from ray.rllib.algorithms.dqn import DQNConfig
@@ -15,6 +16,7 @@ from stable_baselines3 import A2C, DQN, PPO
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.env_checker import check_env
+from torch.utils.tensorboard import SummaryWriter
 
 from .configuration import TrainerConf
 from .multi_trafficenv import MultiTrafficEnv
@@ -22,7 +24,7 @@ from .simengine import SimEngine
 from .trafficenv import TrafficEnv
 
 
-def _main() -> None:
+def _train() -> None:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -66,7 +68,7 @@ def _main() -> None:
 
 def _train_single_agent(
     conf: TrainerConf,
-    tensorboard_dir: str,
+    tensorboard_dir: str | None,
     model_file: str,
 ) -> None:
     print("Initializing Single-Agent Environment...")
@@ -100,7 +102,7 @@ def _train_single_agent(
 
 def _train_multi_agent(
     conf: TrainerConf,
-    tensorboard_dir: str,
+    tensorboard_dir: str | None,
     model_file: str,
 ) -> None:
     print("Initializing Multi-Agent Environment...")
@@ -154,18 +156,29 @@ def _train_multi_agent(
     config.training(
         num_epochs=4,
         train_batch_size_per_learner=3600,
+        entropy_coeff=0.01,
     )
 
     print("Building Multi-Agent Model Configuration...")
     algo = config.build_algo()
 
+    writer: SummaryWriter | None = None
+    if tensorboard_dir:
+        timestr = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        logdir = os.path.join(tensorboard_dir, f"run_{timestr}")
+        os.makedirs(logdir, exist_ok=True)
+        writer = SummaryWriter(log_dir=logdir)
+
     print("Starting Multi-Agent model training...")
 
-    for _ in range(conf.total_steps):
+    for i in range(conf.total_steps):
+        print(f"Step {i}")
         result = algo.train()
-        pprint(result["env_runners"].get("agent_episode_returns_mean"))
-        pprint(result["training_iteration"])
+        if writer:
+            _write_results(writer, i, result)
 
+    if writer:
+        writer.close()
     print("Multi-Agent Model trained!")
 
     if model_file:
@@ -173,6 +186,20 @@ def _train_multi_agent(
         print(f"Multi-Agent Model Checkpoint folder saved to: {model_file}")
 
     ray.shutdown()
+
+
+def _write_results(writer: SummaryWriter, step: int, result: dict[str, Any]) -> None:
+    mean_reward: float | None = float(result["env_runners"].get("episode_return_mean"))
+    agent_rewards: dict[str, np.float64] | None = result["env_runners"].get(
+        "agent_episode_returns_mean",
+    )
+
+    if mean_reward is not None:
+        writer.add_scalar("Rewards/Mean_Reward", mean_reward, step)
+
+    if agent_rewards is not None:
+        for aid in agent_rewards:
+            writer.add_scalar(f"Rewards/Agent_{aid}", float(agent_rewards[aid]), step)
 
 
 def _env_creator(env_config):
@@ -238,4 +265,4 @@ class _TrafficStatsCallback(BaseCallback):
 
 
 if __name__ == "__main__":
-    _main()
+    _train()

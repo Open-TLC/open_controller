@@ -1,5 +1,3 @@
-from itertools import product
-
 import numpy as np
 
 
@@ -91,56 +89,66 @@ class SafetyController:
         return "".join(sumo_state)
 
     def _get_possible_phases(self) -> np.ndarray:
+        num_logical = self._num_logical
+
         conflict_matrix = (self._intergreens > 0) | (self._intergreens.T > 0)
         np.fill_diagonal(conflict_matrix, False)
 
-        # Generate all phase with no conflicts.
-        valid_phases = []
-        for phase in product([0, 1], repeat=self._num_logical):
-            phase_arr = np.array(phase)
-            green_indices = np.where(phase_arr == 1)[0]
+        # 2. Build adjacency for the COMPLEMENT graph using bitmasks.
+        # If a bit is 1, it means there is NO conflict between the two signals.
+        adj = [0] * num_logical
+        for i in range(num_logical):
+            mask = 0
+            for j in range(num_logical):
+                if i != j and not conflict_matrix[i, j]:
+                    mask |= 1 << j
+            adj[i] = mask
 
-            if len(green_indices) > 0:
-                conflicting_greens = conflict_matrix[
-                    np.ix_(green_indices, green_indices)
-                ]
-                if not np.any(conflicting_greens):
-                    valid_phases.append(phase_arr)
-            else:
-                valid_phases.append(phase_arr)  # All red
+        maximal_phases_masks = []
 
-        phases_array = np.array(valid_phases)
-        maximal_phases = []
+        # 3. Bitwise Bron-Kerbosch Algorithm
+        def bk(r: int, p: int, x: int):
+            # If P and X are empty, R is a maximal independent set
+            if p == 0 and x == 0:
+                maximal_phases_masks.append(r)
+                return
 
-        # Filter out phases that aren't maximal, meaning that they are subsets of
-        # other groups. This is done to reduce the number of phases.
-        for i, phase in enumerate(phases_array):
-            is_maximal = True
-            for j, other in enumerate(phases_array):
-                if i == j:
-                    continue
-                if np.all((phase | other) == other) and not np.array_equal(
-                    phase, other
-                ):
-                    is_maximal = False
-                    break
-            if is_maximal:
-                maximal_phases.append(phase)
+            # Pivot optimization: pick an arbitrary node from P union X
+            # This drastically reduces the number of recursive branches
+            pivot_k = p | x
+            pivot = (pivot_k & -pivot_k).bit_length() - 1
 
-        # To give the agent granular control over traffic, single group phases are
-        # added. This means phases where only one group is green. The idea here is
-        # that the agent can avoid unnecessary intergreen times if letting only a
-        # single vehicle through.
-        # TODO: Evaluate the usefulness of these extra phases.
-        single_phases = np.eye(self._num_logical, dtype=int)
+            # Only iterate over nodes in P that are NOT connected to the pivot
+            temp_p = p & ~adj[pivot]
 
-        # All red phase is also added. This can be used as a "waiting" state if no
-        # vehicles are around.
-        # TODO: Evaluate the usefulness of this extra phase.
-        all_red = np.zeros((1, self._num_logical), dtype=int)
+            while temp_p > 0:
+                # Get the least significant set bit (the node 'v')
+                lsb = temp_p & -temp_p
+                v = lsb.bit_length() - 1
 
-        # All phases are combined.
-        final_phases = np.vstack([maximal_phases, single_phases, all_red])
+                # Recurse: add 'v' to R, restrict P and X to neighbors of 'v'
+                bk(r | lsb, p & adj[v], x & adj[v])
 
-        # Duplicates are removed.
-        return np.unique(final_phases, axis=0)
+                # Move 'v' from P to X
+                p &= ~lsb
+                x |= lsb
+                temp_p &= ~lsb
+
+        # Start BK with all nodes available in P (all bits set to 1)
+        all_nodes_mask = (1 << num_logical) - 1
+        bk(0, all_nodes_mask, 0)
+
+        # 4. Add single phases and all-red, using a set to automatically deduplicate
+        final_masks = set(maximal_phases_masks)
+
+        for i in range(num_logical):
+            final_masks.add(1 << i)  # Single group
+        final_masks.add(0)  # All red phase
+
+        # 5. Convert bitmasks back to a 2D numpy array
+        result_list = [
+            [(mask >> i) & 1 for i in range(num_logical)] for mask in final_masks
+        ]
+
+        # np.unique sorts the array and provides your consistent, clean output
+        return np.unique(np.array(result_list, dtype=int), axis=0)
