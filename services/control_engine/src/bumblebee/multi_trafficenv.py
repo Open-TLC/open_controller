@@ -275,17 +275,10 @@ class MultiTrafficEnv(MultiAgentEnv):
         """
         rewards = {}
 
-        teleport_count = self._simengine.get_teleported_count
-
         for aid in self.agents:
-            # Teleports indicate systemic gridlock. Applying this globally to all agents
-            # stops selfish behavior where one agent solves its local traffic by
-            # permanently backing up a neighbor until cars start disappearing.
-            teleport_penalty = teleport_count * -1000
-
             local_detectors = self._detectors.get(aid, [])
             if not local_detectors:
-                rewards[aid] = teleport_penalty
+                rewards[aid] = 0.0
                 continue
 
             queue_lengths = np.array(
@@ -307,6 +300,12 @@ class MultiTrafficEnv(MultiAgentEnv):
 
             local_queue_penalty = float(np.sum(penalties))
 
-            rewards[aid] = teleport_penalty - local_queue_penalty
+            rewards[aid] = -local_queue_penalty
+
+        if rewards:
+            mean_reward = float(np.mean(list(rewards.values())))
+
+            for aid in rewards:
+                rewards[aid] += mean_reward * 0.2
 
         return rewards
