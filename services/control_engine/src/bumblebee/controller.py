@@ -70,15 +70,20 @@ class BumblebeeController(SignalController):
 
         self._sumo_states: str = ""
 
+        self._locked: bool = False  # Used to lock the state of the controller to red.
+
     def tick(self) -> None:
         """Advance the controller by one time step."""
-        obs = get_observation(
-            self._cur_phase_idx,
-            len(self._detectors),
-            self._detectors,
-        )
-        action, _ = self._model.predict(obs)
-        self._cur_phase_idx = int(action.item())
+        # Controller doesn't advance to new phases if it is locked.
+        # This is done to lock it to red in case of a major failure.
+        if not self._locked:
+            obs = get_observation(
+                self._cur_phase_idx,
+                len(self._detectors),
+                self._detectors,
+            )
+            action, _ = self._model.predict(obs)
+            self._cur_phase_idx = int(action.item())
 
         self._sumo_states = self._safety_controller.step(self._cur_phase_idx)
 
@@ -115,7 +120,8 @@ class BumblebeeController(SignalController):
 
     def all_red(self) -> None:
         """Force safety controller to red gracefully."""
-        raise NotImplementedError
+        self._cur_phase_idx = 0  # 0 is always the index of all red phase.
+        self._locked = True  # Lock the controller to the current phase.
 
     @property
     def status(self) -> ControllerStatus:
@@ -139,7 +145,9 @@ class BumblebeeController(SignalController):
     @property
     def signal_states(self) -> str:
         """Signal states in Open Controller format."""
-        raise NotImplementedError
+        mapping_table = str.maketrans({"r": "b", "g": "5", "y": "<"})
+
+        return self._sumo_states.translate(mapping_table)
 
     @property
     def signal_states_sumo(self) -> str:
