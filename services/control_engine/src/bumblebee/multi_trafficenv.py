@@ -17,6 +17,8 @@ from .simengine import SimEngine
 
 
 class MultiTrafficEnv(MultiAgentEnv):
+    """RL environment for training multiple signal controller agents."""
+
     def __init__(
         self,
         simengine: SimEngine,
@@ -36,7 +38,8 @@ class MultiTrafficEnv(MultiAgentEnv):
 
         if env_conf.step_length < self._simengine.step_length:
             raise ValueError(
-                f"Environment step length ({env_conf.step_length}s) cannot be smaller than "
+                f"Environment step length ({env_conf.step_length}s) "
+                f"cannot be smaller than "
                 f"SimEngine step length ({self._simengine.step_length}s).",
             )
         self._step_length: float = env_conf.step_length
@@ -47,9 +50,11 @@ class MultiTrafficEnv(MultiAgentEnv):
             or isclose(remainder, self._simengine.step_length, abs_tol=1e-9)
         ):
             raise ValueError(
-                f"Environment step length ({self._step_length}s) must be a perfect multiple "
+                f"Environment step length ({self._step_length}s) "
+                f"must be a perfect multiple "
                 f"of SimEngine step length ({self._simengine.step_length}s). "
-                f"Resulting steps would be a fractional {self._step_length / self._simengine.step_length}.",
+                f"Resulting steps would be a fractional "
+                f"{self._step_length / self._simengine.step_length}.",
             )
 
         # How many simulation steps to advance per one environment step.
@@ -151,6 +156,7 @@ class MultiTrafficEnv(MultiAgentEnv):
         seed: int | None = None,
         options: dict | None = None,
     ) -> tuple[dict[AgentID, np.ndarray], dict[AgentID, Any]]:
+        """Reset the environment to original state."""
         super().reset(seed=seed, options=options)
 
         self._cur_step: int = 0
@@ -194,6 +200,25 @@ class MultiTrafficEnv(MultiAgentEnv):
         dict[AgentID, bool],
         dict[AgentID, dict],
     ]:
+        """Advance the environment by one timestep using the provided agent actions.
+
+        Applies the agent actions, steps the underlying traffic simulation,
+        and updates states.
+
+        Args:
+            action_dict: A dictionary mapping active AgentIDs to their chosen actions.
+
+        Returns:
+            A tuple containing five dictionaries:
+                - obs: New observations mapped by AgentID.
+                - rewards: Scalar rewards mapped by AgentID.
+                - terminateds: Termination flags mapped by AgentID. Must include
+                  the "__all__" key (bool) indicating if the episode ended naturally.
+                - truncateds: Truncation flags mapped by AgentID. Must include
+                  the "__all__" key (bool) indicating if the episode hit a time limit.
+                - infos: Auxiliary diagnostic information mapped by AgentID.
+
+        """
         self._cur_step += 1
 
         # Apply actions to all controllers.
@@ -213,7 +238,7 @@ class MultiTrafficEnv(MultiAgentEnv):
         self._episode_travel_time += self._simengine.get_finished_travel_time
         self._episode_vehicles += self._simengine.get_finished_vehicles_count
 
-        is_truncated = self._cur_step > self._episode_steps
+        is_truncated = self._cur_step >= self._episode_steps
 
         observations = self._get_observations()
         rewards = self._get_rewards()
@@ -239,9 +264,11 @@ class MultiTrafficEnv(MultiAgentEnv):
         return observations, rewards, terminateds, truncateds, infos
 
     def render(self) -> None:
+        """Show current performance in the SUMO GUI."""
         raise NotImplementedError
 
     def close(self) -> None:
+        """Close environment and simulation."""
         self._simengine.close()
 
     def _get_observations(self) -> dict[AgentID, np.ndarray]:
@@ -289,12 +316,12 @@ class MultiTrafficEnv(MultiAgentEnv):
             # This is a threshold for approximating the number of cars that fit in
             # a detectors area. If this is exceeded, the queue spills out of the
             # detection area and the reward is adjusted to prevent this.
-            QUEUE_THRESHOLD: float = 8.0
+            queue_threshold: float = 8.0
 
-            exceeds_mask = queue_lengths > QUEUE_THRESHOLD
+            exceeds_mask = queue_lengths > queue_threshold
             penalties = np.where(
                 exceeds_mask,
-                QUEUE_THRESHOLD + (queue_lengths - QUEUE_THRESHOLD) ** 2,
+                queue_threshold + (queue_lengths - queue_threshold) ** 2,
                 queue_lengths,
             )
 

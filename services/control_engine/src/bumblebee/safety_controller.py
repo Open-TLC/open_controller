@@ -11,13 +11,13 @@ class SafetyController:
         step_length: float,
         default_yellow: float = 3.0,
     ) -> None:
-        """
-        Args:
-            logical_intergreens: N x N matrix of transition times between *logical* signal groups.
-            link_to_logical_map: List mapping SUMO link index to logical group index.
-                                 e.g., [0, 1, 0, 2, 3]
-            step_length: Length of a time step in seconds.
-            default_yellow: Length of yellow light.
+        """Args:
+        logical_intergreens: N x N matrix of transition times between *logical* signal groups.
+        link_to_logical_map: List mapping SUMO link index to logical group index.
+                             e.g., [0, 1, 0, 2, 3]
+        step_length: Length of a time step in seconds.
+        default_yellow: Length of yellow light.
+
         """
         self._intergreens = logical_intergreens
         self._link_map = link_to_logical_map
@@ -47,14 +47,16 @@ class SafetyController:
                 for j in range(self._num_logical):
                     if i != j and self._intergreens[i, j] > 0:
                         self._lockout_timers[j] = max(
-                            self._lockout_timers[j], self._intergreens[i, j]
+                            self._lockout_timers[j],
+                            self._intergreens[i, j],
                         )
 
         # Yellow -> Red transitions and lockout timings.
         for i in range(self._num_logical):
             if self._yellow_timers[i] > 0:
                 self._yellow_timers[i] = max(
-                    0.0, self._yellow_timers[i] - self._delta_t
+                    0.0,
+                    self._yellow_timers[i] - self._delta_t,
                 )
 
             if self._current_group_states[i] == "y" and self._yellow_timers[i] <= 0.0:
@@ -63,7 +65,8 @@ class SafetyController:
 
             if self._lockout_timers[i] > 0:
                 self._lockout_timers[i] = max(
-                    0.0, self._lockout_timers[i] - self._delta_t
+                    0.0,
+                    self._lockout_timers[i] - self._delta_t,
                 )
 
         # Red -> Green transitions.
