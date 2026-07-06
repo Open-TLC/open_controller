@@ -58,10 +58,10 @@ def _main() -> None:
 
     conf = TrainerConf(conf_dict)
 
-    if conf.traffic_env.multi_agent:
-        _train_multi_agent(conf, tensorboard_dir, model_file)
-    else:
+    if len(conf.controllers) == 1:
         _train_single_agent(conf, tensorboard_dir, model_file)
+    else:
+        _train_multi_agent(conf, tensorboard_dir, model_file)
 
 
 def _train_single_agent(

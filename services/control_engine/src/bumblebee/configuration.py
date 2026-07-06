@@ -31,7 +31,6 @@ class TrafficEnvConf:
         # Whether to run in multi agent or single agent mode.
         # Defaults to single agent mode.
         val = conf.get("multi_agent")
-        self.multi_agent: bool = bool(val) if val is not None else False
 
         self.episode_steps: int = int(conf["episode_steps"])
 
