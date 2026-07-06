@@ -44,7 +44,7 @@ class SimEngine:
             "--step-length",
             str(self._step_length),
             "--time-to-teleport",
-            "120",
+            "-1",
         ]
 
         if not self._sumo_running:
