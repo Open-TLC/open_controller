@@ -1,7 +1,9 @@
-from collections.abc import Sequence
 from enum import Enum
 
-from services.control_engine.src.detector import Detector, e3Detector
+from services.control_engine.src.detectors.area_detector import AreaDetector
+from services.control_engine.src.detectors.point_detector import PointDetector
+from services.control_engine.src.detectors.sumo_e1_detector import E1PointDetector
+from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
 
 from .configuration import SyvariGroupConfiguration
 from .cycle_timer import CycleTimer
@@ -108,19 +110,20 @@ class SignalGroup:
         self._is_requesting: bool = False
         self._is_priority_requesting: bool = False
 
-        self._e3_detectors: list[e3Detector] = []
-        self._loop_detectors: list[Detector] = []
+        self._area_detectors: list[AreaDetector] = []
+        self._point_detectors: list[PointDetector] = []
 
-        for det_name in conf.detector_confs:
-            det_type: str = conf.detector_confs[det_name]["type"]
-            if det_type == "request":
-                det = Detector(self._timer, det_name, conf.detector_confs[det_name])
-                self._loop_detectors.append(det)
-            elif det_type == "e3detector":
-                det = e3Detector(self._timer, det_name, conf.detector_confs[det_name])
-                self._e3_detectors.append(det)
+        for det_conf in conf.detector_confs:
+            det_type: str = det_conf["type"]
+            det_id: str = det_conf["id"]
+            if det_type == "e1_detector":
+                det = E1PointDetector(det_id)
+                self._point_detectors.append(det)
+            elif det_type == "e3_detector":
+                det = E3AreaDetector(det_id)
+                self._area_detectors.append(det)
             else:
-                raise TypeError(f"Unknown detector type for {det_name}: {det_type}")
+                raise TypeError(f"Unknown detector type for {det_id}: {det_type}")
 
     @property
     def name(self) -> str:
@@ -166,16 +169,6 @@ class SignalGroup:
         ) % self._timer.cycle_length
 
         return time_since_green < self._min_guaranteed
-
-    @property
-    def e1_detectors(self) -> Sequence[Detector]:
-        """Groups loop detectors."""
-        return self._loop_detectors
-
-    @property
-    def e3_detectors(self) -> Sequence[Detector]:
-        """Groups area detectors."""
-        return self._e3_detectors
 
     def tick(self) -> None:
         """Advance group by one step.
@@ -321,6 +314,12 @@ class SignalGroup:
 
     def _update_extension(self) -> None:
         """Update the extension timer based on state and detector readings."""
+        # Update all detectors
+        for det in self._area_detectors:
+            det.tick()
+        for det in self._point_detectors:
+            det.tick()
+
         if self._cur_state != GroupState.ACTIVE_GREEN:
             self._last_extended = None
             self._last_priority_extended = None
@@ -363,17 +362,19 @@ class SignalGroup:
         return time_since_last_priority_vehicle < EXTENSION_LENGTH
 
     def _has_vehicles(self) -> bool:
-        veh_count = sum(det.veh_count() for det in self._e3_detectors)
+        veh_count = sum(det.vehicle_count for det in self._area_detectors)
 
-        # Evaluate if any short loop request channels are closed/on
-        has_loop_activations = any(det.loop_on for det in self._loop_detectors)
+        has_loop_activations = any(det.is_occupied for det in self._point_detectors)
 
         return veh_count > 0 or has_loop_activations
 
     def _has_priority_vehicles(self) -> bool:
-        veh_count = sum(det.veh_count() for det in self._e3_detectors)
+        veh_count = sum(det.vehicle_count for det in self._area_detectors)
 
-        # Currently e3 detectors count transit vehicles as 100 vehicles each.
-        # TODO: Fix detector to return true/false if detects priority vehicles.
+        # TODO: Currently broken, since area detectors
+        # can't differentiate between vehicle types.
+        # We should add a new detector type for detecting
+        # special vehicle types, like transit, emergency etc.
+
         transit_threshold = 100
         return veh_count >= transit_threshold

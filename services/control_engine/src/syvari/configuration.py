@@ -157,53 +157,39 @@ def _get_active_groups_by_phase(
 
 
 def _get_detector_configurations_by_group(
-    detector_configurations: dict[str, Any],
-) -> dict[str, dict[str, Any]]:
+    detector_configurations: list[dict[str, str]],
+) -> dict[str, list[dict[str, str]]]:
     """Group detector configurations by their associated signal group names.
 
-    A detector can be mapped to multiple groups if it defines both a single
-    "group" and a list of "request_groups" in its configuration block.
+    A detector is mapped to a group if it is defined in its "group" key
+    or within its "request_groups" list.
 
     Args:
-        detector_configurations: The raw detector configuration dictionary,
-            typically loaded from the controller configuration JSON.
-            Structure:
-                {
-                    "detector_name_1": {"group": "A", "request_groups": ["B"], ...},
-                    "detector_name_2": {"group": "B", ...}
-                }
+        detector_configurations: A list of raw detector configuration dictionaries.
 
     Returns:
-        A dictionary where keys are signal group names, and values are
-        dictionaries of the detectors belonging to that group.
-        Structure:
-            {
-                "A": {"detector_name_1": {"group": "A", ...}},
-                "B": {
-                    "detector_name_1": {"group": "A", "request_groups": ["B"], ...},
-                    "detector_name_2": {"group": "B", ...}
-                }
-            }
+        A dictionary mapping signal group names to a list of detector
+        configurations belonging to that group.
 
     """
-    detector_confs_by_group: dict[str, dict[str, Any]] = {}
+    detector_confs_by_group: dict[str, list[dict[str, str]]] = {}
 
-    for det_name, det_data in detector_configurations.items():
+    for det_conf in detector_configurations:
         groups: list[str] = []
 
-        single_group = det_data.get("group")
+        single_group = det_conf.get("group")
         if single_group:
             groups.append(single_group)
 
-        request_groups = det_data.get("request_groups")
+        request_groups = det_conf.get("request_groups")
         if request_groups:
             groups.extend(request_groups)
 
         for group in groups:
             if group not in detector_confs_by_group:
-                detector_confs_by_group[group] = {}
+                detector_confs_by_group[group] = []
 
-            detector_confs_by_group[group][det_name] = det_data
+            detector_confs_by_group[group].append(det_conf)
 
     return detector_confs_by_group
 
@@ -220,7 +206,7 @@ class SyvariGroupConfiguration:
         min_guaranteed: float,
         green_end_yellow: float,
         red_end_yellow: float,
-        detector_confs: dict[str, Any],
+        detector_confs: list[dict[str, Any]],
         priority_max: float | None = None,
     ) -> None:
         self.name = name
