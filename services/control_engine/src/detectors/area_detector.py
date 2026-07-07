@@ -10,16 +10,24 @@ class AreaDetector(ABC):
     """
 
     @abstractmethod
-    def vehicle_count(self) -> float:
-        """Return the total number or vehicles currently in the area."""
+    def tick(self) -> None:
+        """Update the detectors internal state."""
         ...
 
+    @property
+    @abstractmethod
+    def vehicle_count(self) -> float:
+        """Total number or vehicles currently in the area."""
+        ...
+
+    @property
     @abstractmethod
     def average_speed(self) -> float:
-        """Return the average speed (m/s) of a vehicle currently in the area."""
+        """Average speed (m/s) of a vehicle currently in the area."""
         ...
 
+    @property
     @abstractmethod
     def average_time_loss(self) -> float:
-        """Return the average time loss (s) experienced by vehicles in the area."""
+        """Average time loss (s) experienced by vehicles in the area."""
         ...
