@@ -152,7 +152,11 @@ class SyvariController(SignalController):
     @property
     def signal_states(self) -> str:
         """Signal states in Open Controller format."""
-        raise NotImplementedError
+        mapping_table = str.maketrans({"r": "b", "g": "5", "y": "<"})
+
+        sumo_states = self.signal_states_sumo
+
+        return sumo_states.translate(mapping_table)
 
     @property
     def signal_states_sumo(self) -> str:
@@ -247,7 +251,7 @@ class SyvariController(SignalController):
         )
 
     def _current_groups_in_guaranteed_green(self) -> bool:
-        """Check if any group in the current phase is protected by guaranteed minimum green requirements.
+        """Check if current group is protected by guaranteed minimum green requirements.
 
         Returns:
             True if a current group is locked into its
