@@ -4,27 +4,28 @@ AMBER_LENGTH: float = 1
 
 
 class SyvariControllerConfiguration:
-    """
-    Configuration object for SYVARI signal controller.
-    """
+    """Configuration object for SYVARI signal controller."""
 
     def __init__(self, name: str, controller_configuration: dict[str, Any]) -> None:
         self.name = name
         self.sumo_name = controller_configuration["sumo_name"]
 
-        # This is a list of group names used to translate signal group states to SUMO signal groups.
+        # This is a list of group names used to translate
+        # signal group states to SUMO signal groups.
         self.state_format = controller_configuration["group_outputs"]
 
         # This is a list of group names used to assign an index to all groups.
         groups_order: list[str] = controller_configuration["group_list"]
-        # This is a phase count * group count matrix of 0 and 1 depending on if group is green or not in a phase.
+        # This is a phase count * group count matrix of 0 and 1
+        # depending on if group is green or not in a phase.
         phases_matrix: list[list[int]] = controller_configuration["phases"]
         # Group count * group count matrix of intergreen times between groups.
         intergreen_matrix: list[list[float]] = controller_configuration["intergreens"]
 
         # Intergreen times by group name.
         intergreens_by_name: dict[str, list[float]] = _get_intergreens_by_group(
-            groups_order, intergreen_matrix
+            groups_order,
+            intergreen_matrix,
         )
 
         # Safety check for conflicting phases
@@ -38,10 +39,9 @@ class SyvariControllerConfiguration:
         self.group_confs: list[SyvariGroupConfiguration] = []
 
         det_confs_by_group = _get_detector_configurations_by_group(
-            controller_configuration["detectors"]
+            controller_configuration["detectors"],
         )
 
-        i: int = 0
         signal_groups = controller_configuration["signal_groups"]
         for group_name in signal_groups:
             sync_start: float = signal_groups[group_name]["sync_start"]
@@ -52,7 +52,8 @@ class SyvariControllerConfiguration:
 
             # Get the green end yellow time based on the phases and intergreens.
             green_end_yellow_time: float = _get_green_end_yellow_time(
-                group_name, intergreens_by_name
+                group_name,
+                intergreens_by_name,
             )
 
             group_conf = SyvariGroupConfiguration(
@@ -68,11 +69,11 @@ class SyvariControllerConfiguration:
             )
 
             self.group_confs.append(group_conf)
-            i += 1
 
 
 def _contains_conflicting_phase(
-    phases: list[list[int]], intergreens: list[list[float]]
+    phases: list[list[int]],
+    intergreens: list[list[float]],
 ) -> bool:
     for phase in phases:
         for i in range(len(phase)):
@@ -86,7 +87,8 @@ def _contains_conflicting_phase(
                 if intergreens[i][j] == 0:
                     continue
 
-                # If conflicting group is active in the same phase, we have a conflict in the phase
+                # If conflicting group is active in the same
+                # phase, we have a conflict in the phase
                 if phase[j] != 0:
                     return True
 
@@ -94,7 +96,8 @@ def _contains_conflicting_phase(
 
 
 def _get_intergreens_by_group(
-    groups: list[str], intergreens: list[list[float]]
+    groups: list[str],
+    intergreens: list[list[float]],
 ) -> dict[str, list[float]]:
     res: dict[str, list[float]] = {}
     for i in range(len(groups)):
@@ -111,7 +114,8 @@ def _get_green_end_yellow_time(
 
 
 def _get_conflicting_groups(
-    groups: list[str], group_intergreens: list[float]
+    groups: list[str],
+    group_intergreens: list[float],
 ) -> list[str]:
     conflict_groups: list[str] = []
     for i in range(len(groups)):
@@ -122,10 +126,10 @@ def _get_conflicting_groups(
 
 
 def _get_active_groups_by_phase(
-    groups_order: list[str], phase_matrix: list[list[int]]
+    groups_order: list[str],
+    phase_matrix: list[list[int]],
 ) -> list[list[str]]:
-    """
-    Maps a binary phase matrix to a list of active signal group names per phase.
+    """Map a binary phase matrix to a list of active signal group names per phase.
 
     Args:
         groups_order: List of signal group names in column order.
@@ -135,6 +139,7 @@ def _get_active_groups_by_phase(
     Returns:
         A list of lists, where each sublist contains the names of the
         signal groups active during that phase.
+
     """
     active_groups_per_phase: list[list[str]] = []
 
@@ -154,17 +159,33 @@ def _get_active_groups_by_phase(
 def _get_detector_configurations_by_group(
     detector_configurations: dict[str, Any],
 ) -> dict[str, dict[str, Any]]:
-    """
-    Converts detector configurations to a dictionary of with signal group name as the key.
-    This makes it easy to get detectors for a specific signal group.
+    """Group detector configurations by their associated signal group names.
+
+    A detector can be mapped to multiple groups if it defines both a single
+    "group" and a list of "request_groups" in its configuration block.
 
     Args:
-        detector_configurations: Detector configuration dictionary read from controller configuration JSON.
+        detector_configurations: The raw detector configuration dictionary,
+            typically loaded from the controller configuration JSON.
+            Structure:
+                {
+                    "detector_name_1": {"group": "A", "request_groups": ["B"], ...},
+                    "detector_name_2": {"group": "B", ...}
+                }
 
     Returns:
-        Dictionary with mappings from signal group name to a dictionary of detector configurations.
-    """
+        A dictionary where keys are signal group names, and values are
+        dictionaries of the detectors belonging to that group.
+        Structure:
+            {
+                "A": {"detector_name_1": {"group": "A", ...}},
+                "B": {
+                    "detector_name_1": {"group": "A", "request_groups": ["B"], ...},
+                    "detector_name_2": {"group": "B", ...}
+                }
+            }
 
+    """
     detector_confs_by_group: dict[str, dict[str, Any]] = {}
 
     for det_name, det_data in detector_configurations.items():
@@ -188,9 +209,7 @@ def _get_detector_configurations_by_group(
 
 
 class SyvariGroupConfiguration:
-    """
-    Configuration object for SYVARI signal group.
-    """
+    """Configuration object for SYVARI signal group."""
 
     def __init__(
         self,

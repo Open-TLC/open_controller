@@ -1,12 +1,15 @@
+from collections.abc import Sequence
 from enum import Enum
-from typing import Sequence
 
-from ..detector import Detector, e3Detector
+from services.control_engine.src.detector import Detector, e3Detector
+
 from .configuration import SyvariGroupConfiguration
 from .cycle_timer import CycleTimer
 
 
 class GroupState(Enum):
+    """Enum for handling sumo signal group states."""
+
     RED = "r"
     AMBER = "u"
     ACTIVE_GREEN = "G"
@@ -15,14 +18,14 @@ class GroupState(Enum):
 
 
 def group_state_to_string(state: GroupState) -> str:
-    """
-    group_state_to_string maps a state enum to Open Controller state character.
+    """Map a state enum to Open Controller state character.
 
     Args:
         state: Group state to convert.
 
     Returns:
         state string: The character representation of the state.
+
     """
     return state.value
 
@@ -32,18 +35,22 @@ EXTENSION_LENGTH: float = 3
 
 
 class SignalGroup:
+    """Signal group for SYVARI controller."""
+
     def __init__(
         self,
         timer: CycleTimer,
         conf: SyvariGroupConfiguration,
     ) -> None:
-        """
+        """Create new SYVARI signal group.
+
         Args:
             timer: Cycle timer used by the controller.
             conf: Signal group configuration.
 
         Raises:
             ValueError
+
         """
         self._timer = timer
         self._name = conf.name
@@ -55,7 +62,8 @@ class SignalGroup:
             or min(conf.sync_start, conf.sync_end) < 0
         ):
             raise ValueError(
-                "Invalid params: sync_start and sync_end must be between 0 and cycle_length."
+                "Invalid params: sync_start and sync_end ",
+                "must be between 0 and cycle_length.",
             )
         self._sync_start = conf.sync_start + conf.amber
         # Group has to end its green enough in advance to have the time for a yellow
@@ -66,13 +74,13 @@ class SignalGroup:
         if conf.min_green > target_phase_duration:
             raise ValueError(
                 f"Invalid params: min_green ({conf.min_green}s) cannot be longer than "
-                f"the target phase window ({target_phase_duration}s)."
+                f"the target phase window ({target_phase_duration}s).",
             )
 
         if conf.min_guaranteed < conf.min_green:
             raise ValueError(
                 f"Invalid params: min_guaranteed ({conf.min_guaranteed}s) can't be "
-                f"smaller than min_green ({conf.min_green}s)."
+                f"smaller than min_green ({conf.min_green}s).",
             )
         self._min_green = conf.min_green
         self._min_guaranteed = conf.min_guaranteed
@@ -81,7 +89,8 @@ class SignalGroup:
         # This makes sure that the cycle doesn't get too much ahead of itself.
         self._min_end = conf.sync_start + conf.min_green
 
-        # If no priority maximum is provided, it defaults to the standard synced window length
+        # If no priority maximum is provided, it defaults
+        # to the standard synced window length
         if conf.priority_max is None:
             self._priority_max = target_phase_duration
         else:
@@ -115,26 +124,40 @@ class SignalGroup:
 
     @property
     def name(self) -> str:
+        """Name of the signal group."""
         return self._name
 
     @property
     def state(self) -> GroupState:
+        """Current signal group state."""
         return self._cur_state
 
     @property
     def is_requesting(self) -> bool:
+        """True if group has an active green request."""
         return self._is_requesting
 
     @property
     def is_priority_requesting(self) -> bool:
+        """True if group has an active priority green request.
+
+        Priority requests can be issued by detectors
+        that detect incoming transit vehicles.
+        """
         return self._is_priority_requesting
 
     @property
     def is_priority_extending(self) -> bool:
+        """True if group is extending due to priority request.
+
+        Priority extensions can be issued by detectors
+        that detect incoming transit vehicles.
+        """
         return self._is_priority_extending()
 
     @property
     def has_guaranteed_green_left(self) -> bool:
+        """True if group hasn't used all of its guaranteed green."""
         if self._cur_state != GroupState.ACTIVE_GREEN:
             return False
 
@@ -146,16 +169,18 @@ class SignalGroup:
 
     @property
     def e1_detectors(self) -> Sequence[Detector]:
+        """Groups loop detectors."""
         return self._loop_detectors
 
     @property
     def e3_detectors(self) -> Sequence[Detector]:
+        """Groups area detectors."""
         return self._e3_detectors
 
     def tick(self) -> None:
-        """
-        tick advances the group by one step. This updates the
-        groups state based on the latest detector readings.
+        """Advance group by one step.
+
+        This updates the groups state based on the latest detector readings.
         """
         # This will update the extension logic if necessary.
         self._update_extension()
@@ -169,7 +194,8 @@ class SignalGroup:
         elif self._cur_state == GroupState.ACTIVE_GREEN:
             self._tick_on_green()
 
-        # If group is in yellow and has been yellow for long enough, it will transition to red.
+        # If group is in yellow and has been yellow
+        # for long enough, it will transition to red.
         elif self._cur_state == GroupState.YELLOW:
             self._tick_on_yellow()
 
@@ -185,9 +211,10 @@ class SignalGroup:
             raise ValueError("Unknown group state: ", self._cur_state)
 
     def start_green(self) -> None:
-        """
-        Puts the group to active green. The group will be responsible
-        for returning to passive green after the conditions are met.
+        """Put the group to active green.
+
+        The group will be responsible for returning to
+        passive green after the conditions are met.
         """
         # If group is already starting it's green, it will remain unchanged.
         if self._cur_state == GroupState.AMBER:
@@ -208,8 +235,9 @@ class SignalGroup:
         self._is_priority_requesting = False
 
     def end_green(self) -> None:
-        """
-        Puts the group to yellow. The group will switch to red itself.
+        """Put the group to yellow.
+
+        The group will switch to red itself.
         """
         if self._cur_state in (GroupState.PASSIVE_GREEN, GroupState.ACTIVE_GREEN):
             self._cur_state = GroupState.YELLOW
@@ -254,8 +282,8 @@ class SignalGroup:
 
     def _tick_on_yellow(self) -> None:
         """Update group while yellow.
-        This will check if group should turn red and update it's state according
-        to it.
+
+        This will check if group should turn red and update it's state according to it.
         """
         time_since_yellow = (
             self._timer.cycle_phase - self._cur_start_time
@@ -268,6 +296,7 @@ class SignalGroup:
 
     def _tick_on_red(self) -> None:
         """Update group while on red.
+
         This will update group's request status depending on detectors.
         """
         self._is_requesting = self._is_requesting or self._has_vehicles()
@@ -277,6 +306,7 @@ class SignalGroup:
 
     def _tick_on_amber(self) -> None:
         """Update group while amber.
+
         This will check if group should turn green and update it's state according
         to it.
         """
@@ -290,9 +320,7 @@ class SignalGroup:
             self._cur_start_time = self._timer.cycle_phase
 
     def _update_extension(self) -> None:
-        """
-        Updates the extension timer based on state and detector readings.
-        """
+        """Update the extension timer based on state and detector readings."""
         if self._cur_state != GroupState.ACTIVE_GREEN:
             self._last_extended = None
             self._last_priority_extended = None
@@ -320,7 +348,7 @@ class SignalGroup:
         return time_since_last_vehicle < EXTENSION_LENGTH
 
     def _is_priority_extending(self) -> bool:
-        """Check if the group is currently trying to priority extend its active green."""
+        """Check if group is currently trying to priority extend its active green."""
         if self._last_priority_extended is None:
             return False
 
@@ -347,4 +375,5 @@ class SignalGroup:
 
         # Currently e3 detectors count transit vehicles as 100 vehicles each.
         # TODO: Fix detector to return true/false if detects priority vehicles.
-        return veh_count >= 100
+        transit_threshold = 100
+        return veh_count >= transit_threshold
