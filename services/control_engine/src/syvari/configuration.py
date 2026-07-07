@@ -1,5 +1,7 @@
 from typing import Any
 
+from services.control_engine.src.detectors.configuration import DetectorConfiguration
+
 AMBER_LENGTH: float = 1
 
 
@@ -39,7 +41,7 @@ class SyvariControllerConfiguration:
         self.group_confs: list[SyvariGroupConfiguration] = []
 
         det_confs_by_group = _get_detector_configurations_by_group(
-            controller_configuration["detectors"],
+            controller_configuration,
         )
 
         signal_groups = controller_configuration["signal_groups"]
@@ -157,41 +159,48 @@ def _get_active_groups_by_phase(
 
 
 def _get_detector_configurations_by_group(
-    detector_configurations: list[dict[str, str]],
-) -> dict[str, list[dict[str, str]]]:
+    controller_conf: dict[str, Any],
+) -> dict[str, list[DetectorConfiguration]]:
     """Group detector configurations by their associated signal group names.
 
-    A detector is mapped to a group if it is defined in its "group" key
-    or within its "request_groups" list.
-
     Args:
-        detector_configurations: A list of raw detector configuration dictionaries.
+        controller_conf: Configuration for the entire controller.
 
     Returns:
         A dictionary mapping signal group names to a list of detector
         configurations belonging to that group.
 
     """
-    detector_confs_by_group: dict[str, list[dict[str, str]]] = {}
+    detector_confs_by_id: dict[str, DetectorConfiguration] = {}
+    for det_conf_dict in controller_conf["detectors"]:
+        det_conf = DetectorConfiguration(det_conf_dict)
 
-    for det_conf in detector_configurations:
-        groups: list[str] = []
+        detector_confs_by_id[det_conf.id] = det_conf
 
-        single_group = det_conf.get("group")
-        if single_group:
-            groups.append(single_group)
+    detector_confs_by_group: dict[str, list[DetectorConfiguration]] = {}
 
-        request_groups = det_conf.get("request_groups")
-        if request_groups:
-            groups.extend(request_groups)
-
-        for group in groups:
-            if group not in detector_confs_by_group:
-                detector_confs_by_group[group] = []
-
-            detector_confs_by_group[group].append(det_conf)
+    for group_name, group_conf in controller_conf["signal_groups"].items():
+        detector_confs_by_group[group_name] = _get_detector_confs(
+            group_conf["detectors"],
+            detector_confs_by_id,
+        )
 
     return detector_confs_by_group
+
+
+def _get_detector_confs(
+    target_detector_ids: list[str],
+    detector_confs: dict[str, DetectorConfiguration],
+) -> list[DetectorConfiguration]:
+    result: list[DetectorConfiguration] = []
+    for det_id in target_detector_ids:
+        det_conf = detector_confs.get(det_id)
+        if not det_conf:
+            raise ValueError(f"No detector {det_id} configured")
+
+        result.append(det_conf)
+
+    return result
 
 
 class SyvariGroupConfiguration:
@@ -206,7 +215,7 @@ class SyvariGroupConfiguration:
         min_guaranteed: float,
         green_end_yellow: float,
         red_end_yellow: float,
-        detector_confs: list[dict[str, Any]],
+        detector_confs: list[DetectorConfiguration],
         priority_max: float | None = None,
     ) -> None:
         self.name = name
