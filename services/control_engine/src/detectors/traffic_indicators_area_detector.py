@@ -1,4 +1,7 @@
+import json
+
 from nats import connect
+from nats.aio.client import Client
 from nats.aio.msg import Msg
 
 from .area_detector import AreaDetector
@@ -29,7 +32,7 @@ class TrafficIndicatorsAreaDetector(AreaDetector):
     ) -> None:
         super().__init__()
         self._area = area
-        self._nc = None
+        self._nc: Client | None = None
 
         self._vehicle_count: float = 0.0
         self._average_speed: float = 0.0
@@ -94,33 +97,28 @@ class TrafficIndicatorsAreaDetector(AreaDetector):
     @property
     def average_speed(self) -> float:
         """Average speed (m/s) of vehicles in the detection area."""
+        raise NotImplementedError("Traffic Indicators doesn't provide speeds.")
         return self._average_speed
 
     @property
     def average_time_loss(self) -> float:
         """Average time loss (s) of vehicles in the detection area."""
+        raise NotImplementedError("Traffic Indicators doesn't provide time losses.")
         return self._average_time_loss
 
     async def _update_vehicle_count(self, msg: Msg) -> None:
-        data = msg.data.decode()
-
-        # TODO: Figure out the data format and update
-        # instance variable _vehicle_count based on it.
+        data = json.loads(msg.data.decode())
 
         print(data)
+
+        queue_lengths: list[dict[str, int]] = data["queue_lengths"]
+
+        for queue in queue_lengths:
+            if queue["lane"] == self._area.detector_id:
+                self._vehicle_count = float(queue["approaching"])
 
     async def _update_average_speed(self, msg: Msg) -> None:
-        data = msg.data.decode()
-
-        # TODO: Figure out the data format and update
-        # instance variable _average_speed based on it.
-
-        print(data)
+        pass
 
     async def _update_average_time_loss(self, msg: Msg) -> None:
-        data = msg.data.decode()
-
-        # TODO: Figure out the data format and update
-        # instance variable _average_time_loss based on it.
-
-        print(data)
+        pass
