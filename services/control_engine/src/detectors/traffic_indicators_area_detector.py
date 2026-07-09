@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from nats import connect
 from nats.aio.client import Client
@@ -7,31 +8,18 @@ from nats.aio.msg import Msg
 from .area_detector import AreaDetector
 
 
-class TrafficIndicatorsDetectionArea:
-    """Traffic Indicators area specifier."""
-
-    def __init__(
-        self,
-        country: str,
-        municipality: str,
-        junction_id: str,
-        detector_id: str,
-    ) -> None:
-        self.country = country
-        self.municipality = municipality
-        self.junction_id = junction_id
-        self.detector_id = detector_id
-
-
 class TrafficIndicatorsAreaDetector(AreaDetector):
     """AreaDetector implementation using data from Traffic Indicators."""
 
     def __init__(
         self,
-        area: TrafficIndicatorsDetectionArea,
+        junction_id: str,
+        group_id: str,
     ) -> None:
         super().__init__()
-        self._area = area
+        self._junction_id = junction_id
+        self._group_id = group_id
+
         self._nc: Client | None = None
 
         self._vehicle_count: float = 0.0
@@ -43,38 +31,31 @@ class TrafficIndicatorsAreaDetector(AreaDetector):
         cls,
         nats_url: str,
         nats_port: int,
-        area: TrafficIndicatorsDetectionArea,
+        junction_id: str,
+        group_id: str,
     ) -> "TrafficIndicatorsAreaDetector":
         """Instantiate detector needing asynchronous setup."""
         # Create instance of detector class.
-        instance = cls(area)
+        instance = cls(junction_id, group_id)
 
         # Create NATS client.
         instance._nc = await connect(f"nats://{nats_url}:{nats_port}")
 
-        # Build subjects for queue lengths, average speeds, and average time losses.
-        queue_subject = (
-            f"indicators.queue_length"
-            f".{area.country}.{area.municipality}"
-            f".{area.junction_id}.{area.detector_id}"
-        )
-        speed_subject = (
-            f"indicators.avg_speed"
-            f".{area.country}.{area.municipality}"
-            f".{area.junction_id}.{area.detector_id}"
-        )
-        loss_subject = (
-            f"indicators.avg_time_loss"
-            f".{area.country}.{area.municipality}"
-            f".{area.junction_id}.{area.detector_id}"
-        )
+        # Detections for queues and speeds come in the same message.
+        detection_subject = f"group.e3.{junction_id}.{group_id}"
 
         # Callback functions update instance variables for
         # queues, speeds, and time losses asynchronously.
-        await instance._nc.subscribe(queue_subject, cb=instance._update_vehicle_count)
-        await instance._nc.subscribe(speed_subject, cb=instance._update_average_speed)
         await instance._nc.subscribe(
-            loss_subject,
+            detection_subject,
+            cb=instance._update_vehicle_count,
+        )
+        await instance._nc.subscribe(
+            detection_subject,
+            cb=instance._update_average_speed,
+        )
+        await instance._nc.subscribe(
+            detection_subject,
             cb=instance._update_average_time_loss,
         )
 
@@ -97,7 +78,6 @@ class TrafficIndicatorsAreaDetector(AreaDetector):
     @property
     def average_speed(self) -> float:
         """Average speed (m/s) of vehicles in the detection area."""
-        raise NotImplementedError("Traffic Indicators doesn't provide speeds.")
         return self._average_speed
 
     @property
@@ -109,16 +89,31 @@ class TrafficIndicatorsAreaDetector(AreaDetector):
     async def _update_vehicle_count(self, msg: Msg) -> None:
         data = json.loads(msg.data.decode())
 
-        print(data)
+        vehicle_count: int | None = data.get("count")
 
-        queue_lengths: list[dict[str, int]] = data["queue_lengths"]
+        # If no vehicles are detected, vehicle count is zeroed.
+        if not vehicle_count:
+            self._vehicle_count = 0
+            return
 
-        for queue in queue_lengths:
-            if queue["lane"] == self._area.detector_id:
-                self._vehicle_count = float(queue["approaching"])
+        self._vehicle_count = float(vehicle_count)
 
     async def _update_average_speed(self, msg: Msg) -> None:
-        pass
+        data = json.loads(msg.data.decode())
+
+        # Vehicles by ID
+        vehicles: dict[str, dict[str, Any]] | None = data.get("objects")
+
+        vehicle_count: int | None = data.get("count")
+
+        # If no vehicles are detected, average speed is zeroed.
+        if not vehicles or not vehicle_count:
+            self._average_speed = 0
+            return
+
+        speed_sum: float = sum(veh["speed"] for veh in vehicles.values())
+
+        self._average_speed = speed_sum / vehicle_count
 
     async def _update_average_time_loss(self, msg: Msg) -> None:
         pass
