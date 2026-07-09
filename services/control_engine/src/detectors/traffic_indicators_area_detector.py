@@ -1,7 +1,6 @@
 import json
 from typing import Any
 
-from nats import connect
 from nats.aio.client import Client
 from nats.aio.msg import Msg
 
@@ -29,23 +28,17 @@ class TrafficIndicatorsAreaDetector(AreaDetector):
     @classmethod
     async def create(
         cls,
-        nats_url: str,
-        nats_port: int,
+        nc: Client,
         junction_id: str,
         group_id: str,
     ) -> "TrafficIndicatorsAreaDetector":
         """Instantiate detector needing asynchronous setup."""
-        # Create instance of detector class.
         instance = cls(junction_id, group_id)
+        instance._nc = nc
 
-        # Create NATS client.
-        instance._nc = await connect(f"nats://{nats_url}:{nats_port}")
-
-        # Detections for queues and speeds come in the same message.
         detection_subject = f"group.e3.{junction_id}.{group_id}"
 
-        # Callback functions update instance variables for
-        # queues, speeds, and time losses asynchronously.
+        # Subscriptions stay the same
         await instance._nc.subscribe(
             detection_subject,
             cb=instance._update_vehicle_count,
