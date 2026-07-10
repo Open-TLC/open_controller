@@ -91,6 +91,63 @@ uv run -m services.control_engine.src.bumblebee.trainer --conf-file path/to/bumb
 
 ## Controller
 
-Signal controller that uses a trained model to decide signal timings.
+Signal controller that uses a trained model to decide signal timings. For now, Bumblebee controller for a single intersection can be configured with the following syntax, but this is likely subject to change in the near future.
 
-#opencontroller
+```json
+{
+	"simengine": {
+		"sumo_file": "path/to/simulation.sumocfg"
+	},
+
+	"model": {
+		"model_type": "ppo",
+		"model_path": "path/to/trained/model.zip",
+		"step_length": 1
+	},
+
+	"controller": {
+		"sumo_name": "controller1", // SUMO ID of the controller
+
+		"group_outputs": [
+			0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
+		],
+
+
+		"intergreens": [
+			[0, 0, 0, 3, 0, 0],
+			[0, 0, 0, 3, 3, 3],
+			[0, 0, 0, 0, 0, 3],
+			[3, 3, 0, 0, 0, 3],
+			[0, 3, 0, 0, 0, 0],
+			[0, 3, 3, 3, 0, 0]
+		],
+		"detectors": [
+			{
+				"type": "e2_detector",
+				"id": "e2_0"
+			},
+			{
+				"type": "e2_detector",
+				"id": "e2_1"
+			},
+			{
+				"type": "e2_detector",
+				"id": "e2_2"
+			},
+			{
+				"type": "e2_detector",
+				"id": "e2_3"
+			},
+			{
+				"type": "e2_detector",
+				"id": "e2_4"
+			},
+			{
+				"type": "e2_detector",
+				"id": "e2_5"
+			}
+		]
+	}
+}
+```
+
