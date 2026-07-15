@@ -143,6 +143,10 @@ class TrafficEnv(gymnasium.Env):
         self._cur_phase_idx = 0
         self._cur_step = 0
 
+        # Update detector states.
+        for detector in self._detectors:
+            detector.tick()
+
         observation: np.ndarray = get_observation(
             self._cur_phase_idx,
             self._safety_controller.phase_count,
@@ -159,6 +163,10 @@ class TrafficEnv(gymnasium.Env):
         # doesn't take into consideration that the intergreen times can expire between
         # simulation steps. This isn't likely a major problem, since once per sec is
         # still frequent enough and intergreen times are usually full seconds.
+
+        # Update detector states.
+        for detector in self._detectors:
+            detector.tick()
 
         # Turn action to SUMO state string.
         new_states = self._safety_controller.step(action)
@@ -220,7 +228,7 @@ class TrafficEnv(gymnasium.Env):
         teleport_penalty = self._simengine.get_teleported_count * -1000
 
         queue_lengths = np.array(
-            [d.vehicle_count() for d in self._detectors],
+            [d.vehicle_count for d in self._detectors],
             dtype=np.float32,
         )
 

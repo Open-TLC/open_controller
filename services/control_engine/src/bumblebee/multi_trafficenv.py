@@ -7,6 +7,7 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.utils.typing import AgentID
 
 from services.control_engine.src.detectors.area_detector import AreaDetector
+from services.control_engine.src.detectors.configuration import DetectorConfiguration
 from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
 from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
 
@@ -24,6 +25,7 @@ class MultiTrafficEnv(MultiAgentEnv):
         simengine: SimEngine,
         env_conf: TrafficEnvConf,
         contr_confs: list[BumblebeeControllerConf],
+        det_confs: list[DetectorConfiguration],
     ) -> None:
         super().__init__()
 
@@ -62,6 +64,24 @@ class MultiTrafficEnv(MultiAgentEnv):
             env_conf.step_length / self._simengine.step_length,
         )
 
+        # All detectors are created.
+        all_detectors: dict[str, AreaDetector] = {}
+
+        for det_conf in det_confs:
+            det_type = det_conf.type
+            if det_type == "e1_detector":
+                continue
+            if det_type == "e2_detector":
+                all_detectors[det_conf.id] = E2AreaDetector(det_conf.id)
+                print(f"Created E2 detector {det_conf.id}")
+            elif det_type == "e3_detector":
+                all_detectors[det_conf.id] = E3AreaDetector(det_conf.id)
+                print(f"Created E3 detector {det_conf.id}")
+            else:
+                raise ValueError(
+                    f"Unsupported detector type {det_type} with ID {det_conf.id}.",
+                )
+
         # Create safety controllers.
         self._controllers: dict[AgentID, SafetyController] = {}
         # Create detectors.
@@ -75,21 +95,12 @@ class MultiTrafficEnv(MultiAgentEnv):
 
             self._controllers[conf.id] = safety_controller
 
-            detectors: list[AreaDetector] = []
-            for detector_conf in conf.detector_confs:
-                detector: AreaDetector
-                det_type: str = detector_conf.type
-                det_id: str = detector_conf.id
-                if det_type == "e2_detector":
-                    detector = E2AreaDetector(det_id)
-                elif det_type == "e3_detector":
-                    detector = E3AreaDetector(det_id)
-                else:
-                    raise ValueError(
-                        f"Unknown detector type for detector {det_id}: {det_type}",
-                    )
-                detectors.append(detector)
-            self._detectors[conf.id] = detectors
+            controller_detectors: list[AreaDetector] = []
+            for node_id in conf.geometry.node_ids():
+                controller_detectors.append(all_detectors[node_id])
+
+            print(f"Controller {conf.id} has {len(controller_detectors)} detectors.")
+            self._detectors[conf.id] = controller_detectors
 
         # IDs of all controllers, i.e. agents.
         self.possible_agents: list[AgentID] = list(self._controllers.keys())
@@ -175,6 +186,11 @@ class MultiTrafficEnv(MultiAgentEnv):
 
             self._controllers[conf.id] = safety_controller
 
+        # Update detector states.
+        for agent_detectors in self._detectors.values():
+            for detector in agent_detectors:
+                detector.tick()
+
         self._actions: dict[AgentID, int] = dict.fromkeys(self.agents, 0)
 
         observations = self._get_observations()
@@ -212,6 +228,11 @@ class MultiTrafficEnv(MultiAgentEnv):
 
         """
         self._cur_step += 1
+
+        # Update detector states.
+        for agent_detectors in self._detectors.values():
+            for detector in agent_detectors:
+                detector.tick()
 
         # Apply actions to all controllers.
         for aid in self.agents:
@@ -301,7 +322,7 @@ class MultiTrafficEnv(MultiAgentEnv):
                 continue
 
             queue_lengths = np.array(
-                [d.vehicle_count() for d in local_detectors],
+                [d.vehicle_count for d in local_detectors],
                 dtype=np.float32,
             )
 

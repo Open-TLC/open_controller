@@ -2,6 +2,7 @@ from typing import Any
 
 import numpy as np
 
+from services.control_engine.src.detectors.configuration import DetectorConfiguration
 from services.control_engine.src.geometry.junction_geometry import JunctionGeometry
 
 
@@ -28,6 +29,18 @@ class TrainerConf:
             )
 
         self.algorithm: str = self.controllers[0].algorithm
+
+        raw_detector_confs: list[dict[str, Any]] | None = raw_conf.get("detectors")
+        if raw_detector_confs is None or len(raw_detector_confs) == 0:
+            raise ValueError(
+                "No detectors configured. Configure at "
+                "least 1 detector to train Bumblebee.",
+            )
+
+        self.detectors: list[DetectorConfiguration] = []
+
+        for raw_detector_conf in raw_detector_confs:
+            self.detectors.append(DetectorConfiguration(raw_detector_conf))
 
 
 class TrafficEnvConf:
@@ -68,7 +81,7 @@ class BumblebeeControllerConf:
         self.model_file = raw_options["model_file"]
         self.algorithm = raw_options["algorithm"]
 
-        self.geometry = JunctionGeometry(raw_options)
+        self.geometry = JunctionGeometry(controller_id, raw_options)
         self.conflict_matrix: np.ndarray = self.geometry.generate_conflict_matrix()
 
         # Map conflict types to intergreen times.

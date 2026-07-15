@@ -205,7 +205,12 @@ def _write_results(writer: SummaryWriter, step: int, result: dict[str, Any]) -> 
 def _env_creator(env_config):
     conf: TrainerConf = env_config["conf"]
     local_simengine = SimEngine(conf.simengine)
-    return MultiTrafficEnv(local_simengine, conf.traffic_env, conf.controllers)
+    return MultiTrafficEnv(
+        local_simengine,
+        conf.traffic_env,
+        conf.controllers,
+        conf.detectors,
+    )
 
 
 def _map_agent_to_policy(agent_id: AgentID, episode: EpisodeType) -> str:

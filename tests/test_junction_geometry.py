@@ -21,7 +21,7 @@ class TestJunctionGeometry(unittest.TestCase):
                 "P1": ["1", "2"],
             },
         }
-        geo = JunctionGeometry(raw_conf)
+        geo = JunctionGeometry("j1", raw_conf)
         matrix = geo.generate_conflict_matrix()
 
         self.assertEqual(matrix.shape, (3, 3))
@@ -35,7 +35,7 @@ class TestJunctionGeometry(unittest.TestCase):
                 "2": ["4a"],
             },
         }
-        geo = JunctionGeometry(raw_conf)
+        geo = JunctionGeometry("j1", raw_conf)
         matrix = geo.generate_conflict_matrix()
 
         self.assertEqual(matrix.shape, (3, 3))
@@ -47,7 +47,7 @@ class TestJunctionGeometry(unittest.TestCase):
             "links": {},
             "crossings": {},
         }
-        geo = JunctionGeometry(raw_conf)
+        geo = JunctionGeometry("j1", raw_conf)
         matrix = geo.generate_conflict_matrix()
         self.assertEqual(matrix.shape, (0, 0))
 
@@ -59,7 +59,7 @@ class TestJunctionGeometry(unittest.TestCase):
             },
         }
         with self.assertRaises(ValueError) as context:
-            JunctionGeometry(invalid_conf)
+            JunctionGeometry("j1", invalid_conf)
         self.assertIn(
             "All exit nodes must have an alphabet part",
             str(context.exception),
@@ -75,7 +75,7 @@ class TestJunctionGeometry(unittest.TestCase):
         ]
         for conf in bad_confs:
             with self.subTest(conf=conf), self.assertRaises(ValueError):
-                JunctionGeometry(conf)
+                JunctionGeometry("j1", conf)
 
     def test_self_conflict_always_zero(self) -> None:
         """Safety invariant: An active link or crossing doesn't conflict with itself."""
@@ -88,7 +88,7 @@ class TestJunctionGeometry(unittest.TestCase):
                 "P1": ["0", "1"],
             },
         }
-        geo = JunctionGeometry(raw_conf)
+        geo = JunctionGeometry("j1", raw_conf)
         matrix = geo.generate_conflict_matrix()
 
         # The diagonal elements of the square matrix must be entirely 0
@@ -103,7 +103,7 @@ class TestJunctionGeometry(unittest.TestCase):
                 "1": ["5a"],
             },
         }
-        geo = JunctionGeometry(raw_conf)
+        geo = JunctionGeometry("j1", raw_conf)
         matrix = geo.generate_conflict_matrix()
 
         self.assertEqual(matrix[0, 1], 1)
@@ -117,7 +117,7 @@ class TestJunctionGeometry(unittest.TestCase):
                 "1": ["4a"],
             },
         }
-        geo = JunctionGeometry(raw_conf)
+        geo = JunctionGeometry("j1", raw_conf)
         matrix = geo.generate_conflict_matrix()
 
         self.assertEqual(matrix[0, 1], 1)
@@ -131,7 +131,7 @@ class TestJunctionGeometry(unittest.TestCase):
                 "2": ["3a"],
             },
         }
-        geo = JunctionGeometry(raw_conf)
+        geo = JunctionGeometry("j1", raw_conf)
         matrix = geo.generate_conflict_matrix()
 
         self.assertEqual(matrix[0, 1], 0)
@@ -151,7 +151,7 @@ class TestJunctionGeometry(unittest.TestCase):
                 "P1": ["0", "1"],
             },
         }
-        geo = JunctionGeometry(raw_conf)
+        geo = JunctionGeometry("j1", raw_conf)
         matrix = geo.generate_conflict_matrix()
 
         # Vehicle -> Pedestrian transition (Row 0, Col 1)
@@ -171,7 +171,7 @@ class TestJunctionGeometry(unittest.TestCase):
                 "P2": ["0"],
             },
         }
-        geo = JunctionGeometry(raw_conf)
+        geo = JunctionGeometry("j1", raw_conf)
         matrix = geo.generate_conflict_matrix()
 
         self.assertEqual(matrix[1, 2], 0)

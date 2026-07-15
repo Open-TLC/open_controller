@@ -11,13 +11,14 @@ class JunctionGeometry:
     This can be used to parse and extract information abou the geometry of a junction.
     """
 
-    def __init__(self, raw_conf: dict[str, Any]) -> None:
-        self._conf = raw_conf
+    def __init__(self, junction_id: str, raw_options: dict[str, Any]) -> None:
+        self._conf = raw_options
+        self._junction_id = junction_id
 
         self._links: list[_Link] = []
         self._crossings: list[_Crossing] = []
 
-        for entry_str, exits in raw_conf["links"].items():
+        for entry_str, exits in raw_options["links"].items():
             entry_node = _Node(entry_str)
             for exit_str in exits:
                 exit_node = _Node(exit_str)
@@ -27,9 +28,19 @@ class JunctionGeometry:
                     )
                 self._links.append(_Link(entry_node, exit_node))
 
-        for crossing_id, crossed_nodes_list in raw_conf.get("crossings", {}).items():
+        for crossing_id, crossed_nodes_list in raw_options.get("crossings", {}).items():
             crossed_nodes = [_Node(node_str) for node_str in crossed_nodes_list]
             self._crossings.append(_Crossing(crossing_id, crossed_nodes))
+
+    def node_ids(self) -> list[str]:
+        ids: list[str] = []
+        for link in self._links:
+            start_id = f"{self._junction_id}.{link.start.num}"
+            end_id = f"{self._junction_id}.{link.end.num}{link.end.char}"
+            ids.append(start_id)
+            ids.append(end_id)
+
+        return ids
 
     def generate_conflict_matrix(self) -> np.ndarray:
         """Generate conflict matrix based on geometry.

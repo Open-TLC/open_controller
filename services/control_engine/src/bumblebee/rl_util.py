@@ -25,7 +25,7 @@ def get_observation(
     obs = np.zeros(num_detectors + phase_count, dtype=np.float32)
 
     for i, d in enumerate(detectors):
-        obs[i] = d.vehicle_count()
+        obs[i] = d.vehicle_count
 
     np.log1p(obs[:num_detectors], out=obs[:num_detectors])
 
