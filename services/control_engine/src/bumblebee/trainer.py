@@ -74,7 +74,7 @@ def _train_single_agent(
     print("Initializing Single-Agent Environment...")
     simengine = SimEngine(conf.simengine)
 
-    env = TrafficEnv(simengine, conf.traffic_env, conf.controllers[0])
+    env = TrafficEnv(simengine, conf.traffic_env, conf.controllers[0], conf.detectors)
 
     # If tensorboard directory exists, environment is wrapped in a logging wrapper.
     if tensorboard_dir:

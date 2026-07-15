@@ -3,8 +3,6 @@ from typing import Any
 import numpy as np
 
 from services.control_engine.src.detectors.area_detector import AreaDetector
-from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
-from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
 from services.control_engine.src.signal_controller import (
     ControllerStatus,
     SignalController,
@@ -21,12 +19,14 @@ class BumblebeeController(SignalController):
     def __init__(
         self,
         conf: BumblebeeControllerConf,
+        detectors: dict[str, AreaDetector],
         step_length: float,
     ) -> None:
         """Initialize Bumblebee controller.
 
         Args:
             conf: Controller configuration for the controller.
+            detectors: Detectors by ID.
             step_length: Time step between controller ticks in seconds.
 
         """
@@ -41,20 +41,10 @@ class BumblebeeController(SignalController):
             step_length,
         )
 
+        # Assign detectors to the controller based on controllers nodes.
         self._detectors: list[AreaDetector] = []
-        for detector_conf in conf.detector_confs:
-            detector: AreaDetector
-            det_type: str = detector_conf.type
-            det_id: str = detector_conf.id
-            if det_type == "e2_detector":
-                detector = E2AreaDetector(det_id)
-            elif det_type == "e3_detector":
-                detector = E3AreaDetector(det_id)
-            else:
-                raise ValueError(
-                    f"Unknown detector type for detector {det_id}: {det_type}",
-                )
-            self._detectors.append(detector)
+        for node_id in conf.geometry.node_ids():
+            self._detectors.append(detectors[node_id])
 
         self._cur_phase_idx: int = 0
         self._step_count: int = 0

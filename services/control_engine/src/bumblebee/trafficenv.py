@@ -5,6 +5,7 @@ import gymnasium
 import numpy as np
 
 from services.control_engine.src.detectors.area_detector import AreaDetector
+from services.control_engine.src.detectors.configuration import DetectorConfiguration
 from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
 from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
 
@@ -29,6 +30,7 @@ class TrafficEnv(gymnasium.Env):
         simengine: SimEngine,
         env_conf: TrafficEnvConf,
         contr_conf: BumblebeeControllerConf,
+        det_confs: list[DetectorConfiguration],
     ) -> None:
         self._simengine = simengine
         self._controller_id: str = contr_conf.id
@@ -70,25 +72,33 @@ class TrafficEnv(gymnasium.Env):
             self._simengine.step_length,
         )
 
+        # Create detectors.
+        detectors: dict[str, AreaDetector] = {}
+
+        for det_conf in det_confs:
+            det_type = det_conf.type
+            if det_type == "e1_detector":
+                continue
+            if det_type == "e2_detector":
+                detectors[det_conf.id] = E2AreaDetector(det_conf.id)
+                print(f"Created E2 detector {det_conf.id}")
+            elif det_type == "e3_detector":
+                detectors[det_conf.id] = E3AreaDetector(det_conf.id)
+                print(f"Created E3 detector {det_conf.id}")
+            else:
+                raise ValueError(
+                    f"Unsupported detector type {det_type} with ID {det_conf.id}.",
+                )
+
+        # Assign detectors to the controller based on controllers nodes.
+        self._detectors: list[AreaDetector] = []
+        for node_id in contr_conf.geometry.node_ids():
+            self._detectors.append(detectors[node_id])
+
         # Action space maps a discrete number to a possible phase.
         self.action_space = gymnasium.spaces.Discrete(
             self._safety_controller.phase_count,
         )
-
-        self._detectors: list[AreaDetector] = []
-        for detector_conf in contr_conf.detector_confs:
-            detector: AreaDetector
-            det_type: str = detector_conf.type
-            det_id: str = detector_conf.id
-            if det_type == "e2_detector":
-                detector = E2AreaDetector(det_id)
-            elif det_type == "e3_detector":
-                detector = E3AreaDetector(det_id)
-            else:
-                raise ValueError(
-                    f"Unknown detector type for detector {det_id}: {det_type}",
-                )
-            self._detectors.append(detector)
 
         # Detectors provide 1 reading each and phase is one-hot encoded on top.
         obs_dim = len(self._detectors) + self._safety_controller.phase_count
