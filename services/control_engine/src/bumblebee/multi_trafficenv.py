@@ -10,7 +10,7 @@ from services.control_engine.src.detectors.area_detector import AreaDetector
 from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
 from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
 
-from .configuration import ControllerConf, TrafficEnvConf
+from .configuration import BumblebeeControllerConf, TrafficEnvConf
 from .rl_util import get_observation
 from .safety_controller import SafetyController
 from .simengine import SimEngine
@@ -23,12 +23,12 @@ class MultiTrafficEnv(MultiAgentEnv):
         self,
         simengine: SimEngine,
         env_conf: TrafficEnvConf,
-        contr_confs: list[ControllerConf],
+        contr_confs: list[BumblebeeControllerConf],
     ) -> None:
         super().__init__()
 
         self._simengine = simengine
-        self._contr_confs: list[ControllerConf] = contr_confs
+        self._contr_confs: list[BumblebeeControllerConf] = contr_confs
 
         # Length of a training step in seconds.
         if env_conf.step_length <= 0:
@@ -68,16 +68,12 @@ class MultiTrafficEnv(MultiAgentEnv):
         self._detectors: dict[AgentID, list[AreaDetector]] = {}
 
         for conf in contr_confs:
-            intergreens = np.array(conf.intergreens)
-            group_outputs = conf.group_outputs
-
             safety_controller = SafetyController(
-                intergreens,
-                group_outputs,
+                conf.intergreens,
                 self._simengine.step_length,
             )
 
-            self._controllers[conf.name] = safety_controller
+            self._controllers[conf.id] = safety_controller
 
             detectors: list[AreaDetector] = []
             for detector_conf in conf.detector_confs:
@@ -93,7 +89,7 @@ class MultiTrafficEnv(MultiAgentEnv):
                         f"Unknown detector type for detector {det_id}: {det_type}",
                     )
                 detectors.append(detector)
-            self._detectors[conf.name] = detectors
+            self._detectors[conf.id] = detectors
 
         # IDs of all controllers, i.e. agents.
         self.possible_agents: list[AgentID] = list(self._controllers.keys())
@@ -172,16 +168,12 @@ class MultiTrafficEnv(MultiAgentEnv):
         self._simengine.reset()
 
         for conf in self._contr_confs:
-            intergreens = np.array(conf.intergreens)
-            group_outputs = conf.group_outputs
-
             safety_controller = SafetyController(
-                intergreens,
-                group_outputs,
+                conf.intergreens,
                 self._simengine.step_length,
             )
 
-            self._controllers[conf.name] = safety_controller
+            self._controllers[conf.id] = safety_controller
 
         self._actions: dict[AgentID, int] = dict.fromkeys(self.agents, 0)
 

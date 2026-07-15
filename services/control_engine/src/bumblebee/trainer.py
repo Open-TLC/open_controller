@@ -1,18 +1,18 @@
 import argparse
 import datetime
-import json
 import os
 from typing import Any, cast
 
 import gymnasium
 import numpy as np
 import ray
+import yaml
 from gymnasium.wrappers import RecordEpisodeStatistics
 from ray.rllib.algorithms.dqn import DQNConfig
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.utils.typing import AgentID, EpisodeType, MultiAgentPolicyConfigDict
 from ray.tune.registry import register_env
-from stable_baselines3 import A2C, DQN, PPO
+from stable_baselines3 import DQN, PPO
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.env_checker import check_env
@@ -52,11 +52,11 @@ def _train() -> None:
 
     try:
         with open(conf_filename) as f:
-            conf_dict = json.load(f)
+            conf_dict = yaml.safe_load(f)
     except FileNotFoundError as e:
         raise ValueError(f"Configuration file not found at '{conf_filename}'.") from e
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Configuration file contains invalid JSON syntax: {e}") from e
+    except yaml.YAMLError as e:
+        raise ValueError(f"Configuration file contains invalid YAML syntax: {e}") from e
 
     conf = TrainerConf(conf_dict)
 
@@ -106,9 +106,6 @@ def _train_multi_agent(
     model_file: str,
 ) -> None:
     print("Initializing Multi-Agent Environment...")
-
-    if conf.algorithm == "a2c":
-        raise ValueError("A2C is not configured for Multi-Agent execution.")
 
     ray_tmp_path = os.path.expanduser("~/ray_tmp")
     os.makedirs(ray_tmp_path, exist_ok=True)
@@ -229,12 +226,6 @@ def _create_model(
         )
     elif conf.algorithm == "ppo":
         model = PPO(
-            "MlpPolicy",
-            env,
-            tensorboard_log=(tensorboard_dir if tensorboard_dir else None),
-        )
-    elif conf.algorithm == "a2c":
-        model = A2C(
             "MlpPolicy",
             env,
             tensorboard_log=(tensorboard_dir if tensorboard_dir else None),

@@ -10,7 +10,7 @@ from services.control_engine.src.signal_controller import (
     SignalController,
 )
 
-from .configuration import ControllerConf
+from .configuration import BumblebeeControllerConf
 from .rl_util import get_observation, load_model
 from .trafficenv import SafetyController
 
@@ -20,33 +20,24 @@ class BumblebeeController(SignalController):
 
     def __init__(
         self,
-        conf: ControllerConf,
-        algorithm: str,
-        filename: str,
+        conf: BumblebeeControllerConf,
         step_length: float,
     ) -> None:
         """Initialize Bumblebee controller.
 
         Args:
             conf: Controller configuration for the controller.
-            algorithm: Algorithm used to train the
-                model (currently supported: ppo and dqn).
-            filename: Path to the trained model file.
             step_length: Time step between controller ticks in seconds.
 
         """
-        self._model = load_model(algorithm, filename)
+        self._model = load_model(conf.algorithm, conf.model_file)
 
         self._conf = conf
         self._step_length = step_length
 
-        # Intergreen matrix.
-        intergreens = np.array(conf.intergreens)
-
         # Safety controller for handling conflicting phases and intergreens.
         self._safety_controller = SafetyController(
-            intergreens,
-            conf.group_outputs,
+            conf.intergreens,
             step_length,
         )
 
@@ -102,7 +93,6 @@ class BumblebeeController(SignalController):
         intergreens = np.array(self._conf.intergreens)
         self._safety_controller = SafetyController(
             intergreens,
-            self._conf.group_outputs,
             self._step_length,
         )
 

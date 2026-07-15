@@ -1,37 +1,37 @@
 from typing import Any
 
-from services.control_engine.src.detectors.configuration import (
-    AreaDetectorConfiguration,
-)
+import numpy as np
+
+from services.control_engine.src.geometry.junction_geometry import JunctionGeometry
 
 
 class TrainerConf:
-    def __init__(self, conf: dict[str, Any]) -> None:
-        self.algorithm: str = conf["algorithm"]
-        self.total_steps: int = conf["training_steps"]
-        self.traffic_env = TrafficEnvConf(conf["traffic_env"])
-        self.simengine = SimEngineConf(conf["simengine"])
+    def __init__(self, raw_conf: dict[str, Any]) -> None:
+        self.total_steps: int = raw_conf["training_steps"]
+        self.traffic_env = TrafficEnvConf(raw_conf["traffic_env"])
+        self.simengine = SimEngineConf(raw_conf["simengine"])
 
-        self.controllers: list[ControllerConf] = []
+        raw_controller_confs: list[dict[str, Any]] | None = raw_conf.get("controllers")
+        if raw_controller_confs is None or len(raw_controller_confs) == 0:
+            raise ValueError(
+                "No controllers configured. Configure at "
+                "least 1 controller to train Bumblebee.",
+            )
 
-        # Support for multiple controller configurations.
-        controller_confs: list[dict[str, Any]] | None = conf.get("controllers")
-        if controller_confs is not None and len(controller_confs) > 0:
-            for controller_conf in controller_confs:
-                self.controllers.append(ControllerConf(controller_conf))
+        self.controllers: list[BumblebeeControllerConf] = []
 
-        # Support for single controller configurations.
-        controller_conf: dict[str, Any] | None = conf.get("controller")
-        if controller_conf is not None:
-            self.controllers.append(ControllerConf(controller_conf))
+        for raw_controller_conf in raw_controller_confs:
+            controller_id = raw_controller_conf["id"]
+            controller_options = raw_controller_conf["options"]
+            self.controllers.append(
+                BumblebeeControllerConf(controller_id, controller_options),
+            )
+
+        self.algorithm: str = self.controllers[0].algorithm
 
 
 class TrafficEnvConf:
     def __init__(self, conf: dict[str, Any]) -> None:
-        # Whether to run in multi agent or single agent mode.
-        # Defaults to single agent mode.
-        val = conf.get("multi_agent")
-
         self.episode_steps: int = int(conf["episode_steps"])
 
         # Length of a training step in seconds.
@@ -51,20 +51,38 @@ class SimEngineConf:
         self.step_length: float = float(val) if val is not None else 0.1
 
 
-class ControllerConf:
-    """Configuration for a single controller.
+DEFAULT_VEHICLE_VEHICLE_INTERGREEN: float = 3
+DEFAULT_VEHICLE_PEDESTRIAN_INTERGREEN: float = 1
+DEFAULT_PEDESTRIAN_VEHICLE_INTERGREEN: float = 10
+
+
+class BumblebeeControllerConf:
+    """Configuration for a Bumblebee controller.
 
     This can mean a "production" controller
     or a controller used in training.
     """
 
-    def __init__(self, conf: dict[str, Any]) -> None:
-        self.name: str = conf["sumo_name"]
+    def __init__(self, controller_id: str, raw_options: dict[str, Any]) -> None:
+        self.id = controller_id
+        self.model_file = raw_options["model_file"]
+        self.algorithm = raw_options["algorithm"]
 
-        self.group_outputs: list[int] = conf["group_outputs"]
+        self.geometry = JunctionGeometry(raw_options)
+        self.conflict_matrix: np.ndarray = self.geometry.generate_conflict_matrix()
 
-        self.intergreens: list[list[float]] = conf["intergreens"]
-
-        self.detector_confs: list[AreaDetectorConfiguration] = []
-        for det_conf in conf["detectors"]:
-            self.detector_confs.append(AreaDetectorConfiguration(det_conf))
+        # Map conflict types to intergreen times.
+        vv = raw_options.get(
+            "vehicle_vehicle_intergreen",
+            DEFAULT_VEHICLE_VEHICLE_INTERGREEN,
+        )
+        vp = raw_options.get(
+            "vehicle_pedestrian_intergreen",
+            DEFAULT_VEHICLE_PEDESTRIAN_INTERGREEN,
+        )
+        pv = raw_options.get(
+            "pedestrian_vehicle_intergreen",
+            DEFAULT_PEDESTRIAN_VEHICLE_INTERGREEN,
+        )
+        intergreen_mapping = np.array([0, vv, pv, vp])
+        self.intergreens: np.ndarray = intergreen_mapping[self.conflict_matrix]

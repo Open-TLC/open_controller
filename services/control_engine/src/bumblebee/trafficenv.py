@@ -8,7 +8,7 @@ from services.control_engine.src.detectors.area_detector import AreaDetector
 from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
 from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
 
-from .configuration import ControllerConf, TrafficEnvConf
+from .configuration import BumblebeeControllerConf, TrafficEnvConf
 from .rl_util import get_observation
 from .safety_controller import SafetyController
 from .simengine import SimEngine
@@ -16,6 +16,7 @@ from .simengine import SimEngine
 
 class TrafficEnv(gymnasium.Env):
     """TrafficEnv is used to train and run RL models in Open Controller Bumblebee.
+
     TrafficEnv uses SimEngine and SUMO to simulate traffic on a network. It can
     provide observations based on detector readings from the simulation, execute
     signal group states, and calculate statistics about the traffic situation. The
@@ -27,21 +28,22 @@ class TrafficEnv(gymnasium.Env):
         self,
         simengine: SimEngine,
         env_conf: TrafficEnvConf,
-        contr_conf: ControllerConf,
+        contr_conf: BumblebeeControllerConf,
     ) -> None:
         self._simengine = simengine
-        self._controller_id: str = contr_conf.name
+        self._controller_id: str = contr_conf.id
+        self._contr_conf = contr_conf
 
         # Length of a training step in seconds.
         if env_conf.step_length <= 0:
             raise ValueError(
-                f"Step length ({env_conf.step_length}) must be greater than 0"
+                f"Step length ({env_conf.step_length}) must be greater than 0",
             )
 
         if env_conf.step_length < self._simengine.step_length:
             raise ValueError(
-                f"Environment step length ({env_conf.step_length}s) cannot be smaller than "
-                f"SimEngine step length ({self._simengine.step_length}s)."
+                f"Environment step length ({env_conf.step_length}s) cannot be "
+                f"smaller than SimEngine step length ({self._simengine.step_length}s).",
             )
         self._step_length: float = env_conf.step_length
 
@@ -51,27 +53,26 @@ class TrafficEnv(gymnasium.Env):
             or isclose(remainder, self._simengine.step_length, abs_tol=1e-9)
         ):
             raise ValueError(
-                f"Environment step length ({self._step_length}s) must be a perfect multiple "
-                f"of SimEngine step length ({self._simengine.step_length}s). "
-                f"Resulting steps would be a fractional {self._step_length / self._simengine.step_length}."
+                f"Environment step length ({self._step_length}s) must be a perfect "
+                f"multiple of SimEngine step length ({self._simengine.step_length}s). "
+                f"Resulting steps would be a fractional "
+                f"{self._step_length / self._simengine.step_length}.",
             )
 
         # How many simulation steps to advance per one environment step.
         self._simulation_steps_per_step: int = round(
-            env_conf.step_length / self._simengine.step_length
+            env_conf.step_length / self._simengine.step_length,
         )
-
-        self._intergreens = np.array(contr_conf.intergreens)
-        self._group_outputs = contr_conf.group_outputs
 
         # Safety controller for handling conflicting phases and intergreens.
         self._safety_controller = SafetyController(
-            self._intergreens, self._group_outputs, self._simengine.step_length
+            contr_conf.intergreens,
+            self._simengine.step_length,
         )
 
         # Action space maps a discrete number to a possible phase.
         self.action_space = gymnasium.spaces.Discrete(
-            self._safety_controller.phase_count
+            self._safety_controller.phase_count,
         )
 
         self._detectors: list[AreaDetector] = []
@@ -85,7 +86,7 @@ class TrafficEnv(gymnasium.Env):
                 detector = E3AreaDetector(det_id)
             else:
                 raise ValueError(
-                    f"Unknown detector type for detector {det_id}: {det_type}"
+                    f"Unknown detector type for detector {det_id}: {det_type}",
                 )
             self._detectors.append(detector)
 
@@ -116,7 +117,10 @@ class TrafficEnv(gymnasium.Env):
         self._episode_reward: float = 0
 
     def reset(
-        self, *, options: dict | None = None, seed: int | None = None
+        self,
+        *,
+        options: dict | None = None,
+        seed: int | None = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
 
@@ -132,14 +136,17 @@ class TrafficEnv(gymnasium.Env):
 
         # Reset the controller.
         self._safety_controller = SafetyController(
-            self._intergreens, self._group_outputs, self._simengine.step_length
+            self._contr_conf.intergreens,
+            self._simengine.step_length,
         )
 
         self._cur_phase_idx = 0
         self._cur_step = 0
 
         observation: np.ndarray = get_observation(
-            self._cur_phase_idx, self._safety_controller.phase_count, self._detectors
+            self._cur_phase_idx,
+            self._safety_controller.phase_count,
+            self._detectors,
         )
 
         info: dict[str, Any] = {"status": "initialized"}
@@ -163,7 +170,9 @@ class TrafficEnv(gymnasium.Env):
         self._simengine.step(self._simulation_steps_per_step)
 
         observation: np.ndarray = get_observation(
-            self._cur_phase_idx, self._safety_controller.phase_count, self._detectors
+            self._cur_phase_idx,
+            self._safety_controller.phase_count,
+            self._detectors,
         )
 
         reward: float = self._reward()
@@ -206,11 +215,13 @@ class TrafficEnv(gymnasium.Env):
 
         Returns:
             Reward as a negative number. Higher means better performance.
+
         """
         teleport_penalty = self._simengine.get_teleported_count * -1000
 
         queue_lengths = np.array(
-            [d.vehicle_count() for d in self._detectors], dtype=np.float32
+            [d.vehicle_count() for d in self._detectors],
+            dtype=np.float32,
         )
 
         # This is a threshold for approximating the number of cars that fit in
