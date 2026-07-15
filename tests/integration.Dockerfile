@@ -25,12 +25,14 @@ ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
 # Install project dependencies
-COPY pyproject.toml /app
-RUN	uv sync --no-dev
+COPY pyproject.toml uv.lock* ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+	uv sync --frozen --no-dev --no-install-project
 
 # Copy rest of the project
 COPY . /app
-RUN uv sync --no-dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+	uv sync --frozen --no-dev
 
 # Send python output directly to stdout or stderr
 # instead of writing to an intermediate buffer.
