@@ -142,7 +142,6 @@ class SafetyController:
 
         # Here we only keep maximal phases and add the all-red phase (0)
         final_masks = set(maximal_phases_masks)
-        final_masks.add(0)
 
         # Convert the masks back to 2D numpy arrays
         result_list = [

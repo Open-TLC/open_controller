@@ -8,9 +8,13 @@ from services.control_engine.src.detectors.area_detector import AreaDetector
 from services.control_engine.src.detectors.configuration import DetectorConfiguration
 from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
 from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
+from services.control_engine.src.geometry.movements import (
+    DownstreamMovement,
+    LanePressureConfig,
+)
 
 from .configuration import BumblebeeControllerConf, TrafficEnvConf
-from .rl_util import get_observation
+from .rl_util import get_observation, get_presslight_reward
 from .safety_controller import SafetyController
 from .simengine import SimEngine
 
@@ -81,27 +85,51 @@ class TrafficEnv(gymnasium.Env):
                 continue
             if det_type == "e2_detector":
                 detectors[det_conf.id] = E2AreaDetector(det_conf.id)
-                print(f"Created E2 detector {det_conf.id}")
             elif det_type == "e3_detector":
                 detectors[det_conf.id] = E3AreaDetector(det_conf.id)
-                print(f"Created E3 detector {det_conf.id}")
             else:
                 raise ValueError(
                     f"Unsupported detector type {det_type} with ID {det_conf.id}.",
                 )
 
-        # Assign detectors to the controller based on controllers nodes.
         self._detectors: list[AreaDetector] = []
-        for node_id in contr_conf.geometry.node_ids():
-            self._detectors.append(detectors[node_id])
+
+        self._lane_pressure_configs: list[LanePressureConfig] = []
+
+        for entry_id in contr_conf.geometry.entry_node_ids():
+            upstream_detector = detectors[entry_id]
+            self._detectors.append(upstream_detector)
+
+            movements = []
+            exit_ids = contr_conf.geometry.exit_node_ids(entry_id)
+            for exit_id in exit_ids:
+                downstream_detector = detectors[exit_id]
+                self._detectors.append(downstream_detector)
+
+                movements.append(
+                    DownstreamMovement(
+                        downstream_node_id=exit_id,
+                        detector=downstream_detector,
+                        theta=1,  # TODO: Assign meaningful movement probabilities.
+                    ),
+                )
+
+            self._lane_pressure_configs.append(
+                LanePressureConfig(
+                    node_id=entry_id,
+                    incoming_detector=upstream_detector,
+                    movements=movements,
+                ),
+            )
 
         # Action space maps a discrete number to a possible phase.
         self.action_space = gymnasium.spaces.Discrete(
             self._safety_controller.phase_count,
         )
 
-        # Detectors provide 1 reading each and phase is one-hot encoded on top.
-        obs_dim = len(self._detectors) + self._safety_controller.phase_count
+        # Incoming lanes contribute one pressure each
+        # and phase is one-hot encoded on top.
+        obs_dim = len(self._lane_pressure_configs) + self._safety_controller.phase_count
 
         self.observation_space = gymnasium.spaces.Box(
             low=0,
@@ -126,6 +154,12 @@ class TrafficEnv(gymnasium.Env):
         # Keep track of cumulative reward.
         self._episode_reward: float = 0
 
+        # Keep track of actions.
+        self._action_counts: dict[int, int] = dict.fromkeys(
+            range(self._safety_controller.phase_count),
+            0,
+        )
+
     def reset(
         self,
         *,
@@ -133,6 +167,12 @@ class TrafficEnv(gymnasium.Env):
         seed: int | None = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
+
+        print(f"Action counts: {self._action_counts}")
+        self._action_counts: dict[int, int] = dict.fromkeys(
+            range(self._safety_controller.phase_count),
+            0,
+        )
 
         self._episode_teleported = 0
 
@@ -160,7 +200,7 @@ class TrafficEnv(gymnasium.Env):
         observation: np.ndarray = get_observation(
             self._cur_phase_idx,
             self._safety_controller.phase_count,
-            self._detectors,
+            self._lane_pressure_configs,
         )
 
         info: dict[str, Any] = {"status": "initialized"}
@@ -169,6 +209,7 @@ class TrafficEnv(gymnasium.Env):
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         self._cur_step += 1
         self._cur_phase_idx = action
+        self._action_counts[action] += 1
         # TODO: Currently signal group states are only updated once per step. This
         # doesn't take into consideration that the intergreen times can expire between
         # simulation steps. This isn't likely a major problem, since once per sec is
@@ -190,7 +231,7 @@ class TrafficEnv(gymnasium.Env):
         observation: np.ndarray = get_observation(
             self._cur_phase_idx,
             self._safety_controller.phase_count,
-            self._detectors,
+            self._lane_pressure_configs,
         )
 
         reward: float = self._reward()
@@ -235,23 +276,4 @@ class TrafficEnv(gymnasium.Env):
             Reward as a negative number. Higher means better performance.
 
         """
-        teleport_penalty = self._simengine.get_teleported_count * -1000
-
-        queue_lengths = np.array(
-            [d.vehicle_count for d in self._detectors],
-            dtype=np.float32,
-        )
-
-        # This is a threshold for approximating the number of cars that fit in
-        # a detectors area. If this is exceeded, the queue spills out of the
-        # detection area and the reward is adjusted to prevent this.
-        QUEUE_THRESHOLD: float = 8
-
-        exceeds_mask = queue_lengths > QUEUE_THRESHOLD
-        penalties = np.where(
-            exceeds_mask,
-            QUEUE_THRESHOLD + (queue_lengths - QUEUE_THRESHOLD) ** 2,
-            queue_lengths,
-        )
-
-        return teleport_penalty - float(np.sum(penalties))
+        return get_presslight_reward(self._lane_pressure_configs)

@@ -155,8 +155,6 @@ def _train_multi_agent(
         train_batch_size_per_learner=3600,
         entropy_coeff=0.01,
         lr=[[0, 0.0005], [200, 0.0001], [600, 0.00002]],
-        grad_clip=0.1,
-        grad_clip_by="norm",
     )
 
     print("Building Multi-Agent Model Configuration...")

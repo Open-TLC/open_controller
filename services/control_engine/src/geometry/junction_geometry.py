@@ -26,21 +26,42 @@ class JunctionGeometry:
                     raise ValueError(
                         'All exit nodes must have an alphabet part ("2a").',
                     )
-                self._links.append(_Link(entry_node, exit_node))
+                link = _Link(entry_node, exit_node)
+                self._links.append(link)
 
         for crossing_id, crossed_nodes_list in raw_options.get("crossings", {}).items():
             crossed_nodes = [_Node(node_str) for node_str in crossed_nodes_list]
             self._crossings.append(_Crossing(crossing_id, crossed_nodes))
 
-    def node_ids(self) -> list[str]:
-        ids: list[str] = []
+        # Gather all entry nodes.
+        entry_node_ids: list[str] = []
         for link in self._links:
-            start_id = f"{self._junction_id}.{link.start.num}"
-            end_id = f"{self._junction_id}.{link.end.num}{link.end.char}"
-            ids.append(start_id)
-            ids.append(end_id)
+            entry_id = f"{self._junction_id}.{link.start.num}"
+            entry_node_ids.append(entry_id)
 
-        return ids
+        # This removes duplicates, though there shouldn't be any.
+        self._entry_node_ids: list[str] = list(dict.fromkeys(entry_node_ids))
+
+        # Gather all exit nodes per entry node.
+        exit_node_ids: dict[str, list[str]] = {}
+        for entry_id in self._entry_node_ids:
+            exit_node_ids[entry_id] = []
+            for link in self._links:
+                if f"{self._junction_id}.{link.start.num}" != entry_id:
+                    continue
+
+                exit_id = f"{self._junction_id}.{link.end.num}{link.end.char}"
+                exit_node_ids[entry_id].append(exit_id)
+
+        self._exit_node_ids: dict[str, list[str]] = exit_node_ids
+
+    def entry_node_ids(self) -> list[str]:
+        """List of entering lane/node IDs."""
+        return self._entry_node_ids
+
+    def exit_node_ids(self, entry_node_id: str) -> list[str]:
+        """List of exiting lane/node IDs for given entry node."""
+        return self._exit_node_ids[entry_node_id]
 
     def generate_conflict_matrix(self) -> np.ndarray:
         """Generate conflict matrix based on geometry.
@@ -165,6 +186,10 @@ class _Link:
         """
         # Link doesn't conflict with itself.
         if self == other:
+            return False
+
+        # Link doesn't conflict with links starting from the same node.
+        if self.start == other.start:
             return False
 
         # Merge conflict: Links end on the same node.

@@ -3,6 +3,10 @@ from typing import Any
 import numpy as np
 
 from services.control_engine.src.detectors.area_detector import AreaDetector
+from services.control_engine.src.geometry.movements import (
+    DownstreamMovement,
+    LanePressureConfig,
+)
 from services.control_engine.src.signal_controller import (
     ControllerStatus,
     SignalController,
@@ -41,10 +45,35 @@ class BumblebeeController(SignalController):
             step_length,
         )
 
-        # Assign detectors to the controller based on controllers nodes.
         self._detectors: list[AreaDetector] = []
-        for node_id in conf.geometry.node_ids():
-            self._detectors.append(detectors[node_id])
+
+        self._lane_pressure_configs: list[LanePressureConfig] = []
+
+        for entry_id in conf.geometry.entry_node_ids():
+            upstream_detector = detectors[entry_id]
+            self._detectors.append(upstream_detector)
+
+            movements = []
+            exit_ids = conf.geometry.exit_node_ids(entry_id)
+            for exit_id in exit_ids:
+                downstream_detector = detectors[exit_id]
+                self._detectors.append(downstream_detector)
+
+                movements.append(
+                    DownstreamMovement(
+                        downstream_node_id=exit_id,
+                        detector=downstream_detector,
+                        theta=1,  # TODO: Assign meaningful movement probabilities.
+                    ),
+                )
+
+            self._lane_pressure_configs.append(
+                LanePressureConfig(
+                    node_id=entry_id,
+                    incoming_detector=upstream_detector,
+                    movements=movements,
+                ),
+            )
 
         self._cur_phase_idx: int = 0
         self._step_count: int = 0
@@ -55,13 +84,16 @@ class BumblebeeController(SignalController):
 
     def tick(self) -> None:
         """Advance the controller by one time step."""
+        for detector in self._detectors:
+            detector.tick()
+
         # Controller doesn't advance to new phases if it is locked.
         # This is done to lock it to red in case of a major failure.
         if not self._locked:
             obs = get_observation(
                 self._cur_phase_idx,
                 len(self._detectors),
-                self._detectors,
+                self._lane_pressure_configs,
             )
             action, _ = self._model.predict(obs)
             self._cur_phase_idx = int(action.item())
@@ -100,6 +132,7 @@ class BumblebeeController(SignalController):
 
     def all_red(self) -> None:
         """Force safety controller to red gracefully."""
+        raise NotImplementedError
         self._cur_phase_idx = 0  # 0 is always the index of all red phase.
         self._locked = True  # Lock the controller to the current phase.
 

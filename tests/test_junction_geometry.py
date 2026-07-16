@@ -95,6 +95,38 @@ class TestJunctionGeometry(unittest.TestCase):
         diagonal = np.diagonal(matrix)
         np.testing.assert_array_equal(diagonal, np.zeros(len(diagonal), dtype=int))
 
+    def test_vehicle_to_vehicle_diverging(self) -> None:
+        """Diverging lanes never conflict."""
+        raw_conf = {
+            "links": {
+                "0": ["3a", "2a", "1a"],
+                "1": ["0a", "3a", "2a"],
+                "2": ["1a", "0a", "3a"],
+                "3": ["2a", "1a", "0a"],
+            },
+        }
+        geo = JunctionGeometry("j1", raw_conf)
+        matrix = geo.generate_conflict_matrix()
+
+        expected = np.array(
+            [
+                [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1],
+                [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1],
+                [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+                [1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1],
+                [0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0],
+                [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+                [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1],
+                [1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
+                [0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                [0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+                [0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0],
+            ],
+        )
+
+        np.testing.assert_array_equal(matrix, expected)
+
     def test_vehicle_to_vehicle_merge_conflict(self) -> None:
         """Converging vehicle links should have a conflict (1)."""
         raw_conf = {

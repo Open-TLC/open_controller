@@ -10,9 +10,13 @@ from services.control_engine.src.detectors.area_detector import AreaDetector
 from services.control_engine.src.detectors.configuration import DetectorConfiguration
 from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
 from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
+from services.control_engine.src.geometry.movements import (
+    DownstreamMovement,
+    LanePressureConfig,
+)
 
 from .configuration import BumblebeeControllerConf, TrafficEnvConf
-from .rl_util import get_observation
+from .rl_util import get_observation, get_presslight_reward
 from .safety_controller import SafetyController
 from .simengine import SimEngine
 
@@ -73,10 +77,8 @@ class MultiTrafficEnv(MultiAgentEnv):
                 continue
             if det_type == "e2_detector":
                 all_detectors[det_conf.id] = E2AreaDetector(det_conf.id)
-                print(f"Created E2 detector {det_conf.id}")
             elif det_type == "e3_detector":
                 all_detectors[det_conf.id] = E3AreaDetector(det_conf.id)
-                print(f"Created E3 detector {det_conf.id}")
             else:
                 raise ValueError(
                     f"Unsupported detector type {det_type} with ID {det_conf.id}.",
@@ -84,23 +86,55 @@ class MultiTrafficEnv(MultiAgentEnv):
 
         # Create safety controllers.
         self._controllers: dict[AgentID, SafetyController] = {}
-        # Create detectors.
+
+        # Track detectors per agent.
         self._detectors: dict[AgentID, list[AreaDetector]] = {}
 
+        # Track pressure configurations per agent.
+        self._lane_pressure_configs: dict[AgentID, list[LanePressureConfig]] = {}
+
         for conf in contr_confs:
+            aid = conf.id
+
             safety_controller = SafetyController(
                 conf.intergreens,
                 self._simengine.step_length,
             )
+            self._controllers[aid] = safety_controller
 
-            self._controllers[conf.id] = safety_controller
+            agent_detectors: list[AreaDetector] = []
+            agent_configs: list[LanePressureConfig] = []
 
-            controller_detectors: list[AreaDetector] = []
-            for node_id in conf.geometry.node_ids():
-                controller_detectors.append(all_detectors[node_id])
+            for entry_id in conf.geometry.entry_node_ids():
+                upstream_detector = all_detectors[entry_id]
+                if upstream_detector not in agent_detectors:
+                    agent_detectors.append(upstream_detector)
 
-            print(f"Controller {conf.id} has {len(controller_detectors)} detectors.")
-            self._detectors[conf.id] = controller_detectors
+                movements = []
+                exit_ids = conf.geometry.exit_node_ids(entry_id)
+                for exit_id in exit_ids:
+                    downstream_detector = all_detectors[exit_id]
+                    if downstream_detector not in agent_detectors:
+                        agent_detectors.append(downstream_detector)
+
+                    movements.append(
+                        DownstreamMovement(
+                            downstream_node_id=exit_id,
+                            detector=downstream_detector,
+                            theta=1.0,  # TODO: Assign meaningful movement probabilities.
+                        ),
+                    )
+
+                agent_configs.append(
+                    LanePressureConfig(
+                        node_id=entry_id,
+                        incoming_detector=upstream_detector,
+                        movements=movements,
+                    ),
+                )
+
+            self._detectors[aid] = agent_detectors
+            self._lane_pressure_configs[aid] = agent_configs
 
         # IDs of all controllers, i.e. agents.
         self.possible_agents: list[AgentID] = list(self._controllers.keys())
@@ -116,18 +150,15 @@ class MultiTrafficEnv(MultiAgentEnv):
         }
 
         # Agents have individually shaped observation spaces,
-        # depending on the number of detectors and phases.
+        # depending on the number of lanes and phases.
         obs_dims: dict[AgentID, int] = {}
         for aid in self._detectors:
             # Observation space for a controller consists of three things:
-            # 1. Vehicle counts read from detectors.
+            # 1. Calculated pressures from incoming lanes.
             # 2. One-hot encoded current phase.
-            # 3. Phase indices of other controllers.
             obs_dims[aid] = (
-                len(self._detectors[aid])
+                len(self._lane_pressure_configs[aid])
                 + self._controllers[aid].phase_count
-                + len(self.agents)
-                - 1  # This groups phase index is included only as one-hot encoded.
             )
 
         self.observation_spaces = {
@@ -143,6 +174,12 @@ class MultiTrafficEnv(MultiAgentEnv):
         # Agents need to know each others' previous actions.
         # All actions are updated here after each step.
         self._actions: dict[AgentID, int] = dict.fromkeys(self.agents, 0)
+
+        # Keep track of actions taken by agents.
+        self._action_counts: dict[AgentID, dict[int, int]] = {
+            agent: dict.fromkeys(range(self._controllers[agent].phase_count), 0)
+            for agent in self.agents
+        }
 
         # Keeps track of episode lengths.
         self._cur_step: int = 0
@@ -193,6 +230,11 @@ class MultiTrafficEnv(MultiAgentEnv):
 
         self._actions: dict[AgentID, int] = dict.fromkeys(self.agents, 0)
 
+        self._action_counts: dict[AgentID, dict[int, int]] = {
+            agent: dict.fromkeys(range(self._controllers[agent].phase_count), 0)
+            for agent in self.agents
+        }
+
         observations = self._get_observations()
         infos = {aid: {} for aid in self.agents}
 
@@ -237,6 +279,7 @@ class MultiTrafficEnv(MultiAgentEnv):
         # Apply actions to all controllers.
         for aid in self.agents:
             if aid in action_dict:
+                self._action_counts[aid][action_dict[aid]] += 1
                 new_states: str = self._controllers[aid].step(action_dict[aid])
                 self._simengine.set_signal_group_states(str(aid), new_states)
 
@@ -265,6 +308,7 @@ class MultiTrafficEnv(MultiAgentEnv):
         infos = {aid: {} for aid in self.agents}
 
         if is_truncated:
+            print(f"Action counts: {self._action_counts}")
             self.agents = []
             print(
                 "Average travel time: ",
@@ -289,20 +333,15 @@ class MultiTrafficEnv(MultiAgentEnv):
         for aid in self.agents:
             cur_phase_idx = self._actions[aid]
             phase_count = self._controllers[aid].phase_count
-            detectors = self._detectors[aid]
+            pressure_configs = self._lane_pressure_configs[aid]
 
             individual_observation = get_observation(
                 cur_phase_idx,
                 phase_count,
-                detectors,
+                pressure_configs,
             )
 
-            other_actions = self._actions.copy()
-            del other_actions[aid]
-
-            other_array = np.array(list(other_actions.values()), dtype=np.float32)
-
-            observations[aid] = np.concatenate((individual_observation, other_array))
+            observations[aid] = individual_observation
 
         return observations
 
@@ -316,36 +355,5 @@ class MultiTrafficEnv(MultiAgentEnv):
         rewards = {}
 
         for aid in self.agents:
-            local_detectors = self._detectors.get(aid, [])
-            if not local_detectors:
-                rewards[aid] = 0.0
-                continue
-
-            queue_lengths = np.array(
-                [d.vehicle_count for d in local_detectors],
-                dtype=np.float32,
-            )
-
-            # This is a threshold for approximating the number of cars that fit in
-            # a detectors area. If this is exceeded, the queue spills out of the
-            # detection area and the reward is adjusted to prevent this.
-            queue_threshold: float = 8.0
-
-            exceeds_mask = queue_lengths > queue_threshold
-            penalties = np.where(
-                exceeds_mask,
-                queue_threshold + (queue_lengths - queue_threshold) ** 2,
-                queue_lengths,
-            )
-
-            local_queue_penalty = float(np.sum(penalties))
-
-            rewards[aid] = -local_queue_penalty
-
-        if rewards:
-            mean_reward = float(np.mean(list(rewards.values())))
-
-            for aid in rewards:
-                rewards[aid] += mean_reward * 0.2
-
+            rewards[aid] = get_presslight_reward(self._lane_pressure_configs[aid])
         return rewards
