@@ -5,50 +5,23 @@ timer:
   controller_step: 1
 
 nats:
-  url: nats://localhost
+  url: nats
   port: 4222
 
 controllers:
   - id: j1
-    type: bumblebee  # This will not work yet, as Bumblebee is not yet merged.
+    type: fixed_time  # This is not actually meant to be used in production. It is here just for demonstration and testing.
     options:
-      algorithm: ppo
-      model_file: /path/to/trained/model
-      links:
-        "0":
-          - 5a
-        "1":
-          - 3a
-        "2":
-          - 1a
-          - 1b
-        "3":
-          - 5a
-        "4":
-          - 3a
-        "5":
-          - 1a
-          - 1b
-  - id: j2
-    type: bumblebee  # This will not work yet, as Bumblebee is not yet merged.
-    options:
-      algorithm: dqn
-      model_file: /path/to/trained/model
-      links:
-        "0":
-          - 5a
-          - 5b
-        "1":
-          - 3a
-        "2":
-          - 1a
-        "3":
-          - 5a
-          - 5b
-        "4":
-          - 3a
-        "5":
-          - 1a
+      phases:
+        - signal_states: ggrrrr
+          duration: 10
+        - signal_states: rrggrr
+          duration: 10
+        - signal_states: rrrrgg
+          duration: 10
+
+      yellow_duration: 3
+
 detectors:
   - id: j1.0
     type: e2_detector
@@ -79,34 +52,4 @@ detectors:
     options: {}
   - id: j1.5a
     type: e2_detector
-  - id: j2.0
-    type: e2_detector
-    options: {}
-  - id: j2.1
-    type: e2_detector
-    options: {}
-  - id: j2.1a
-    type: e2_detector
-    options: {}
-  - id: j2.2
-    type: e2_detector
-    options: {}
-  - id: j2.3
-    type: e2_detector
-    options: {}
-  - id: j2.3a
-    type: e2_detector
-    options: {}
-  - id: j2.4
-    type: e2_detector
-    options: {}
-  - id: j2.5
-    type: e2_detector
-    options: {}
-  - id: j2.5a
-    type: e2_detector
-    options: {}
-  - id: j2.5b
-    type: e2_detector
-    options: {}
 

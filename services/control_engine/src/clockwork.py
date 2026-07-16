@@ -17,9 +17,14 @@ import time
 from nats import connect
 from nats.aio.client import Client
 
-from .configuration import ClockworkConf, TimerConf, read_command_line
+from .configuration import (
+    ClockworkConf,
+    TimerConf,
+    create_controller,
+    read_command_line,
+)
 from .detectors.configuration import create_detectors
-from .signal_controller import SignalController, create_controller
+from .signal_controller import SignalController
 from .timer import Timer
 
 
@@ -83,6 +88,9 @@ class Clockwork:
                 "Please configure controllers in --conf-file.",
             )
 
+        for controller in self._controllers:
+            self._signal_states[controller.id] = controller.signal_states
+
         while True:
             # Block until it's time to update controller and publish new states.
             self._timer.wait_for_update()
@@ -94,6 +102,7 @@ class Clockwork:
                 changed: bool = new_states != self._signal_states[controller.id]
                 if changed:
                     await self._publishers[controller.id].publish(new_states)
+                    self._signal_states[controller.id] = new_states
 
 
 STATUS_SUBJECT_PREFIX = "clockwork.status"

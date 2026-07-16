@@ -1,12 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from .configuration import ControllerConf
-from .detectors.area_detector import AreaDetector
-from .detectors.point_detector import PointDetector
-from .signal_group_controller import PhaseRingController
-from .timer import Timer
-
 
 class ControllerStatus:
     """Status of a controller."""
@@ -89,47 +83,3 @@ class SignalController(ABC):
     def signal_states_sumo(self) -> str:
         """Signal states in SUMO format."""
         ...
-
-
-SUPPORTED_CONTROLLER_TYPES: list[str] = ["phasering", "syvari", "bumblebee"]
-
-
-def create_controller(
-    conf: ControllerConf,
-    timer: Timer,
-    detectors: tuple[list[PointDetector], list[AreaDetector]],
-) -> SignalController:
-    """Create controller based on provided configuration.
-
-    Args:
-        conf: Controller configuration used to create the controller.
-        timer: Timer used by the controller.
-        detectors: All available detectors. The controller will only get the ones it
-            needs based on the configuration. This is necessary as the way detectors
-            are configured can vary between controllers.
-
-    Returns:
-        The created signal controller.
-
-    Raises:
-        ValueErrors: Unknown controller type.
-        ValueError: Detector configured in controller can't be found in 'detectors'.
-
-    """
-    controller_type = conf.type
-
-    controller: SignalController
-    if controller_type == "phasering":
-        # TODO: Migrate PhaseRingController to standard signal controller.
-        controller = PhaseRingController(conf.options, timer)
-    elif controller_type == "syvari":
-        raise NotImplementedError("SYVARI controller creation is not yet supported.")
-    elif controller_type == "bumblebee":
-        raise NotImplementedError("Bumblebee controller creation is not yet supported.")
-    else:
-        raise ValueError(
-            f"Controller type {controller_type} is not supported. "
-            f"Currently supported controller types: {SUPPORTED_CONTROLLER_TYPES}.",
-        )
-
-    return controller
