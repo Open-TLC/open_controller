@@ -13,11 +13,11 @@ for clockwork_tc
 
 
 import pandas as pd
-from signal_group import SignalGroup
+from .signal_group import SignalGroup
 
 # just for debug
-from confread import GlobalConf
-from timer import Timer
+from .confread import GlobalConf
+from .timer import Timer
 
 def main():
     timer=Timer(0.1)

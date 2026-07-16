@@ -4,9 +4,9 @@ services:
     ports:
       - "4222:4222"
 
-  controller-runner:
-    image: controller-runner
-    container_name: oc_controller_container
+  clockwork:
+    image: clockwork
+    container_name: oc_clockwork
     build:
       context: .
       dockerfile: services/control_engine/docker/Dockerfile
@@ -33,3 +33,4 @@ services:
     build:
       context: .
       dockerfile: services/simengine/docker/Dockerfile
+

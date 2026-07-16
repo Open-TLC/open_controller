@@ -10,7 +10,7 @@ it easier to implement external control schemes
 # All Rights Reserved
 #
 
-from signal_group import SignalGroup
+from .signal_group import SignalGroup
 import keyboard, time
 
 

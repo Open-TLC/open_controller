@@ -18,6 +18,7 @@ from nats import connect
 from nats.aio.client import Client
 
 from .configuration import ClockworkConf, TimerConf, read_command_line
+from .detectors.configuration import create_detectors
 from .signal_controller import SignalController, create_controller
 from .timer import Timer
 
@@ -47,6 +48,10 @@ class Clockwork:
         self._controllers: list[SignalController] = []
 
         self._timer: ControllerTimer = ControllerTimer(self._conf.timer)
+
+        # Clockwork caches the current signal states for each controller.
+        # This is used to publish new states only when the state changes.
+        self._signal_states: dict[str, str] = {}
 
     @classmethod
     async def create(cls, args: argparse.Namespace) -> "Clockwork":
@@ -86,7 +91,9 @@ class Clockwork:
             for controller in self._controllers:
                 controller.tick()
                 new_states: str = controller.signal_states
-                await self._publishers[controller.id].publish(new_states)
+                changed: bool = new_states != self._signal_states[controller.id]
+                if changed:
+                    await self._publishers[controller.id].publish(new_states)
 
 
 STATUS_SUBJECT_PREFIX = "clockwork.status"
