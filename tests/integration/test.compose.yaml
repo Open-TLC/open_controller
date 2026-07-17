@@ -1,0 +1,12 @@
+services:
+  nats:
+    image: nats:latest
+
+  clockwork:
+    image: oc-integration-test
+    container_name: oc-integration-test
+    environment:
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      - nats
+
