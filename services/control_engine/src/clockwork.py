@@ -58,6 +58,10 @@ class Clockwork:
         # This is used to publish new states only when the state changes.
         self._signal_states: dict[str, str] = {}
 
+        # If mode is set to update, clockwork will publish states regardless of whether
+        # they have changed. Other wise they will only be published once changed.
+        self._update_always: bool = self._conf.nats.mode == "update"
+
     @classmethod
     async def create(cls, args: argparse.Namespace) -> "Clockwork":
         """Asynchronous constructor for Clockwork."""
@@ -99,10 +103,17 @@ class Clockwork:
             for controller in self._controllers:
                 controller.tick()
                 new_states: str = controller.signal_states
-                changed: bool = new_states != self._signal_states[controller.id]
-                if changed:
-                    await self._publishers[controller.id].publish(new_states)
-                    self._signal_states[controller.id] = new_states
+                await self._publish_if_necessary(new_states, controller.id)
+
+                # New states are saved.
+                self._signal_states[controller.id] = new_states
+
+    async def _publish_if_necessary(self, new_states: str, controller_id: str) -> None:
+        changed: bool = new_states != self._signal_states[controller_id]
+        # States are published if they have changed or if Clockwork is set to always
+        # publish states.
+        if changed or self._update_always:
+            await self._publishers[controller_id].publish(new_states)
 
 
 STATUS_SUBJECT_PREFIX = "clockwork.status"

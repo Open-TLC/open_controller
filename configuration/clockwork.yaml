@@ -5,8 +5,9 @@ timer:
   controller_step: 1
 
 nats:
-  url: nats
+  url: nats  # When running in docker compose, this is the same as NATS service name.
   port: 4222
+  mode: change  # change / update
 
 controllers:
   - id: j1

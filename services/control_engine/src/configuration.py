@@ -60,6 +60,7 @@ class ControllerConf:
 
 DEFAULT_NATS_SERVER = "nats://localhost"
 DEFAULT_NATS_PORT = 4222
+DEFAULT_NATS_MODE = "change"
 
 
 class NatsConf:
@@ -68,6 +69,12 @@ class NatsConf:
     def __init__(self, raw_conf: dict[str, Any]) -> None:
         self.server = raw_conf.get("server") or DEFAULT_NATS_SERVER
         self.port = raw_conf.get("port") or DEFAULT_NATS_PORT
+        mode = raw_conf.get("mode") or DEFAULT_NATS_MODE
+        if mode not in ["change", "update"]:
+            raise ValueError(
+                f"Unknown Clockwork NATS mode {mode}. Supported modes: change, update.",
+            )
+        self.mode = mode
 
 
 SUPPORTED_TIMER_MODES: list[str] = ["fixed", "real"]
