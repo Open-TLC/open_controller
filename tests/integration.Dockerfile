@@ -1,21 +1,7 @@
-FROM ubuntu:noble
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install necessary system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-	ca-certificates software-properties-common libatomic1
+FROM ghcr.io/eclipse-sumo/sumo:main
 
 # Install uv using the installation script
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
-# Add SUMO PPA and install
-RUN add-apt-repository ppa:sumo/stable && \
-	apt-get update && apt-get install -y --no-install-recommends \
-	sumo sumo-tools sumo-doc
-
-# Export SUMO_HOME so traci and libsumo can be found in python
-ENV SUMO_HOME="/usr/share/sumo"
 
 # Set working directory
 WORKDIR /app
