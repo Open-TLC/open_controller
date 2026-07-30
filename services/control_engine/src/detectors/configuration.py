@@ -1,4 +1,21 @@
-SUPPORTED_DETECTOR_TYPES = ["e1_detector", "e2_detector", "e3_detector"]
+from nats.aio.client import Client
+
+from services.control_engine.src.detectors.traffic_indicators_area_detector import (
+    TrafficIndicatorsAreaDetector,
+)
+
+from .area_detector import AreaDetector
+from .point_detector import PointDetector
+from .sumo_e1_detector import E1PointDetector
+from .sumo_e2_detector import E2AreaDetector
+from .sumo_e3_detector import E3AreaDetector
+
+SUPPORTED_DETECTOR_TYPES = [
+    "e1_detector",
+    "e2_detector",
+    "e3_detector",
+    "traffic_indicators_detector",
+]
 
 
 class DetectorConfiguration:
@@ -19,3 +36,53 @@ class DetectorConfiguration:
 
         self.type = det_type
         self.id = conf["id"]
+
+
+async def create_detectors(
+    detector_configurations: list[DetectorConfiguration],
+    nc: Client | None = None,
+) -> tuple[list[PointDetector], list[AreaDetector]]:
+    """Create detectors from configurations.
+
+    Make sure to provide NATS client when creating Traffic Indicators detectors.
+
+    Args:
+        detector_configurations: List of detector configuration objects.
+        nc: Optional NATS client.
+
+    Returns:
+        Tuple containing created point detectors and area detectors.
+
+    """
+    point_detectors: list[PointDetector] = []
+    area_detectors: list[AreaDetector] = []
+
+    for conf in detector_configurations:
+        if conf.type == SUPPORTED_DETECTOR_TYPES[0]:
+            point_detectors.append(E1PointDetector(conf.id))
+
+        elif conf.type == SUPPORTED_DETECTOR_TYPES[1]:
+            area_detectors.append(E2AreaDetector(conf.id))
+
+        elif conf.type == SUPPORTED_DETECTOR_TYPES[2]:
+            area_detectors.append(E3AreaDetector(conf.id))
+
+        elif conf.type == SUPPORTED_DETECTOR_TYPES[3]:
+            if nc is None:
+                raise ValueError(
+                    "Found Traffic Indicators detector in "
+                    "configuration, yet no NATS client was "
+                    "provided. You must provide a NATS client "
+                    "when creating Traffic Indicators detectors",
+                )
+            # FIXME: This is a bit hacky, but for now Traffic Indicators indexes
+            # area detections based on junction and signal group. Thus we need
+            # to index the controllers in the same matter. In the future we should
+            # start indexing Traffic Indicators areas by arbitrary identifiers, as
+            # they aren't strictly binded to junctions or groups.
+            (junction_id, group_id) = conf.id.split(".", maxsplit=1)
+            area_detectors.append(
+                await TrafficIndicatorsAreaDetector.create(nc, junction_id, group_id),
+            )
+
+    return point_detectors, area_detectors

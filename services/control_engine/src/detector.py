@@ -8,8 +8,6 @@ This module implements detecors for traffic controllers
 # All Rights Reserved
 #
 # import traci
-from signal_group import SignalGroup
-#from timer import Timer
 
 
 def main():
