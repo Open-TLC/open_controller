@@ -323,9 +323,9 @@ class _Link:
         return other_start_inside != other_end_inside
 
     def is_minor(self) -> bool:
-        """Check if link serves a minor movement (right turn or U-turn)."""
+        """Check if link serves a minor movement (right turn)."""
         offset = (self.end.num - self.start.num) % self._total_nodes
-        return offset in (0, 1, self._total_nodes - 1)
+        return offset == self._total_nodes - 1
 
 
 class _Crossing:
