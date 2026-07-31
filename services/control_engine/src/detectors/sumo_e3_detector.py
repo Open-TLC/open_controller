@@ -63,8 +63,16 @@ class E3AreaDetector(BaseE3AreaDetector):
 class E3TransitAreaDetector(BaseE3AreaDetector, TransitAreaDetector):
     """AreaDetector implementation using SUMO's E3 detector for transit only."""
 
+    def __init__(self, detector_id: str) -> None:
+        super().__init__(detector_id)
+        # ID needs to be overridden to differentiate transit detector from possible
+        # general detector that uses the same SUMO detector. This makes it possible
+        # to re-use SUMO detectors across logical detectors.
+        self._id = f"transit_{detector_id}"
+        self._sumo_id = detector_id
+
     def _fetch_metrics(self) -> tuple[float, float, float]:
-        vehicle_ids = libsumo.multientryexit.getLastStepVehicleIDs(self._id)
+        vehicle_ids = libsumo.multientryexit.getLastStepVehicleIDs(self._sumo_id)
         transit_ids = [
             v
             for v in vehicle_ids

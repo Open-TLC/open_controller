@@ -6,15 +6,18 @@ from services.control_engine.src.detectors.traffic_indicators_area_detector impo
 
 from .area_detector import AreaDetector
 from .point_detector import PointDetector
-from .sumo_e1_detector import E1PointDetector
-from .sumo_e2_detector import E2AreaDetector
-from .sumo_e3_detector import E3AreaDetector
+from .sumo_e1_detector import E1PointDetector, E1TransitPointDetector
+from .sumo_e2_detector import E2AreaDetector, E2TransitAreaDetector
+from .sumo_e3_detector import E3AreaDetector, E3TransitAreaDetector
 
 SUPPORTED_DETECTOR_TYPES = [
     "e1_detector",
     "e2_detector",
     "e3_detector",
     "traffic_indicators_detector",
+    "e1_transit_detector",
+    "e2_transit_detector",
+    "e3_transit_detector",
 ]
 
 
@@ -84,5 +87,14 @@ async def create_detectors(
             area_detectors.append(
                 await TrafficIndicatorsAreaDetector.create(nc, junction_id, group_id),
             )
+
+        elif conf.type == SUPPORTED_DETECTOR_TYPES[4]:
+            point_detectors.append(E1TransitPointDetector(conf.id))
+
+        elif conf.type == SUPPORTED_DETECTOR_TYPES[5]:
+            area_detectors.append(E2TransitAreaDetector(conf.id))
+
+        elif conf.type == SUPPORTED_DETECTOR_TYPES[6]:
+            area_detectors.append(E3TransitAreaDetector(conf.id))
 
     return point_detectors, area_detectors
