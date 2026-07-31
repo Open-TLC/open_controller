@@ -16,6 +16,11 @@ class BaseE3AreaDetector(AreaDetector, ABC):
         self._average_speed: float = 0.0
         self._average_time_loss: float = 0.0
 
+    @property
+    def id(self) -> str:
+        """ID of the detector."""
+        return self._id
+
     def tick(self) -> None:
         """Update the detectors internal state."""
         raw_count, raw_speed, raw_loss = self._fetch_metrics()
