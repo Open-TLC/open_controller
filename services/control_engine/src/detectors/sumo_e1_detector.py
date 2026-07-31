@@ -55,8 +55,16 @@ class E1PointDetector(BaseE1Detector):
 class E1TransitPointDetector(BaseE1Detector, TransitPointDetector):
     """Transit point detector using SUMO's E1 detector."""
 
+    def __init__(self, detector_id: str) -> None:
+        super().__init__(detector_id)
+        # ID needs to be overridden to differentiate transit detector from possible
+        # general detector that uses the same SUMO detector. This makes it possible
+        # to re-use SUMO detectors across logical detectors.
+        self._id = f"transit_{detector_id}"
+        self._sumo_id = detector_id
+
     def _check_occupancy(self) -> bool:
-        vehicle_data = libsumo.inductionloop.getVehicleData(self._id)
+        vehicle_data = libsumo.inductionloop.getVehicleData(self._sumo_id)
         return any(
             vType in TRANSIT_VEHICLE_TYPES for (_, _, _, _, vType) in vehicle_data
         )

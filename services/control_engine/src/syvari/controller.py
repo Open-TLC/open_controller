@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 from services.control_engine.src.signal_controller import (
@@ -16,13 +17,24 @@ class SyvariController(SignalController):
     Follows the control logic of SYVARI.
     """
 
-    def __init__(self, conf: SyvariControllerConfiguration, timer: CycleTimer) -> None:
+    def __init__(
+        self,
+        conf: SyvariControllerConfiguration,
+        timer: CycleTimer,
+        signal_groups: dict[str, SignalGroup] | None = None,
+    ) -> None:
         """Create new SyvariController.
+
+        Prefer using `SyvariController.create(...)` to ensure signal groups
+        and detectors are asynchronously initialized.
 
         Args:
             conf: Configuration used for the controller instance.
-                This must be initialized before creating controller.
             timer: System timer used for the entire scenario.
+            signal_groups: Dictionary mapping group names to SignalGroup instances.
+
+        Raises:
+            ValueError: If configuration contains no signal group settings.
 
         """
         # Save configuration and timer objects
@@ -37,24 +49,52 @@ class SyvariController(SignalController):
         if len(conf.group_confs) == 0:
             raise ValueError("Controller doesn't have signal groups configured.")
 
-        # Create signal groups
-        self._signal_groups: dict[str, SignalGroup] = {}
-        for group_conf in conf.group_confs:
-            group = SignalGroup(timer, group_conf)
-            self._signal_groups[group.name] = group
+        self._signal_groups: dict[str, SignalGroup] = signal_groups or {}
 
-        # Matrix of active group names per phase
+        # Matrix of active group names per phase.
         self._phases = conf.phases
 
         # Current phase index.
         self._cur_phase_idx: int = 0
 
-        # Keep track of performed steps
+        # Keep track of performed steps.
         self._step_count: int = 0
 
         # Signal groups in the first phase start their greens.
         for group_name in self._phases[0]:
-            self._signal_groups[group_name].start_green()
+            if group_name in self._signal_groups:
+                self._signal_groups[group_name].start_green()
+
+    @classmethod
+    async def create(
+        cls,
+        conf: SyvariControllerConfiguration,
+        timer: CycleTimer,
+    ) -> "SyvariController":
+        """Asynchronously create a SyvariController and its signal groups.
+
+        Args:
+            conf: Configuration used for the controller instance.
+            timer: System timer used for the entire scenario.
+
+        Returns:
+            Fully initialized SyvariController instance.
+
+        Raises:
+            ValueError: If configuration contains no signal group settings.
+
+        """
+        if len(conf.group_confs) == 0:
+            raise ValueError("Controller doesn't have signal groups configured.")
+
+        # Concurrently create all signal groups and their underlying detectors
+        groups = await asyncio.gather(
+            *(SignalGroup.create(timer, group_conf) for group_conf in conf.group_confs),
+        )
+
+        signal_groups = {group.name: group for group in groups}
+
+        return cls(conf=conf, timer=timer, signal_groups=signal_groups)
 
     def tick(self) -> None:
         """Advance the controller by a single time step.
