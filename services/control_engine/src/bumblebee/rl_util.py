@@ -8,6 +8,7 @@ from services.control_engine.src.geometry.movements import LanePressureConfig
 
 def get_observation(
     current_phase_idx: int,
+    steps_in_current_phase: int,
     phase_count: int,
     pressure_configs: list[LanePressureConfig],
 ) -> np.ndarray:
@@ -15,39 +16,46 @@ def get_observation(
 
     Args:
         current_phase_idx: The index of the controllers current phase.
+        steps_in_current_phase: How long the agent has remained in the current state.
         phase_count: Number of phases in the controller.
         pressure_configs: Configurations for calculating lane wise pressures.
 
     Returns:
-        Lane wise pressures and one-hot encoded phase in an array.
+        Lane wise pressures, one-hot encoded phase in an array,
+        and the time agent has remained in the current state.
 
     """
     num_pressures = len(pressure_configs)
-    obs = np.zeros(num_pressures + phase_count, dtype=np.float32)
+    obs = np.zeros(num_pressures + phase_count + 1, dtype=np.float32)
 
     for i, pressure_config in enumerate(pressure_configs):
-        obs[i] = get_lane_pressure(pressure_config)
+        obs[i] = _get_lane_pressure(pressure_config)
 
+    # Add one-hot-encoded phase.
     obs[len(pressure_configs) + current_phase_idx] = 1.0
+
+    # Add current phase duration.
+    obs[num_pressures + phase_count] = steps_in_current_phase
 
     return obs
 
 
-def get_lane_pressure(pressure_config: LanePressureConfig) -> float:
+def _get_lane_pressure(pressure_config: LanePressureConfig) -> float:
     q_in = pressure_config.incoming_detector.vehicle_count
 
-    pressure = 0.0
-    for m in pressure_config.movements:
-        q_out = m.detector.vehicle_count
-        pressure += m.theta * (q_in - q_out)
+    weighted_q_out = sum(
+        m.theta * m.detector.vehicle_count for m in pressure_config.movements
+    )
 
-    return pressure
+    total_theta = sum(m.theta for m in pressure_config.movements)
+
+    return (total_theta * q_in) - weighted_q_out
 
 
 def get_presslight_reward(pressure_configs: list[LanePressureConfig]) -> float:
     total_penalty = 0.0
     for pressure_config in pressure_configs:
-        pressure = get_lane_pressure(pressure_config)
+        pressure = _get_lane_pressure(pressure_config)
         total_penalty += abs(pressure) ** 1.5
 
     return -total_penalty

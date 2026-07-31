@@ -196,6 +196,7 @@ class MultiTrafficEnv(MultiAgentEnv):
         obs_dims: dict[AgentID, int] = {
             aid: len(self._lane_pressure_configs[aid])
             + self._controllers[aid].phase_count
+            + 1
             for aid in self._detectors
         }
 
@@ -227,11 +228,16 @@ class MultiTrafficEnv(MultiAgentEnv):
         self._episode_vehicles: int = 0
 
         self._cur_phases: dict[AgentID, int] = dict.fromkeys(
-            self._agent_ids,
+            self.possible_agents,
             0,
         )
         self._phase_changes: dict[AgentID, int] = dict.fromkeys(
-            self._agent_ids,
+            self.possible_agents,
+            0,
+        )
+
+        self._steps_since_phase_start: dict[AgentID, int] = dict.fromkeys(
+            self.possible_agents,
             0,
         )
 
@@ -248,8 +254,9 @@ class MultiTrafficEnv(MultiAgentEnv):
 
         self._episode_travel_time = 0
         self._episode_vehicles = 0
-        self._cur_phases = dict.fromkeys(self._agent_ids, 0)
-        self._phase_changes = dict.fromkeys(self._agent_ids, 0)
+        self._cur_phases = dict.fromkeys(self.possible_agents, 0)
+        self._phase_changes = dict.fromkeys(self.possible_agents, 0)
+        self._steps_since_phase_start = dict.fromkeys(self.possible_agents, 0)
 
         # Activate all agents.
         self.agents = self.possible_agents[:]
@@ -324,6 +331,8 @@ class MultiTrafficEnv(MultiAgentEnv):
             if aid in action_dict:
                 if self._cur_phases[aid] != action_dict[aid]:
                     self._phase_changes[aid] += 1
+                    self._steps_since_phase_start[aid] = 0
+                self._steps_since_phase_start[aid] += 1
                 self._cur_phases[aid] = action_dict[aid]
                 self._action_counts[aid][action_dict[aid]] += 1
                 new_states: str = self._controllers[aid].step(action_dict[aid])
@@ -383,6 +392,7 @@ class MultiTrafficEnv(MultiAgentEnv):
 
             individual_observation = get_observation(
                 cur_phase_idx,
+                self._steps_since_phase_start[aid],
                 phase_count,
                 pressure_configs,
             )
