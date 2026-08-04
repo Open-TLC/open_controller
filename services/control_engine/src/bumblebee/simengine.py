@@ -5,6 +5,7 @@ from .configuration import SimEngineConf
 
 class SimEngine:
     """SimEngine is a simulation runner that is designed to work in RL applications.
+
     It can run simulations in steps to allow for neural network training which
     requires fine grained control over environment. SimEngine is designed to be
     used through Bumblebee's TrafficEnv environment. SimEngine can run in both
@@ -25,15 +26,23 @@ class SimEngine:
         self._finished_travel_time_last_step: float = 0.0
         self._finished_vehicles_count_last_step: int = 0
 
-        # State tracking memory to map: { vehicle_id: departure_simulation_time }
-        self._departure_times: dict[str, float] = {}
+        self._finished_transit_time_last_step: float = 0.0
+        self._finished_transit_count_last_step: int = 0
+
+        # State tracking vehicle ID -> departure time + vehicle type.
+        self._departures: dict[str, tuple[float, str]] = {}
 
     def reset(self) -> None:
         """Reset the simulation to its original state."""
         self._num_teleported_last_step = 0
+
         self._finished_travel_time_last_step = 0.0
         self._finished_vehicles_count_last_step = 0
-        self._departure_times.clear()
+
+        self._finished_transit_time_last_step = 0.0
+        self._finished_transit_count_last_step = 0
+
+        self._departures.clear()
 
         sumo_args = [
             "sumo",
@@ -56,10 +65,18 @@ class SimEngine:
 
         current_time = libsumo.simulation.getTime()
         for veh_id in libsumo.vehicle.getIDList():
+            # Don't update already noted vehicles.
+            if veh_id in self._departures:
+                continue
+
+            veh_type = libsumo.vehicle.getTypeID(veh_id)
+
             try:
-                self._departure_times[veh_id] = libsumo.vehicle.getDeparture(veh_id)
+                depart_time = libsumo.vehicle.getDeparture(veh_id)
             except Exception:
-                self._departure_times[veh_id] = current_time
+                depart_time = current_time
+
+            self._departures[veh_id] = (depart_time, veh_type)
 
     def step(self, time_step_count: int) -> None:
         """Advance the simulation by specified time steps."""
@@ -76,15 +93,20 @@ class SimEngine:
             )
 
             for veh_id in libsumo.simulation.getDepartedIDList():
-                self._departure_times[veh_id] = current_time
+                veh_type = libsumo.vehicle.getTypeID(veh_id)
+                self._departures[veh_id] = (current_time, veh_type)
 
             for veh_id in libsumo.simulation.getArrivedIDList():
-                if veh_id in self._departure_times:
-                    depart_time = self._departure_times.pop(veh_id)
+                if veh_id in self._departures:
+                    depart_time, veh_type = self._departures.pop(veh_id)
                     travel_time = current_time - depart_time
 
-                    self._finished_travel_time_last_step += travel_time
-                    self._finished_vehicles_count_last_step += 1
+                    if veh_type in ["DEFAULT_RAILTYPE"]:
+                        self._finished_transit_time_last_step += travel_time
+                        self._finished_transit_count_last_step += 1
+                    else:
+                        self._finished_travel_time_last_step += travel_time
+                        self._finished_vehicles_count_last_step += 1
 
     def close(self) -> None:
         libsumo.close()
@@ -116,6 +138,16 @@ class SimEngine:
     def get_finished_vehicles_count(self) -> int:
         """Get the total number of vehicles that finished in the last step."""
         return self._finished_vehicles_count_last_step
+
+    @property
+    def get_finished_transit_time(self) -> float:
+        """Get the total accumulated travel time of transit vehicles that finished in the last step."""
+        return self._finished_transit_time_last_step
+
+    @property
+    def get_finished_transit_count(self) -> int:
+        """Get the total number of transit vehicles that finished in the last step."""
+        return self._finished_transit_count_last_step
 
     @property
     def step_length(self) -> float:
