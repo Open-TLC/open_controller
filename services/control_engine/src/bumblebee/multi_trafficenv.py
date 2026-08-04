@@ -6,10 +6,14 @@ from gymnasium import spaces
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.utils.typing import AgentID
 
-from services.control_engine.src.detectors.area_detector import AreaDetector
-from services.control_engine.src.detectors.configuration import DetectorConfiguration
-from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
-from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
+from services.control_engine.src.detectors.area_detector import (
+    AreaDetector,
+    TransitAreaDetector,
+)
+from services.control_engine.src.detectors.configuration import (
+    DetectorConfiguration,
+    create_detectors,
+)
 from services.control_engine.src.geometry.movements import (
     DownstreamMovement,
     LanePressureConfig,
@@ -29,8 +33,20 @@ class MultiTrafficEnv(MultiAgentEnv):
         simengine: SimEngine,
         env_conf: TrafficEnvConf,
         contr_confs: list[BumblebeeControllerConf],
-        det_confs: list[DetectorConfiguration],
+        all_detectors: dict[str, AreaDetector],
     ) -> None:
+        """Create a new MultiTrafficEnv.
+
+        Prefer using `MultiTrafficEnv.create(...)` to ensure detectors are
+        asynchronously initialized before environment setup.
+
+        Args:
+            simengine: Simulation engine used by the environment.
+            env_conf: Traffic environment configuration.
+            contr_confs: List of controller configurations.
+            all_detectors: Pre-initialized detector registry.
+
+        """
         super().__init__()
 
         self._simengine: SimEngine = simengine
@@ -40,10 +56,7 @@ class MultiTrafficEnv(MultiAgentEnv):
             self._validate_and_calc_step_length(env_conf.step_length)
         )
 
-        # Create all detectors.
-        all_detectors = self._create_detector_registry(det_confs)
-
-        # Setup safety controllers, agent detectors, and pressure configs
+        # Setup safety controllers, agent detectors, and pressure configs.
         self._controllers: dict[AgentID, SafetyController] = {}
         self._detectors: dict[AgentID, list[AreaDetector]] = {}
         self._lane_pressure_configs: dict[AgentID, list[LanePressureConfig]] = {}
@@ -64,6 +77,35 @@ class MultiTrafficEnv(MultiAgentEnv):
 
         # Setup training trackers.
         self._init_state_trackers(env_conf.episode_steps)
+
+    @classmethod
+    async def create(
+        cls,
+        simengine: SimEngine,
+        env_conf: TrafficEnvConf,
+        contr_confs: list[BumblebeeControllerConf],
+        det_confs: list[DetectorConfiguration],
+    ) -> "MultiTrafficEnv":
+        """Asynchronously create a MultiTrafficEnv instance.
+
+        Args:
+            simengine: Simulation engine instance.
+            env_conf: Traffic environment configuration.
+            contr_confs: List of controller configurations for agents.
+            det_confs: List of detector configurations to instantiate.
+
+        Returns:
+            Fully initialized MultiTrafficEnv instance.
+
+        """
+        all_detectors = await cls._create_detector_registry(det_confs)
+
+        return cls(
+            simengine=simengine,
+            env_conf=env_conf,
+            contr_confs=contr_confs,
+            all_detectors=all_detectors,
+        )
 
     def _validate_and_calc_step_length(
         self,
@@ -100,25 +142,17 @@ class MultiTrafficEnv(MultiAgentEnv):
         simulation_steps = round(env_step_length / sim_step_length)
         return env_step_length, simulation_steps
 
-    def _create_detector_registry(
-        self,
+    @staticmethod
+    async def _create_detector_registry(
         det_confs: list[DetectorConfiguration],
     ) -> dict[str, AreaDetector]:
         """Instantiate and register all supported detectors."""
+        _, area_detectors = await create_detectors(det_confs)
+
         all_detectors: dict[str, AreaDetector] = {}
 
-        for det_conf in det_confs:
-            det_type = det_conf.type
-            if det_type == "e1_detector":
-                continue
-            if det_type == "e2_detector":
-                all_detectors[det_conf.id] = E2AreaDetector(det_conf.id)
-            elif det_type == "e3_detector":
-                all_detectors[det_conf.id] = E3AreaDetector(det_conf.id)
-            else:
-                raise ValueError(
-                    f"Unsupported detector type {det_type} with ID {det_conf.id}.",
-                )
+        for det in area_detectors:
+            all_detectors[det.id] = det
 
         return all_detectors
 
@@ -143,6 +177,12 @@ class MultiTrafficEnv(MultiAgentEnv):
             )
             self._detectors[aid] = agent_detectors
             self._lane_pressure_configs[aid] = agent_configs
+
+        # Save filtered transit detectors.
+        self._transit_detectors: dict[AgentID, list[TransitAreaDetector]] = {
+            aid: [det for det in detectors if isinstance(det, TransitAreaDetector)]
+            for aid, detectors in self._detectors.items()
+        }
 
     def _build_agent_pressure_configs(
         self,
@@ -182,6 +222,11 @@ class MultiTrafficEnv(MultiAgentEnv):
                 ),
             )
 
+        # Add special transit detectors.
+        for entry_id in conf.transit_links:
+            transit_det = all_detectors[f"transit_{entry_id}"]
+            agent_detectors.append(transit_det)
+
         return agent_detectors, agent_configs
 
     def _build_action_spaces(self) -> dict[AgentID, spaces.Space]:
@@ -197,6 +242,7 @@ class MultiTrafficEnv(MultiAgentEnv):
             aid: len(self._lane_pressure_configs[aid])
             + self._controllers[aid].phase_count
             + 1
+            + len(self._transit_detectors[aid])
             for aid in self._detectors
         }
 
@@ -226,6 +272,8 @@ class MultiTrafficEnv(MultiAgentEnv):
 
         self._episode_travel_time: float = 0.0
         self._episode_vehicles: int = 0
+        self._episode_transit_time: float = 0
+        self._episode_transit_count: int = 0
 
         self._cur_phases: dict[AgentID, int] = dict.fromkeys(
             self.possible_agents,
@@ -254,6 +302,9 @@ class MultiTrafficEnv(MultiAgentEnv):
 
         self._episode_travel_time = 0
         self._episode_vehicles = 0
+        self._episode_transit_time = 0
+        self._episode_transit_count = 0
+
         self._cur_phases = dict.fromkeys(self.possible_agents, 0)
         self._phase_changes = dict.fromkeys(self.possible_agents, 0)
         self._steps_since_phase_start = dict.fromkeys(self.possible_agents, 0)
@@ -347,6 +398,8 @@ class MultiTrafficEnv(MultiAgentEnv):
         # Gather metric data.
         self._episode_travel_time += self._simengine.get_finished_travel_time
         self._episode_vehicles += self._simengine.get_finished_vehicles_count
+        self._episode_transit_time += self._simengine.get_finished_transit_time
+        self._episode_transit_count += self._simengine.get_finished_transit_count
 
         is_truncated = self._cur_step >= self._episode_steps
 
@@ -370,6 +423,12 @@ class MultiTrafficEnv(MultiAgentEnv):
                 if self._episode_vehicles > 0
                 else 0,
             )
+            print(
+                "Average transit travel time: ",
+                round(self._episode_transit_time / self._episode_transit_count, 1)
+                if self._episode_transit_count > 0
+                else 0,
+            )
             print("Number of trips: ", self._episode_vehicles)
             print(f"Phase changes: {self._phase_changes}\n")
 
@@ -390,11 +449,17 @@ class MultiTrafficEnv(MultiAgentEnv):
             phase_count = self._controllers[aid].phase_count
             pressure_configs = self._lane_pressure_configs[aid]
 
+            transit_detections: np.ndarray = np.array(
+                [det.vehicle_count for det in self._transit_detectors[aid]],
+                dtype=np.float32,
+            )
+
             individual_observation = get_observation(
                 cur_phase_idx,
                 self._steps_since_phase_start[aid],
                 phase_count,
                 pressure_configs,
+                transit_detections,
             )
 
             observations[aid] = individual_observation
@@ -411,5 +476,8 @@ class MultiTrafficEnv(MultiAgentEnv):
         rewards = {}
 
         for aid in self.agents:
-            rewards[aid] = get_presslight_reward(self._lane_pressure_configs[aid])
+            rewards[aid] = get_presslight_reward(
+                self._lane_pressure_configs[aid],
+                self._transit_detectors[aid],
+            )
         return rewards

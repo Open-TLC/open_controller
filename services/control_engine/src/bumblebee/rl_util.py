@@ -2,7 +2,9 @@ import numpy as np
 from stable_baselines3 import DQN, PPO
 from stable_baselines3.common.base_class import BaseAlgorithm
 
-from services.control_engine.src.detectors.area_detector import AreaDetector
+from services.control_engine.src.detectors.area_detector import (
+    TransitAreaDetector,
+)
 from services.control_engine.src.geometry.movements import LanePressureConfig
 
 
@@ -11,6 +13,7 @@ def get_observation(
     steps_in_current_phase: int,
     phase_count: int,
     pressure_configs: list[LanePressureConfig],
+    transit_detections: np.ndarray,
 ) -> np.ndarray:
     """Get observation in Bumblebee standard format.
 
@@ -19,23 +22,30 @@ def get_observation(
         steps_in_current_phase: How long the agent has remained in the current state.
         phase_count: Number of phases in the controller.
         pressure_configs: Configurations for calculating lane wise pressures.
+        transit_detections: Vehicle counts from transit detectors.
 
     Returns:
         Lane wise pressures, one-hot encoded phase in an array,
-        and the time agent has remained in the current state.
+        the time agent has remained in the current state, and transit detections.
 
     """
     num_pressures = len(pressure_configs)
-    obs = np.zeros(num_pressures + phase_count + 1, dtype=np.float32)
+    obs = np.zeros(
+        num_pressures + phase_count + 1 + transit_detections.shape[0],
+        dtype=np.float32,
+    )
 
     for i, pressure_config in enumerate(pressure_configs):
         obs[i] = _get_lane_pressure(pressure_config)
 
     # Add one-hot-encoded phase.
-    obs[len(pressure_configs) + current_phase_idx] = 1.0
+    obs[num_pressures + current_phase_idx] = 1.0
 
     # Add current phase duration.
     obs[num_pressures + phase_count] = steps_in_current_phase
+
+    # Add transit detections to the end of the array.
+    obs[num_pressures + phase_count + 1 :] = transit_detections
 
     return obs
 
@@ -52,18 +62,21 @@ def _get_lane_pressure(pressure_config: LanePressureConfig) -> float:
     return (total_theta * q_in) - weighted_q_out
 
 
-def get_presslight_reward(pressure_configs: list[LanePressureConfig]) -> float:
-    total_penalty = 0.0
+def get_presslight_reward(
+    pressure_configs: list[LanePressureConfig],
+    transit_detectors: list[TransitAreaDetector],
+) -> float:
+    """Calculate reward based on lane pressures and transit vehicle queues."""
+    pressure_penalty = 0.0
     for pressure_config in pressure_configs:
         pressure = _get_lane_pressure(pressure_config)
-        total_penalty += abs(pressure) ** 1.5
+        pressure_penalty += abs(pressure)
 
-    return -total_penalty
+    transit_penalty = 0.0
+    for det in transit_detectors:
+        transit_penalty += det.vehicle_count * 20
 
-
-def calculate_pressure(upstream: AreaDetector, downstream: AreaDetector) -> float:
-    """Calculate the pressure of a link."""
-    return max(0, (upstream.vehicle_count - downstream.vehicle_count))
+    return -pressure_penalty - transit_penalty
 
 
 def load_model(model_type: str, filename: str) -> BaseAlgorithm:

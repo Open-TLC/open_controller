@@ -99,3 +99,7 @@ class BumblebeeControllerConf:
         )
         intergreen_mapping = np.array([0, vv, pv, vp])
         self.intergreens: np.ndarray = intergreen_mapping[self.conflict_matrix]
+
+        self.transit_links: list[str] = [
+            f"{self.id}.{link_id}" for link_id in raw_options.get("transit_links", [])
+        ]
