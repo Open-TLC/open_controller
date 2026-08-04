@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import json
 import os
 import sys
 import unittest
@@ -32,23 +33,38 @@ class TestClockworkE2E(unittest.IsolatedAsyncioTestCase):
                     self.process.kill()
                     await self.process.wait()
 
-    async def test_clockwork_status_emits_b_and_5(self) -> None:
-        """Run Clockwork and assert 'b' and '5' appear in the status."""
+    async def test_clockwork_status_emits_required_states(self) -> None:
+        """Run Clockwork and assert 'b', '5', and '<' appear in the status."""
         try:
             self.nc = await connect(self.nats_url)
         except Exception as e:
             self.fail(f"Could not connect to NATS at {self.nats_url}: {e}")
 
-        message_received_future: asyncio.Future[str] = (
+        states_received_future: asyncio.Future[set[str]] = (
             asyncio.get_running_loop().create_future()
         )
 
-        async def message_handler(msg) -> None:
-            payload = msg.data.decode("utf-8")
-            if "b" in payload and "5" in payload and not message_received_future.done():
-                message_received_future.set_result(payload)
+        expected_states = {"b", "5", "<"}
+        seen_states: set[str] = set()
 
-        subject = "clockwork.status.j1"
+        async def message_handler(msg) -> None:
+            if states_received_future.done():
+                return
+
+            with contextlib.suppress(json.JSONDecodeError):
+                payload = json.loads(msg.data.decode("utf-8"))
+                substate = payload.get("substate")
+
+                # Track the substate if it's one we care about
+                if substate in expected_states:
+                    seen_states.add(substate)
+
+                # Complete the test early if all target states have been received
+                if seen_states == expected_states and not states_received_future.done():
+                    states_received_future.set_result(seen_states)
+
+        # Subscribe to states of signal groups of controller "j1"
+        subject = "group.control.j1.*"
         sub = await self.nc.subscribe(subject, cb=message_handler)
 
         cmd = [
@@ -66,24 +82,25 @@ class TestClockworkE2E(unittest.IsolatedAsyncioTestCase):
                 stderr=None,
             )
         except FileNotFoundError:
-            self.fail("Could not run command. Is Python in your PATH?")
+            self.fail("Failed to run Clockwork.")
 
         timeout_seconds = 10.0
         try:
-            matched_payload = await asyncio.wait_for(
-                message_received_future,
+            matched_states = await asyncio.wait_for(
+                states_received_future,
                 timeout=timeout_seconds,
             )
         except TimeoutError:
             self.fail(
-                f"Timed out after {timeout_seconds}s waiting for a message "
-                f"containing 'b' and '5' on subject '{subject}'.",
+                f"Timed out after {timeout_seconds}s waiting for states "
+                f"{expected_states} on subject '{subject}'. Only saw: {seen_states}",
             )
 
         await sub.unsubscribe()
 
-        self.assertIn("b", matched_payload)
-        self.assertIn("5", matched_payload)
+        self.assertIn("b", matched_states)
+        self.assertIn("5", matched_states)
+        self.assertIn("<", matched_states)
 
 
 if __name__ == "__main__":
