@@ -1,3 +1,5 @@
+from typing import Any
+
 from nats.aio.client import Client
 
 from services.control_engine.src.detectors.traffic_indicators_area_detector import (
@@ -32,13 +34,21 @@ class DetectorConfiguration:
 
     """
 
-    def __init__(self, conf: dict[str, str]) -> None:
+    def __init__(self, conf: dict[str, str | dict[str, Any]]) -> None:
         det_type = conf["type"]
         if det_type not in SUPPORTED_DETECTOR_TYPES:
             raise ValueError(f"Detector of type {det_type} is not supported")
 
-        self.type = det_type
-        self.id = conf["id"]
+        self.type: str = det_type
+
+        det_id = conf["id"]
+        if type(det_id) is not str:
+            raise TypeError("Detector ID must be of type string")
+        self.id: str = det_id
+
+        options = conf.get("options")
+        if type(options) is dict:
+            self.options: dict[str, Any] = options
 
 
 async def create_detectors(
@@ -89,12 +99,17 @@ async def create_detectors(
             )
 
         elif conf.type == SUPPORTED_DETECTOR_TYPES[4]:
-            point_detectors.append(E1TransitPointDetector(conf.id))
+            point_detectors.append(
+                E1TransitPointDetector(conf.id, options=conf.options),
+            )
 
         elif conf.type == SUPPORTED_DETECTOR_TYPES[5]:
-            area_detectors.append(E2TransitAreaDetector(conf.id))
+            area_detectors.append(E2TransitAreaDetector(conf.id, options=conf.options))
 
         elif conf.type == SUPPORTED_DETECTOR_TYPES[6]:
-            area_detectors.append(E3TransitAreaDetector(conf.id))
+            area_detectors.append(E3TransitAreaDetector(conf.id, options=conf.options))
+
+        else:
+            raise ValueError(f"Unknown detector type: {conf.type}")
 
     return point_detectors, area_detectors

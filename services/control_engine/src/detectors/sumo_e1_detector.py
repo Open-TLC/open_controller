@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 import libsumo
 
@@ -60,7 +61,7 @@ class E1PointDetector(BaseE1Detector):
 class E1TransitPointDetector(BaseE1Detector, TransitPointDetector):
     """Transit point detector using SUMO's E1 detector."""
 
-    def __init__(self, detector_id: str) -> None:
+    def __init__(self, detector_id: str, options: dict[str, Any] | None = None) -> None:
         super().__init__(detector_id)
         # ID needs to be overridden to differentiate transit detector from possible
         # general detector that uses the same SUMO detector. This makes it possible
@@ -68,8 +69,15 @@ class E1TransitPointDetector(BaseE1Detector, TransitPointDetector):
         self._id = f"transit_{detector_id}"
         self._sumo_id = detector_id
 
+        if (
+            options
+            and options.get("vehicle_types")
+            and type(options["vehicle_types"] is list[str])
+        ):
+            self._vehicle_types: list[str] = options["vehicle_types"]
+        else:
+            self._vehicle_types = TRANSIT_VEHICLE_TYPES
+
     def _check_occupancy(self) -> bool:
         vehicle_data = libsumo.inductionloop.getVehicleData(self._sumo_id)
-        return any(
-            vType in TRANSIT_VEHICLE_TYPES for (_, _, _, _, vType) in vehicle_data
-        )
+        return any(vType in self._vehicle_types for (_, _, _, _, vType) in vehicle_data)

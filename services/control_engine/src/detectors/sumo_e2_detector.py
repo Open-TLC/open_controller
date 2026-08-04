@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 import libsumo
 
@@ -68,7 +69,7 @@ class E2AreaDetector(BaseE2AreaDetector):
 class E2TransitAreaDetector(BaseE2AreaDetector, TransitAreaDetector):
     """AreaDetector implementation using SUMO's E2 detector for transit only."""
 
-    def __init__(self, detector_id: str) -> None:
+    def __init__(self, detector_id: str, options: dict[str, Any] | None = None) -> None:
         super().__init__(detector_id)
         # ID needs to be overridden to differentiate transit detector from possible
         # general detector that uses the same SUMO detector. This makes it possible
@@ -76,12 +77,21 @@ class E2TransitAreaDetector(BaseE2AreaDetector, TransitAreaDetector):
         self._id = f"transit_{detector_id}"
         self._sumo_id = detector_id
 
+        if (
+            options
+            and options.get("vehicle_types")
+            and type(options["vehicle_types"] is list[str])
+        ):
+            self._vehicle_types: list[str] = options["vehicle_types"]
+        else:
+            self._vehicle_types = TRANSIT_VEHICLE_TYPES
+
     def _fetch_metrics(self) -> tuple[float, float, float]:
         vehicle_ids = libsumo.lanearea.getLastStepVehicleIDs(self._sumo_id)
         transit_ids = [
             v
             for v in vehicle_ids
-            if libsumo.vehicle.getTypeID(v) in TRANSIT_VEHICLE_TYPES
+            if libsumo.vehicle.getTypeID(v) in self._vehicle_types
         ]
 
         count = len(transit_ids)
