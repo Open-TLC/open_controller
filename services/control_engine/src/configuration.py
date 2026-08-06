@@ -28,6 +28,9 @@ class ClockworkConf:
 
         self.nats: NatsConf = NatsConf(raw_conf["nats"])
         self.timer: TimerConf = TimerConf(raw_conf["timer"])
+        self.publisher: PublisherConf = PublisherConf(
+            raw_conf["clockwork"]["publisher"],
+        )
 
         # TODO: Override controllers print_status if print_status is set to True
         self.controllers: list[ControllerConf] = []
@@ -54,7 +57,6 @@ class ControllerConf:
 
 DEFAULT_NATS_SERVER = "nats://localhost"
 DEFAULT_NATS_PORT = 4222
-DEFAULT_NATS_MODE = "change"
 
 
 class NatsConf:
@@ -63,10 +65,19 @@ class NatsConf:
     def __init__(self, raw_conf: dict[str, Any]) -> None:
         self.server = raw_conf.get("server") or DEFAULT_NATS_SERVER
         self.port = raw_conf.get("port") or DEFAULT_NATS_PORT
-        mode = raw_conf.get("mode") or DEFAULT_NATS_MODE
+
+
+DEFAULT_PUBLISHER_MODE = "change"
+
+
+class PublisherConf:
+    """Configuration object for Clockwork state publisher."""
+
+    def __init__(self, raw_conf: dict[str, Any]) -> None:
+        mode = raw_conf.get("mode") or DEFAULT_PUBLISHER_MODE
         if mode not in ["change", "update"]:
             raise ValueError(
-                f"Unknown Clockwork NATS mode {mode}. Supported modes: change, update.",
+                f"Unknown publisher mode {mode}. Supported modes: change, update.",
             )
         self.mode = mode
 

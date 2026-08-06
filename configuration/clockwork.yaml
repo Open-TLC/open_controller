@@ -61,9 +61,6 @@ traffic_indicators:
 clockwork:
   publisher:
     mode: change
-    data_types:
-      - "groups"
-      - "controllers"
   controllers:
     - id: j1
       type: fixed_time  # This is not actually meant to be used in production. It is here just for demonstration and testing.
