@@ -35,10 +35,22 @@ class SafetyController:
 
         self._phases = self._geometry.get_possible_phases(min_major_movements=2)
 
+        # Calculate lane wise phases from link wise phases.
+        self._lane_phases = self._geometry.to_lane_wise(self._phases)
+
     @property
     def phase_count(self) -> int:
         """Number of phases."""
         return self._phases.shape[0]
+
+    @property
+    def phases_lane(self) -> np.ndarray:
+        """Lane wise phases of the signal controller.
+
+        Matrix of shape (number of phases, number of lanes).
+        1 means that lane has green, 0 means that lane has red.
+        """
+        return self._lane_phases
 
     def step(self, new_phase_idx: int) -> str:
         """Advance the safety controller by one time-step.
@@ -99,3 +111,12 @@ class SafetyController:
                 )
 
         return "".join(self._current_states)
+
+    def get_phase_wise_transit_detections(
+        self,
+        transit_detections: np.ndarray,
+    ) -> np.ndarray:
+        """Convert transit detections to phase wise detection matrix."""
+        return self.phases_lane @ self._geometry.map_transit_detections_to_lanes(
+            transit_detections,
+        )

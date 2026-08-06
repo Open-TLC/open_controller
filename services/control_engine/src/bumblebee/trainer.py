@@ -9,8 +9,9 @@ import numpy as np
 import ray
 import yaml
 from gymnasium.wrappers import RecordEpisodeStatistics
-from ray.rllib.algorithms.dqn import DQNConfig
 from ray.rllib.algorithms.ppo import PPOConfig
+from ray.rllib.core.rl_module.multi_rl_module import MultiRLModuleSpec
+from ray.rllib.core.rl_module.rl_module import RLModuleSpec
 from ray.rllib.utils.typing import AgentID, EpisodeType, MultiAgentPolicyConfigDict
 from ray.tune.registry import register_env
 from stable_baselines3 import DQN, PPO
@@ -20,6 +21,7 @@ from stable_baselines3.common.env_checker import check_env
 from torch.utils.tensorboard import SummaryWriter
 
 from .configuration import TrainerConf
+from .frap_network import FRAPMaskedPPORLModule
 from .multi_trafficenv import MultiTrafficEnv
 from .simengine import SimEngine
 from .trafficenv import TrafficEnv
@@ -134,31 +136,41 @@ def _train_multi_agent(
 
     policies = cast(MultiAgentPolicyConfigDict, raw_policies)
 
-    if conf.algorithm == "ppo":
-        config = PPOConfig()
-    elif conf.algorithm == "dqn":
-        config = DQNConfig()
-    else:
-        raise ValueError(f"Unknown Multi-Agent algorithm: {conf.algorithm}")
+    policy_ids = [str(pid) for pid in raw_policies]
 
-    config.environment(env="multi_traffic_env", env_config={"conf": conf})
-    config.framework("torch")
-
-    config = config.multi_agent(
-        policies=policies,
-        policy_mapping_fn=_map_agent_to_policy,
+    # Configure RLModule specifications for every agent/policy.
+    rl_module_spec = MultiRLModuleSpec(
+        rl_module_specs={
+            pid: RLModuleSpec(
+                module_class=FRAPMaskedPPORLModule,
+                model_config={
+                    "hidden_dim": getattr(conf, "hidden_dim", 32),
+                    "embed_dim": getattr(conf, "embed_dim", 16),
+                },
+            )
+            for pid in policy_ids
+        },
     )
 
-    config = config.env_runners(num_env_runners=0)
-
-    config.training(
-        num_epochs=4,
-        train_batch_size_per_learner=3600,
-        entropy_coeff=0.01,
-        lr=[[0, 0.0005], [200, 0.0001], [600, 0.00002]],
+    # Build algorithm configuration.
+    config = (
+        PPOConfig()
+        .environment(env="multi_traffic_env", env_config={"conf": conf})
+        .framework("torch")
+        .multi_agent(
+            policies=policies,
+            policy_mapping_fn=_map_agent_to_policy,
+        )
+        .rl_module(rl_module_spec=rl_module_spec)
+        .env_runners(num_env_runners=0)
+        .training(
+            num_epochs=4,
+            train_batch_size_per_learner=3600,
+            entropy_coeff=0.01,
+        )
     )
 
-    print("Building Multi-Agent Model Configuration...")
+    print("Building Algorithm...")
     algo = config.build_algo()
 
     writer: SummaryWriter | None = None
@@ -168,7 +180,7 @@ def _train_multi_agent(
         os.makedirs(logdir, exist_ok=True)
         writer = SummaryWriter(log_dir=logdir)
 
-    print("Starting Multi-Agent model training...")
+    print("Starting model training...")
 
     for i in range(conf.total_steps):
         print(f"Step {i}")
@@ -178,7 +190,7 @@ def _train_multi_agent(
 
     if writer:
         writer.close()
-    print("Multi-Agent Model trained!")
+    print("Model trained!")
 
     if model_file:
         algo.save(checkpoint_dir=model_file)
