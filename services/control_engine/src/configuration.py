@@ -11,13 +11,7 @@ from typing import Any
 
 import yaml
 
-from .detectors.area_detector import AreaDetector
 from .detectors.configuration import DetectorConfiguration
-from .detectors.point_detector import PointDetector
-from .fixed_time_controller.controller import FixedTimeController
-from .signal_controller import SignalController
-from .signal_group_controller import PhaseRingController
-from .timer import Timer
 
 
 class ClockworkConf:
@@ -37,7 +31,7 @@ class ClockworkConf:
 
         # TODO: Override controllers print_status if print_status is set to True
         self.controllers: list[ControllerConf] = []
-        for raw_controller_conf in raw_conf["controllers"]:
+        for raw_controller_conf in raw_conf["clockwork"]["controllers"]:
             controller_conf = ControllerConf(raw_controller_conf)
             self.controllers.append(controller_conf)
 
@@ -85,7 +79,7 @@ class TimerConf:
 
     def __init__(self, raw_conf: dict[str, Any]) -> None:
         timer_mode = str(raw_conf.get("timer_mode"))
-        if not timer_mode or timer_mode not in SUPPORTED_TIMER_MODES:
+        if timer_mode not in SUPPORTED_TIMER_MODES:
             raise ValueError(
                 f"Unknown timer mode {timer_mode}. "
                 f"Currently supported modes {SUPPORTED_TIMER_MODES}.",
@@ -93,20 +87,10 @@ class TimerConf:
         self.mode: str = timer_mode
 
         # The length of a simulation step (s).
-        self.simulation_step: float = float(raw_conf["simulation_step"])
-        # The time between controller updates (s).
-        self.controller_step: float = float(raw_conf["controller_step"])
-        # When running in
-        self.real_time_multiplier: float = float(raw_conf["real_time_multiplier"])
+        self.time_step: float = float(raw_conf["time_step"])
 
-    @property
-    def timer_prm(self) -> dict[str, Any]:
-        """Get settings in legacy timer parameter format."""
-        return {
-            "timer_mode": self.mode,
-            "time_step": self.simulation_step,
-            "real_time_multiplier": self.real_time_multiplier,
-        }
+        # When running in real mode, we might want to change the speed of time.
+        self.real_time_multiplier: float = float(raw_conf["real_time_multiplier"])
 
 
 def read_command_line():
@@ -127,49 +111,3 @@ def read_command_line():
     )
 
     return parser.parse_args()
-
-
-SUPPORTED_CONTROLLER_TYPES: list[str] = ["phasering", "syvari", "bumblebee"]
-
-
-def create_controller(
-    conf: ControllerConf,
-    timer: Timer,
-    detectors: tuple[list[PointDetector], list[AreaDetector]],
-) -> SignalController:
-    """Create controller based on provided configuration.
-
-    Args:
-        conf: Controller configuration used to create the controller.
-        timer: Timer used by the controller.
-        detectors: All available detectors. The controller will only get the ones it
-            needs based on the configuration. This is necessary as the way detectors
-            are configured can vary between controllers.
-
-    Returns:
-        The created signal controller.
-
-    Raises:
-        ValueErrors: Unknown controller type.
-        ValueError: Detector configured in controller can't be found in 'detectors'.
-
-    """
-    controller_type = conf.type
-
-    controller: SignalController
-    if controller_type == "phasering":
-        # TODO: Migrate PhaseRingController to standard signal controller.
-        controller = PhaseRingController(conf.options, timer)
-    elif controller_type == "fixed_time":
-        controller = FixedTimeController(conf.id, timer, conf.options)
-    elif controller_type == "syvari":
-        raise NotImplementedError("SYVARI controller creation is not yet supported.")
-    elif controller_type == "bumblebee":
-        raise NotImplementedError("Bumblebee controller creation is not yet supported.")
-    else:
-        raise ValueError(
-            f"Controller type {controller_type} is not supported. "
-            f"Currently supported controller types: {SUPPORTED_CONTROLLER_TYPES}.",
-        )
-
-    return controller

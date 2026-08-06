@@ -21,10 +21,9 @@ from nats.aio.client import Client
 
 from .configuration import (
     ClockworkConf,
-    TimerConf,
-    create_controller,
     read_command_line,
 )
+from .controller_creation import create_controller
 from .detectors.configuration import create_detectors
 from .signal_controller import SignalController
 from .timer import Timer
@@ -54,7 +53,7 @@ class Clockwork:
         self._publishers: dict[str, StatePublisher] = {}
         self._controllers: list[SignalController] = []
 
-        self._timer: ControllerTimer = ControllerTimer(self._conf.timer)
+        self._timer: Timer = Timer(self._conf.timer)
 
         # Clockwork caches the current signal states for each controller.
         # This is used to publish new states only when the state changes.
@@ -105,8 +104,8 @@ class Clockwork:
             self._signal_states[controller.id] = controller.signal_states
 
         while True:
-            # Block until it's time to update controller and publish new states.
-            self._timer.wait_for_update()
+            # Advancing timer.
+            self._timer.tick()
 
             # Update all controllers and publish their states.
             for controller in self._controllers:
@@ -124,45 +123,6 @@ class Clockwork:
         # publish states.
         if changed or self._update_always:
             await self._publishers[controller_id].publish(new_states)
-
-
-class ControllerTimer(Timer):
-    """Timer for controller operations.
-
-    Provides convenience method to block until next controller
-    update. This is meant to be used only by Clockwork.
-    """
-
-    def __init__(self, conf: TimerConf):
-        """Create controller timer.
-
-        Args:
-            conf: Configuration for timer.
-
-        """
-        super().__init__(conf.timer_prm)
-        self._step_length = conf.controller_step
-        self._last_updated = self.seconds
-        self._real: bool = conf.mode == "real"
-
-    def wait_for_update(self) -> None:
-        """Wait for next update time.
-
-        This sleeps until it is again time to update the controller.
-        """
-        next_update: float = self._last_updated + self._step_length
-        while next_update > self.seconds:
-            # If timer mode is real, this needs to block until next
-            # timer update.
-            next_update_real = next_update * self._time_multiplier
-            while self._real and next_update_real > self.real_seconds:
-                time.sleep(0.1)
-                self.sleep_tick()
-
-            # Tick timer until next update passes.
-            self.tick()
-
-        self._last_updated = self.seconds
 
 
 class _GroupStateMessage:

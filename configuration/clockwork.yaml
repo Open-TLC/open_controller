@@ -1,31 +1,85 @@
 timer:
   timer_mode: fixed
   real_time_multiplier: 1
-  simulation_step: 0.1
-  controller_step: 1
+  time_step: 0.1
 
 nats:
   url: nats  # When running in docker compose, this is the same as NATS service name.
   port: 4222
   mode: change  # change / update
 
-controllers:
-  - id: j1
-    type: fixed_time  # This is not actually meant to be used in production. It is here just for demonstration and testing.
-    options:
-      phases:
-        - signal_states: ggrrrr
-          duration: 10
-        - signal_states: rrggrr
-          duration: 10
-        - signal_states: rrrrgg
-          duration: 10
+simengine:
+  sumo_conf: models/some.sumocfg
+  publisher:
+    mode: change
+    data_types:
+      - groups
+      - dets
+      - v2x
 
-      yellow_duration: 3
+traffic_indicators:
+  input_streams:
+    sig_inputs:
+      connection: nats
+      type: groups
+      subtype: sumo
+      nats_subject: group.status.270.*
+    radar270.1:
+      connection: nats
+  inputs:
+    dets:  # Induction loops
+      - id: 2-002
+        type: falling_edge
+        stream: sig_inputs
+        name: 2-002  # NATS subject suffix
+    object_filters:  # Radars and cameras
+      - id: "270_1_0"
+        type: simple
+        stream: radar270.1
+        lane: "0"
+    groups:
+      - id: group1
+        type: simple
+        stream: sig_inputs  # See streams above
+        group: "7"  # NATS subject suffix, we read subject "group.status.270.7" in this example
+    lanes:  # Does sensor fusion with data inputs
+      - id: grp2_1
+        in_dets: ["2-040"]
+        out_dets: ["2-002"]  # Counts difference between input and output dets
+        object_lists: ["270_1_0"]  # Radar data filtered by lane and type?
+  outputs:
+    - view: group1_view
+      connection: nats
+      type: area
+      nats_output_subject: group.view.270.1
+      trigger: time  # time / new message
+      trigger_time: 1.0
+      # References lane ID
+      lanes: ["grp2_1"]  # Lanes -> dets + object_filters -> input_streams
+      group: group1
 
-detectors:
-  - id: j1.0
-    type: e2_detector
+clockwork:
+  publisher:
+    mode: change
+    data_types:
+      - "groups"
+      - "controllers"
+  controllers:
+    - id: j1
+      type: fixed_time  # This is not actually meant to be used in production. It is here just for demonstration and testing.
+      options:
+        phases:
+          - signal_states: ggrrrr
+            duration: 10
+          - signal_states: rrggrr
+            duration: 10
+          - signal_states: rrrrgg
+            duration: 10
+        yellow_duration: 3
+
+detectors:  # All detector configurations in this simulation
+  - id: j1.0  # Unique id for detector Format: INTERSECTION_ID.UNIQUE_DET_ID 
+    type: e1_detector
     options: {}
   - id: j1.1
     type: e2_detector

@@ -8,36 +8,39 @@ This module implements system timer for clockwork_tc
 #
 import time
 
+from .configuration import TimerConf
+
 
 class Timer:
     """Timer for handling time steps and conversions."""
 
-    def __init__(self, timer_prm):
-        self.time_step = timer_prm["time_step"]
-        self._time_multiplier = timer_prm["real_time_multiplier"]
-        self.start_rtime = time.time()
-        self._cur_rtime = time.time()
-        self.steps = 0
-        self.last_update = self._cur_rtime
+    def __init__(self, conf: TimerConf) -> None:
+        self.time_step: float = conf.time_step
+        self._time_multiplier: float = conf.real_time_multiplier
+        self.start_rtime: float = time.time()
+        self._cur_rtime: float = time.time()
+        self.steps: int = 0
+        self.last_update: float = self._cur_rtime
         # This is used to compensate for the time drift as integrator
-        self.aggregate_time_drift = 0.0
+        self.aggregate_time_drift: float = 0.0
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Timer as human readable string."""
         return f"Timer, {self.steps} steps and {self.seconds} seconds"
 
-    def reset(self):
-        """Start the timer from zero."""
-        self.steps = 0
+    def reset(self) -> None:
+        """Start the timer to zero."""
+        self.steps: int = 0
         self.start_rtime = time.time()
         self._cur_rtime = time.time() - self.start_rtime
 
-    def tick(self):
+    def tick(self) -> None:
         """One time step forward."""
         self.steps += 1
         self._cur_rtime = (time.time() - self.start_rtime) * self._time_multiplier
         self.aggregate_time_drift += self._get_time_since_last_update() - self.time_step
 
-    def sleep_tick(self):
+    def sleep_tick(self) -> None:
         """Sleep for one tick.
 
         This advances the internal clock of the timer.
@@ -82,8 +85,10 @@ class Timer:
 
     @seconds.setter
     def seconds(self, new_seconds: float) -> None:
-        # Sets _steps_ to closest second value
-        self.steps = round(
-            new_seconds / self.time_step,
-            5,
-        )  # one might consider flooring?
+        # Sets steps to closest second value
+        self.steps = int(
+            round(
+                new_seconds / self.time_step,
+                5,
+            ),
+        )
