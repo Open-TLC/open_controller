@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+TRANSIT_VEHICLE_TYPES: list[str] = ["bus", "tram"]
+
 
 class PointDetector(ABC):
     """Detector interface for interacting with a point detector.
@@ -25,3 +27,7 @@ class PointDetector(ABC):
     def detection_duration(self) -> float:
         """Duration of the current detection in seconds."""
         ...
+
+
+class TransitPointDetector(PointDetector):
+    """Point detector for detecting transit vehicles."""

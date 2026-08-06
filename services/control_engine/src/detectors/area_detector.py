@@ -31,3 +31,7 @@ class AreaDetector(ABC):
     def average_time_loss(self) -> float:
         """Average time loss (s) experienced by vehicles in the area."""
         ...
+
+
+class TransitAreaDetector(AreaDetector):
+    """Area detector for detecting transit vehicles."""

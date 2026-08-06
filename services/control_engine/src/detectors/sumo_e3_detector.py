@@ -1,45 +1,82 @@
+from abc import ABC, abstractmethod
+
 import libsumo
 
-from .area_detector import AreaDetector
+from .area_detector import AreaDetector, TransitAreaDetector
+from .point_detector import TRANSIT_VEHICLE_TYPES
 
 
-class E3AreaDetector(AreaDetector):
-    """AreaDetector implementation using SUMO's E3 detector."""
+class BaseE3AreaDetector(AreaDetector, ABC):
+    """Shared implementation layer for all SUMO E3-based area detectors."""
 
     def __init__(self, detector_id: str) -> None:
         super().__init__()
-
         self._id = detector_id
-
         self._vehicle_count: float = 0.0
         self._average_speed: float = 0.0
         self._average_time_loss: float = 0.0
 
     def tick(self) -> None:
-        """Update detections from simulation."""
-        self._vehicle_count = float(
-            libsumo.multientryexit.getLastStepVehicleNumber(self._id),
-        )
+        """Update the detectors internal state."""
+        raw_count, raw_speed, raw_loss = self._fetch_metrics()
 
-        raw_speed = float(libsumo.multientryexit.getLastStepMeanSpeed(self._id))
-        self._average_speed = max(0.0, raw_speed)
-
-        raw_time_loss = float(
-            libsumo.multientryexit.getLastIntervalMeanTimeLoss(self._id),
-        )
-        self._average_time_loss = max(0.0, raw_time_loss)
+        self._vehicle_count = float(raw_count)
+        self._average_speed = max(0.0, float(raw_speed))
+        self._average_time_loss = max(0.0, float(raw_loss))
 
     @property
     def vehicle_count(self) -> float:
-        """Total number of vehicles currently in detection area."""
+        """Total number or vehicles currently in the area."""
         return self._vehicle_count
 
     @property
     def average_speed(self) -> float:
-        """Average speed (m/s) of vehicles in the detection area."""
+        """Average speed (m/s) of a vehicle currently in the area."""
         return self._average_speed
 
     @property
     def average_time_loss(self) -> float:
-        """Average time loss (s) of vehicles in the detection area."""
+        """Average time loss (s) experienced by vehicles in the area."""
         return self._average_time_loss
+
+    @abstractmethod
+    def _fetch_metrics(self) -> tuple[float, float, float]:
+        """Get readings from the detector.
+
+        Returns:
+            Vehicle count, average speed, and average time loss.
+
+        """
+        ...
+
+
+class E3AreaDetector(BaseE3AreaDetector):
+    """AreaDetector implementation using SUMO's E3 detector."""
+
+    def _fetch_metrics(self) -> tuple[float, float, float]:
+        count = libsumo.multientryexit.getLastStepVehicleNumber(self._id)
+        speed = libsumo.multientryexit.getLastStepMeanSpeed(self._id)
+        loss = libsumo.multientryexit.getLastIntervalMeanTimeLoss(self._id)
+        return count, speed, loss
+
+
+class E3TransitAreaDetector(BaseE3AreaDetector, TransitAreaDetector):
+    """AreaDetector implementation using SUMO's E3 detector for transit only."""
+
+    def _fetch_metrics(self) -> tuple[float, float, float]:
+        vehicle_ids = libsumo.multientryexit.getLastStepVehicleIDs(self._id)
+        transit_ids = [
+            v
+            for v in vehicle_ids
+            if libsumo.vehicle.getTypeID(v) in TRANSIT_VEHICLE_TYPES
+        ]
+
+        count = len(transit_ids)
+        if count > 0:
+            speed = sum(libsumo.vehicle.getSpeed(v) for v in transit_ids) / count
+            loss = sum(libsumo.vehicle.getTimeLoss(v) for v in transit_ids) / count
+        else:
+            # If no transit vehicles are detected, values signal no readings.
+            speed, loss = -1.0, -1.0
+
+        return count, speed, loss

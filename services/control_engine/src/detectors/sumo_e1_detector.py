@@ -1,48 +1,62 @@
+from abc import ABC, abstractmethod
+
 import libsumo
 
-from .point_detector import PointDetector
+from .point_detector import TRANSIT_VEHICLE_TYPES, PointDetector, TransitPointDetector
 
 
-class E1PointDetector(PointDetector):
-    """Point detector implementation using SUMO's E1 detector."""
+class BaseE1Detector(PointDetector, ABC):
+    """Shared implementation layer for all SUMO E1-based detectors."""
 
     def __init__(self, detector_id: str) -> None:
         super().__init__()
-
         self._id = detector_id
-
-        self._current_time: float = 0  # Current simulation time in seconds
-        self._occupied: bool = False  # Start the detector as not occupied
-        self._detection_start: float = -1  # Time of the last occupation start
+        self._current_time: float = 0
+        self._occupied: bool = False
+        self._detection_start: float = -1
 
     def tick(self) -> None:
-        """Update the detector's internal status."""
-        # Update the detectors internal clock
+        """Update the detector."""
         self._current_time = libsumo.simulation.getTime()
 
-        currently_occupied = (
-            libsumo.inductionloop.getLastStepVehicleNumber(self._id) > 0
-        )
+        # Defer the specific occupancy rule to the subclass
+        currently_occupied = self._check_occupancy()
 
-        # If detector was not occupied previously but now is, detection starts.
         if not self._occupied and currently_occupied:
             self._occupied = True
             self._detection_start = self._current_time
-
-        # If detector was occupied but is no longer, detection ends.
         elif self._occupied and not currently_occupied:
             self._occupied = False
             self._detection_start = -1
 
     @property
     def is_occupied(self) -> bool:
-        """True if detector currently detects a vehicle."""
+        """True if detector currently has a vehicle detected."""
         return self._occupied
 
     @property
     def detection_duration(self) -> float:
         """Duration of the current detection in seconds."""
         if not self._occupied:
-            return 0
-
+            return 0.0
         return self._current_time - self._detection_start
+
+    @abstractmethod
+    def _check_occupancy(self) -> bool: ...
+
+
+class E1PointDetector(BaseE1Detector):
+    """Point detector implementation using SUMO's E1 detector."""
+
+    def _check_occupancy(self) -> bool:
+        return libsumo.inductionloop.getLastStepVehicleNumber(self._id) > 0
+
+
+class E1TransitPointDetector(BaseE1Detector, TransitPointDetector):
+    """Transit point detector using SUMO's E1 detector."""
+
+    def _check_occupancy(self) -> bool:
+        vehicle_data = libsumo.inductionloop.getVehicleData(self._id)
+        return any(
+            vType in TRANSIT_VEHICLE_TYPES for (_, _, _, _, vType) in vehicle_data
+        )
