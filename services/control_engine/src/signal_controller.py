@@ -29,7 +29,10 @@ class SignalController(ABC):
     def tick(self) -> None:
         """Advance the controller by one step.
 
-        This updates detections and signal states.
+        This updates detections and signal states. If controller is supposed to be
+        updated at certain intervals, it needs to handle spam protection itself. Users
+        of SignalController can call tick how often they want, and the controller should
+        keep track of update frequency itself.
         """
         ...
 
