@@ -16,8 +16,6 @@ import asyncio
 from nats import connect
 from nats.aio.client import Client
 
-from services.control_engine.src.state_publisher import StatePublisher
-
 from .configuration import (
     ClockworkConf,
     read_command_line,
@@ -25,6 +23,7 @@ from .configuration import (
 from .controller_creation import create_controller
 from .detectors.configuration import create_detectors
 from .signal_controller import SignalController
+from .state_publisher import StatePublisher
 from .timer import Timer
 
 
