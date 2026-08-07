@@ -74,7 +74,7 @@ def get_presslight_reward(
 
     transit_penalty = 0.0
     for det in transit_detectors:
-        transit_penalty += det.vehicle_count * 20
+        transit_penalty += det.vehicle_count * 5
 
     return -pressure_penalty - transit_penalty
 
