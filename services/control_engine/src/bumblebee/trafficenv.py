@@ -15,13 +15,12 @@ from services.control_engine.src.detectors.configuration import (
     create_detectors,
 )
 from services.control_engine.src.geometry.movements import (
-    DownstreamMovement,
     LanePressureConfig,
 )
 from services.control_engine.src.timer import Timer
 
 from .configuration import BumblebeeControllerConf, TrafficEnvConf
-from .rl_util import get_observation, get_reward
+from .rl_util import build_agent_pressure_configs, get_observation, get_reward
 from .safety_controller import SafetyController
 from .simengine import SimEngine
 
@@ -181,7 +180,7 @@ class TrafficEnv(MultiAgentEnv):
                 self._timer,
             )
 
-            agent_detectors, agent_configs = self._build_agent_pressure_configs(
+            agent_detectors, agent_configs = build_agent_pressure_configs(
                 conf,
                 all_detectors,
             )
@@ -193,51 +192,6 @@ class TrafficEnv(MultiAgentEnv):
             aid: [det for det in detectors if isinstance(det, TransitAreaDetector)]
             for aid, detectors in self._detectors.items()
         }
-
-    def _build_agent_pressure_configs(
-        self,
-        conf: BumblebeeControllerConf,
-        all_detectors: dict[str, AreaDetector],
-    ) -> tuple[list[AreaDetector], list[LanePressureConfig]]:
-        """Create lane pressure configs and detectors for a controller."""
-        agent_detectors: list[AreaDetector] = []
-        agent_configs: list[LanePressureConfig] = []
-
-        for entry_id in conf.geometry.entry_node_ids():
-            upstream_detector = all_detectors[entry_id]
-            if upstream_detector not in agent_detectors:
-                agent_detectors.append(upstream_detector)
-
-            movements: list[DownstreamMovement] = []
-            exit_ids = conf.geometry.exit_node_ids(entry_id)
-
-            for exit_id in exit_ids:
-                downstream_detector = all_detectors[exit_id]
-                if downstream_detector not in agent_detectors:
-                    agent_detectors.append(downstream_detector)
-
-                movements.append(
-                    DownstreamMovement(
-                        downstream_node_id=exit_id,
-                        detector=downstream_detector,
-                        theta=1.0,  # TODO: Assign meaningful movement probabilities.
-                    ),
-                )
-
-            agent_configs.append(
-                LanePressureConfig(
-                    node_id=entry_id,
-                    incoming_detector=upstream_detector,
-                    movements=movements,
-                ),
-            )
-
-        # Add special transit detectors.
-        for entry_id in conf.transit_links:
-            transit_det = all_detectors[f"transit_{entry_id}"]
-            agent_detectors.append(transit_det)
-
-        return agent_detectors, agent_configs
 
     def _build_action_spaces(self) -> dict[AgentID, spaces.Space]:
         """Create action spaces based on controller phase counts."""

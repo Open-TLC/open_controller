@@ -1,8 +1,12 @@
 from typing import Any
 
-from services.control_engine.src.detectors.area_detector import AreaDetector
+import numpy as np
+
+from services.control_engine.src.detectors.area_detector import (
+    AreaDetector,
+    TransitAreaDetector,
+)
 from services.control_engine.src.geometry.movements import (
-    DownstreamMovement,
     LanePressureConfig,
 )
 from services.control_engine.src.signal_controller import (
@@ -12,7 +16,8 @@ from services.control_engine.src.signal_controller import (
 from services.control_engine.src.timer import Timer
 
 from .configuration import BumblebeeControllerConf
-from .rl_util import get_observation, load_model
+from .frap_inference_network import load_model
+from .rl_util import build_agent_pressure_configs, get_observation
 from .trafficenv import SafetyController
 
 
@@ -22,22 +27,18 @@ class BumblebeeController(SignalController):
     def __init__(
         self,
         conf: BumblebeeControllerConf,
-        detectors: dict[str, AreaDetector],
+        all_detectors: dict[str, AreaDetector],
         timer: Timer,
     ) -> None:
         """Initialize Bumblebee controller.
 
         Args:
             conf: Controller configuration for the controller.
-            detectors: Detectors by ID.
+            all_detectors: Detectors by ID.
             timer: Timer to be used for control.
-            step_length: Time step between controller ticks in seconds.
 
         """
-        self._model = load_model(conf.algorithm, conf.model_file)
-
         self._conf = conf
-
         self._timer = timer
 
         # Safety controller for handling conflicting phases and intergreens.
@@ -47,42 +48,29 @@ class BumblebeeController(SignalController):
             timer,
         )
 
-        self._detectors: list[AreaDetector] = []
+        # Load trained PyTorch model.
+        self._model = load_model(
+            model_file=conf.model_file,
+            num_phases=self._safety_controller.phase_count,
+            hidden_dim=getattr(conf, "hidden_dim", 32),
+            embed_dim=getattr(conf, "embed_dim", 16),
+        )
 
-        self._lane_pressure_configs: list[LanePressureConfig] = []
+        detectors, pressure_configs = build_agent_pressure_configs(conf, all_detectors)
 
-        for entry_id in conf.geometry.entry_node_ids():
-            upstream_detector = detectors[entry_id]
-            self._detectors.append(upstream_detector)
+        self._detectors: list[AreaDetector] = detectors
+        self._lane_pressure_configs: list[LanePressureConfig] = pressure_configs
 
-            movements = []
-            exit_ids = conf.geometry.exit_node_ids(entry_id)
-            for exit_id in exit_ids:
-                downstream_detector = detectors[exit_id]
-                self._detectors.append(downstream_detector)
-
-                movements.append(
-                    DownstreamMovement(
-                        downstream_node_id=exit_id,
-                        detector=downstream_detector,
-                        theta=1,  # TODO: Assign meaningful movement probabilities.
-                    ),
-                )
-
-            self._lane_pressure_configs.append(
-                LanePressureConfig(
-                    node_id=entry_id,
-                    incoming_detector=upstream_detector,
-                    movements=movements,
-                ),
-            )
+        # Filter and save transit detectors.
+        self._transit_detectors: list[TransitAreaDetector] = [
+            det for det in detectors if isinstance(det, TransitAreaDetector)
+        ]
 
         self._cur_phase_idx: int = 0
+        self._phase_start_time: float = self._timer.seconds
         self._step_count: int = 0
-
         self._sumo_states: str = ""
-
-        self._locked: bool = False  # Used to lock the state of the controller to red.
+        self._locked: bool = False  # Used to lock controller state in failure
 
     def tick(self) -> None:
         """Advance the controller by one time step."""
@@ -92,13 +80,37 @@ class BumblebeeController(SignalController):
         # Controller doesn't advance to new phases if it is locked.
         # This is done to lock it to red in case of a major failure.
         if not self._locked:
-            obs = get_observation(
-                self._cur_phase_idx,
-                len(self._detectors),
-                self._lane_pressure_configs,
+            cur_phase_idx = self._cur_phase_idx
+            phase_count = self._safety_controller.phase_count
+            pressure_configs = self._lane_pressure_configs
+
+            elapsed_time = self._timer.seconds - self._phase_start_time
+
+            transit_detections: np.ndarray = np.array(
+                [det.vehicle_count for det in self._transit_detectors],
             )
-            action, _ = self._model.predict(obs)
-            self._cur_phase_idx = int(action.item())
+            phase_wise_transit_detections = (
+                self._safety_controller.get_phase_wise_transit_detections(
+                    transit_detections,
+                )
+            )
+
+            phase_active_lanes = self._safety_controller.phases_lane
+
+            obs = get_observation(
+                cur_phase_idx,
+                elapsed_time,
+                phase_count,
+                pressure_configs,
+                phase_wise_transit_detections,
+                phase_active_lanes,
+            )
+
+            next_phase_idx = self._model.predict(obs)
+
+            if next_phase_idx != cur_phase_idx:
+                self._phase_start_time = self._timer.seconds
+                self._cur_phase_idx = next_phase_idx
 
         self._sumo_states = self._safety_controller.step(self._cur_phase_idx)
 

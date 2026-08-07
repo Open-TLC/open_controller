@@ -1,8 +1,11 @@
 import numpy as np
-from stable_baselines3 import DQN, PPO
-from stable_baselines3.common.base_class import BaseAlgorithm
 
-from services.control_engine.src.geometry.movements import LanePressureConfig
+from services.control_engine.src.bumblebee.configuration import BumblebeeControllerConf
+from services.control_engine.src.detectors.area_detector import AreaDetector
+from services.control_engine.src.geometry.movements import (
+    DownstreamMovement,
+    LanePressureConfig,
+)
 
 
 def get_observation(
@@ -104,23 +107,46 @@ def get_reward(
     return -pressure_penalty - transit_penalty
 
 
-def load_model(model_type: str, filename: str) -> BaseAlgorithm:
-    """Load StableBaselines3 model from a file.
+def build_agent_pressure_configs(
+    conf: BumblebeeControllerConf,
+    all_detectors: dict[str, AreaDetector],
+) -> tuple[list[AreaDetector], list[LanePressureConfig]]:
+    """Create lane pressure configs and detectors for a controller."""
+    agent_detectors: list[AreaDetector] = []
+    agent_configs: list[LanePressureConfig] = []
 
-    Args:
-        model_type: Model algorithm (currently supported: ppo, dqn).
-        filename: Path to the saved model file.
+    for entry_id in conf.geometry.entry_node_ids():
+        upstream_detector = all_detectors[entry_id]
+        if upstream_detector not in agent_detectors:
+            agent_detectors.append(upstream_detector)
 
-    Returns:
-        Model object loaded from the file.
+        movements: list[DownstreamMovement] = []
+        exit_ids = conf.geometry.exit_node_ids(entry_id)
 
-    """
-    model: BaseAlgorithm
-    if model_type == "ppo":
-        model = PPO.load(filename)
-    elif model_type == "dqn":
-        model = DQN.load(filename)
-    else:
-        raise ValueError("Unknown model type: ", model_type)
+        for exit_id in exit_ids:
+            downstream_detector = all_detectors[exit_id]
+            if downstream_detector not in agent_detectors:
+                agent_detectors.append(downstream_detector)
 
-    return model
+            movements.append(
+                DownstreamMovement(
+                    downstream_node_id=exit_id,
+                    detector=downstream_detector,
+                    theta=1.0,  # TODO: Assign meaningful movement probabilities.
+                ),
+            )
+
+        agent_configs.append(
+            LanePressureConfig(
+                node_id=entry_id,
+                incoming_detector=upstream_detector,
+                movements=movements,
+            ),
+        )
+
+    # Add special transit detectors.
+    for entry_id in conf.transit_links:
+        transit_det = all_detectors[f"transit_{entry_id}"]
+        agent_detectors.append(transit_det)
+
+    return agent_detectors, agent_configs
