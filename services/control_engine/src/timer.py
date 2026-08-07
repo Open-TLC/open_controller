@@ -10,6 +10,9 @@ import time
 
 from .configuration import TimerConf
 
+# Alias for performance gains.
+_get_clock = time.perf_counter
+
 
 class Timer:
     """Timer for handling time steps and conversions."""
@@ -17,41 +20,50 @@ class Timer:
     def __init__(self, conf: TimerConf) -> None:
         self.time_step: float = conf.time_step
         self._time_multiplier: float = conf.real_time_multiplier
-        self.start_rtime: float = time.time()
-        self._cur_rtime: float = time.time()
+        now: float = _get_clock()
+        self.start_rtime: float = now
+        self._cur_rtime: float = 0.0
         self.steps: int = 0
-        self.last_update: float = self._cur_rtime
+        self.last_update: float = now
+
         # This is used to compensate for the time drift as integrator
         self.aggregate_time_drift: float = 0.0
 
     def __str__(self) -> str:
         """Timer as human readable string."""
-        return f"Timer, {self.steps} steps and {self.seconds} seconds"
+        return f"Timer, {self.steps} steps and {round(self.seconds, 5)} seconds"
 
     def reset(self) -> None:
         """Start the timer to zero."""
-        self.steps: int = 0
-        self.start_rtime = time.time()
-        self._cur_rtime = time.time() - self.start_rtime
+        self.steps = 0
+        now: float = _get_clock()
+        self.start_rtime = now
+        self._cur_rtime = 0.0
+        self.last_update = now
+        self.aggregate_time_drift = 0.0
 
     def tick(self) -> None:
         """One time step forward."""
         self.steps += 1
-        self._cur_rtime = (time.time() - self.start_rtime) * self._time_multiplier
-        self.aggregate_time_drift += self._get_time_since_last_update() - self.time_step
+        now: float = _get_clock()
+        # Single clock read updates both real-time state and aggregate time drift
+        self._cur_rtime = (now - self.start_rtime) * self._time_multiplier
+        self.aggregate_time_drift += (now - self.last_update) - self.time_step
+        self.last_update = now
 
     def sleep_tick(self) -> None:
         """Sleep for one tick.
 
         This advances the internal clock of the timer.
         """
-        self._cur_rtime = (time.time() - self.start_rtime) * self._time_multiplier
+        self._cur_rtime = (_get_clock() - self.start_rtime) * self._time_multiplier
 
     def _get_time_since_last_update(self) -> float:
         """Get the last update time and updates the counter to current time."""
-        last_update_before_reset = self.last_update
-        self.last_update = time.time()
-        return self.last_update - last_update_before_reset
+        now: float = _get_clock()
+        last_update_diff: float = now - self.last_update
+        self.last_update = now
+        return last_update_diff
 
     def reset_time_step(self) -> None:
         """Reset the aggregate time drift.
@@ -60,7 +72,7 @@ class Timer:
         (by the UI)
         """
         self.aggregate_time_drift = 0.0
-        self.last_update = time.time()
+        self.last_update = _get_clock()
 
     def get_next_time_step(self) -> float:
         """Next time step in seconds."""
@@ -75,20 +87,15 @@ class Timer:
 
     @property
     def seconds(self) -> float:
-        """Time in seconds, rounded up to three decimals."""
-        return round(self.steps * self.time_step, 5)
+        """Time in seconds."""
+        return self.steps * self.time_step
 
     @property
     def real_seconds(self) -> float:
         """Real time in seconds from simulation start."""
-        return round(self._cur_rtime, 5)
+        return self._cur_rtime
 
     @seconds.setter
     def seconds(self, new_seconds: float) -> None:
-        # Sets steps to closest second value
-        self.steps = int(
-            round(
-                new_seconds / self.time_step,
-                5,
-            ),
-        )
+        # Sets steps to closest step count for given second value
+        self.steps = round(new_seconds / self.time_step)
