@@ -17,7 +17,7 @@ def get_observation(
 
     Args:
         current_phase_idx: Index of the current active phase.
-        steps_in_current_phase: Number of steps agent has remained in current phase.
+        seconds_in_current_phase: Number of steps agent has remained in current phase.
         phase_count: Total number of candidate phases.
         pressure_configs: Lane pressure configurations for all movements.
         transit_detections: Phase wise transit detections.
@@ -48,7 +48,7 @@ def get_observation(
     # Third column -> phase active duration.
     if 0 <= current_phase_idx < phase_count:
         real_obs[current_phase_idx, 1] = 1.0
-        real_obs[current_phase_idx, 2] = float(steps_in_current_phase)
+        real_obs[current_phase_idx, 2] = float(seconds_in_current_phase)
 
     # Fourth column -> phase transit counts.
     real_obs[:, 3] = transit_detections
@@ -60,12 +60,12 @@ def get_observation(
     action_mask = np.ones(phase_count, dtype=np.float32)
 
     # Mask off all other phases until minimum green has elapsed.
-    if steps_in_current_phase < min_green_time:
+    if seconds_in_current_phase < min_green_time:
         action_mask[:] = 0.0
         action_mask[current_phase_idx] = 1.0
 
     # Mask off current phase, if maximum green has passed.
-    elif steps_in_current_phase >= max_green_time:
+    elif seconds_in_current_phase >= max_green_time:
         action_mask[current_phase_idx] = 0.0
 
     return {

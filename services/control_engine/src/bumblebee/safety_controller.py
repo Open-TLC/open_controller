@@ -117,6 +117,8 @@ class SafetyController:
             self._lockout_timers - delta_t,
             a_min=0.0,
             a_max=None,
+        )
+
     def get_phase_wise_transit_detections(
         self,
         transit_detections: np.ndarray,

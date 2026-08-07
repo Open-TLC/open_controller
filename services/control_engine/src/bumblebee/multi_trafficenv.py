@@ -468,7 +468,7 @@ class MultiTrafficEnv(MultiAgentEnv):
             phase_count = self._controllers[aid].phase_count
             pressure_configs = self._lane_pressure_configs[aid]
 
-            elapsed_time = self._phase_start_times[aid] - self._timer.seconds
+            elapsed_time = self._timer.seconds - self._phase_start_times[aid]
 
             transit_detections: np.ndarray = np.array(
                 [det.vehicle_count for det in self._transit_detectors[aid]],
@@ -476,7 +476,7 @@ class MultiTrafficEnv(MultiAgentEnv):
             )
             phase_wise_transit_detections = self._controllers[
                 aid
-            ].get_phase_wise_transit_detections(raw_transit_detections)
+            ].get_phase_wise_transit_detections(transit_detections)
 
             phase_active_lanes = self._controllers[aid].phases_lane
 
