@@ -6,6 +6,7 @@ from typing import Any, cast
 
 import numpy as np
 import ray
+import torch
 import yaml
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.core.rl_module.multi_rl_module import MultiRLModuleSpec
@@ -30,8 +31,8 @@ def _train() -> None:
     )
 
     parser.add_argument(
-        "--model-file",
-        help="File to save the trained model (zip)",
+        "--model-dir",
+        help="Directory to save the trained models",
         required=False,
     )
 
@@ -43,7 +44,7 @@ def _train() -> None:
 
     args = parser.parse_args()
     conf_filename: str = args.conf_file  # Configuration file location.
-    model_file: str = args.model_file  # Target location for trained model.
+    model_dir: str = args.model_dir  # Target location for trained models.
     tensorboard_dir: str = args.tensorboard  # Tensorboard log directory.
 
     try:
@@ -56,13 +57,13 @@ def _train() -> None:
 
     conf = TrainerConf(conf_dict)
 
-    _train_multi_agent(conf, tensorboard_dir, model_file)
+    _train_multi_agent(conf, tensorboard_dir, model_dir)
 
 
 def _train_multi_agent(
     conf: TrainerConf,
     tensorboard_dir: str | None,
-    model_file: str,
+    model_dir: str,
 ) -> None:
     print("Initializing Multi-Agent Environment...")
 
@@ -148,9 +149,18 @@ def _train_multi_agent(
         writer.close()
     print("Model trained!")
 
-    if model_file:
-        algo.save(checkpoint_dir=model_file)
-        print(f"Multi-Agent Model Checkpoint folder saved to: {model_file}")
+    # Create model directory, if it doesn't exist.
+    os.makedirs(model_dir, exist_ok=True)
+
+    for pid in policy_ids:
+        agent_module = algo.get_module(pid)
+        if agent_module is None:
+            continue
+
+        torch.save(
+            agent_module.get_state(),
+            os.path.join(model_dir, f"controller_{pid}.pt"),
+        )
 
     ray.shutdown()
 
