@@ -1,6 +1,7 @@
 import numpy as np
 
 from services.control_engine.src.geometry.junction_geometry import JunctionGeometry
+from services.control_engine.src.timer import Timer
 
 
 class SafetyController:
@@ -10,7 +11,7 @@ class SafetyController:
         self,
         intergreens: np.ndarray,
         geometry: JunctionGeometry,
-        step_length: float,
+        timer: Timer,
         default_yellow: float = 3.0,
     ) -> None:
         """Create safety controller from junction geometry and timing options.
@@ -18,20 +19,22 @@ class SafetyController:
         Args:
             intergreens: N x N matrix of transition times between links.
             geometry: Description of junctions geometry.
-            step_length: Length of a time step in seconds.
+            timer: Timer used to calculate safety timings.
             default_yellow: Length of yellow light.
 
         """
         self._intergreens = intergreens
         self._geometry = geometry
-        self._delta_t = step_length
         self._default_yellow = default_yellow
+
+        self._timer = timer
+        self._last_updated = self._timer.seconds
 
         # The dimension 'N' is now the sum of vehicle links and pedestrian crossings
         self._num_elements = intergreens.shape[0]
         self._current_states = ["r"] * self._num_elements
-        self._yellow_timers = np.zeros(self._num_elements)
-        self._lockout_timers = np.zeros(self._num_elements)
+        self._yellow_timers: np.ndarray = np.zeros(self._num_elements)
+        self._lockout_timers: np.ndarray = np.zeros(self._num_elements)
 
         self._phases = self._geometry.get_possible_phases(min_major_movements=2)
 
@@ -73,29 +76,33 @@ class SafetyController:
         # Red -> Green transitions.
         for i in range(self._num_elements):
             if new_phase[i] == 1 and self._current_states[i] != "g":
-                conflict_active = False
-                for j in range(self._num_elements):
-                    if self._intergreens[j, i] > 0 and self._current_states[j] in [
-                        "g",
-                        "y",
-                    ]:
-                        conflict_active = True
-                        break
+                conflict_active = any(
+                    self._intergreens[j, i] > 0
+                    and self._current_states[j] in ("g", "y")
+                    for j in range(self._num_elements)
+                )
 
                 if self._lockout_timers[i] <= 0.0 and not conflict_active:
                     self._current_states[i] = "g"
 
-        # Advance all yellow and lockout timers.
-        for i in range(self._num_elements):
-            if self._yellow_timers[i] > 0.0:
-                self._yellow_timers[i] = max(
-                    0.0,
-                    self._yellow_timers[i] - self._delta_t,
-                )
-            if self._lockout_timers[i] > 0.0:
-                self._lockout_timers[i] = max(
-                    0.0,
-                    self._lockout_timers[i] - self._delta_t,
-                )
+        # Update yellow and lockout timers.
+        self._update_timers()
 
         return "".join(self._current_states)
+
+    def _update_timers(self) -> None:
+        # Time between last update and now.
+        delta_t: float = self._timer.seconds - self._last_updated
+        self._last_updated = self._timer.seconds
+
+        # Update timings.
+        self._yellow_timers = np.clip(
+            self._yellow_timers - delta_t,
+            a_min=0.0,
+            a_max=None,
+        )
+        self._lockout_timers = np.clip(
+            self._lockout_timers - delta_t,
+            a_min=0.0,
+            a_max=None,
+        )

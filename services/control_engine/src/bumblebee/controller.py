@@ -1,7 +1,5 @@
 from typing import Any
 
-import numpy as np
-
 from services.control_engine.src.detectors.area_detector import AreaDetector
 from services.control_engine.src.geometry.movements import (
     DownstreamMovement,
@@ -11,6 +9,7 @@ from services.control_engine.src.signal_controller import (
     ControllerStatus,
     SignalController,
 )
+from services.control_engine.src.timer import Timer
 
 from .configuration import BumblebeeControllerConf
 from .rl_util import get_observation, load_model
@@ -24,25 +23,28 @@ class BumblebeeController(SignalController):
         self,
         conf: BumblebeeControllerConf,
         detectors: dict[str, AreaDetector],
-        step_length: float,
+        timer: Timer,
     ) -> None:
         """Initialize Bumblebee controller.
 
         Args:
             conf: Controller configuration for the controller.
             detectors: Detectors by ID.
+            timer: Timer to be used for control.
             step_length: Time step between controller ticks in seconds.
 
         """
         self._model = load_model(conf.algorithm, conf.model_file)
 
         self._conf = conf
-        self._step_length = step_length
+
+        self._timer = timer
 
         # Safety controller for handling conflicting phases and intergreens.
         self._safety_controller = SafetyController(
             conf.intergreens,
-            step_length,
+            conf.geometry,
+            timer,
         )
 
         self._detectors: list[AreaDetector] = []
@@ -112,10 +114,10 @@ class BumblebeeController(SignalController):
 
     def reload(self) -> None:
         """Reload controller from configuration."""
-        intergreens = np.array(self._conf.intergreens)
         self._safety_controller = SafetyController(
-            intergreens,
-            self._step_length,
+            self._conf.intergreens,
+            self._conf.geometry,
+            self._timer,
         )
 
         self._cur_phase_idx: int = 0

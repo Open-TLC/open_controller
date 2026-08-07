@@ -18,6 +18,7 @@ from services.control_engine.src.geometry.movements import (
     DownstreamMovement,
     LanePressureConfig,
 )
+from services.control_engine.src.timer import Timer
 
 from .configuration import BumblebeeControllerConf, TrafficEnvConf
 from .rl_util import get_observation, get_presslight_reward
@@ -50,6 +51,15 @@ class MultiTrafficEnv(MultiAgentEnv):
         super().__init__()
 
         self._simengine: SimEngine = simengine
+
+        self._timer = Timer(
+            {
+                "timer_mode": "fixed",
+                "real_time_multiplier": 1,
+                "time_step": env_conf.step_length,
+            },
+        )
+
         self._contr_confs: list[BumblebeeControllerConf] = contr_confs
 
         self._step_length, self._simulation_steps_per_step = (
@@ -168,7 +178,7 @@ class MultiTrafficEnv(MultiAgentEnv):
             self._controllers[aid] = SafetyController(
                 conf.intergreens,
                 conf.geometry,
-                self._simengine.step_length,
+                self._timer,
             )
 
             agent_detectors, agent_configs = self._build_agent_pressure_configs(
@@ -284,9 +294,9 @@ class MultiTrafficEnv(MultiAgentEnv):
             0,
         )
 
-        self._steps_since_phase_start: dict[AgentID, int] = dict.fromkeys(
+        self._phase_start_times: dict[AgentID, float] = dict.fromkeys(
             self.possible_agents,
-            0,
+            float(self._timer.seconds),
         )
 
     def reset(
@@ -307,7 +317,10 @@ class MultiTrafficEnv(MultiAgentEnv):
 
         self._cur_phases = dict.fromkeys(self.possible_agents, 0)
         self._phase_changes = dict.fromkeys(self.possible_agents, 0)
-        self._steps_since_phase_start = dict.fromkeys(self.possible_agents, 0)
+        self._phase_start_times = dict.fromkeys(
+            self.possible_agents,
+            float(self._timer.seconds),
+        )
 
         # Activate all agents.
         self.agents = self.possible_agents[:]
@@ -319,7 +332,7 @@ class MultiTrafficEnv(MultiAgentEnv):
             safety_controller = SafetyController(
                 conf.intergreens,
                 conf.geometry,
-                self._simengine.step_length,
+                self._timer,  # Timer doesn't need resetting between environment resets.
             )
 
             self._controllers[conf.id] = safety_controller
@@ -372,6 +385,9 @@ class MultiTrafficEnv(MultiAgentEnv):
         """
         self._cur_step += 1
 
+        # Update timer so controllers will update their timings.
+        self._timer.tick()
+
         # Update detector states.
         for agent_detectors in self._detectors.values():
             for detector in agent_detectors:
@@ -380,10 +396,11 @@ class MultiTrafficEnv(MultiAgentEnv):
         # Apply actions to all controllers.
         for aid in self.agents:
             if aid in action_dict:
+                # Transition to a new phase.
                 if self._cur_phases[aid] != action_dict[aid]:
                     self._phase_changes[aid] += 1
-                    self._steps_since_phase_start[aid] = 0
-                self._steps_since_phase_start[aid] += 1
+                    self._phase_start_times[aid] = float(self._timer.seconds)
+
                 self._cur_phases[aid] = action_dict[aid]
                 self._action_counts[aid][action_dict[aid]] += 1
                 new_states: str = self._controllers[aid].step(action_dict[aid])
@@ -449,6 +466,8 @@ class MultiTrafficEnv(MultiAgentEnv):
             phase_count = self._controllers[aid].phase_count
             pressure_configs = self._lane_pressure_configs[aid]
 
+            elapsed_time = self._phase_start_times[aid] - self._timer.seconds
+
             transit_detections: np.ndarray = np.array(
                 [det.vehicle_count for det in self._transit_detectors[aid]],
                 dtype=np.float32,
@@ -456,7 +475,7 @@ class MultiTrafficEnv(MultiAgentEnv):
 
             individual_observation = get_observation(
                 cur_phase_idx,
-                self._steps_since_phase_start[aid],
+                elapsed_time,
                 phase_count,
                 pressure_configs,
                 transit_detections,

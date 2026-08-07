@@ -4,6 +4,7 @@ import numpy as np
 
 from services.control_engine.src.bumblebee.safety_controller import SafetyController
 from services.control_engine.src.geometry.junction_geometry import JunctionGeometry
+from services.control_engine.src.timer import Timer
 
 
 class TestSafetyController(unittest.TestCase):
@@ -31,10 +32,14 @@ class TestSafetyController(unittest.TestCase):
             ],
         )
 
+        timer = Timer(
+            {"timer_mode": "fixed", "real_time_multiplier": 1, "time_step": 1},
+        )
+
         controller = SafetyController(
             intergreens,
             geometry,
-            step_length=1.0,
+            timer,
             default_yellow=3.0,
         )
 
@@ -51,25 +56,30 @@ class TestSafetyController(unittest.TestCase):
         # Step 0: Command transition to vehicle green (Phase 1: [1, 0]).
         # Pedestrian node transitions g -> y. Lockout on vehicle node set to 10s.
         # Timer ticks immediately down by 1s.
+        timer.tick()
         state = controller.step(1)
         self.assertEqual(state, "ry")
         self.assertEqual(controller._yellow_timers[1], 2.0)
         self.assertEqual(controller._lockout_timers[0], 9.0)
 
         # Step 1: Tick (1s remaining on yellow, 8s on lockout).
+        timer.tick()
         state = controller.step(1)
         self.assertEqual(state, "ry")
 
         # Step 2: Tick (0s remaining on yellow, 7s on lockout).
+        timer.tick()
         state = controller.step(1)
         self.assertEqual(state, "ry")
 
         # Steps 3 through 8: Tick until the 10s lockout is exhausted.
         for _ in range(7):
+            timer.tick()
             state = controller.step(1)
             self.assertEqual(state, "rr")
 
         # Step 9: Lockout ticks down from 1s to 0s. Vehicle is finally allowed green!
+        timer.tick()
         state = controller.step(1)
         self.assertEqual(state, "gr")
 
@@ -80,20 +90,24 @@ class TestSafetyController(unittest.TestCase):
         # Step 0: Command transition back to pedestrian green (Phase 0: [0, 1]).
         # Vehicle goes g -> y. Lockout on pedestrian set to 1s.
         # Lockout immediately ticks down to 0s at the end of the step.
+        timer.tick()
         state = controller.step(0)
         self.assertEqual(state, "yr")
         self.assertEqual(controller._yellow_timers[0], 2.0)
         self.assertEqual(controller._lockout_timers[1], 0.0)
 
         # Step 1: Yellow 1s, lockout 0s
+        timer.tick()
         state = controller.step(0)
         self.assertEqual(state, "yr")
 
         # Step 2: Yellow 0s, lockout 0s
+        timer.tick()
         state = controller.step(0)
         self.assertEqual(state, "yr")
 
         # Step 3: Yellow ended, pedestrian transitions to green.
+        timer.tick()
         state = controller.step(0)
         self.assertEqual(state, "rg")
 
@@ -124,16 +138,21 @@ class TestSafetyController(unittest.TestCase):
             ],
         )
 
+        timer = Timer(
+            {"timer_mode": "fixed", "real_time_multiplier": 1, "time_step": 1},
+        )
+
         controller = SafetyController(
             intergreens,
             geometry,
-            step_length=1.0,
+            timer,
             default_yellow=3.0,
         )
 
         controller._current_states = ["g", "g", "r"]
 
         # Step 0: Transition to Phase 0 (Node 2 Green: [0, 0, 1])
+        timer.tick()
         controller.step(0)
         self.assertEqual(
             controller._lockout_timers[2],
@@ -156,10 +175,15 @@ class TestSafetyController(unittest.TestCase):
                 [2.0, 0.0],
             ],
         )
+
+        timer = Timer(
+            {"timer_mode": "fixed", "real_time_multiplier": 1, "time_step": 0.5},
+        )
+
         controller = SafetyController(
             intergreens,
             geometry,
-            step_length=0.5,
+            timer,
             default_yellow=1.5,
         )
 
@@ -174,6 +198,7 @@ class TestSafetyController(unittest.TestCase):
         ]
 
         for expected_state in expected_states:
+            timer.tick()
             state = controller.step(0)
             self.assertEqual(state, expected_state)
 

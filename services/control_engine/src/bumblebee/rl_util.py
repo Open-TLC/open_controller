@@ -10,7 +10,7 @@ from services.control_engine.src.geometry.movements import LanePressureConfig
 
 def get_observation(
     current_phase_idx: int,
-    steps_in_current_phase: int,
+    seconds_in_current_phase: float,
     phase_count: int,
     pressure_configs: list[LanePressureConfig],
     transit_detections: np.ndarray,
@@ -19,7 +19,7 @@ def get_observation(
 
     Args:
         current_phase_idx: The index of the controllers current phase.
-        steps_in_current_phase: How long the agent has remained in the current state.
+        seconds_in_current_phase: How long the agent has remained in the current state.
         phase_count: Number of phases in the controller.
         pressure_configs: Configurations for calculating lane wise pressures.
         transit_detections: Vehicle counts from transit detectors.
@@ -42,7 +42,7 @@ def get_observation(
     obs[num_pressures + current_phase_idx] = 1.0
 
     # Add current phase duration.
-    obs[num_pressures + phase_count] = steps_in_current_phase
+    obs[num_pressures + phase_count] = seconds_in_current_phase
 
     # Add transit detections to the end of the array.
     obs[num_pressures + phase_count + 1 :] = transit_detections
