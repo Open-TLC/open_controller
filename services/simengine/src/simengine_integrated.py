@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The sumo interface module
 
 This module operates Sumo simulator and applies controller to it
@@ -7,7 +6,6 @@ This module operates Sumo simulator and applies controller to it
 # Copyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 # rt random
-import json
 import os
 import platform
 import sys
@@ -35,12 +33,7 @@ DEFAULT_SUMO_CNF = "testmodel/cross.sumocfg"
 SUMO_BIN_NAME = "sumo"
 SUMO_BIN_NAME_GRAPH = "sumo-gui"
 
-# Imprtinc components from control_engine
-# FIXME:We should not use paths, insteead different sercives should
-# Be properly modularized and imported as modules
-engine_path = "services/control_engine/src"  # Standard installation
-sys.path.append(engine_path)
-from signal_group_controller import PhaseRingController
+from services.control_engine.src.signal_group_controller import PhaseRingController
 
 
 # We run the sumo model based on conf dictionery given as parameter
@@ -174,12 +167,14 @@ def run_sumo():
     ):
         for vehicleId in traci.vehicle.getIDList():
             traci.vehicle.setSpeedMode(
-                vehicleId, 55
+                vehicleId,
+                55,
             )  # disable right of way check, vehicles can enter the junction, despite queue end
             vehlen = traci.vehicle.getLength(vehicleId)
             if vehlen > 10.0:
                 traci.vehicle.setLaneChangeMode(
-                    vehicleId, 1
+                    vehicleId,
+                    1,
                 )  # Disable lane changing except from Traci
 
         real_time = system_timer.real_seconds  # DBIK230711
@@ -268,7 +263,10 @@ def run_sumo():
             if SUMOSIM:
                 Sumo_e1detections_to_controller(sumo_loops, sumo_to_e1dets)
                 Sumo_e3detections_to_controller(
-                    sumo_e3dets, sumo_to_e3dets, sumovismode, v2x_mode
+                    sumo_e3dets,
+                    sumo_to_e3dets,
+                    sumovismode,
+                    v2x_mode,
                 )
             else:
                 pass
@@ -304,7 +302,8 @@ def run_sumo():
 
 
 def _create_controllers(
-    sys_conf: dict[str, Any], system_timer: Timer
+    sys_conf: dict[str, Any],
+    system_timer: Timer,
 ) -> dict[str, dict[str, Any]]:
     # Dictionary holding all controller configurations
     controller_confs: dict[str, Any] = {}
@@ -331,7 +330,7 @@ def _create_controllers(
         if "controller_file" in controller_confs[controller_name]:
             # Single controller configuration
             controller_conf: GlobalConf = GlobalConf(
-                controller_confs[controller_name]["controller_file"]
+                controller_confs[controller_name]["controller_file"],
             )
             controller_params = controller_conf.get_controller_params()
         elif "controller" in sys_conf:
@@ -391,7 +390,6 @@ def get_e3det_mapping(all_dets):
 # Note: params should be removed if it's own class
 def Sumo_e1detections_to_controller(sumo_loops, sumo_to_dets):
     """Passes the Sumo e1-detector info to the controller detector objects"""
-
     occlist = []
     loop_stat = "Loops: "
     loop_out_list = ["269_R702R", "269_601A"]
@@ -426,7 +424,10 @@ def Sumo_e1detections_to_controller(sumo_loops, sumo_to_dets):
 
 
 def Sumo_e3detections_to_controller(
-    sumo_e3dets, sumo_to_dets, vismode, v2x_mode
+    sumo_e3dets,
+    sumo_to_dets,
+    vismode,
+    v2x_mode,
 ):  # DBIK241113  New function to pass e3 detector info
     """Passes the Sumo e3-detector info to the controller detector objects"""
     for e3det_id_sumo in sumo_e3dets:
@@ -503,12 +504,14 @@ def Sumo_e3detections_to_controller(
                     if vehcolor == "red":
                         try:
                             vehspeed = round(
-                                e3det.det_vehicles_dict[veh]["set_speed"], 1
+                                e3det.det_vehicles_dict[veh]["set_speed"],
+                                1,
                             )
                             traci.vehicle.setSpeed(veh, vehspeed)
                             curspeed = round(traci.vehicle.getSpeed(veh), 1)
                             vehdist = round(
-                                e3det.det_vehicles_dict[veh]["leaderDist"], 1
+                                e3det.det_vehicles_dict[veh]["leaderDist"],
+                                1,
                             )
                             print(
                                 "Vehicle: ",
@@ -525,7 +528,7 @@ def Sumo_e3detections_to_controller(
 
                         with open("v2x_file.txt", "a") as f:
                             f.writelines(
-                                f"Vehicle: {veh} Speed:  {curspeed}  SetSpeed: {vehspeed} Distance: {vehdist}  \n"
+                                f"Vehicle: {veh} Speed:  {curspeed}  SetSpeed: {vehspeed} Distance: {vehdist}  \n",
                             )
                     else:
                         try:
@@ -543,15 +546,21 @@ def Sumo_e3detections_to_controller(
             # DBIK201118 Visualize signal states with vehicle colors
             if vismode == "main_states":
                 sumo_indicate_main_signal_state(
-                    vehiclesdict, e3det.last_vehicles_dict, visgroup
+                    vehiclesdict,
+                    e3det.last_vehicles_dict,
+                    visgroup,
                 )
             elif vismode == "sub_states":
                 sumo_indicate_sub_signal_state(
-                    vehiclesdict, e3det.last_vehicles_dict, visgroup
+                    vehiclesdict,
+                    e3det.last_vehicles_dict,
+                    visgroup,
                 )
             elif vismode == "req_perm":
                 sumo_indicate_req_perm_state(
-                    vehiclesdict, e3det.last_vehicles_dict, visgroup
+                    vehiclesdict,
+                    e3det.last_vehicles_dict,
+                    visgroup,
                 )
             e3det.last_vehicles_dict = vehiclesdict
 
@@ -595,7 +604,9 @@ def sumo_indicate_sub_signal_state(vehdict, lastvehdict, visgroup):
 
     # DBIK202408  Set color of vehicles at the e3detector when the signal state changes
     vis_state = visgroup.group_sub_state_changed(
-        "Any", visgroup.state, visgroup.prev_state
+        "Any",
+        visgroup.state,
+        visgroup.prev_state,
     )
     if vis_state != "None":
         for key in vehdict:
@@ -618,7 +629,9 @@ def sumo_indicate_req_perm_state(vehdict, lastvehdict, visgroup):
 
     # DBIK202408  Set color of vehicles at the e3detector when the signal state changes
     vis_state = visgroup.group_sub_state_changed(
-        "Any", visgroup.state, visgroup.prev_state
+        "Any",
+        visgroup.state,
+        visgroup.prev_state,
     )
     if vis_state != "None":
         for key in vehdict:
@@ -638,9 +651,9 @@ def set_signal_state_to_vehice_color(vehid, sigstate):
         traci.vehicle.setColor(vehid, (0, 102, 0))  # Dark Green
     elif sigstate in ["Green_Extending"]:
         traci.vehicle.setColor(vehid, (0, 255, 0))  # Green
-    elif sigstate in ["Green_RemainGreen", "Amber_MinimumTime"]:
-        traci.vehicle.setColor(vehid, (0, 128, 255))  # Blue
-    elif sigstate in ["Green_RemainGreen"]:
+    elif sigstate in ["Green_RemainGreen", "Amber_MinimumTime"] or sigstate in [
+        "Green_RemainGreen"
+    ]:
         traci.vehicle.setColor(vehid, (0, 128, 255))  # Blue
     elif sigstate in ["Red_WaitIntergreen", "AmberRed_MinimumTime"]:
         traci.vehicle.setColor(vehid, (255, 0, 255))  # Pink
@@ -694,7 +707,7 @@ def set_vehicle_color(vehid, vcolor):
 def print_det_status():
     loopcount = traci.inductionloop.getIDCount()
     loops = traci.inductionloop.getIDList()
-    print("Found {} loops: {}".format(loopcount, loops))
+    print(f"Found {loopcount} loops: {loops}")
     for loop_id in loops:
         lane = traci.inductionloop.getLaneID(loop_id)
         avg_speed = traci.inductionloop.getLastStepMeanSpeed(loop_id)
@@ -705,7 +718,7 @@ def print_det_status():
         veh_pos = traci.inductionloop.getPosition(loop_id)
         time_since_det = traci.inductionloop.getTimeSinceDetection(loop_id)
         vehdata = traci.inductionloop.getVehicleData(loop_id)
-        print("lane:{}, a_speed:{}, occupancy:{}".format(lane, avg_speed, occupancy))
+        print(f"lane:{lane}, a_speed:{avg_speed}, occupancy:{occupancy}")
 
 
 if __name__ == "__main__":

@@ -21,16 +21,16 @@ Design principles:
 
 #from transitions.extensions import GraphMachine as Machine
 from transitions import Machine as Machine
-from confread import GlobalConf # For testing
+from .confread import GlobalConf # For testing
 import pandas as pd
 
-from signal_group import SignalGroup
-from signal_group import value_is_number # Should be in utils unit or something
-from timer import Timer
-from stats import StatLogger
-from detector import Detector, ExtDetector, GrpDetector, e3Detector
-from extender import Extender, StaticExtender, e3Extender
-from lane import Lane
+from .signal_group import SignalGroup
+from .signal_group import value_is_number # Should be in utils unit or something
+from .timer import Timer
+from .stats import StatLogger
+from .detector import Detector, ExtDetector, GrpDetector, e3Detector
+from .extender import Extender, StaticExtender, e3Extender
+from .lane import Lane
 import sys
 import json
 

@@ -13,6 +13,7 @@ dependencies = [
     "pandas>=3.0.3",
     "python-dateutil>=2.9.0.post0",
     "pytz>=2026.2",
+    "pyyaml>=6.0.3",
     "six>=1.17.0",
     "traci>=1.27.0",
     "transitions>=0.9.3",

@@ -1,15 +1,44 @@
-FROM python:3.9-slim
+FROM ubuntu:noble
 
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install necessary system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	ca-certificates \
+	software-properties-common \
+	libx11-6 \
+	libxext6 \
+	libxrender1 \
+	libxtst6 \
+	libgl1 \
+	libatomic1\
+	&& rm -rf /var/lib/apt/lists/*
+
+# Install uv using the installation script
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Set working directory
 WORKDIR /app
 
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 
-COPY services/control_engine/docker/requirements.txt .
+# Install project dependencies
+COPY pyproject.toml uv.lock* ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+	uv sync --frozen --no-dev --no-install-project
 
-# Install python libraries for the control_engine requirements
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy rest of the project
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+	uv sync --frozen --no-dev
 
-# Copy the code and models into the container at /app
-COPY . .
+# Send python output directly to stdout or stderr
+# instead of writing to an intermediate buffer.
+# This can prevent "ghost" logs not showing up
+# when running int Docker
+ENV PYTHONUNBUFFERED=1
 
+CMD [ "uv", "run", "-m", "services.control_engine.src.clockwork", "--conf-file", "./configuration/clockwork.yaml" ]
 
-ENTRYPOINT ["sh", "services/control_engine/docker/run_control_engine.sh"]
