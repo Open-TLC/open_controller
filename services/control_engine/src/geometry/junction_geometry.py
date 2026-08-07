@@ -64,6 +64,19 @@ class JunctionGeometry:
 
         self._exit_node_ids: dict[str, list[str]] = exit_node_ids
 
+        self._num_entry_lanes = len(self._entry_node_ids)
+
+        # Mapping matrix to convert phases from link wise to lane wise.
+        self._link_to_lane_map: np.ndarray | None = None
+
+        # Entry IDs of links receiving transit vehicles.
+        self._transit_links: list[str] = [
+            str(link_id) for link_id in raw_options.get("transit_links", [])
+        ]
+
+        # Mapping matrix to convert transit detections to lane wise detections.
+        self._transit_to_lane_map: np.ndarray | None = None
+
     def entry_node_ids(self) -> list[str]:
         """List of entering lane/node IDs."""
         return self._entry_node_ids
@@ -225,6 +238,84 @@ class JunctionGeometry:
             return np.empty((0, num_elements), dtype=int)
 
         return np.unique(np.array(valid_phases, dtype=int), axis=0)
+
+    def to_lane_wise(self, phases: np.ndarray) -> np.ndarray:
+        """Map movement wise phases to lane wise phases.
+
+        Args:
+            phases: Link wise phases matrix.
+
+        Returns:
+            Lane wise phases matrix. 1 indicates green, 0 indicates red.
+
+        """
+        if phases.size == 0:
+            return np.empty((0, self._num_entry_lanes), dtype=int)
+
+        # Build mapping matrix. This is cached for future calls.
+        link_to_lane_map = self._build_link_to_lane_map()
+
+        # Map phases to lanes by matrix multiplication.
+        return (phases @ link_to_lane_map > 0).astype(int)
+
+    def _build_link_to_lane_map(self) -> np.ndarray:
+        if self._link_to_lane_map is not None:
+            return self._link_to_lane_map
+
+        # Mapping matrix from links to entry lanes.
+        # TODO: Currently crossings are completely ignored. The system should be able
+        # to also handle pedestrian crossings in the future.
+        num_elements = len(self._links) + len(self._crossings)
+        link_to_lane_map = np.zeros((num_elements, self._num_entry_lanes), dtype=int)
+
+        for i, link in enumerate(self._links):
+            lane_idx = link.start.num
+            link_to_lane_map[i, lane_idx] = 1
+
+        self._link_to_lane_map = link_to_lane_map
+
+        return link_to_lane_map
+
+    def map_transit_detections_to_lanes(
+        self,
+        transit_detections: np.ndarray,
+    ) -> np.ndarray:
+        """Map raw transit detector counts into a lane-wise array.
+
+        Args:
+            transit_detections: Transit detections as an array. The detections should be
+                in the same order as 'transit_links'.
+
+        Returns:
+            Vector containing lane wise transit vehicle counts.
+
+        """
+        mapping_matrix = self._get_transit_to_lane_map()
+
+        return transit_detections @ mapping_matrix
+
+    def _get_transit_to_lane_map(self) -> np.ndarray:
+        """Build binary mapping matrix from transit detectors to entry lanes.
+
+        Returns:
+            Matrix of shape (num_transit_links, num_entry_lanes) where
+                matrix[i, j] = 1.0 indicates transit detector i monitors entry lane j.
+
+        """
+        if self._transit_to_lane_map is not None:
+            return self._transit_to_lane_map
+
+        num_transit = len(self._transit_links)
+        num_lanes = self._num_entry_lanes
+        matrix = np.zeros((num_transit, num_lanes), dtype=np.float32)
+
+        for transit_idx, link_id_str in enumerate(self._transit_links):
+            # Node ID numbers must be 0-indexed.
+            lane_idx = int(link_id_str)
+            matrix[transit_idx, lane_idx] = 1.0
+
+        self._transit_to_lane_map = matrix
+        return matrix
 
 
 @total_ordering

@@ -14,7 +14,7 @@ from services.control_engine.src.geometry.movements import (
 )
 
 from .configuration import BumblebeeControllerConf, TrafficEnvConf
-from .rl_util import get_observation, get_presslight_reward
+from .rl_util import get_observation, get_reward
 from .safety_controller import SafetyController
 from .simengine import SimEngine
 
@@ -276,4 +276,4 @@ class TrafficEnv(gymnasium.Env):
             Reward as a negative number. Higher means better performance.
 
         """
-        return get_presslight_reward(self._lane_pressure_configs)
+        return get_reward(self._lane_pressure_configs)

@@ -21,7 +21,7 @@ from services.control_engine.src.geometry.movements import (
 from services.control_engine.src.timer import Timer
 
 from .configuration import BumblebeeControllerConf, TrafficEnvConf
-from .rl_util import get_observation, get_presslight_reward
+from .rl_util import get_observation, get_reward
 from .safety_controller import SafetyController
 from .simengine import SimEngine
 
@@ -247,21 +247,23 @@ class MultiTrafficEnv(MultiAgentEnv):
         }
 
     def _build_observation_spaces(self) -> dict[AgentID, spaces.Space]:
-        """Create observation spaces based on lane pressure configurations."""
-        obs_dims: dict[AgentID, int] = {
-            aid: len(self._lane_pressure_configs[aid])
-            + self._controllers[aid].phase_count
-            + 1
-            + len(self._transit_detectors[aid])
-            for aid in self._detectors
-        }
-
+        """Create observation spaces that contain observations and an action mask."""
         return {
-            aid: spaces.Box(
-                low=0,
-                high=np.inf,
-                shape=(obs_dims[aid],),
-                dtype=np.float32,
+            aid: spaces.Dict(
+                {
+                    "action_mask": spaces.Box(
+                        low=0.0,
+                        high=1.0,
+                        shape=(self._controllers[aid].phase_count,),
+                        dtype=np.float32,
+                    ),
+                    "real_obs": spaces.Box(
+                        low=0.0,
+                        high=np.inf,
+                        shape=(self._controllers[aid].phase_count, 4),
+                        dtype=np.float32,
+                    ),
+                },
             )
             for aid in self.agents
         }
@@ -304,7 +306,7 @@ class MultiTrafficEnv(MultiAgentEnv):
         *,
         seed: int | None = None,
         options: dict | None = None,
-    ) -> tuple[dict[AgentID, np.ndarray], dict[AgentID, Any]]:
+    ) -> tuple[dict[AgentID, dict[str, np.ndarray]], dict[AgentID, Any]]:
         """Reset the environment to original state."""
         super().reset(seed=seed, options=options)
 
@@ -358,7 +360,7 @@ class MultiTrafficEnv(MultiAgentEnv):
         self,
         action_dict: dict[AgentID, int],
     ) -> tuple[
-        dict[AgentID, np.ndarray],
+        dict[AgentID, dict[str, np.ndarray]],
         dict[AgentID, float],
         dict[AgentID, bool],
         dict[AgentID, bool],
@@ -459,8 +461,8 @@ class MultiTrafficEnv(MultiAgentEnv):
         """Close environment and simulation."""
         self._simengine.close()
 
-    def _get_observations(self) -> dict[AgentID, np.ndarray]:
-        observations: dict[AgentID, np.ndarray] = {}
+    def _get_observations(self) -> dict[AgentID, dict[str, np.ndarray]]:
+        observations: dict[AgentID, dict[str, np.ndarray]] = {}
         for aid in self.agents:
             cur_phase_idx = self._actions[aid]
             phase_count = self._controllers[aid].phase_count
@@ -472,13 +474,19 @@ class MultiTrafficEnv(MultiAgentEnv):
                 [det.vehicle_count for det in self._transit_detectors[aid]],
                 dtype=np.float32,
             )
+            phase_wise_transit_detections = self._controllers[
+                aid
+            ].get_phase_wise_transit_detections(raw_transit_detections)
+
+            phase_active_lanes = self._controllers[aid].phases_lane
 
             individual_observation = get_observation(
                 cur_phase_idx,
                 elapsed_time,
                 phase_count,
                 pressure_configs,
-                transit_detections,
+                phase_wise_transit_detections,
+                phase_active_lanes,
             )
 
             observations[aid] = individual_observation
@@ -495,8 +503,19 @@ class MultiTrafficEnv(MultiAgentEnv):
         rewards = {}
 
         for aid in self.agents:
-            rewards[aid] = get_presslight_reward(
+            cur_phase_idx = self._actions[aid]
+
+            raw_transit_detections: np.ndarray = np.array(
+                [det.vehicle_count for det in self._transit_detectors[aid]],
+                dtype=np.float32,
+            )
+            phase_wise_transit_detections = self._controllers[
+                aid
+            ].get_phase_wise_transit_detections(raw_transit_detections)
+
+            rewards[aid] = get_reward(
+                cur_phase_idx,
                 self._lane_pressure_configs[aid],
-                self._transit_detectors[aid],
+                phase_wise_transit_detections,
             )
         return rewards
