@@ -188,15 +188,16 @@ def _train_multi_agent(
 
 
 def _write_results(writer: SummaryWriter, step: int, result: dict[str, Any]) -> None:
-    mean_reward: float | None = float(result["env_runners"].get("episode_return_mean"))
     agent_rewards: dict[str, np.float64] | None = result["env_runners"].get(
         "agent_episode_returns_mean",
     )
 
-    if mean_reward is not None:
+    if agent_rewards is not None:
+        mean_reward = sum(agent_rewards.values()) / len(
+            agent_rewards,
+        )
         writer.add_scalar("Rewards/Mean_Reward", mean_reward, step)
 
-    if agent_rewards is not None:
         for aid in agent_rewards:
             writer.add_scalar(f"Rewards/Agent_{aid}", float(agent_rewards[aid]), step)
 
