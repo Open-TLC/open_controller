@@ -1,17 +1,24 @@
 from math import isclose
 from typing import Any
 
-import gymnasium
 import numpy as np
+from gymnasium import spaces
+from ray.rllib.env.multi_agent_env import MultiAgentEnv
+from ray.rllib.utils.typing import AgentID
 
-from services.control_engine.src.detectors.area_detector import AreaDetector
-from services.control_engine.src.detectors.configuration import DetectorConfiguration
-from services.control_engine.src.detectors.sumo_e2_detector import E2AreaDetector
-from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
+from services.control_engine.src.detectors.area_detector import (
+    AreaDetector,
+    TransitAreaDetector,
+)
+from services.control_engine.src.detectors.configuration import (
+    DetectorConfiguration,
+    create_detectors,
+)
 from services.control_engine.src.geometry.movements import (
     DownstreamMovement,
     LanePressureConfig,
 )
+from services.control_engine.src.timer import Timer
 
 from .configuration import BumblebeeControllerConf, TrafficEnvConf
 from .rl_util import get_observation, get_reward
@@ -19,102 +26,205 @@ from .safety_controller import SafetyController
 from .simengine import SimEngine
 
 
-class TrafficEnv(gymnasium.Env):
-    """TrafficEnv is used to train and run RL models in Open Controller Bumblebee.
-
-    TrafficEnv uses SimEngine and SUMO to simulate traffic on a network. It can
-    provide observations based on detector readings from the simulation, execute
-    signal group states, and calculate statistics about the traffic situation. The
-    environment is also responsible for ensuring the safety of traffic by blocking
-    conflicting signal phases.
-    """
+class TrafficEnv(MultiAgentEnv):
+    """RL environment for training multiple signal controller agents."""
 
     def __init__(
         self,
         simengine: SimEngine,
         env_conf: TrafficEnvConf,
-        contr_conf: BumblebeeControllerConf,
-        det_confs: list[DetectorConfiguration],
+        contr_confs: list[BumblebeeControllerConf],
+        all_detectors: dict[str, AreaDetector],
     ) -> None:
-        self._simengine = simengine
-        self._controller_id: str = contr_conf.id
-        self._contr_conf = contr_conf
+        """Create a new MultiTrafficEnv.
 
-        # Length of a training step in seconds.
-        if env_conf.step_length <= 0:
+        Prefer using `MultiTrafficEnv.create(...)` to ensure detectors are
+        asynchronously initialized before environment setup.
+
+        Args:
+            simengine: Simulation engine used by the environment.
+            env_conf: Traffic environment configuration.
+            contr_confs: List of controller configurations.
+            all_detectors: Pre-initialized detector registry.
+
+        """
+        super().__init__()
+
+        self._simengine: SimEngine = simengine
+
+        self._timer = Timer(
+            {
+                "timer_mode": "fixed",
+                "real_time_multiplier": 1,
+                "time_step": env_conf.step_length,
+            },
+        )
+
+        self._contr_confs: list[BumblebeeControllerConf] = contr_confs
+
+        self._step_length, self._simulation_steps_per_step = (
+            self._validate_and_calc_step_length(env_conf.step_length)
+        )
+
+        # Setup safety controllers, agent detectors, and pressure configs.
+        self._controllers: dict[AgentID, SafetyController] = {}
+        self._detectors: dict[AgentID, list[AreaDetector]] = {}
+        self._lane_pressure_configs: dict[AgentID, list[LanePressureConfig]] = {}
+        self._setup_agent_controllers_and_configs(contr_confs, all_detectors)
+
+        # Assign agents.
+        self.possible_agents: list[AgentID] = list(self._controllers.keys())
+        self.agents: list[AgentID] = self.possible_agents[:]
+        self._agent_ids: set[AgentID] = set(self.possible_agents)
+
+        # Define action and observation spaces.
+        self.action_spaces: dict[AgentID, spaces.Space] | None = (
+            self._build_action_spaces()
+        )
+        self.observation_spaces: dict[AgentID, spaces.Space] | None = (
+            self._build_observation_spaces()
+        )
+
+        # Setup training trackers.
+        self._init_state_trackers(env_conf.episode_steps)
+
+    @classmethod
+    async def create(
+        cls,
+        simengine: SimEngine,
+        env_conf: TrafficEnvConf,
+        contr_confs: list[BumblebeeControllerConf],
+        det_confs: list[DetectorConfiguration],
+    ) -> "TrafficEnv":
+        """Asynchronously create a MultiTrafficEnv instance.
+
+        Args:
+            simengine: Simulation engine instance.
+            env_conf: Traffic environment configuration.
+            contr_confs: List of controller configurations for agents.
+            det_confs: List of detector configurations to instantiate.
+
+        Returns:
+            Fully initialized MultiTrafficEnv instance.
+
+        """
+        all_detectors = await cls._create_detector_registry(det_confs)
+
+        return cls(
+            simengine=simengine,
+            env_conf=env_conf,
+            contr_confs=contr_confs,
+            all_detectors=all_detectors,
+        )
+
+    def _validate_and_calc_step_length(
+        self,
+        env_step_length: float,
+    ) -> tuple[float, int]:
+        """Validate step length constraints against SimEngine step length."""
+        sim_step_length = self._simengine.step_length
+
+        if env_step_length <= 0:
             raise ValueError(
-                f"Step length ({env_conf.step_length}) must be greater than 0",
+                f"Step length ({env_step_length}) must be greater than 0",
             )
 
-        if env_conf.step_length < self._simengine.step_length:
+        if env_step_length < sim_step_length:
             raise ValueError(
-                f"Environment step length ({env_conf.step_length}s) cannot be "
-                f"smaller than SimEngine step length ({self._simengine.step_length}s).",
+                f"Environment step length ({env_step_length}s) "
+                f"cannot be smaller than "
+                f"SimEngine step length ({sim_step_length}s).",
             )
-        self._step_length: float = env_conf.step_length
 
-        remainder = self._step_length % self._simengine.step_length
+        remainder = env_step_length % sim_step_length
         if not (
             isclose(remainder, 0, abs_tol=1e-9)
-            or isclose(remainder, self._simengine.step_length, abs_tol=1e-9)
+            or isclose(remainder, sim_step_length, abs_tol=1e-9)
         ):
             raise ValueError(
-                f"Environment step length ({self._step_length}s) must be a perfect "
-                f"multiple of SimEngine step length ({self._simengine.step_length}s). "
+                f"Environment step length ({env_step_length}s) "
+                f"must be a perfect multiple "
+                f"of SimEngine step length ({sim_step_length}s). "
                 f"Resulting steps would be a fractional "
-                f"{self._step_length / self._simengine.step_length}.",
+                f"{env_step_length / sim_step_length}.",
             )
 
-        # How many simulation steps to advance per one environment step.
-        self._simulation_steps_per_step: int = round(
-            env_conf.step_length / self._simengine.step_length,
-        )
+        simulation_steps = round(env_step_length / sim_step_length)
+        return env_step_length, simulation_steps
 
-        # Safety controller for handling conflicting phases and intergreens.
-        self._safety_controller = SafetyController(
-            contr_conf.intergreens,
-            self._simengine.step_length,
-        )
+    @staticmethod
+    async def _create_detector_registry(
+        det_confs: list[DetectorConfiguration],
+    ) -> dict[str, AreaDetector]:
+        """Instantiate and register all supported detectors."""
+        _, area_detectors = await create_detectors(det_confs)
 
-        # Create detectors.
-        detectors: dict[str, AreaDetector] = {}
+        all_detectors: dict[str, AreaDetector] = {}
 
-        for det_conf in det_confs:
-            det_type = det_conf.type
-            if det_type == "e1_detector":
-                continue
-            if det_type == "e2_detector":
-                detectors[det_conf.id] = E2AreaDetector(det_conf.id)
-            elif det_type == "e3_detector":
-                detectors[det_conf.id] = E3AreaDetector(det_conf.id)
-            else:
-                raise ValueError(
-                    f"Unsupported detector type {det_type} with ID {det_conf.id}.",
-                )
+        for det in area_detectors:
+            all_detectors[det.id] = det
 
-        self._detectors: list[AreaDetector] = []
+        return all_detectors
 
-        self._lane_pressure_configs: list[LanePressureConfig] = []
+    def _setup_agent_controllers_and_configs(
+        self,
+        contr_confs: list[BumblebeeControllerConf],
+        all_detectors: dict[str, AreaDetector],
+    ) -> None:
+        """Initialize controllers and map entry/exit detectors for controllers."""
+        for conf in contr_confs:
+            aid = conf.id
 
-        for entry_id in contr_conf.geometry.entry_node_ids():
-            upstream_detector = detectors[entry_id]
-            self._detectors.append(upstream_detector)
+            self._controllers[aid] = SafetyController(
+                conf.intergreens,
+                conf.geometry,
+                self._timer,
+            )
 
-            movements = []
-            exit_ids = contr_conf.geometry.exit_node_ids(entry_id)
+            agent_detectors, agent_configs = self._build_agent_pressure_configs(
+                conf,
+                all_detectors,
+            )
+            self._detectors[aid] = agent_detectors
+            self._lane_pressure_configs[aid] = agent_configs
+
+        # Save filtered transit detectors.
+        self._transit_detectors: dict[AgentID, list[TransitAreaDetector]] = {
+            aid: [det for det in detectors if isinstance(det, TransitAreaDetector)]
+            for aid, detectors in self._detectors.items()
+        }
+
+    def _build_agent_pressure_configs(
+        self,
+        conf: BumblebeeControllerConf,
+        all_detectors: dict[str, AreaDetector],
+    ) -> tuple[list[AreaDetector], list[LanePressureConfig]]:
+        """Create lane pressure configs and detectors for a controller."""
+        agent_detectors: list[AreaDetector] = []
+        agent_configs: list[LanePressureConfig] = []
+
+        for entry_id in conf.geometry.entry_node_ids():
+            upstream_detector = all_detectors[entry_id]
+            if upstream_detector not in agent_detectors:
+                agent_detectors.append(upstream_detector)
+
+            movements: list[DownstreamMovement] = []
+            exit_ids = conf.geometry.exit_node_ids(entry_id)
+
             for exit_id in exit_ids:
-                downstream_detector = detectors[exit_id]
-                self._detectors.append(downstream_detector)
+                downstream_detector = all_detectors[exit_id]
+                if downstream_detector not in agent_detectors:
+                    agent_detectors.append(downstream_detector)
 
                 movements.append(
                     DownstreamMovement(
                         downstream_node_id=exit_id,
                         detector=downstream_detector,
-                        theta=1,  # TODO: Assign meaningful movement probabilities.
+                        theta=1.0,  # TODO: Assign meaningful movement probabilities.
                     ),
                 )
 
-            self._lane_pressure_configs.append(
+            agent_configs.append(
                 LanePressureConfig(
                     node_id=entry_id,
                     incoming_detector=upstream_detector,
@@ -122,158 +232,290 @@ class TrafficEnv(gymnasium.Env):
                 ),
             )
 
-        # Action space maps a discrete number to a possible phase.
-        self.action_space = gymnasium.spaces.Discrete(
-            self._safety_controller.phase_count,
-        )
+        # Add special transit detectors.
+        for entry_id in conf.transit_links:
+            transit_det = all_detectors[f"transit_{entry_id}"]
+            agent_detectors.append(transit_det)
 
-        # Incoming lanes contribute one pressure each
-        # and phase is one-hot encoded on top.
-        obs_dim = len(self._lane_pressure_configs) + self._safety_controller.phase_count
+        return agent_detectors, agent_configs
 
-        self.observation_space = gymnasium.spaces.Box(
-            low=0,
-            high=np.inf,
-            shape=(obs_dim,),
-            dtype=np.float32,
-        )
+    def _build_action_spaces(self) -> dict[AgentID, spaces.Space]:
+        """Create action spaces based on controller phase counts."""
+        return {
+            aid: spaces.Discrete(self._controllers[aid].phase_count)
+            for aid in self.agents
+        }
 
-        # Keep track of steps.
+    def _build_observation_spaces(self) -> dict[AgentID, spaces.Space]:
+        """Create observation spaces that contain observations and an action mask."""
+        return {
+            aid: spaces.Dict(
+                {
+                    "action_mask": spaces.Box(
+                        low=0.0,
+                        high=1.0,
+                        shape=(self._controllers[aid].phase_count,),
+                        dtype=np.float32,
+                    ),
+                    "real_obs": spaces.Box(
+                        low=0.0,
+                        high=np.inf,
+                        shape=(self._controllers[aid].phase_count, 4),
+                        dtype=np.float32,
+                    ),
+                },
+            )
+            for aid in self.agents
+        }
+
+    def _init_state_trackers(self, episode_steps: int) -> None:
+        """Initialize trackers for actions and phase changes."""
+        self._actions: dict[AgentID, int] = dict.fromkeys(self.agents, 0)
+        self._action_counts: dict[AgentID, dict[int, int]] = {
+            agent: dict.fromkeys(
+                range(self._controllers[agent].phase_count),
+                0,
+            )
+            for agent in self.agents
+        }
+
         self._cur_step: int = 0
-        self._episode_max_steps = env_conf.episode_steps
+        self._episode_steps: int = episode_steps
 
-        # Keep track of teleportations.
-        self._episode_teleported: int = 0
-
-        # Keep track of total travel time.
-        self._episode_travel_time: float = 0
-
-        # Keep track of finished vehicles count.
+        self._episode_travel_time: float = 0.0
         self._episode_vehicles: int = 0
+        self._episode_transit_time: float = 0
+        self._episode_transit_count: int = 0
 
-        # Keep track of cumulative reward.
-        self._episode_reward: float = 0
-
-        # Keep track of actions.
-        self._action_counts: dict[int, int] = dict.fromkeys(
-            range(self._safety_controller.phase_count),
+        self._cur_phases: dict[AgentID, int] = dict.fromkeys(
+            self.possible_agents,
             0,
+        )
+        self._phase_changes: dict[AgentID, int] = dict.fromkeys(
+            self.possible_agents,
+            0,
+        )
+
+        self._phase_start_times: dict[AgentID, float] = dict.fromkeys(
+            self.possible_agents,
+            float(self._timer.seconds),
         )
 
     def reset(
         self,
         *,
-        options: dict | None = None,
         seed: int | None = None,
-    ) -> tuple[np.ndarray, dict[str, Any]]:
-        super().reset(seed=seed)
+        options: dict | None = None,
+    ) -> tuple[dict[AgentID, dict[str, np.ndarray]], dict[AgentID, Any]]:
+        """Reset the environment to original state."""
+        super().reset(seed=seed, options=options)
 
-        print(f"Action counts: {self._action_counts}")
-        self._action_counts: dict[int, int] = dict.fromkeys(
-            range(self._safety_controller.phase_count),
-            0,
-        )
-
-        self._episode_teleported = 0
+        self._cur_step: int = 0
 
         self._episode_travel_time = 0
         self._episode_vehicles = 0
+        self._episode_transit_time = 0
+        self._episode_transit_count = 0
 
-        self._episode_reward = 0
+        self._cur_phases = dict.fromkeys(self.possible_agents, 0)
+        self._phase_changes = dict.fromkeys(self.possible_agents, 0)
+        self._phase_start_times = dict.fromkeys(
+            self.possible_agents,
+            float(self._timer.seconds),
+        )
+
+        # Activate all agents.
+        self.agents = self.possible_agents[:]
 
         # Reset the simulation.
         self._simengine.reset()
 
-        # Reset the controller.
-        self._safety_controller = SafetyController(
-            self._contr_conf.intergreens,
-            self._simengine.step_length,
-        )
+        for conf in self._contr_confs:
+            safety_controller = SafetyController(
+                conf.intergreens,
+                conf.geometry,
+                self._timer,  # Timer doesn't need resetting between environment resets.
+            )
 
-        self._cur_phase_idx = 0
-        self._cur_step = 0
+            self._controllers[conf.id] = safety_controller
 
         # Update detector states.
-        for detector in self._detectors:
-            detector.tick()
+        for agent_detectors in self._detectors.values():
+            for detector in agent_detectors:
+                detector.tick()
 
-        observation: np.ndarray = get_observation(
-            self._cur_phase_idx,
-            self._safety_controller.phase_count,
-            self._lane_pressure_configs,
-        )
+        self._actions: dict[AgentID, int] = dict.fromkeys(self.agents, 0)
 
-        info: dict[str, Any] = {"status": "initialized"}
-        return observation, info
+        self._action_counts: dict[AgentID, dict[int, int]] = {
+            agent: dict.fromkeys(range(self._controllers[agent].phase_count), 0)
+            for agent in self.agents
+        }
 
-    def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        observations = self._get_observations()
+        infos = {aid: {} for aid in self.agents}
+
+        return observations, infos
+
+    def step(
+        self,
+        action_dict: dict[AgentID, int],
+    ) -> tuple[
+        dict[AgentID, dict[str, np.ndarray]],
+        dict[AgentID, float],
+        dict[AgentID, bool],
+        dict[AgentID, bool],
+        dict[AgentID, dict],
+    ]:
+        """Advance the environment by one timestep using the provided agent actions.
+
+        Applies the agent actions, steps the underlying traffic simulation,
+        and updates states.
+
+        Args:
+            action_dict: A dictionary mapping active AgentIDs to their chosen actions.
+
+        Returns:
+            A tuple containing five dictionaries:
+                - obs: New observations mapped by AgentID.
+                - rewards: Scalar rewards mapped by AgentID.
+                - terminateds: Termination flags mapped by AgentID. Must include
+                  the "__all__" key (bool) indicating if the episode ended naturally.
+                - truncateds: Truncation flags mapped by AgentID. Must include
+                  the "__all__" key (bool) indicating if the episode hit a time limit.
+                - infos: Auxiliary diagnostic information mapped by AgentID.
+
+        """
         self._cur_step += 1
-        self._cur_phase_idx = action
-        self._action_counts[action] += 1
-        # TODO: Currently signal group states are only updated once per step. This
-        # doesn't take into consideration that the intergreen times can expire between
-        # simulation steps. This isn't likely a major problem, since once per sec is
-        # still frequent enough and intergreen times are usually full seconds.
+
+        # Update timer so controllers will update their timings.
+        self._timer.tick()
 
         # Update detector states.
-        for detector in self._detectors:
-            detector.tick()
+        for agent_detectors in self._detectors.values():
+            for detector in agent_detectors:
+                detector.tick()
 
-        # Turn action to SUMO state string.
-        new_states = self._safety_controller.step(action)
+        # Apply actions to all controllers.
+        for aid in self.agents:
+            if aid in action_dict:
+                # Transition to a new phase.
+                if self._cur_phases[aid] != action_dict[aid]:
+                    self._phase_changes[aid] += 1
+                    self._phase_start_times[aid] = float(self._timer.seconds)
 
-        # Set signal group states in simulation to the new states.
-        self._simengine.set_signal_group_states(self._controller_id, new_states)
+                self._cur_phases[aid] = action_dict[aid]
+                self._action_counts[aid][action_dict[aid]] += 1
+                new_states: str = self._controllers[aid].step(action_dict[aid])
+                self._simengine.set_signal_group_states(str(aid), new_states)
 
         # Advance the simulation.
         self._simengine.step(self._simulation_steps_per_step)
 
-        observation: np.ndarray = get_observation(
-            self._cur_phase_idx,
-            self._safety_controller.phase_count,
-            self._lane_pressure_configs,
-        )
-
-        reward: float = self._reward()
+        # Save previous actions.
+        self._actions = action_dict
 
         # Gather metric data.
-        self._episode_teleported += self._simengine.get_teleported_count
         self._episode_travel_time += self._simengine.get_finished_travel_time
         self._episode_vehicles += self._simengine.get_finished_vehicles_count
-        self._episode_reward += reward
+        self._episode_transit_time += self._simengine.get_finished_transit_time
+        self._episode_transit_count += self._simengine.get_finished_transit_count
 
-        terminated: bool = self._cur_step > self._episode_max_steps
-        truncated: bool = False
+        is_truncated = self._cur_step >= self._episode_steps
 
-        info = {}
+        observations = self._get_observations()
+        rewards = self._get_rewards()
 
-        if terminated or truncated:
-            info["traffic"] = {
-                "teleported": self._episode_teleported,
-                "finished": self._episode_vehicles,
-                "avg_travel_time": (
-                    self._episode_travel_time / self._episode_vehicles
-                    if self._episode_vehicles > 0
-                    else 0
-                ),
-            }
-            info["metrics"] = {
-                "reward": self._episode_reward,
-            }
+        terminateds = dict.fromkeys(self.agents, False)
+        terminateds["__all__"] = False
 
-        return observation, reward, terminated, truncated, info
+        truncateds = dict.fromkeys(self.agents, is_truncated)
+        truncateds["__all__"] = is_truncated
+
+        infos = {aid: {} for aid in self.agents}
+
+        if is_truncated:
+            print(f"Action counts: {self._action_counts}")
+            self.agents = []
+            print(
+                "Average travel time: ",
+                round(self._episode_travel_time / self._episode_vehicles, 1)
+                if self._episode_vehicles > 0
+                else 0,
+            )
+            print(
+                "Average transit travel time: ",
+                round(self._episode_transit_time / self._episode_transit_count, 1)
+                if self._episode_transit_count > 0
+                else 0,
+            )
+            print("Number of trips: ", self._episode_vehicles)
+            print(f"Phase changes: {self._phase_changes}\n")
+
+        return observations, rewards, terminateds, truncateds, infos
 
     def render(self) -> None:
+        """Show current performance in the SUMO GUI."""
         raise NotImplementedError
 
     def close(self) -> None:
+        """Close environment and simulation."""
         self._simengine.close()
 
-    def _reward(self) -> float:
-        """Calculate reward for last step.
+    def _get_observations(self) -> dict[AgentID, dict[str, np.ndarray]]:
+        observations: dict[AgentID, dict[str, np.ndarray]] = {}
+        for aid in self.agents:
+            cur_phase_idx = self._actions[aid]
+            phase_count = self._controllers[aid].phase_count
+            pressure_configs = self._lane_pressure_configs[aid]
+
+            elapsed_time = self._timer.seconds - self._phase_start_times[aid]
+
+            transit_detections: np.ndarray = np.array(
+                [det.vehicle_count for det in self._transit_detectors[aid]],
+                dtype=np.float32,
+            )
+            phase_wise_transit_detections = self._controllers[
+                aid
+            ].get_phase_wise_transit_detections(transit_detections)
+
+            phase_active_lanes = self._controllers[aid].phases_lane
+
+            individual_observation = get_observation(
+                cur_phase_idx,
+                elapsed_time,
+                phase_count,
+                pressure_configs,
+                phase_wise_transit_detections,
+                phase_active_lanes,
+            )
+
+            observations[aid] = individual_observation
+
+        return observations
+
+    def _get_rewards(self) -> dict[AgentID, float]:
+        """Calculate reward for the last step for all agents.
 
         Returns:
-            Reward as a negative number. Higher means better performance.
+            Dict mapping agent_id to its local reward as a negative float.
 
         """
-        return get_reward(self._lane_pressure_configs)
+        rewards = {}
+
+        for aid in self.agents:
+            cur_phase_idx = self._actions[aid]
+
+            raw_transit_detections: np.ndarray = np.array(
+                [det.vehicle_count for det in self._transit_detectors[aid]],
+                dtype=np.float32,
+            )
+            phase_wise_transit_detections = self._controllers[
+                aid
+            ].get_phase_wise_transit_detections(raw_transit_detections)
+
+            rewards[aid] = get_reward(
+                cur_phase_idx,
+                self._lane_pressure_configs[aid],
+                phase_wise_transit_detections,
+            )
+        return rewards

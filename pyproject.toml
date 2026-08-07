@@ -15,16 +15,14 @@ dependencies = [
     "python-dateutil>=2.9.0.post0",
     "pytz>=2026.2",
     "ray[rllib]>=2.56.0",
+    "torch",
     "six>=1.17.0",
-    "stable-baselines3[extra]>=2.9.0",
     "traci>=1.27.0",
     "transitions>=0.9.3",
     "tzdata>=2026.2",
-]
-
-[dependency-groups]
-dev = [
-    "tensorboard>=2.20.0",
+    "grpcio",
+    "tensorboard",
+    "pillow",
 ]
 
 [tool.ruff.lint]
