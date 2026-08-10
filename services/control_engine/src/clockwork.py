@@ -97,6 +97,8 @@ class Clockwork:
         for controller in self._controllers:
             self._signal_states[controller.id] = controller.signal_states
 
+        self._timer.reset()
+
         while True:
             # Synchronize update cycle to the timer.
             await asyncio.sleep(self._timer.wall_time_to_next_step())

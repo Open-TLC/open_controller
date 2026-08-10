@@ -3,9 +3,12 @@
 # Coopyright 2020 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 
+import logging
 import time
 
 from .configuration import TimerConf
+
+logger = logging.getLogger(__name__)
 
 
 class Timer:
@@ -44,7 +47,15 @@ class Timer:
         now: float = time.monotonic()
         elapsed_wall_time = now - self._last_update_wall_time
         target_wall_interval = self._time_step / self._time_multiplier
-        return max(0.0, target_wall_interval - elapsed_wall_time)
+        diff = target_wall_interval - elapsed_wall_time
+        if diff < 0:
+            logger.warning(
+                "Can't keep up. Controller is running %.3fs behind timer at step %d.",
+                -diff,
+                self._steps,
+            )
+
+        return max(0.0, diff)
 
     def __str__(self) -> str:
         """Timer as a human-readable string."""
