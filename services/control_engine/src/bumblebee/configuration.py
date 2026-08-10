@@ -64,7 +64,7 @@ class SimEngineConf:
         self.step_length: float = float(val) if val is not None else 0.1
 
 
-DEFAULT_VEHICLE_VEHICLE_INTERGREEN: float = 3
+DEFAULT_VEHICLE_VEHICLE_INTERGREEN: float = 5
 DEFAULT_VEHICLE_PEDESTRIAN_INTERGREEN: float = 1
 DEFAULT_PEDESTRIAN_VEHICLE_INTERGREEN: float = 10
 

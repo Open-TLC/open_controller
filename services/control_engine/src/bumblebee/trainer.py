@@ -124,6 +124,7 @@ def _train_multi_agent(
             num_epochs=4,
             train_batch_size_per_learner=3600,
             entropy_coeff=0.01,
+            lr=[[0, 0.005], [200, 0.0001], [600, 0.00001]],
         )
     )
 
