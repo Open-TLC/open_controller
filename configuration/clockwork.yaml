@@ -1,6 +1,6 @@
 timer:
-  timer_mode: fixed
-  real_time_multiplier: 1
+  timer_mode: real
+  real_time_multiplier: 100
   time_step: 0.1
 
 nats:

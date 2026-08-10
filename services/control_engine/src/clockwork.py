@@ -2,13 +2,12 @@
 
 This module runs a signal controller and sends the provided signal states to NATS.
 """
-#
+
 # Open Controller, an open source traffic signal control platform
 # URL: https://www.opencontroller.org
 # Copyright 2023 - 2024 by Conveqs Oy, Kari Koskinen and others
 # This program has been released under EUPL-1.2 license which is available at
 # URL: https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
-#
 
 import argparse
 import asyncio
@@ -99,6 +98,9 @@ class Clockwork:
             self._signal_states[controller.id] = controller.signal_states
 
         while True:
+            # Synchronize update cycle to the timer.
+            await asyncio.sleep(self._timer.wall_time_to_next_step())
+
             # Advancing timer.
             self._timer.tick()
 
