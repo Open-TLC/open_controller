@@ -1,9 +1,9 @@
-# Signal head operation
+# Signal group operation
 
-Each signal head (`SignalGroup`) is implemented as a state machine. That top-level
+Each signal group (`SignalGroup`) is implemented as a state machine. That top-level
 state machine has four states - Red, AmberRed, Green and Amber - and each of these
 states is itself a nested state machine (a "substate machine") that governs what
-happens while the signal head is in that phase.
+happens while the signal group is in that phase.
 
 ```
 Red -> AmberRed -> Green -> Amber -> Red -> ...
@@ -37,9 +37,9 @@ The full ring is written to `tmp/ring.png`, and the per-phase diagrams to
 
 ### Full ring
 
-![Full signal head ring](figures/full_signalhead_ring.png)
+![Full signal group ring](figures/full_signalgroup_ring.png)
 
-The signal head cycles through Red, AmberRed, Green and Amber in a fixed order -
+The signal group cycles through Red, AmberRed, Green and Amber in a fixed order -
 there is no other possible sequence. Each of the four phases is its own nested
 state machine, shown individually below.
 
@@ -53,7 +53,7 @@ AmberRed is "just a timer" without naming what actually ends it.
 
 ### AmberRed
 
-![AmberRed substate machine](figures/signalhead_ring_amber_red.png)
+![AmberRed substate machine](figures/signalgroup_ring_amber_red.png)
 
 AmberRed is one of the simple phases: `Init` moves unconditionally to
 `MinimumTime`, which runs a minimum time that, in this phase, is also its
@@ -62,7 +62,7 @@ condition becomes true, ending the phase.
 
 ### Amber
 
-![Amber substate machine](figures/signalhead_ring_amber.png)
+![Amber substate machine](figures/signalgroup_ring_amber.png)
 
 Amber works the same way as AmberRed: `Init` moves unconditionally to
 `MinimumTime`, and `MinimumTime` moves to `Exit` once `min_time_passed` is
@@ -70,7 +70,7 @@ true - again, minimum time and maximum time are the same here.
 
 ### Red
 
-![Red substate machine](figures/signalhead_ring_red.png)
+![Red substate machine](figures/signalgroup_ring_red.png)
 
 Red is more complex than the other two fixed-time phases:
 
@@ -87,7 +87,7 @@ Red is more complex than the other two fixed-time phases:
 
 ### Green
 
-![Green substate machine](figures/signalhead_ring_green.png)
+![Green substate machine](figures/signalgroup_ring_green.png)
 
 Green starts the same way as the other phases, but what happens after the
 minimum time depends on configuration (the `green_end` setting) as well as
