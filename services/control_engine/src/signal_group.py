@@ -12,10 +12,11 @@ signal group controller
 import sys
 import time
 import math
+from contextlib import contextmanager
 #from transitions_gui import WebMachine
 #from transitions import Machine, State
 #from transitions import State
-from transitions.extensions import HierarchicalGraphMachine as Machine
+from transitions.extensions import HierarchicalMachine as Machine
 from transitions.extensions.nesting import NestedState as State
 
 # Constant minimums in seconds
@@ -105,9 +106,31 @@ def _style_diagram(machine, title):
     machine.graph_cls = ConditionOnlyGraph
 
 
+@contextmanager
+def _graph_capable():
+    """Temporarily gives SignalGroup/FixedTime (and its subclasses) graph-drawing
+    support by swapping in transitions' HierarchicalGraphMachine as their base
+    class. Normal operation never pays for this: SignalGroup/FixedTime are
+    plain HierarchicalMachine-based, with no (py)graphviz dependency and no
+    per-transition graph bookkeeping - only diagram generation, inside this
+    context, needs the graph-capable library.
+    """
+    from transitions.extensions import HierarchicalGraphMachine
+
+    swapped = {SignalGroup: SignalGroup.__bases__, FixedTime: FixedTime.__bases__}
+    try:
+        for cls in swapped:
+            cls.__bases__ = (HierarchicalGraphMachine,)
+        yield
+    finally:
+        for cls, bases in swapped.items():
+            cls.__bases__ = bases
+
+
 def _build_signal_group():
     """Builds a SignalGroup from the config file given on the command line.
-    Shared by draw_graphs() and draw_submachine_graphs().
+    Shared by draw_graphs() and draw_submachine_graphs(). Must be called
+    within a _graph_capable() block.
     """
     from timer import Timer
     from confread import GlobalConf
@@ -119,26 +142,28 @@ def _build_signal_group():
 
 
 def draw_graphs():
-    sg = _build_signal_group()
-    _style_diagram(sg, 'The signal group main loop')
-    print('Getting the diagram')
-    sg.get_graph(show_roi=False, force_new=True).draw('tmp/ring.png', prog='dot')
+    with _graph_capable():
+        sg = _build_signal_group()
+        _style_diagram(sg, 'The signal group main loop')
+        print('Getting the diagram')
+        sg.get_graph(show_roi=False, force_new=True).draw('tmp/ring.png', prog='dot')
 
 
 def draw_submachine_graphs():
     """Draws a separate diagram for each of the signal group's sub-state-machines
     (Red, AmberRed, Green, Amber)."""
-    sg = _build_signal_group()
-    submachines = {
-        'red': sg.group_based_red,
-        'amber_red': sg.fixed_amber_red,
-        'green': sg.va_green,
-        'amber': sg.fixed_amber,
-    }
-    for name, machine in submachines.items():
-        _style_diagram(machine, 'Signal group - {} substate machine'.format(name))
-        print('Getting the diagram for', name)
-        machine.get_graph(show_roi=False, force_new=True).draw('tmp/ring_{}.png'.format(name), prog='dot')
+    with _graph_capable():
+        sg = _build_signal_group()
+        submachines = {
+            'red': sg.group_based_red,
+            'amber_red': sg.fixed_amber_red,
+            'green': sg.va_green,
+            'amber': sg.fixed_amber,
+        }
+        for name, machine in submachines.items():
+            _style_diagram(machine, 'Signal group - {} substate machine'.format(name))
+            print('Getting the diagram for', name)
+            machine.get_graph(show_roi=False, force_new=True).draw('tmp/ring_{}.png'.format(name), prog='dot')
 
 
 
@@ -261,15 +286,15 @@ class SignalGroup(Machine):
         ]
         initial = 'Start'
 
-        # Note, this deorates this object by passing self...
-        Machine.__init__(
-            self,
+        # Note: super() (not a hardcoded Machine.__init__ call) so that this
+        # respects whichever base class is active - see _graph_capable()
+        # below, which swaps in graph-drawing support only while diagramming.
+        super().__init__(
             name=name,
             states=states,
             transitions=transitions,
             initial=initial,
             auto_transitions=False,
-            graph_engine='graphviz'
             )
 
         self.next_state() # This will trigger the Start->Red
@@ -868,14 +893,12 @@ class FixedTime(Machine):
             }
         ]
         initial = 'Init'
-        # Note, this deorates this object by passing self...
-        Machine.__init__(
-            self,
+        # Note: super(), see the comment in SignalGroup.__init__ above.
+        super().__init__(
             states=states,
             transitions=transitions,
             initial=initial,
             auto_transitions=False,
-            graph_engine='graphviz'
             )
 
 
