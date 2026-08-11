@@ -9,12 +9,13 @@ signal group controller
 # All Rights Reserved
 #
 
+import sys
 import time
 import math
+from contextlib import contextmanager
 #from transitions_gui import WebMachine
 #from transitions import Machine, State
 #from transitions import State
-#from transitions.extensions import HierarchicalGraphMachine as Machine
 from transitions.extensions import HierarchicalMachine as Machine
 from transitions.extensions.nesting import NestedState as State
 
@@ -54,33 +55,115 @@ def main():
     except KeyboardInterrupt:  # Ctrl + C will shutdown the machine
         print("Exiting")
 
-def draw_graphs():
+def _style_diagram(machine, title):
+    """Applies the shared diagram styling to a (Nested)GraphMachine instance.
+
+    Every transition in these state machines uses the same trigger
+    ('next_state'), so it adds no information on the diagram - show only the
+    guard conditions instead, one OR-ed alternative per line.
+    """
+    from collections import defaultdict
+    from transitions.extensions.diagrams_graphviz import NestedGraph
+
+    machine.title = title
+    machine.show_conditions = True
+    machine.show_auto_transitions = True
+    machine.show_state_attributes = True
+    machine.machine_attributes = dict(machine.machine_attributes, rankdir='TB')
+
+    class ConditionOnlyGraph(NestedGraph):
+        def _transition_label(self, tran):
+            if self.machine.show_conditions and any(p in tran for p in ("conditions", "unless")):
+                conditions = " & ".join(tran.get("conditions", []) + ["!" + u for u in tran.get("unless", [])])
+                return conditions + r"\l"
+            return ""
+
+        def _add_edges(self, transitions, container):
+            edges_attr = defaultdict(lambda: defaultdict(dict))
+            for transition in transitions:
+                src = transition["source"]
+                dst = transition.get("dest", src)
+                if edges_attr[src][dst]:
+                    attr = edges_attr[src][dst]
+                    attr[attr["label_pos"]] += self._transition_label(transition)
+                else:
+                    edges_attr[src][dst] = self._create_edge_attr(src, dst, transition)
+            for custom_src, dests in self.custom_styles["edge"].items():
+                for custom_dst, style in dests.items():
+                    if style and (
+                        custom_src not in edges_attr or custom_dst not in edges_attr[custom_src]
+                    ):
+                        edges_attr[custom_src][custom_dst] = self._create_edge_attr(
+                            custom_src, custom_dst, {"trigger": "", "dest": ""}
+                        )
+            for src, dests in edges_attr.items():
+                for dst, attr in dests.items():
+                    del attr["label_pos"]
+                    style = self.custom_styles["edge"][src][dst]
+                    attr.update(**self.machine.style_attributes.get("edge", {}).get(style, {}))
+                    container.edge(attr.pop("source"), attr.pop("dest"), **attr)
+
+    machine.graph_cls = ConditionOnlyGraph
+
+
+@contextmanager
+def _graph_capable():
+    """Temporarily gives SignalGroup/FixedTime (and its subclasses) graph-drawing
+    support by swapping in transitions' HierarchicalGraphMachine as their base
+    class. Normal operation never pays for this: SignalGroup/FixedTime are
+    plain HierarchicalMachine-based, with no (py)graphviz dependency and no
+    per-transition graph bookkeeping - only diagram generation, inside this
+    context, needs the graph-capable library.
+    """
+    from transitions.extensions import HierarchicalGraphMachine
+
+    swapped = {SignalGroup: SignalGroup.__bases__, FixedTime: FixedTime.__bases__}
+    try:
+        for cls in swapped:
+            cls.__bases__ = (HierarchicalGraphMachine,)
+        yield
+    finally:
+        for cls, bases in swapped.items():
+            cls.__bases__ = bases
+
+
+def _build_signal_group():
+    """Builds a SignalGroup from the config file given on the command line.
+    Shared by draw_graphs() and draw_submachine_graphs(). Must be called
+    within a _graph_capable() block.
+    """
     from timer import Timer
     from confread import GlobalConf
 
-    timer = Timer(0.1) # these should have defaults in group?
+    timer = Timer({'time_step': 0.1, 'real_time_multiplier': 1})
     sys_cnf = GlobalConf().cnf
-    sg = SignalGroup(timer, 'kari', sys_cnf['controller']['signal_groups']['default'])
+    group_name = next(iter(sys_cnf['controller']['signal_groups']))
+    return SignalGroup(timer, group_name, sys_cnf['controller']['signal_groups'][group_name])
 
-    #sg = SignalGroup('test')
-    sg.title = 'The signal group main loop'
-    sg.show_conditions = True
-    sg.show_auto_transitions = True
-    sg.show_state_attributes = True
-    print('Getting the diagram')
-    sg.get_graph(show_roi=False).draw('tmp/ring.png', prog='dot')
 
-    exit()
-    diagram_no = 0
-    try:
-        while True:
-            name = 'tmp/my_diagram{}.png'.format(diagram_no)
-            diagram_no = (diagram_no + 1) % 4
-            sg.get_combined_graph(show_roi=True).draw(name, prog='dot')
-            sg.tick()
-            print('state:', sg.state)
-    except KeyboardInterrupt:  # Ctrl + C will shutdown the machine
-        print("Exiting")
+def draw_graphs():
+    with _graph_capable():
+        sg = _build_signal_group()
+        _style_diagram(sg, 'The signal group main loop')
+        print('Getting the diagram')
+        sg.get_graph(show_roi=False, force_new=True).draw('tmp/ring.png', prog='dot')
+
+
+def draw_submachine_graphs():
+    """Draws a separate diagram for each of the signal group's sub-state-machines
+    (Red, AmberRed, Green, Amber)."""
+    with _graph_capable():
+        sg = _build_signal_group()
+        submachines = {
+            'red': sg.group_based_red,
+            'amber_red': sg.fixed_amber_red,
+            'green': sg.va_green,
+            'amber': sg.fixed_amber,
+        }
+        for name, machine in submachines.items():
+            _style_diagram(machine, 'Signal group - {} substate machine'.format(name))
+            print('Getting the diagram for', name)
+            machine.get_graph(show_roi=False, force_new=True).draw('tmp/ring_{}.png'.format(name), prog='dot')
 
 
 
@@ -203,14 +286,15 @@ class SignalGroup(Machine):
         ]
         initial = 'Start'
 
-        # Note, this deorates this object by passing self...
-        Machine.__init__(
-            self,
+        # Note: super() (not a hardcoded Machine.__init__ call) so that this
+        # respects whichever base class is active - see _graph_capable()
+        # below, which swaps in graph-drawing support only while diagramming.
+        super().__init__(
             name=name,
             states=states,
             transitions=transitions,
             initial=initial,
-            auto_transitions=False
+            auto_transitions=False,
             )
 
         self.next_state() # This will trigger the Start->Red
@@ -809,13 +893,12 @@ class FixedTime(Machine):
             }
         ]
         initial = 'Init'
-        # Note, this deorates this object by passing self...
-        Machine.__init__(
-            self,
+        # Note: super(), see the comment in SignalGroup.__init__ above.
+        super().__init__(
             states=states,
             transitions=transitions,
             initial=initial,
-            auto_transitions=False
+            auto_transitions=False,
             )
 
 
@@ -1119,4 +1202,10 @@ if __name__ == "__main__":
     print("Testing the group ctrl")
     #sg1 = SignalGroup('1')
     #main()
-    draw_graphs()
+    # --submachines draws Red/AmberRed/Green/Amber separately instead of the
+    # full ring. Consumed here so confread's argparse doesn't choke on it.
+    if '--submachines' in sys.argv:
+        sys.argv.remove('--submachines')
+        draw_submachine_graphs()
+    else:
+        draw_graphs()
