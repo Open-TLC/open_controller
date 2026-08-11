@@ -6,7 +6,6 @@ timer:
 nats:
   url: nats  # When running in docker compose, this is the same as NATS service name.
   port: 4222
-  mode: change  # change / update
 
 simengine:
   sumo_conf: models/some.sumocfg
