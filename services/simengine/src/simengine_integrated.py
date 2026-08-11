@@ -19,6 +19,7 @@ from typing import Any
 # workloads. The code aliases the selected backend as `traci` because both
 # libraries expose nearly identical APIs.
 if platform.system() == "Windows":
+    # import libsumo as traci
     import traci
 elif platform.system() in ("Linux", "Darwin"):
     import libsumo as traci
@@ -36,26 +37,12 @@ SUMO_BIN_NAME = "sumo"
 SUMO_BIN_NAME_GRAPH = "sumo-gui"
 
 # Imprtinc components from control_engine
-# FIXME:We should not use paths, insteead different sercives should
-# Be properly modularized and imported as modules
-engine_path = "services/control_engine/src"  # Standard installation
-sys.path.append(engine_path)
-from signal_group_controller import PhaseRingController
-
+from services.control_engine.src.signal_group_controller import PhaseRingController
 
 # We run the sumo model based on conf dictionery given as parameter
 def run_sumo():
     """Run sumo with given configuration"""
     unit_cnf = GlobalConf()  # Open Controller configuration.
-
-    # Imprtinc components from control_engine
-    # FIXME:We should not use paths, insteead different sercives should
-    # Be properly modularized and imported as modules
-    if "control_engine_path" in unit_cnf.cnf:
-        engine_path = unit_cnf.cnf["control_engine_path"]
-    else:
-        engine_path = "services/control_engine/src"  # Standard installation
-    sys.path.append(engine_path)
 
     controllers_dict = {}
 
