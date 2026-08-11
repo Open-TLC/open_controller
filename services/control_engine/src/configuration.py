@@ -39,7 +39,7 @@ class ClockworkConf:
             self.controllers.append(controller_conf)
 
         self.detectors: list[DetectorConfiguration] = []
-        for raw_detector_conf in raw_conf["detectors"]:
+        for raw_detector_conf in raw_conf["clockwork"]["detectors"]:
             detector_conf = DetectorConfiguration(raw_detector_conf)
             self.detectors.append(detector_conf)
 

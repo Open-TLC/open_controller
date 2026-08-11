@@ -73,34 +73,33 @@ clockwork:
             duration: 10
         yellow_duration: 3
 
-detectors:  # All detector configurations in this simulation
-  - id: j1.0  # Unique id for detector Format: INTERSECTION_ID.UNIQUE_DET_ID 
-    type: e1_detector
-    options: {}
-  - id: j1.1
-    type: e2_detector
-    options: {}
-  - id: j1.1a
-    type: e2_detector
-    options: {}
-  - id: j1.1b
-    type: e2_detector
-    options: {}
-  - id: j1.2
-    type: e2_detector
-    options: {}
-  - id: j1.3
-    type: e2_detector
-    options: {}
-  - id: j1.3a
-    type: e2_detector
-    options: {}
-  - id: j1.4
-    type: e2_detector
-    options: {}
-  - id: j1.5
-    type: e2_detector
-    options: {}
-  - id: j1.5a
-    type: e2_detector
-
+  detectors:  # All detector configurations in this simulation
+    - id: j1.0  # Unique id for detector Format: INTERSECTION_ID.UNIQUE_DET_ID 
+      type: e1_detector
+      options: {}
+    - id: j1.1
+      type: e2_detector
+      options: {}
+    - id: j1.1a
+      type: e2_detector
+      options: {}
+    - id: j1.1b
+      type: e2_detector
+      options: {}
+    - id: j1.2
+      type: e2_detector
+      options: {}
+    - id: j1.3
+      type: e2_detector
+      options: {}
+    - id: j1.3a
+      type: e2_detector
+      options: {}
+    - id: j1.4
+      type: e2_detector
+      options: {}
+    - id: j1.5
+      type: e2_detector
+      options: {}
+    - id: j1.5a
+      type: e2_detector

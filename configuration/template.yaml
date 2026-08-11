@@ -99,18 +99,16 @@ clockwork:
           - signal_states: rrrrgg
             duration: 10
         yellow_duration: 3
-
-# detectors: Settings for all detectors used in the control.
-detectors:
-    # id: Unique ID for the detector. Format: <intersection ID>.<unique detector id>
-  - id: j1.0
-    # type: Detector type. Currently supported detector types:
-    # - e1_detector: SUMO E1 detector. This creates a point detector.
-    # - e2_detector: SUMO E2 detector. This creates an area detector.
-    # - e3_detector: SUMO E3 detector. This creates an area detector.
-    # - traffic_indicators: Detector that uses data from Traffic Indicators. This creates an area detector.
-    type: e1_detector
-    # options: Dictionary of detector specific options.
-    # Schema depends on the detector type.
-    options: {}
-
+  # detectors: Settings for all detectors used in the control.
+  detectors:
+      # id: Unique ID for the detector. Format: <intersection ID>.<unique detector id>
+    - id: j1.0
+      # type: Detector type. Currently supported detector types:
+      # - e1_detector: SUMO E1 detector. This creates a point detector.
+      # - e2_detector: SUMO E2 detector. This creates an area detector.
+      # - e3_detector: SUMO E3 detector. This creates an area detector.
+      # - traffic_indicators: Detector that uses data from Traffic Indicators. This creates an area detector.
+      type: e1_detector
+      # options: Dictionary of detector specific options.
+      # Schema depends on the detector type.
+      options: {}
