@@ -15,7 +15,7 @@ class Timer:
     """Timer for handling time steps and real-time synchronization."""
 
     def __init__(self, conf: TimerConf) -> None:
-        self._time_step: float = conf.time_step
+        self._step_length: float = conf.time_step
         self._time_multiplier: float = conf.real_time_multiplier
         self._mode: str = conf.mode
 
@@ -25,7 +25,17 @@ class Timer:
     @property
     def seconds(self) -> float:
         """Simulation time in seconds."""
-        return self._steps * self._time_step
+        return self._steps * self._step_length
+
+    @property
+    def steps(self) -> int:
+        """Number of steps taken."""
+        return self._steps
+
+    @property
+    def step_length(self) -> float:
+        """Length of a step in seconds."""
+        return self._step_length
 
     def reset(self) -> None:
         """Start the timer from zero."""
@@ -46,7 +56,7 @@ class Timer:
 
         now: float = time.monotonic()
         elapsed_wall_time = now - self._last_update_wall_time
-        target_wall_interval = self._time_step / self._time_multiplier
+        target_wall_interval = self._step_length / self._time_multiplier
         diff = target_wall_interval - elapsed_wall_time
         if diff < 0:
             logger.warning(
