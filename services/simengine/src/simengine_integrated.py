@@ -26,8 +26,9 @@ else:
     raise SystemError("Unknown operating system: ", platform.system())
 
 
-from .confread_ms import GlobalConf
-from .timer import Timer
+from confread_ms import GlobalConf
+from timer import Timer
+from websumo_interface import WebsumoInterface
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
@@ -131,6 +132,10 @@ def run_sumo():
     except Exception as e:
         print("Sumo start failed:", e)
         return
+
+    # WebSUMO viewer interface: publishes the simulation state so it
+    # can be viewed with WebSUMO (no-op if there is no NATS server)
+    websumo = WebsumoInterface(sumo_file, sys_cnf.get("nats"))
 
     sumo_to_e1dets = get_e1det_mapping(e1dets)
     print("sumo to e1 dets: ")
@@ -280,6 +285,8 @@ def run_sumo():
                 print("Fatal error in sumo, exiting")
                 break
 
+            websumo.publish_state()
+
             # print(system_timer.steps, '%.3f' % real_time, '%.3f' % next_update_time, sleep_count, '%.3f' % last_print )
 
             system_timer.tick()  # DBIK230711 imer tick only in the main loop
@@ -292,6 +299,9 @@ def run_sumo():
             system_timer.sleep_tick()
             real_time = system_timer.real_seconds  # DBIK230711
             # print(sleep_count, real_time)
+
+    websumo.publish_end()
+    websumo.close()
 
     print("Closing traci")
     try:

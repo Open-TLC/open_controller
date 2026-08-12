@@ -35,3 +35,30 @@ services:
     build:
       context: .
       dockerfile: services/simengine/docker/Dockerfile
+
+  # The WebSUMO viewer. Runs file-free: it discovers the scenario and
+  # fetches the net and the state over NATS from the simengine, so no
+  # scenario files or volumes are needed. The websumo repository is
+  # expected next to this one and is not modified: the image is built
+  # here from the inline dockerfile below.
+  websumo:
+    image: websumo
+    container_name: oc_websumo_container
+    build:
+      context: ../websumo
+      dockerfile_inline: |
+        FROM python:3.11-slim
+        WORKDIR /app
+        COPY backend backend
+        COPY frontend/dist frontend/dist
+        RUN pip install --no-cache-dir -r backend/requirements.txt sumolib pyproj
+        RUN mkdir -p /app/scenarios-empty
+        WORKDIR /app/backend
+        CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8775"]
+    ports:
+      - "8775:8775"
+    environment:
+      NATS_URL: nats://nats:4222
+      SCENARIOS_DIR: /app/scenarios-empty
+    depends_on:
+      - nats

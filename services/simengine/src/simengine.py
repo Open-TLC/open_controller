@@ -18,6 +18,7 @@ import json
 from timer import Timer
 from confread import GlobalConf
 from outputs import DetStorage, GroupStorage, RadarStorage
+from websumo_interface import WebsumoInterface
 
 
 SOFTWARE_NAME = "SUMO Simulation enngine"
@@ -34,17 +35,8 @@ OUTPUT_TYPES = {
 
 GREEN_SUBSTATES = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-# This will need:
-# export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
-
-# Alternatively:
-# we need to import python modules from the $SUMO_HOME/tools directory
-if 'SUMO_HOME' in os.environ:
-    SUMO_TOOLS = os.path.join(os.environ['SUMO_HOME'], 'tools')
-    sys.path.append(SUMO_TOOLS)
-    import traci
-else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
+# The in-process sumo engine is used instead of the TraCI socket
+import libsumo as traci
 
 
 # One of these is choden with the command line parameter
@@ -184,6 +176,9 @@ class SumoNatsInterface:
     async def run(self):
         """Runs the system"""
         self.start_sumo()
+        # WebSUMO viewer interface: publishes the simulation state so it
+        # can be viewed with WebSUMO (no-op if there is no NATS server)
+        self.websumo = WebsumoInterface(self.sumo_file, self.nats_server)
         await self.connect_nats()
         # TODO: Callbacks for control messages to be added here
         # Loop for handling the simulation
@@ -274,10 +269,15 @@ class SumoNatsInterface:
             # This will handle all the data stream from sumo to nats
             await self.send_statuses_to_nats()
 
+            self.websumo.publish_state()
+
             # To sync with realtimer
             self.system_timer.tick()
             # Note, if Sumo is stopped by hand, this will try to catch up
             await asyncio.sleep(self.system_timer.get_next_time_step())
+
+        self.websumo.publish_end()
+        self.websumo.close()
 
 
 
