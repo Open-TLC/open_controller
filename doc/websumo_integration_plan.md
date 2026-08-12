@@ -235,14 +235,29 @@ cannot be viewed.
 
 ## Step 2 — Operate
 
-Subscribe to `sim.{scenario}.cmd.*` and apply the browser's commands
-before the next step. The command set, payloads, and semantics are
-defined in `SIM_PROTOCOL.md`: `pause`, `resume`, `stop`, `speed`
-(`{"v": float}`, clamped to 0.1–1000), `scale` (`{"v": float}`, 0–5),
-`select`, `spawn`. Its prescribed step flow — collect pending commands,
-apply, step, publish — matches where our two call sites already sit.
-Malformed or unsupported commands are silently ignored, per the
-protocol.
+**Implemented 2026-08-12 for the time-neutral commands** (decision 3):
+the interface subscribes `sim.{scenario}.cmd.*` and honours
+
+- `select` — single global selection; publishes the immediate one-shot
+  inspect message the panel expects, and subsequent frames carry the
+  `inspect` block (vehicle and TLS field sets mirror WebSUMO's own
+  adapter; `spent` is derived from `getPhaseDuration`/`getNextSwitch`
+  because `getSpentDuration` doesn't exist in the image's SUMO 1.18).
+  A vanished element gets the protocol's `gone` marker.
+- `scale` — `traci.simulation.setScale`, clamped to 0–5.
+
+Everything else — `pause`, `resume`, `stop`, `speed`, unknown commands,
+malformed payloads — is **silently ignored**, per the protocol and per
+decision 3: the viewer's time controls act on nothing in OC mode until
+the clockwork-side TODO is done. (Viewer-side polish for later, their
+repo: grey out the time controls when attached to an external
+simengine.) `spawn` stays excluded until `.routes` is served (decision
+4).
+
+Verified live against the running stack: selecting a real vehicle fills
+the panel (speed, lane, route, next-TLS with distance and state);
+selecting `270_Tyyn_Vali` returns program/state/phases; `scale` is
+accepted; a pause/speed burst leaves the 10 Hz stream untouched.
 
 This is the one place needing care: pause and speed act on the step loop,
 which is existing OC behaviour. To honour principle 1, the loop gains

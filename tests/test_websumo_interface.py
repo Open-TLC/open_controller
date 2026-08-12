@@ -40,17 +40,98 @@ class FakeVehicle:
     def getVehicleClass(self, veh_id):
         return self.vehicles[veh_id][5]
 
+    # Inspection getters; any id not in self.vehicles raises KeyError,
+    # which the interface must turn into a 'gone' marker
+    def _check(self, veh_id):
+        if veh_id not in self.vehicles:
+            raise KeyError(veh_id)
+
+    def getTypeID(self, veh_id):
+        self._check(veh_id)
+        return "car_type"
+
+    def getSpeed(self, veh_id):
+        self._check(veh_id)
+        return 12.345
+
+    def getAllowedSpeed(self, veh_id):
+        return 13.9
+
+    def getAcceleration(self, veh_id):
+        return 0.8
+
+    def getLaneID(self, veh_id):
+        return "lane_0"
+
+    def getLanePosition(self, veh_id):
+        return 45.32
+
+    def getRouteID(self, veh_id):
+        return "route_0"
+
+    def getRoute(self, veh_id):
+        return ("edge_a", "edge_b")
+
+    def getRouteIndex(self, veh_id):
+        return 1
+
+    def getDeparture(self, veh_id):
+        return 10.0
+
+    def getDepartDelay(self, veh_id):
+        return 0.0
+
+    def getWaitingTime(self, veh_id):
+        return 0.0
+
+    def getAccumulatedWaitingTime(self, veh_id):
+        return 2.5
+
+    def getTimeLoss(self, veh_id):
+        return 1.25
+
+    def getDistance(self, veh_id):
+        return 1234.56
+
+    def getLeader(self, veh_id):
+        return ("veh_ahead", 12.34)
+
+    def getNextTLS(self, veh_id):
+        return (("tl0", 3, 45.06, "G"),)
+
+    def getSpeedFactor(self, veh_id):
+        return 1.0
+
+    def getMinGap(self, veh_id):
+        return 2.5
+
 
 class FakeSimulation:
     def __init__(self, time=0.0):
         self.time = time
+        self.scale = None
 
     def getTime(self):
         return self.time
 
+    def setScale(self, value):
+        self.scale = value
+
     def convertGeo(self, x, y):
         # A recognizable, reversible fake projection
         return 24.0 + x / 1000.0, 60.0 + y / 1000.0
+
+
+class FakePhase:
+    def __init__(self, duration, state):
+        self.duration = duration
+        self.state = state
+
+
+class FakeLogic:
+    def __init__(self, program_id, phases):
+        self.programID = program_id
+        self.phases = phases
 
 
 class FakeTrafficLight:
@@ -62,6 +143,22 @@ class FakeTrafficLight:
 
     def getRedYellowGreenState(self, tls_id):
         return self.states[tls_id]
+
+    def getProgram(self, tls_id):
+        return "0"
+
+    def getAllProgramLogics(self, tls_id):
+        return [FakeLogic("0", [FakePhase(30.0, self.states[tls_id]),
+                                FakePhase(5.0, "yyyy")])]
+
+    def getPhase(self, tls_id):
+        return 0
+
+    def getNextSwitch(self, tls_id):
+        return 130.0
+
+    def getPhaseDuration(self, tls_id):
+        return 30.0
 
 
 class FakeInductionLoop:
@@ -90,11 +187,18 @@ class FakeTraci:
 
 
 class FakeMsg:
-    def __init__(self):
+    def __init__(self, subject="", data=b""):
+        self.subject = subject
+        self.data = data
         self.responded_with = None
 
     async def respond(self, data):
         self.responded_with = data
+
+
+def cmd_msg(command, payload=None):
+    return FakeMsg(subject="sim.js266.cmd." + command,
+                   data=json.dumps(payload).encode() if payload else b"")
 
 
 class FakeNats:
@@ -221,6 +325,92 @@ class TestWebsumoInterface(unittest.IsolatedAsyncioTestCase):
         msg = FakeMsg()
         await nats.subscriptions["sim.js266.net"](msg)
         self.assertEqual(gzip.decompress(msg.responded_with), self.net_bytes)
+
+    # --- commands ----------------------------------------------------
+
+    def make_started(self, traci=None):
+        nats = FakeNats()
+        interface = create_websumo_interface(
+            make_conf(self.net_path), traci or FakeTraci(), nats)
+        return interface, nats
+
+    async def test_scale_command_applies_clamped(self):
+        traci = FakeTraci()
+        interface, _ = self.make_started(traci)
+        await interface.handle_command(cmd_msg("scale", {"v": 2.0}))
+        self.assertEqual(traci.simulation.scale, 2.0)
+        await interface.handle_command(cmd_msg("scale", {"v": 99.0}))
+        self.assertEqual(traci.simulation.scale, 5.0)
+
+    async def test_time_bending_and_unknown_commands_ignored(self):
+        traci = FakeTraci()
+        interface, nats = self.make_started(traci)
+        for command in ("pause", "resume", "stop", "speed", "bogus"):
+            await interface.handle_command(cmd_msg(command, {"v": 3.0}))
+        self.assertIsNone(traci.simulation.scale)
+        self.assertEqual(nats.published, [])
+
+    async def test_malformed_payload_ignored(self):
+        interface, nats = self.make_started()
+        await interface.handle_command(
+            FakeMsg(subject="sim.js266.cmd.select", data=b"not json"))
+        self.assertIsNone(interface.selected)
+        self.assertEqual(nats.published, [])
+
+    async def test_select_vehicle_one_shot_and_frame_inspect(self):
+        traci = FakeTraci(
+            vehicles={"veh0": (100.0, 200.0, 90.0, 4.5, 1.8, "passenger")})
+        interface, nats = self.make_started(traci)
+        await interface.handle_command(
+            cmd_msg("select", {"kind": "vehicle", "id": "veh0"}))
+
+        # Immediate one-shot inspect message
+        self.assertEqual(len(nats.published), 1)
+        one_shot = json.loads(nats.published[0][1].decode())
+        self.assertEqual(one_shot["type"], "inspect")
+        block = one_shot["inspect"]
+        self.assertEqual(block["kind"], "vehicle")
+        self.assertEqual(block["id"], "veh0")
+        self.assertEqual(block["speed"], 12.35)
+        self.assertEqual(block["leader"], ["veh_ahead", 12.3])
+        self.assertEqual(block["nextTLS"], ["tl0", 45.1, "G"])
+        self.assertEqual(block["routeEdges"], ["edge_a", "edge_b"])
+
+        # Subsequent frames carry the inspect block too
+        frame = interface.build_state_frame()
+        self.assertEqual(frame["inspect"]["id"], "veh0")
+        json.dumps(frame)
+
+    async def test_select_tls_inspect_with_derived_spent(self):
+        traci = FakeTraci(tls={"tl0": "GGrr"}, time=120.0)
+        interface, nats = self.make_started(traci)
+        await interface.handle_command(
+            cmd_msg("select", {"kind": "tls", "id": "tl0"}))
+        block = json.loads(nats.published[0][1].decode())["inspect"]
+        self.assertEqual(block["kind"], "tls")
+        self.assertEqual(block["state"], "GGrr")
+        self.assertEqual(block["phases"], [[30.0, "GGrr"], [5.0, "yyyy"]])
+        # spent = phaseDuration - (nextSwitch - now) = 30 - (130 - 120)
+        self.assertEqual(block["spent"], 20.0)
+
+    async def test_select_vanished_vehicle_reports_gone(self):
+        interface, nats = self.make_started(FakeTraci())  # no vehicles
+        await interface.handle_command(
+            cmd_msg("select", {"kind": "vehicle", "id": "ghost"}))
+        block = json.loads(nats.published[0][1].decode())["inspect"]
+        self.assertEqual(block, {"kind": "vehicle", "id": "ghost",
+                                 "gone": True})
+
+    async def test_deselect_clears_selection(self):
+        traci = FakeTraci(
+            vehicles={"veh0": (0.0, 0.0, 0.0, 4.0, 2.0, "passenger")})
+        interface, _ = self.make_started(traci)
+        await interface.handle_command(
+            cmd_msg("select", {"kind": "vehicle", "id": "veh0"}))
+        self.assertIsNotNone(interface.selected)
+        await interface.handle_command(cmd_msg("select"))
+        self.assertIsNone(interface.selected)
+        self.assertNotIn("inspect", interface.build_state_frame())
 
 
 if __name__ == "__main__":
