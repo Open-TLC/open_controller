@@ -67,6 +67,9 @@ class WebsumoInterface:
             files, or an "ip:port" string as returned by
             GlobalConf.get_nats_params(). Defaults to localhost:4222.
         """
+        # A CRLF-mangled entrypoint script (Windows checkout) passes the
+        # path with a trailing carriage return; sumo trims it, we must too
+        sumocfg_file = sumocfg_file.strip()
         self.connected = False
         self.scenario = scenario_from_sumocfg(sumocfg_file)
         self._subject_prefix = "sim." + self.scenario
