@@ -170,7 +170,7 @@ class GlobalConf:
         if 'graph' in command_line_params:
             self.conf['simulation']['graphics'] = command_line_params.graph
         
-        if 'sumo_conf' in command_line_params:
+        if command_line_params.sumo_conf:
             self.conf['simulation']['sumo_conf'] = command_line_params.sumo_conf
 
     
