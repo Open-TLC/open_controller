@@ -6,15 +6,20 @@ running simulation can be viewed with the WebSUMO viewer. The subjects
 and the payloads are defined by WebSUMO (docs/SIM_PROTOCOL.md, v 1.0):
 
     sim.{scenario}.state      published after every simulation step
+    sim.{scenario}.log        published when there are events (collisions)
     sim.{scenario}.end        published once when the simulation ends
     sim.{scenario}.net        request-reply, the gzipped net file
     sim.{scenario}.detectors  request-reply, gzipped merged e1 detectors
+    sim.{scenario}.cmd.select subscribed: details of the selected element
+                              are included in the state ("inspect")
 
 The scenario name and the served files are derived from the sumocfg the
-engine is already running. The interface is for viewing only: it does
-not subscribe to the sim.{scenario}.cmd.* subjects and it has no timing
-logic of its own. The engine's timer owns the update cadence and this
-module publishes whatever the engine's own tick produces.
+engine is already running. The interface is for viewing only: of the
+sim.{scenario}.cmd.* subjects only "select" is subscribed, and its only
+effect is reading more data for the viewer. The run control commands
+(pause, resume, stop, speed, scale, spawn) are ignored, and there is no
+timing logic of any kind. The engine's timer owns the update cadence
+and this module publishes whatever the engine's own tick produces.
 
 If the NATS server cannot be reached, a warning is printed and every
 operation becomes a no-op: the simulation runs exactly as it would
@@ -67,6 +72,8 @@ class WebsumoInterface:
         self._subject_prefix = "sim." + self.scenario
         self._nats_url = nats_url(nats_conf)
         self._nats = None
+        # The element selected in the viewer ({"kind": ..., "id": ...})
+        self._selected = None
 
         try:
             net_file = net_file_from_sumocfg(sumocfg_file)
@@ -110,11 +117,23 @@ class WebsumoInterface:
         async def reply_detectors(msg):
             await msg.respond(self._detectors_payload)
 
+        async def on_select(msg):
+            try:
+                selection = json.loads(msg.data) if msg.data else {}
+            except json.JSONDecodeError:
+                selection = {}
+            if "kind" in selection and "id" in selection:
+                self._selected = selection
+            else:
+                self._selected = None
+
         await self._nats.subscribe(self._subject_prefix + ".net",
                                    cb=reply_net)
         if self._detectors_payload is not None:
             await self._nats.subscribe(self._subject_prefix + ".detectors",
                                        cb=reply_detectors)
+        await self._nats.subscribe(self._subject_prefix + ".cmd.select",
+                                   cb=on_select)
 
     def publish_state(self):
         """Reads the current state from sumo and publishes it
@@ -133,8 +152,18 @@ class WebsumoInterface:
             "detectors": get_detector_states(),
             "_empty": libsumo.simulation.getMinExpectedNumber() == 0,
         }
+        events = get_events()
+        if events:
+            state["events"] = events
+        selection = self._selected
+        if selection is not None:
+            state["inspect"] = get_inspect_state(selection)
         self._publish(self._subject_prefix + ".state",
                       json.dumps(state).encode())
+        if events:
+            log_message = {"type": "log", "t": state["t"], "events": events}
+            self._publish(self._subject_prefix + ".log",
+                          json.dumps(log_message).encode())
 
     def publish_end(self):
         """Tells the viewer that the simulation has ended"""
@@ -215,6 +244,99 @@ def get_detector_states():
         occup = libsumo.inductionloop.getLastStepOccupancy(det_id)
         detectors[det_id] = (vehnum > 0) or (occup > 0)
     return detectors
+
+
+def get_events():
+    """Returns the exceptional events of this step
+
+    Collisions, teleports and emergency stops, as shown in the
+    viewer's log panel. Empty list on a normal step.
+    """
+    events = []
+    for collision in libsumo.simulation.getCollisions():
+        events.append({
+            "type": "collision",
+            "text": collision.collider + " vs " + collision.victim,
+            "lane": collision.lane,
+        })
+    for veh_id in libsumo.simulation.getStartingTeleportIDList():
+        events.append({"type": "teleport", "text": veh_id})
+    for veh_id in libsumo.simulation.getEmergencyStoppingVehiclesIDList():
+        events.append({"type": "emergency", "text": veh_id})
+    return events
+
+
+def get_inspect_state(selection):
+    """Returns the details of the element selected in the viewer
+
+    The field names follow the WebSUMO protocol. A "gone" marker is
+    returned if the selected element is no longer in the simulation.
+    """
+    try:
+        if selection["kind"] == "vehicle":
+            return get_vehicle_details(selection["id"])
+        if selection["kind"] == "tls":
+            return get_traffic_light_details(selection["id"])
+    except Exception:
+        pass
+    return {"kind": selection.get("kind"),
+            "id": selection.get("id"),
+            "gone": True}
+
+
+def get_vehicle_details(veh_id):
+    """Returns the inspection details of one vehicle"""
+    vehicle = libsumo.vehicle
+    leader = vehicle.getLeader(veh_id)
+    next_tls = vehicle.getNextTLS(veh_id)
+    return {
+        "kind": "vehicle",
+        "id": veh_id,
+        "type": vehicle.getTypeID(veh_id),
+        "vclass": vehicle.getVehicleClass(veh_id),
+        "speed": round(vehicle.getSpeed(veh_id), 2),
+        "allowedSpeed": round(vehicle.getAllowedSpeed(veh_id), 2),
+        "accel": round(vehicle.getAcceleration(veh_id), 2),
+        "lane": vehicle.getLaneID(veh_id),
+        "lanePos": round(vehicle.getLanePosition(veh_id), 1),
+        "route": vehicle.getRouteID(veh_id),
+        "routeEdges": list(vehicle.getRoute(veh_id)),
+        "routeIndex": vehicle.getRouteIndex(veh_id),
+        "departure": round(vehicle.getDeparture(veh_id), 1),
+        "departDelay": round(vehicle.getDepartDelay(veh_id), 1),
+        "waiting": round(vehicle.getWaitingTime(veh_id), 1),
+        "accumWaiting": round(vehicle.getAccumulatedWaitingTime(veh_id), 1),
+        "timeLoss": round(vehicle.getTimeLoss(veh_id), 1),
+        "distance": round(vehicle.getDistance(veh_id), 1),
+        "leader": [leader[0], round(leader[1], 1)] if leader else None,
+        "nextTLS": ([next_tls[0][0], round(next_tls[0][2], 1), next_tls[0][3]]
+                    if next_tls else None),
+        "speedFactor": round(vehicle.getSpeedFactor(veh_id), 3),
+        "length": vehicle.getLength(veh_id),
+        "width": vehicle.getWidth(veh_id),
+        "minGap": vehicle.getMinGap(veh_id),
+    }
+
+
+def get_traffic_light_details(tls_id):
+    """Returns the inspection details of one traffic light"""
+    trafficlight = libsumo.trafficlight
+    program = trafficlight.getProgram(tls_id)
+    phases = []
+    for logic in trafficlight.getAllProgramLogics(tls_id):
+        if logic.programID == program:
+            phases = [[phase.duration, phase.state] for phase in logic.phases]
+            break
+    return {
+        "kind": "tls",
+        "id": tls_id,
+        "program": program,
+        "phase": trafficlight.getPhase(tls_id),
+        "state": trafficlight.getRedYellowGreenState(tls_id),
+        "nextSwitch": round(trafficlight.getNextSwitch(tls_id), 1),
+        "spent": round(trafficlight.getSpentDuration(tls_id), 1),
+        "phases": phases,
+    }
 
 
 def scenario_from_sumocfg(sumocfg_file):
