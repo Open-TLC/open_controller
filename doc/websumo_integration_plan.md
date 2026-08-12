@@ -52,6 +52,7 @@ It owns, and is the only place that contains:
 
 - building the state frame from SUMO (vehicles, TLS, detectors)
 - publishing it on `sim.{scenario}.state`
+- answering `sim.{scenario}.net` file requests (gzipped bytes, see step 1)
 - subscribing to `sim.{scenario}.cmd.*` and applying operator commands
 - all subject-name construction for this feature
 
@@ -190,13 +191,38 @@ into those classes.
 needed to render, so phase 1 publishes only `.state`; `.end` when a run
 finishes is a cheap later addition if the viewer should show it.
 
+**The network file travels over NATS too** (protocol addition,
+2026-08-12, on WebSUMO `main`): the viewer holds no scenario files at
+all. The module answers request-reply on `sim.{scenario}.net` with the
+**gzip-compressed** bytes of the net file named in the conf — opaque
+bytes, never parsed by OC; the sumolib→GeoJSON rendering stays on
+WebSUMO's side. JS_266's net is 55 KB gzipped, far under the 1 MB NATS
+payload cap. `sim.{scenario}.detectors` / `.routes` are optional
+equivalents we do **not** serve in phase 1 (see open questions).
+
+Discovery is closed by the same protocol change: a scenario is
+discoverable as soon as `.state` is published (the viewer watches
+`sim.>`), Load fetches the net over NATS, and Start **attaches** to the
+already-running simengine — it never spawns or kills one. No `.sumocfg`,
+no `SCENARIOS_DIR`, no scenario wrapper directory anywhere in OC.
+
 Enabled by one **top-level** conf block in the simengine conf; omit it
 and the feature does not exist (`get_websumo_params()` returns `None`
 and no interface object is ever constructed):
 
 ```json
-"websumo": { "scenario": "js266", "state_rate_hz": 10 }
+"websumo": {
+    "scenario": "js266",
+    "state_rate_hz": 10,
+    "net_file": "models/JS_266_DEMO/net/JS_266-267K.net.xml"
+}
 ```
+
+The net must carry a geo projection — `traci.simulation.convertGeo()`
+(vehicle lon/lat) and the viewer both require it. Verified 2026-08-12:
+`JS_266-267K.net.xml` has a full `<location>` tag (UTM 35 / WGS84).
+Check that tag first when wiring a new model; a purely cartesian net
+cannot be viewed.
 
 ## Step 2 — Operate
 
@@ -239,33 +265,24 @@ is needed**:
       - "8776:8775"
     environment:
       - NATS_URL=nats://nats:4222
-      - SCENARIOS_DIR=/model/websumo
-    volumes:
-      - ./models/JS_266_DEMO:/model
     depends_on:
       - nats
 ```
 
+- **No volumes, no `SCENARIOS_DIR`** — the file-less protocol
+  (2026-08-12) removed the viewer's entire filesystem footprint. The
+  backend runs with an empty scenario directory and fetches the net over
+  NATS. NATS subjects are now the *only* surface between the two
+  systems: nothing shared but the broker.
 - `profiles: ["websumo"]` keeps it separable: a plain
   `docker compose up` starts exactly today's stack;
   `docker compose --profile websumo up` adds the viewer. Removing the
   integration = deleting this one service entry.
-- The whole model directory is mounted (not just the scenario dir) so
-  the scenario's relative references into the model — the net-file
-  symlink in particular — resolve inside the container.
-- The network file is shared, not duplicated: a
-  `models/JS_266_DEMO/websumo/` scenario dir holds a `js266.net.xml`
-  symlink to `../net/JS_266-267K.net.xml`. SUMO loads the net via OC's
-  sumocfg; the viewer reads the same file through the symlink for its
-  map GeoJSON. OC code never parses the XML — vehicle lon/lat comes
-  from `traci.simulation.convertGeo()`, which uses the projection baked
-  into the net. Verified 2026-08-12: `JS_266-267K.net.xml` carries a
-  full geo projection (UTM 35 / WGS84 with `origBoundary`), which both
-  `convertGeo` and the viewer require. A model without one cannot be
-  viewed — check the `<location>` tag first when wiring a new model.
-- **Prerequisite on WebSUMO's `main`: a Dockerfile.** It currently has
-  none — backend + built frontend, exposing 8775, honouring `NATS_URL`
-  and `SCENARIOS_DIR`.
+- **Prerequisite on WebSUMO's `main`: a Dockerfile** (verified still
+  missing 2026-08-12). Their `run.sh` documents the runtime deps:
+  backend needs the SUMO distribution for `sumolib` + binaries (their
+  standalone adapter also uses `libsumo`), frontend is a node build.
+  The image serves both, exposes 8775, honours `NATS_URL`.
 
 **The image keeps `libsumo`/`eclipse-sumo`.** WebSUMO's docs (2026-08-12)
 state that `sumo_adapter.py` remains its *standalone, no-OC simengine* —
@@ -287,19 +304,30 @@ injected, so the module is testable in isolation. That testability is a
 reason for the single-file design, not an afterthought.
 
 Covers: state frame shape and field order against the contract above;
-rounding; empty simulation; command parsing and rejection of unknown
-commands; and that a disabled interface performs no calls at all.
+rounding; empty simulation; the `.net` request-reply (gzipped bytes of
+the conf-named file, request payload ignored); command parsing and
+rejection of unknown commands; and that a disabled interface performs
+no calls at all.
 
 ## Open decisions (not to be settled unilaterally)
 
-1. **Scenario discovery.** `main.py:184` gates the WebSocket on
-   `_is_valid_scenario()`, which requires a `{scenario}.sumocfg` on disk.
-   In OC mode nothing reads that file, but without one the viewer refuses
-   to connect. Keep a stub, or change the predicate? WebSUMO-side call.
+1. ~~**Scenario discovery.**~~ Closed 2026-08-12 by the file-less
+   protocol: publishing `.state` is discovery; no `.sumocfg` needed.
 2. **Build or pull.** Build the websumo image from the repo in compose,
-   or publish an image and pull it?
+   or publish an image and pull it? (Blocked on their Dockerfile either
+   way.)
 3. **Scope of "operate".** Which of pause/resume/speed/scale/spawn are
    actually wanted in phase 1.
+4. **Serving `.detectors` / `.routes`.** Deferred from phase 1 — without
+   them the viewer renders no detector bars and no spawn markers
+   (occupancy and signals are unaffected; they ride the state frame).
+   Serving them later needs one real piece of logic: OC's model splits
+   detectors and routes across several files (`JS_266_e1dets.add.xml` +
+   `JS_267_e1dets.add.xml`; cars/trams/bikes route files), and the
+   protocol wants one document per subject — so a small XML merge, or a
+   conf listing exactly one file per subject. Decide when the features
+   are wanted. Note: if spawn markers stay unserved, dropping the
+   `spawn` command from step 2's scope follows naturally.
 
 ## Agreed on the WebSUMO side
 
@@ -330,10 +358,24 @@ not the code. OC can reimplement the bridge if needed."* simbridge.py is
 the reference implementation to check against — particularly its thread
 facade, when the later `simengine_integrated.py` step needs one.
 
+### Closed by WebSUMO's file-less protocol (2026-08-12)
+
+A later series on their `main` (through `ac115e4`) made NATS-only the
+primary documented mode and closed two of this plan's open items:
+
+- **Static files over NATS**: `sim.{scenario}.net` / `.detectors` /
+  `.routes` request-reply subjects, gzipped replies, empty request
+  payload, timeout ⇒ artifact absent ⇒ render without that overlay.
+  Only `.net` is required. Raw XML travels (not GeoJSON), so OC ships
+  files it already has and WebSUMO owns the rendering.
+- **Scenario discovery**: watching `sim.>` for `.state` — publishing
+  state *is* discovery. `list_scenarios()` = local ∪ live-on-NATS, and
+  Start attaches to an external simengine instead of spawning one.
+- Also fixed there: the lon/lat ordering slip in the protocol's example,
+  and a simbridge stay-alive bug.
+
 ### Still open on the WebSUMO side
 
-- **No Dockerfile on `main`** (verified 2026-08-12) — step 3's
-  prerequisite stands.
-- **Scenario discovery unchanged** — `backend/main.py` still requires a
-  `{scenario}.sumocfg` on disk before it lists a scenario or accepts its
-  WebSocket; the open decision below stands.
+- **No Dockerfile on `main`** (verified again 2026-08-12) — step 3's
+  prerequisite stands; `run.sh` now documents the runtime deps an image
+  needs.
