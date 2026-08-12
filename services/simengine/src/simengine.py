@@ -18,6 +18,7 @@ import json
 from timer import Timer
 from confread import GlobalConf
 from outputs import DetStorage, GroupStorage, RadarStorage
+from websumo_interface import create_websumo_interface
 
 
 SOFTWARE_NAME = "SUMO Simulation enngine"
@@ -185,6 +186,16 @@ class SumoNatsInterface:
         """Runs the system"""
         self.start_sumo()
         await self.connect_nats()
+        # WebSUMO viewer interface: on by default, --nowebsumo turns it
+        # off; settings default from the SUMO config
+        self.websumo = None
+        if not self.config.websumo_disabled():
+            self.websumo = create_websumo_interface(
+                self.config.get_websumo_params(), traci, self.nats,
+                TIMER_PARAMS["time_step"], timer=self.system_timer,
+                sumo_config_path=self.sumo_file)
+        if self.websumo:
+            await self.websumo.start()
         # TODO: Callbacks for control messages to be added here
         # Loop for handling the simulation
         if self.group_input:
@@ -269,10 +280,14 @@ class SumoNatsInterface:
                 # disable right of way check, vehicles can enter the junction, despite queue end
                 traci.vehicle.setSpeedMode(vehicleId,55) 
 
+            if self.websumo:
+                await self.websumo.pause_gate()
             if not self.update_sumo():
                 break
             # This will handle all the data stream from sumo to nats
             await self.send_statuses_to_nats()
+            if self.websumo:
+                await self.websumo.publish_state()
 
             # To sync with realtimer
             self.system_timer.tick()
@@ -560,10 +575,16 @@ def read_command_line():
 
 
     parser.add_argument('--sumo-conf',
-                                help='Sumo model to execute '
-                                    '(default: default.conf)',
-                                required=True)
+                                help='Sumo model to execute; overrides the '
+                                    'sumo_conf value of the conf file',
+                                required=False)
 
+
+    parser.add_argument('--nowebsumo',
+                                help='If set, runs without the WebSUMO '
+                                    'browser viewer',
+                                action='store_true',
+                                required=False)
 
     parser.add_argument('--print-status',
                                 help='If set, prints status info in every update',

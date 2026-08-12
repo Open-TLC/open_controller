@@ -1,0 +1,95 @@
+# WebSUMO viewer stack: the current docker demo model (testmodel/JS270)
+# with the browser viewer on top. Self-contained and separate from the
+# default docker-compose.yaml, which stays untouched.
+#
+#   docker compose -f docker-compose.websumo.yaml up --build
+#   -> viewer at http://localhost:8776  (scenario js270 appears via NATS
+#      discovery once the simengine publishes; Load fetches the network
+#      over NATS - no scenario files on the viewer side)
+#
+# NATS: this file names the broker service exactly as the default stack
+# does, so within the same compose project an already-running nats is
+# reused; otherwise it is started.
+#
+# Everything (network file included) flows over NATS subjects
+# (sim.js270.*) - see doc/websumo_integration_plan.md and WebSUMO's
+# docs/SIM_PROTOCOL.md.
+
+services:
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"
+
+  # OC's simengine running the demo model, with the websumo block in its
+  # conf: publishes sim.js270.state and serves sim.js270.net.
+  simengine-websumo:
+    image: simengine-runner
+    container_name: oc_simengine_websumo_container
+    build:
+      context: .
+      dockerfile: services/simengine/docker/Dockerfile
+    entrypoint: ["python", "services/simengine/src/simengine.py",
+                 "--nats-server", "nats",
+                 "--conf", "models/testmodel/simsource_websumo.json",
+                 "--sumo-conf", "models/testmodel/JS270_med_traffic.sumocfg"]
+    depends_on:
+      - nats
+
+  # OC control engine, exactly as the default stack runs it (same image,
+  # same conf; clockwork's default NATS host is already "nats").
+  controller-websumo:
+    image: controller-runner
+    container_name: oc_controller_websumo_container
+    build:
+      context: .
+      dockerfile: services/control_engine/docker/Dockerfile
+    entrypoint: ["python", "services/control_engine/src/clockwork.py",
+                 "--conf-file=models/testmodel/oc_demo_full_features.json"]
+    depends_on:
+      - nats
+
+  # The browser viewer, built straight from the public websumo repo.
+  # Their main has no Dockerfile yet, so the (OC-tailored) build recipe
+  # lives here - which we likely want long-term anyway, as this
+  # container is expected to grow into the wider controller UI.
+  # File-less: no volumes; SCENARIOS_DIR stays empty in the image.
+  websumo:
+    image: websumo
+    container_name: oc_websumo_container
+    ports:
+      - "8776:8775"
+    environment:
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      - nats
+    build:
+      context: https://github.com/Open-TLC/websumo.git
+      dockerfile_inline: |
+        FROM node:22-slim AS frontend
+        WORKDIR /build
+        COPY frontend/package.json frontend/package-lock.json ./
+        RUN npm ci
+        COPY frontend/ ./
+        RUN npm run build
+
+        # python:3.14 matches the sumo-tools path expected by the backend
+        FROM python:3.14-slim
+        WORKDIR /app/backend
+        # libsumo's native extension links against X11/GL even headless;
+        # main.py shells out to pgrep (procps) for adapter cleanup
+        RUN apt-get update && apt-get install -y --no-install-recommends \
+                libx11-6 libxext6 libxrender1 libxcursor1 libxft2 \
+                libxinerama1 libgl1 libglu1-mesa libatomic1 procps \
+            && rm -rf /var/lib/apt/lists/*
+        COPY backend/requirements.txt .
+        # eclipse-sumo provides the sumo binary and the tools tree
+        # (sumolib) the network renderer imports; pyproj is sumolib's
+        # undeclared runtime dep for convertXY2LonLat (missing from
+        # websumo's requirements.txt as of 2026-08-12)
+        RUN pip install --no-cache-dir -r requirements.txt eclipse-sumo==1.27.0 pyproj
+        COPY backend/ .
+        COPY --from=frontend /build/dist /app/frontend/dist
+        ENV SCENARIOS_DIR=/scenarios
+        EXPOSE 8775
+        CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8775"]

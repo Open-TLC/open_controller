@@ -77,6 +77,26 @@ class GlobalConf:
             required=False,
         )
 
+        parser.add_argument(
+            "--nowebsumo",
+            help="If set, runs without the WebSUMO browser viewer",
+            action="store_true",
+            required=False,
+        )
+
+        parser.add_argument(
+            "--nats-server",
+            help="NATS server address for the WebSUMO viewer "
+            "(default: localhost)",
+            required=False,
+        )
+
+        parser.add_argument(
+            "--nats-port",
+            help="NATS server port for the WebSUMO viewer (default: 4222)",
+            required=False,
+        )
+
         args = parser.parse_args()
 
         return vars(args)
