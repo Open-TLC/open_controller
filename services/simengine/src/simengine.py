@@ -569,9 +569,9 @@ def read_command_line():
 
 
     parser.add_argument('--sumo-conf',
-                                help='Sumo model to execute '
-                                    '(default: default.conf)',
-                                required=True)
+                                help='Sumo model to execute; overrides the '
+                                    'sumo_conf value of the conf file',
+                                required=False)
 
 
     parser.add_argument('--print-status',
