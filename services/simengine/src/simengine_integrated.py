@@ -165,6 +165,28 @@ def run_sumo():
 
     print(system_timer.steps, real_time, next_update_time, sleep_count)
 
+    # Optional WebSUMO browser viewer: same interface as the distributed
+    # engine uses, driven from this synchronous loop by running its
+    # coroutines to completion. Off unless the conf has a websumo block.
+    websumo = None
+    websumo_loop = None
+    if sys_cnf.get("websumo"):
+        import asyncio
+
+        import nats
+
+        from .websumo_interface import create_websumo_interface
+
+        nats_cnf = sys_cnf.get("nats", {})
+        websumo_loop = asyncio.new_event_loop()
+        nats_client = websumo_loop.run_until_complete(
+            nats.connect("nats://{}:{}".format(nats_cnf.get("server", "localhost"),
+                                               nats_cnf.get("port", 4222)))
+        )
+        websumo = create_websumo_interface(sys_cnf["websumo"], traci,
+                                           nats_client, time_step, system_timer)
+        websumo_loop.run_until_complete(websumo.start())
+
     # traci.vehicle.setLaneChangeMode(vehicleId,256) # Disable lane changing except from Traci
 
     #######SIMULATION STARTS################################################
@@ -279,6 +301,16 @@ def run_sumo():
             except traci.exceptions.FatalTraCIError:
                 print("Fatal error in sumo, exiting")
                 break
+
+            if websumo:
+                websumo_loop.run_until_complete(websumo.publish_state())
+                if websumo.paused:
+                    websumo_loop.run_until_complete(websumo.pause_gate())
+                    # Paused wall-clock time is not simulation time, so
+                    # restart the pacing from now (sleep_tick refreshes
+                    # real_seconds, which is only recomputed on a tick)
+                    system_timer.sleep_tick()
+                    next_update_time = system_timer.real_seconds
 
             # print(system_timer.steps, '%.3f' % real_time, '%.3f' % next_update_time, sleep_count, '%.3f' % last_print )
 
