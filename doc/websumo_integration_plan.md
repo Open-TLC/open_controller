@@ -130,6 +130,10 @@ reaching into those classes.
 **No WebSUMO code change in this step** — `main.py` already subscribes to
 `sim.{scenario}.state` and relays it to the browser.
 
+`main.py` also subscribes to `sim.{scenario}.log` and `.end`. Neither is
+needed to render, so phase 1 publishes only `.state`; `.end` when a run
+finishes is a cheap later addition if the viewer should show it.
+
 Enabled by one conf block; omit it and the feature does not exist:
 
 ```json
@@ -156,9 +160,15 @@ independently useful and must not be held up by it.
 
 WebSUMO's `main` currently has **no Dockerfile**. Needs one for backend +
 built frontend, and a `websumo` service in OC's compose with `NATS_URL`
-and a scenario directory mounted. In OC mode the adapter never runs, so
-the image needs no `libsumo`/`eclipse-sumo` — only `sumolib` for the map
-GeoJSON.
+and a scenario directory mounted.
+
+**The image keeps `libsumo`/`eclipse-sumo`.** WebSUMO's docs (2026-08-12)
+state that `sumo_adapter.py` remains its *standalone, no-OC simengine* —
+so the simulator must stay installed for WebSUMO to run without us.
+Integrated mode simply never starts the adapter; it is a runtime mode,
+not a build-time removal. Stripping the simulator from the image would
+break WebSUMO's standalone capability, which is the exact risk its
+Option 3 write-up warns about.
 
 OC's existing `nats` service is the only broker. No leaf nodes, no
 subject bridging: `NATS_TOPOLOGY_RESEARCH.md` recommends leaf nodes for
@@ -186,11 +196,21 @@ commands; and that a disabled interface performs no calls at all.
 3. **Scope of "operate".** Which of pause/resume/speed/scale/spawn are
    actually wanted in phase 1.
 
-## Required on the WebSUMO side (their repo, their commits)
+## Agreed on the WebSUMO side
 
-`TODO.md` item 1 and README's *"Planned (for Open Controller
-integration)"* currently document **Option 2** — the adapter as a
-drop-in replacement for OC's `simengine_integrated.py`, republishing
-`detector.control.*` and applying `group.control.*`. That is the
-opposite of this plan. Until it is corrected, work in that repo will
-rebuild the wrong integration and be right to, by its own docs.
+Confirmed 2026-08-12 in WebSUMO commit `4965e39`, which sets the same
+direction in their repo:
+
+- `docs/INTEGRATION_ROADMAP.md` — *"Decision (2026-08-12): Option 3. OC's
+  simengine owns the simulation and publishes `sim.{scenario}.state`;
+  WebSUMO subscribes and renders, and does not run SUMO in integrated
+  mode."* Options 2 and 4, and the `detector.control.*` /
+  `group.control.*` bridge, are recorded as not planned.
+- `TODO.md` item 1 and the README section now say the same, and state
+  that OC keeps its detector and signal subjects to itself.
+- Their step 4 is *"OC publishes `sim.{scenario}.state`; WebSUMO renders
+  it"*, marked **OC-side work** — i.e. this document.
+
+Both repos now describe one architecture. The remaining WebSUMO-side work
+is the Dockerfile and the integrated mode that skips starting the adapter
+(steps 2–3 above).
