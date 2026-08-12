@@ -88,6 +88,7 @@ class SumoNatsInterface:
         # The command line params are set here
         command_line_params = read_command_line()
         self.config = GlobalConf(command_line_params=command_line_params, conf=command_line_params.conf)
+        self.nowebsumo = command_line_params.nowebsumo
 
         # After this all the configuration is in the self.config"
         self.nats_server = self.config.get_nats_params()
@@ -178,7 +179,8 @@ class SumoNatsInterface:
         self.start_sumo()
         # WebSUMO viewer interface: publishes the simulation state so it
         # can be viewed with WebSUMO (no-op if there is no NATS server)
-        self.websumo = WebsumoInterface(self.sumo_file, self.nats_server)
+        self.websumo = WebsumoInterface(self.sumo_file, self.nats_server,
+                                        enabled=not self.nowebsumo)
         await self.connect_nats()
         # TODO: Callbacks for control messages to be added here
         # Loop for handling the simulation
@@ -591,6 +593,11 @@ def read_command_line():
     parser.add_argument('--use-group-status',
                                 help='If set, we update the groups in the simulation with status messages'
                                     'If not set we use control messages',
+                                action='store_true',
+                                required=False)
+
+    parser.add_argument('--nowebsumo',
+                                help='If set, the WebSUMO viewer interface is not started',
                                 action='store_true',
                                 required=False)
 

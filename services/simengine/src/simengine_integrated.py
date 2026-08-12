@@ -21,7 +21,7 @@ import libsumo as traci
 
 from confread_ms import GlobalConf
 from timer import Timer
-from websumo_interface import WebsumoInterface
+from websumo_interface import WebsumoInterface, nats_conf_from_sys_conf
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
@@ -128,7 +128,11 @@ def run_sumo():
 
     # WebSUMO viewer interface: publishes the simulation state so it
     # can be viewed with WebSUMO (no-op if there is no NATS server)
-    websumo = WebsumoInterface(sumo_file, sys_cnf.get("nats"))
+    websumo = WebsumoInterface(
+        sumo_file,
+        nats_conf_from_sys_conf(sys_cnf),
+        enabled=not sys_cnf["sumo"].get("nowebsumo", False),
+    )
 
     sumo_to_e1dets = get_e1det_mapping(e1dets)
     print("sumo to e1 dets: ")

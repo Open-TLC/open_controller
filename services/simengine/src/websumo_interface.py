@@ -57,7 +57,7 @@ E1_DETECTOR_TAGS = ("e1Detector", "inductionLoop")
 class WebsumoInterface:
     """Publishes the simulation state of one scenario to NATS"""
 
-    def __init__(self, sumocfg_file, nats_conf=None):
+    def __init__(self, sumocfg_file, nats_conf=None, enabled=True):
         """Connects to NATS and starts serving the scenario files
 
         sumocfg_file: path of the sumocfg the engine is running, used
@@ -66,11 +66,16 @@ class WebsumoInterface:
             "server" (or "ip") and "port" keys as used in the conf
             files, or an "ip:port" string as returned by
             GlobalConf.get_nats_params(). Defaults to localhost:4222.
+        enabled: False (the --nowebsumo param) makes every operation
+            a no-op without touching NATS at all
         """
+        self.connected = False
+        if not enabled:
+            print("WebSUMO interface off (--nowebsumo)")
+            return
         # A CRLF-mangled entrypoint script (Windows checkout) passes the
         # path with a trailing carriage return; sumo trims it, we must too
         sumocfg_file = sumocfg_file.strip()
-        self.connected = False
         self.scenario = scenario_from_sumocfg(sumocfg_file)
         self._subject_prefix = "sim." + self.scenario
         self._nats_url = nats_url(nats_conf)
@@ -400,6 +405,22 @@ def input_files_from_sumocfg(sumocfg_file, tag):
     base_dir = os.path.dirname(sumocfg_file)
     return [os.path.join(base_dir, name.strip())
             for name in value.split(",") if name.strip()]
+
+
+def nats_conf_from_sys_conf(sys_cnf):
+    """Returns the nats parameters for the interface from the conf
+
+    The conf file's "nats" section, overridden by the --nats-server and
+    --nats-port command line params (which the integrated conf reader
+    merges into the "sumo" section).
+    """
+    nats_conf = dict(sys_cnf.get("nats") or {})
+    sumo_params = sys_cnf.get("sumo") or {}
+    if sumo_params.get("nats_server"):
+        nats_conf["server"] = sumo_params["nats_server"]
+    if sumo_params.get("nats_port"):
+        nats_conf["port"] = sumo_params["nats_port"]
+    return nats_conf
 
 
 def nats_url(nats_conf):
