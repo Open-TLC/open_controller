@@ -184,6 +184,15 @@ Everything needed is already read from SUMO elsewhere in simengine
 `DetStorage`); the new module reads it directly rather than reaching
 into those classes.
 
+Performance note (pre-implementation review, 2026-08-12): `simengine.py`
+binds SUMO over socket TraCI, so the frame's ~6 calls per vehicle per
+frame are network round-trips at 10 Hz. Precedent says this is
+acceptable — the run loop already iterates every vehicle every step
+(`setSpeedMode`), and the radar output makes the same per-vehicle calls
+— so the module starts with plain calls per principle 3. If it ever
+measures slow, TraCI value subscriptions are the known fallback; do not
+build them speculatively.
+
 **No WebSUMO code change in this step** — `main.py` already subscribes to
 `sim.{scenario}.state` and relays it to the browser.
 
