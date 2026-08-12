@@ -35,21 +35,3 @@ services:
     build:
       context: .
       dockerfile: services/simengine/docker/Dockerfile
-
-  # --- WebSUMO: browser viewer for the OC simulation (opt-in) ---
-  # Off by default; start with: docker compose --profile websumo up
-  # File-less: everything (network file included) arrives over NATS from
-  # OC's simengine, so no volumes. See doc/websumo_integration_plan.md
-  # and WebSUMO's docs/SIM_PROTOCOL.md.
-  websumo:
-    image: websumo
-    container_name: oc_websumo_container
-    profiles: ["websumo"]
-    build:
-      context: https://github.com/Open-TLC/websumo.git   # pin a tag when one exists
-    ports:
-      - "8776:8775"
-    environment:
-      - NATS_URL=nats://nats:4222
-    depends_on:
-      - nats

@@ -257,41 +257,43 @@ independently useful and must not be held up by it.
 
 ## Step 3 — Docker
 
-Same procedure as OC's own services — one `build:` service entry in
-`docker-compose.yaml` — except the build context is the public WebSUMO
-repo instead of a local Dockerfile path, so **no local websumo checkout
-is needed**:
+**Implemented and verified 2026-08-12** as a dedicated compose file,
+`docker-compose.websumo.yaml` — the default `docker-compose.yaml` is
+untouched (byte-identical to `main`). Four services:
 
-```yaml
-  websumo:
-    image: websumo
-    container_name: oc_websumo_container
-    profiles: ["websumo"]          # off by default; principle 1 applies
-                                   # to deployment too
-    build:
-      context: https://github.com/Open-TLC/websumo.git   # pin a tag when one exists
-    ports:
-      - "8776:8775"
-    environment:
-      - NATS_URL=nats://nats:4222
-    depends_on:
-      - nats
-```
+- `nats` — declared exactly as in the default stack, so within the same
+  compose project an already-running broker is **reused**, otherwise
+  started.
+- `simengine-websumo` — the same `simengine-runner` image running the
+  same demo model as the default stack (testmodel/JS270), with the
+  websumo block via `models/testmodel/simsource_websumo.json`
+  (scenario `js270`; the JS270 net carries the required geo
+  projection).
+- `controller-websumo` — the same `controller-runner` image and conf
+  (`oc_demo_full_features.json`) as the default stack.
+- `websumo` — built straight from the public websumo repo URL, viewer
+  on **:8776**. Their `main` has no Dockerfile, so the OC-tailored
+  recipe lives in the compose file (`dockerfile_inline`) — which we
+  want long-term anyway, since this container is expected to grow into
+  the wider controller UI. No volumes: the viewer is fully file-less
+  over NATS.
 
-- **No volumes, no `SCENARIOS_DIR`** — the file-less protocol
-  (2026-08-12) removed the viewer's entire filesystem footprint. The
-  backend runs with an empty scenario directory and fetches the net over
-  NATS. NATS subjects are now the *only* surface between the two
-  systems: nothing shared but the broker.
-- `profiles: ["websumo"]` keeps it separable: a plain
-  `docker compose up` starts exactly today's stack;
-  `docker compose --profile websumo up` adds the viewer. Removing the
-  integration = deleting this one service entry.
-- **Prerequisite on WebSUMO's `main`: a Dockerfile** (verified still
-  missing 2026-08-12). Their `run.sh` documents the runtime deps:
-  backend needs the SUMO distribution for `sumolib` + binaries (their
-  standalone adapter also uses `libsumo`), frontend is a node build.
-  The image serves both, exposes 8775, honours `NATS_URL`.
+Run: `docker compose -f docker-compose.websumo.yaml up --build`, then
+open `http://localhost:8776`.
+
+Verified end-to-end against the running stack: scenario `js270`
+discovered by the viewer purely over NATS; `/api/network/js270` renders
+the full GeoJSON from the NATS-fetched net (lanes, junctions,
+crossings, stop lines); state frames at 10 Hz; junction 270's signals
+cycling under clockwork (junction 269 static — the demo conf controls
+270 only, same single-controller behaviour as the default stack).
+
+Found while verifying, fixed in our image recipe: **`pyproj` is an
+undeclared runtime dependency** of sumolib's `convertXY2LonLat` —
+missing from websumo's `requirements.txt` (as of 2026-08-12), so the
+network endpoint 500s without it. Our `dockerfile_inline` installs it
+explicitly; their requirements.txt should eventually declare it
+(their-side fix).
 
 **The image keeps `libsumo`/`eclipse-sumo`.** WebSUMO's docs (2026-08-12)
 state that `sumo_adapter.py` remains its *standalone, no-OC simengine* —
