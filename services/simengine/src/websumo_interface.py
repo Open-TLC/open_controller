@@ -38,19 +38,112 @@ broker, and works with both of OC's SUMO bindings (TraCI and libsumo).
 import asyncio
 import gzip
 import json
+import os
+import xml.etree.ElementTree
 
 PROTOCOL_VERSION = 1
 
 
-def create_websumo_interface(conf, traci_mod, nats_client, step_length=0.1,
-                             timer=None):
-    """Factory for the engine call site: returns a WebsumoInterface, or
-    None when conf is None (the feature is off unless the simengine conf
-    has a "websumo" block). `timer` is the engine's system Timer; it is
-    resynced after a pause so the simulation does not fast-forward."""
-    if not conf:
+DEFAULT_STATE_RATE_HZ = 10
+
+
+def defaults_from_sumo_config(sumo_config_path):
+    """Viewer settings derived from the SUMO config, so no websumo conf
+    block is needed for the common case: the scenario is named after the
+    sumocfg and the network file is the one that sumocfg loads.
+
+    Returns None if the network cannot be resolved (nothing to render).
+    """
+    config_dir = os.path.dirname(os.path.abspath(sumo_config_path))
+    scenario = os.path.splitext(os.path.basename(sumo_config_path))[0]
+
+    net_file = None
+    try:
+        root = xml.etree.ElementTree.parse(sumo_config_path).getroot()
+        for element in root.iter("net-file"):
+            value = element.get("value") or element.get("v")
+            if value:
+                net_file = os.path.normpath(
+                    os.path.join(config_dir, value.strip()))
+                break
+    except (OSError, xml.etree.ElementTree.ParseError) as error:
+        print("WebSUMO interface: cannot read", sumo_config_path, "-", error)
         return None
-    return WebsumoInterface(conf, traci_mod, nats_client, step_length, timer)
+
+    if not net_file or not os.path.isfile(net_file):
+        print("WebSUMO interface: no net-file found in", sumo_config_path)
+        return None
+
+    return {"scenario": scenario,
+            "state_rate_hz": DEFAULT_STATE_RATE_HZ,
+            "net_file": net_file}
+
+
+def create_websumo_interface(conf, traci_mod, nats_client, step_length=0.1,
+                             timer=None, sumo_config_path=None):
+    """Factory for the engine call site: returns a WebsumoInterface, or
+    None when the feature cannot be set up.
+
+    `conf` is the optional "websumo" conf block; any value it omits is
+    filled from the SUMO config at `sumo_config_path`, so passing no
+    block at all still works. `timer` is the engine's system Timer; it
+    is resynced after a pause so the simulation does not fast-forward.
+    """
+    if conf is None and sumo_config_path is None:
+        return None
+
+    settings = {}
+    if sumo_config_path:
+        settings = defaults_from_sumo_config(sumo_config_path) or {}
+    settings.update(conf or {})
+
+    if not settings.get("net_file") or not settings.get("scenario"):
+        print("WebSUMO interface: not enough settings to start "
+              "(need scenario and net_file); viewer disabled")
+        return None
+
+    return WebsumoInterface(settings, traci_mod, nats_client, step_length,
+                            timer)
+
+
+def start_for_sync_engine(conf, traci_mod, nats_url, step_length=0.1,
+                          timer=None, sumo_config_path=None,
+                          connect_timeout=5.0):
+    """Sets the viewer up for an engine with no asyncio of its own
+    (simengine_integrated.py): connects, subscribes, and returns
+    (interface, event_loop). The engine drives the interface by running
+    its coroutines to completion on that loop.
+
+    Returns (None, None) if the broker is unreachable or the settings do
+    not resolve - the simulation then runs exactly as it would without
+    the viewer, which is why a missing NATS is a warning, not an error.
+    """
+    import nats
+
+    loop = asyncio.new_event_loop()
+    try:
+        # Bounded: nats-py retries a missing broker for minutes, and the
+        # simulation should not wait on an optional viewer
+        nats_client = loop.run_until_complete(
+            asyncio.wait_for(nats.connect(nats_url, max_reconnect_attempts=1),
+                             timeout=connect_timeout))
+    except Exception as error:  # noqa: BLE001 - viewer is optional
+        print("WebSUMO interface: no NATS at {} ({}: {}); "
+              "running without the viewer"
+              .format(nats_url, type(error).__name__, error))
+        loop.close()
+        return None, None
+
+    interface = create_websumo_interface(conf, traci_mod, nats_client,
+                                         step_length, timer,
+                                         sumo_config_path)
+    if not interface:
+        loop.run_until_complete(nats_client.close())
+        loop.close()
+        return None, None
+
+    loop.run_until_complete(interface.start())
+    return interface, loop
 
 
 class WebsumoInterface:
@@ -74,7 +167,7 @@ class WebsumoInterface:
             self.net_gzipped = gzip.compress(net_file.read())
 
         # Publish every Nth step so the wire rate matches state_rate_hz
-        rate_hz = conf.get("state_rate_hz", 10)
+        rate_hz = conf.get("state_rate_hz", DEFAULT_STATE_RATE_HZ)
         steps_per_second = 1.0 / step_length
         self.publish_every = max(1, round(steps_per_second / rate_hz))
         self.step_count = 0

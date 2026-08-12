@@ -28,6 +28,7 @@ else:
 
 from .confread_ms import GlobalConf
 from .timer import Timer
+from .websumo_interface import start_for_sync_engine
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
@@ -165,27 +166,23 @@ def run_sumo():
 
     print(system_timer.steps, real_time, next_update_time, sleep_count)
 
-    # Optional WebSUMO browser viewer: same interface as the distributed
-    # engine uses, driven from this synchronous loop by running its
-    # coroutines to completion. Off unless the conf has a websumo block.
+    # WebSUMO browser viewer: on by default, disabled with --nowebsumo.
+    # Settings default from the SUMO config, so no conf block is needed.
+    # If no broker answers, we warn and simulate without the viewer.
     websumo = None
     websumo_loop = None
-    if sys_cnf.get("websumo"):
-        import asyncio
-
-        import nats
-
-        from .websumo_interface import create_websumo_interface
-
+    # Command-line options land in the "sumo" section (see confread_ms),
+    # conf-file values are top level; the command line wins
+    sumo_cnf = sys_cnf["sumo"]
+    if not sumo_cnf.get("nowebsumo") and not sys_cnf.get("nowebsumo"):
         nats_cnf = sys_cnf.get("nats", {})
-        websumo_loop = asyncio.new_event_loop()
-        nats_client = websumo_loop.run_until_complete(
-            nats.connect("nats://{}:{}".format(nats_cnf.get("server", "localhost"),
-                                               nats_cnf.get("port", 4222)))
-        )
-        websumo = create_websumo_interface(sys_cnf["websumo"], traci,
-                                           nats_client, time_step, system_timer)
-        websumo_loop.run_until_complete(websumo.start())
+        nats_server = sumo_cnf.get("nats_server") or nats_cnf.get("server",
+                                                                 "localhost")
+        nats_port = sumo_cnf.get("nats_port") or nats_cnf.get("port", 4222)
+        websumo, websumo_loop = start_for_sync_engine(
+            sys_cnf.get("websumo"), traci,
+            "nats://{}:{}".format(nats_server, nats_port),
+            time_step, system_timer, sumo_config_path=sumo_file)
 
     # traci.vehicle.setLaneChangeMode(vehicleId,256) # Disable lane changing except from Traci
 

@@ -186,10 +186,14 @@ class SumoNatsInterface:
         """Runs the system"""
         self.start_sumo()
         await self.connect_nats()
-        # WebSUMO viewer interface; None unless the conf has a websumo block
-        self.websumo = create_websumo_interface(
-            self.config.get_websumo_params(), traci, self.nats,
-            TIMER_PARAMS["time_step"], timer=self.system_timer)
+        # WebSUMO viewer interface: on by default, --nowebsumo turns it
+        # off; settings default from the SUMO config
+        self.websumo = None
+        if not self.config.websumo_disabled():
+            self.websumo = create_websumo_interface(
+                self.config.get_websumo_params(), traci, self.nats,
+                TIMER_PARAMS["time_step"], timer=self.system_timer,
+                sumo_config_path=self.sumo_file)
         if self.websumo:
             await self.websumo.start()
         # TODO: Callbacks for control messages to be added here
@@ -575,6 +579,12 @@ def read_command_line():
                                     'sumo_conf value of the conf file',
                                 required=False)
 
+
+    parser.add_argument('--nowebsumo',
+                                help='If set, runs without the WebSUMO '
+                                    'browser viewer',
+                                action='store_true',
+                                required=False)
 
     parser.add_argument('--print-status',
                                 help='If set, prints status info in every update',

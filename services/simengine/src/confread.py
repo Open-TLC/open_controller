@@ -173,6 +173,9 @@ class GlobalConf:
         if command_line_params.sumo_conf:
             self.conf['simulation']['sumo_conf'] = command_line_params.sumo_conf
 
+        if getattr(command_line_params, 'nowebsumo', False):
+            self.conf['simulation']['nowebsumo'] = True
+
     
 
     def get_nats_params(self):
@@ -194,6 +197,10 @@ class GlobalConf:
     def get_websumo_params(self):
         """Returns the websumo viewer conf block, None if not configured"""
         return self.conf.get('websumo')
+
+    def websumo_disabled(self):
+        """Returns true if the websumo viewer is switched off (--nowebsumo)"""
+        return self.conf['simulation'].get('nowebsumo', False)
 
     
     def graph_mode(self):
