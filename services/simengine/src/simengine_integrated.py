@@ -206,6 +206,15 @@ def run_sumo(conf_filename=None, runlog=None):
 
                 traffic_controller = PhaseRingController(controller_cnf, system_timer)
 
+                # We override the outputs if given in conf
+                # if 'group_outputs' in controller_params:
+                if 'group_outputs' in sys_cnf['controller']:   # DBIK20260812 Override sumo outputs
+                    sumo_outputs = sys_cnf['controller']['group_outputs']
+                    controllers_dict[key]['controller'].set_sumo_outputs(sumo_outputs)
+                    print("We override the sumo outputs from conf with:", sumo_outputs)
+                    print("******")
+
+
 
             e1dets += controllers_dict[key]['controller'].req_dets 
             print("dets: ", e1dets)
