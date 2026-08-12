@@ -317,22 +317,26 @@ no calls at all.
    builds the image straight from the public websumo repo (the
    `context:` URL in step 3). If websumo later ships its own image we
    may still keep building — an OC-tailored Dockerfile is likely wanted
-   anyway. Prerequisite unchanged: a Dockerfile on their `main`.
-3. **Scope of "operate" — which commands OC honours.** The safety split
-   found in review: OC's phase-1 engine is `simengine.py` in
-   distributed mode, where **clockwork is a separate process synced to
-   wall-clock time and does not hear `sim.cmd.*`**. Commands that bend
-   simulation time therefore desynchronize control from simulation:
-   `pause`/`resume` (sim freezes, clockwork keeps cycling; OC's timer
-   then tries to catch up) and `speed` (sim at 2×, signals still at
-   1×). Commands that leave time alone are safe: `scale` (one
-   `setScale` call — changes demand, not timing), `select` (read-only
-   inspection), `spawn` (single injection; needs `.routes` served
-   before the UI can offer it). Recommendation: phase 1 view-only;
-   then `scale` + `select`; time-bending commands only in integrated
-   mode (`simengine_integrated.py`, where controllers share the
-   process and its timer, so pausing pauses both coherently) or after
-   deciding clockwork should follow them.
+   anyway, because this container is expected to grow into the wider
+   **controller UI**: the viewer is its first piece, and future OC-side
+   UI parts may ship in the same image. Owning the build keeps that
+   path open. Prerequisite unchanged: a Dockerfile on their `main`.
+3. ~~**Scope of "operate".**~~ **Decided (2026-08-12): simulation only
+   for now.** Phase 1 is view-only; the commands OC may honour are the
+   ones that leave time alone — `scale` (one `setScale` call — changes
+   demand, not timing) and `select` (read-only inspection). The
+   time-bending commands are out of scope, TODO below.
+
+   **TODO (future, controller side): pause/resume/stop/speed in
+   clockwork.** In distributed mode clockwork is a separate process
+   synced to wall-clock time and deaf to `sim.cmd.*`, so bending
+   simulation time desynchronizes control from simulation (sim frozen
+   while signals keep cycling; sim at 2× against 1× signals). Handling
+   these properly means the *controller* following them too — which
+   belongs to a **bigger controller-UI effort** this viewer is likely
+   the first piece of, not to this integration. Until then the viewer's
+   pause/speed buttons act only on WebSUMO's own standalone adapter,
+   never on an OC-driven simulation.
 4. **Serving `.detectors` / `.routes`.** Deferred from phase 1 — without
    them the viewer renders no detector bars and no spawn markers
    (occupancy and signals are unaffected; they ride the state frame).
@@ -352,6 +356,8 @@ no calls at all.
      merging (our side).
    Decide both when the features are wanted; if spawn markers stay
    unserved, dropping `spawn` from step 2 follows naturally.
+   *Status: Kari double-checking these findings before implementation;
+   deferred from phase 1 either way.*
 
 ## Agreed on the WebSUMO side
 
