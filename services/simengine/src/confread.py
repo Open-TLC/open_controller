@@ -139,6 +139,10 @@ class GlobalConf:
         if 'inputs' in config_from_file:
             if 'sig_inputs' in config_from_file['inputs']:
                 self.conf['inputs']['sig_inputs'] = config_from_file['inputs']['sig_inputs']
+        # websumo viewer interface, passed through as-is
+        # (see doc/websumo_integration_plan.md)
+        if 'websumo' in config_from_file:
+            self.conf['websumo'] = config_from_file['websumo']
 
 
     def set_rad_outputs(self, rad_config):
@@ -186,6 +190,10 @@ class GlobalConf:
     def get_input_params(self):
         """Returns inputs sections"""
         return self.conf['inputs']
+
+    def get_websumo_params(self):
+        """Returns the websumo viewer conf block, None if not configured"""
+        return self.conf.get('websumo')
 
     
     def graph_mode(self):

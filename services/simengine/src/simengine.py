@@ -18,6 +18,7 @@ import json
 from timer import Timer
 from confread import GlobalConf
 from outputs import DetStorage, GroupStorage, RadarStorage
+from websumo_interface import create_websumo_interface
 
 
 SOFTWARE_NAME = "SUMO Simulation enngine"
@@ -185,6 +186,12 @@ class SumoNatsInterface:
         """Runs the system"""
         self.start_sumo()
         await self.connect_nats()
+        # WebSUMO viewer interface; None unless the conf has a websumo block
+        self.websumo = create_websumo_interface(
+            self.config.get_websumo_params(), traci, self.nats,
+            TIMER_PARAMS["time_step"])
+        if self.websumo:
+            await self.websumo.start()
         # TODO: Callbacks for control messages to be added here
         # Loop for handling the simulation
         if self.group_input:
@@ -273,6 +280,8 @@ class SumoNatsInterface:
                 break
             # This will handle all the data stream from sumo to nats
             await self.send_statuses_to_nats()
+            if self.websumo:
+                await self.websumo.publish_state()
 
             # To sync with realtimer
             self.system_timer.tick()
