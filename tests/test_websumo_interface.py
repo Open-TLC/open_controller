@@ -6,6 +6,7 @@ canned simulation state, FakeNats records what would go on the wire.
 The frame assertions follow WebSUMO's SIM_PROTOCOL.md (version 1).
 """
 
+import asyncio
 import gzip
 import json
 import os
@@ -342,13 +343,41 @@ class TestWebsumoInterface(unittest.IsolatedAsyncioTestCase):
         await interface.handle_command(cmd_msg("scale", {"v": 99.0}))
         self.assertEqual(traci.simulation.scale, 5.0)
 
-    async def test_time_bending_and_unknown_commands_ignored(self):
+    async def test_stop_speed_and_unknown_commands_ignored(self):
         traci = FakeTraci()
         interface, nats = self.make_started(traci)
-        for command in ("pause", "resume", "stop", "speed", "bogus"):
+        for command in ("stop", "speed", "bogus"):
             await interface.handle_command(cmd_msg(command, {"v": 3.0}))
         self.assertIsNone(traci.simulation.scale)
+        self.assertFalse(interface.paused)
         self.assertEqual(nats.published, [])
+
+    async def test_pause_gate_passes_through_when_not_paused(self):
+        interface, _ = self.make_started()
+        await asyncio.wait_for(interface.pause_gate(), timeout=1)
+
+    async def test_pause_holds_gate_and_resume_resyncs_timer(self):
+        class FakeTimer:
+            resyncs = 0
+
+            def reset_time_step(self):
+                self.resyncs += 1
+
+        timer = FakeTimer()
+        nats = FakeNats()
+        interface = create_websumo_interface(
+            make_conf(self.net_path), FakeTraci(), nats, timer=timer)
+
+        await interface.handle_command(cmd_msg("pause"))
+        self.assertTrue(interface.paused)
+
+        gate = asyncio.ensure_future(interface.pause_gate())
+        await asyncio.sleep(0.15)
+        self.assertFalse(gate.done())  # step loop is held
+
+        await interface.handle_command(cmd_msg("resume"))
+        await asyncio.wait_for(gate, timeout=1)
+        self.assertEqual(timer.resyncs, 1)  # no fast-forward on resume
 
     async def test_malformed_payload_ignored(self):
         interface, nats = self.make_started()

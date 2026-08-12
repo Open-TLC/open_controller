@@ -189,7 +189,7 @@ class SumoNatsInterface:
         # WebSUMO viewer interface; None unless the conf has a websumo block
         self.websumo = create_websumo_interface(
             self.config.get_websumo_params(), traci, self.nats,
-            TIMER_PARAMS["time_step"])
+            TIMER_PARAMS["time_step"], timer=self.system_timer)
         if self.websumo:
             await self.websumo.start()
         # TODO: Callbacks for control messages to be added here
@@ -276,6 +276,8 @@ class SumoNatsInterface:
                 # disable right of way check, vehicles can enter the junction, despite queue end
                 traci.vehicle.setSpeedMode(vehicleId,55) 
 
+            if self.websumo:
+                await self.websumo.pause_gate()
             if not self.update_sumo():
                 break
             # This will handle all the data stream from sumo to nats

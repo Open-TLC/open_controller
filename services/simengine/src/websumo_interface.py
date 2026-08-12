@@ -6,15 +6,19 @@ and serves the network file, per WebSUMO's SIM_PROTOCOL.md (version 1):
 
     sim.{scenario}.state   -> state frame, published from the step loop
     sim.{scenario}.net     <- request-reply: gzipped .net.xml bytes
-    sim.{scenario}.cmd.*   <- viewer commands; only the time-neutral ones
-                              are honoured: "select" (inspection panel)
-                              and "scale" (traffic demand). Time-bending
-                              commands (pause/resume/stop/speed) are
-                              deliberately ignored: the control engine is
-                              wall-clock-synced and does not follow them,
-                              so honouring them would desynchronize
-                              signals from the simulation (see the TODO
-                              in doc/websumo_integration_plan.md).
+    sim.{scenario}.cmd.*   <- viewer commands. Honoured: "select"
+                              (inspection panel), "scale" (traffic
+                              demand), and "pause"/"resume" (the engine
+                              step loop holds in pause_gate(), and the
+                              system timer is resynced on resume so the
+                              simulation continues instead of
+                              fast-forwarding). NOTE: the control engine
+                              is wall-clock-synced and does not follow
+                              the pause - signals keep cycling while the
+                              simulation is held; making clockwork
+                              follow is a separate TODO (see
+                              doc/websumo_integration_plan.md). "speed"
+                              and "stop" remain ignored.
 
 This is a rendering surface, not an OC output: nothing in OC consumes
 these subjects, and no OC behaviour depends on them (see
@@ -31,32 +35,38 @@ broker, and works with both of OC's SUMO bindings (TraCI and libsumo).
 # All Rights Reserved
 #
 
+import asyncio
 import gzip
 import json
 
 PROTOCOL_VERSION = 1
 
 
-def create_websumo_interface(conf, traci_mod, nats_client, step_length=0.1):
+def create_websumo_interface(conf, traci_mod, nats_client, step_length=0.1,
+                             timer=None):
     """Factory for the engine call site: returns a WebsumoInterface, or
     None when conf is None (the feature is off unless the simengine conf
-    has a "websumo" block)"""
+    has a "websumo" block). `timer` is the engine's system Timer; it is
+    resynced after a pause so the simulation does not fast-forward."""
     if not conf:
         return None
-    return WebsumoInterface(conf, traci_mod, nats_client, step_length)
+    return WebsumoInterface(conf, traci_mod, nats_client, step_length, timer)
 
 
 class WebsumoInterface:
     "Publishes simulation state to a WebSUMO viewer and serves the net file"
 
-    def __init__(self, conf, traci_mod, nats_client, step_length=0.1):
+    def __init__(self, conf, traci_mod, nats_client, step_length=0.1,
+                 timer=None):
         self.scenario = conf["scenario"]
         self.traci = traci_mod
         self.nats = nats_client
+        self.timer = timer
         self.state_subject = "sim." + self.scenario + ".state"
         self.net_subject = "sim." + self.scenario + ".net"
         self.cmd_subject = "sim." + self.scenario + ".cmd.*"
         self.selected = None
+        self.paused = False
 
         # The net is read and compressed once, at construction, so a bad
         # path fails at startup rather than on the viewer's first request
@@ -88,7 +98,13 @@ class WebsumoInterface:
         except (ValueError, UnicodeDecodeError):
             return
 
-        if command == "scale":
+        if command == "pause":
+            self.paused = True
+
+        elif command == "resume":
+            self.paused = False
+
+        elif command == "scale":
             # Traffic demand multiplier; time-neutral, so safe to honour
             value = data.get("v")
             if isinstance(value, (int, float)):
@@ -217,6 +233,22 @@ class WebsumoInterface:
         if self.selected:
             frame["inspect"] = self.build_inspect_block()
         return frame
+
+    async def pause_gate(self):
+        """Holds while the viewer has paused the simulation; call in the
+        step loop before advancing SUMO. Returns immediately when not
+        paused. On resume the system timer's drift integrator is reset
+        (Timer.reset_time_step, the hook made for exactly this) so the
+        simulation continues in real time instead of fast-forwarding to
+        catch up the paused wall-clock time."""
+        if not self.paused:
+            return
+        print("WebSUMO interface: simulation paused by viewer")
+        while self.paused:
+            await asyncio.sleep(0.05)
+        if self.timer:
+            self.timer.reset_time_step()
+        print("WebSUMO interface: simulation resumed")
 
     async def publish_state(self):
         """Publishes a state frame; call every simulation step, the

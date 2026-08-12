@@ -246,18 +246,30 @@ the interface subscribes `sim.{scenario}.cmd.*` and honours
   A vanished element gets the protocol's `gone` marker.
 - `scale` — `traci.simulation.setScale`, clamped to 0–5.
 
-Everything else — `pause`, `resume`, `stop`, `speed`, unknown commands,
-malformed payloads — is **silently ignored**, per the protocol and per
-decision 3: the viewer's time controls act on nothing in OC mode until
-the clockwork-side TODO is done. (Viewer-side polish for later, their
-repo: grey out the time controls when attached to an external
-simengine.) `spawn` stays excluded until `.routes` is served (decision
-4).
+**`pause` / `resume` — implemented 2026-08-12** (decision revised by
+Kari: the pause acts on the *simulation*; the controller not following
+is a separate, accepted issue). The engine's step loop holds in the
+interface's `pause_gate()` — one guarded call before
+`simulationStep()`, all logic inside the module. On resume the system
+timer is resynced via `Timer.reset_time_step()` (the hook whose own
+docstring names this use), so the simulation continues in real time
+instead of fast-forwarding through the paused wall-clock time. Known
+and accepted: clockwork keeps cycling signals while the simulation is
+held — making the controller follow remains the TODO below.
+
+Still ignored, along with unknown commands and malformed payloads:
+`speed` (would need the timer's pacing changed mid-run *and* suffers
+the controller desync far less visibly than pause — deferred to the
+controller TODO) and `stop` (destructive to the shared run; unclear
+restart story in attach mode). `spawn` stays excluded until `.routes`
+is served (decision 4).
 
 Verified live against the running stack: selecting a real vehicle fills
 the panel (speed, lane, route, next-TLS with distance and state);
 selecting `270_Tyyn_Vali` returns program/state/phases; `scale` is
-accepted; a pause/speed burst leaves the 10 Hz stream untouched.
+accepted; pause froze the stream for 4 s and resume continued from the
+next step at real time (2.9 sim-seconds over 3 wall-seconds, no
+fast-forward).
 
 This is the one place needing care: pause and speed act on the step loop,
 which is existing OC behaviour. To honour principle 1, the loop gains
