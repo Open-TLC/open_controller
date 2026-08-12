@@ -44,19 +44,31 @@ services:
 
   # The WebSUMO viewer. Runs file-free: it discovers the scenario and
   # fetches the net and the state over NATS from the simengine, so no
-  # scenario files or volumes are needed. The websumo repository is
-  # expected next to this one and is not modified: the image is built
-  # here from the inline dockerfile below.
+  # scenario files or volumes are needed. The image is self-contained:
+  # docker build clones the public websumo repository and builds its
+  # frontend, so plain "docker compose up" works on any machine with
+  # nothing but this repository. To pick up new websumo commits, run:
+  # docker compose build --no-cache websumo
   websumo:
     image: websumo
     container_name: oc_websumo_container
     build:
-      context: ../websumo
+      # Nothing is copied from the context; it only needs to be a
+      # small existing directory.
+      context: services/simengine/docker
       dockerfile_inline: |
+        FROM node:20-slim AS frontend
+        RUN apt-get update \
+            && apt-get install -y --no-install-recommends git ca-certificates \
+            && rm -rf /var/lib/apt/lists/*
+        RUN git clone --depth 1 https://github.com/Open-TLC/websumo.git /src
+        WORKDIR /src/frontend
+        RUN npm ci && npm run build
+
         FROM python:3.11-slim
         WORKDIR /app
-        COPY backend backend
-        COPY frontend/dist frontend/dist
+        COPY --from=frontend /src/backend backend
+        COPY --from=frontend /src/frontend/dist frontend/dist
         RUN pip install --no-cache-dir -r backend/requirements.txt sumolib pyproj
         RUN mkdir -p /app/scenarios-empty
         WORKDIR /app/backend
