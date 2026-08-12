@@ -58,7 +58,10 @@ It owns, and is the only place that contains:
 It exposes a small surface to the rest of OC — roughly a class with
 `connect()`, `publish_state()` and `apply_pending_commands()`, plus a
 factory that returns `None` when the feature is not configured, so call
-sites are a single guarded line.
+sites are a single guarded line. The traci-like module and the NATS
+client are constructor arguments, not imports — the two engines bind
+SUMO differently (TraCI vs libsumo), and injection is what lets the
+tests run without SUMO or a broker.
 
 Nothing else in OC imports SUMO or NATS *for this feature*, and this
 module imports nothing from OC's control engine.
@@ -69,13 +72,57 @@ module imports nothing from OC's control engine.
 |---|---|
 | `services/simengine/src/websumo_interface.py` | **new** — all of it |
 | `services/simengine/src/simengine.py` | construct the interface if configured; call publish + apply around the existing `simulationStep()` |
-| `services/simengine/src/simengine_integrated.py` | same two call sites, in `run_sumo()`'s main loop (around line 278) |
+| `services/simengine/src/confread.py` | **3 additive lines**: pass the `websumo` conf section through, plus a `get_websumo_params()` accessor returning `None` when absent (see below) |
+| `services/simengine/src/simengine_integrated.py` | later step — see "The two engines are different animals" |
 | `tests/test_websumo_interface.py` | **new** — unit tests |
 | a simengine conf + `docker-compose.yaml` | one conf block, one service |
 
-`outputs.py`, `confread.py`, `timer.py`, the whole `control_engine`
-tree, and every existing conf are **untouched**. If a diff shows
-otherwise, principle 1 or 2 has been broken.
+`outputs.py`, `timer.py`, the whole `control_engine` tree, and every
+existing conf are **untouched**. If a diff shows otherwise, principle 1
+or 2 has been broken.
+
+**Why `confread.py` must be touched** (found in review, 2026-08-12):
+`GlobalConf.set_vals_from_conf` copies the conf file section by explicit
+section — `simulation`, `radars`, `outputs` (only `det`/`sig`/`rad`),
+`inputs` (only `sig_inputs`). An unknown top-level `websumo` block would
+be **silently dropped**. Nesting our config inside `simulation` (whose
+`.update()` would let it through) was rejected as exactly the kind of
+trick principle 3 bans. So `confread.py` gets one more `if 'websumo' in
+config_from_file:` passthrough in its existing section-by-section idiom.
+Purely additive; no existing key's handling changes.
+
+### The two engines are different animals (found in review, 2026-08-12)
+
+The plan originally said "same two call sites" in both engines. The code
+says otherwise:
+
+- **`simengine.py`** is asyncio end to end: it already holds a NATS
+  connection, and its run loop (`simengine.py:233-280`) awaits
+  `send_statuses_to_nats()` right after each `simulationStep()`. Our two
+  call sites drop in naturally, and the interface publishes on the
+  connection pattern the file already uses. **Step 1 targets this engine
+  only.**
+- **`simengine_integrated.py`** is fully synchronous — a `while` /
+  `time.sleep` loop with **no NATS connection anywhere** and no asyncio.
+  Since `nats-py` is asyncio-only, publishing from it needs an event
+  loop in a background thread behind a small synchronous facade. That
+  facade lives inside `websumo_interface.py` like everything else, but
+  it is real machinery, so integrated-mode support is a **separate later
+  step**, done after the async path has proven the frame — not smuggled
+  into step 1.
+
+One consequence for the module's design: the two engines also bind SUMO
+differently (`simengine.py` imports TraCI from `SUMO_HOME`;
+`simengine_integrated.py` uses libsumo on Linux/macOS). The module
+therefore takes the traci-like module as a constructor argument instead
+of importing it — which is also what makes the unit tests possible
+without SUMO.
+
+Checked and safe: `simengine_integrated.py` reads controllers from the
+explicit `"controllers"` section of its conf (`_create_controllers`),
+not by iterating top-level keys, so a top-level `websumo` block in that
+conf collides with nothing. (Its conf reader is `confread_ms.py`, which
+passes the whole dict through unfiltered — no change needed there.)
 
 ### Why this is not an `outputs.py` plugin
 
@@ -134,7 +181,9 @@ reaching into those classes.
 needed to render, so phase 1 publishes only `.state`; `.end` when a run
 finishes is a cheap later addition if the viewer should show it.
 
-Enabled by one conf block; omit it and the feature does not exist:
+Enabled by one **top-level** conf block in the simengine conf; omit it
+and the feature does not exist (`get_websumo_params()` returns `None`
+and no interface object is ever constructed):
 
 ```json
 "websumo": { "scenario": "js266", "state_rate_hz": 10 }
@@ -158,9 +207,40 @@ independently useful and must not be held up by it.
 
 ## Step 3 — Docker
 
-WebSUMO's `main` currently has **no Dockerfile**. Needs one for backend +
-built frontend, and a `websumo` service in OC's compose with `NATS_URL`
-and a scenario directory mounted.
+Same procedure as OC's own services — one `build:` service entry in
+`docker-compose.yaml` — except the build context is the public WebSUMO
+repo instead of a local Dockerfile path, so **no local websumo checkout
+is needed**:
+
+```yaml
+  websumo:
+    image: websumo
+    container_name: oc_websumo_container
+    profiles: ["websumo"]          # off by default; principle 1 applies
+                                   # to deployment too
+    build:
+      context: https://github.com/Open-TLC/websumo.git   # pin a tag when one exists
+    ports:
+      - "8776:8775"
+    environment:
+      - NATS_URL=nats://nats:4222
+      - SCENARIOS_DIR=/model/websumo
+    volumes:
+      - ./models/JS_266_DEMO:/model
+    depends_on:
+      - nats
+```
+
+- `profiles: ["websumo"]` keeps it separable: a plain
+  `docker compose up` starts exactly today's stack;
+  `docker compose --profile websumo up` adds the viewer. Removing the
+  integration = deleting this one service entry.
+- The whole model directory is mounted (not just the scenario dir) so
+  the scenario's relative references into the model — the net-file
+  symlink in particular — resolve inside the container.
+- **Prerequisite on WebSUMO's `main`: a Dockerfile.** It currently has
+  none — backend + built frontend, exposing 8775, honouring `NATS_URL`
+  and `SCENARIOS_DIR`.
 
 **The image keeps `libsumo`/`eclipse-sumo`.** WebSUMO's docs (2026-08-12)
 state that `sumo_adapter.py` remains its *standalone, no-OC simengine* —
