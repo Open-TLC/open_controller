@@ -339,9 +339,49 @@ class TestWebsumoInterface(unittest.IsolatedAsyncioTestCase):
         traci = FakeTraci()
         interface, _ = self.make_started(traci)
         await interface.handle_command(cmd_msg("scale", {"v": 2.0}))
+        # Deferred: not applied until the stepping thread asks for it
+        self.assertIsNone(traci.simulation.scale)
+        await interface.apply_pending_commands()
         self.assertEqual(traci.simulation.scale, 2.0)
+
         await interface.handle_command(cmd_msg("scale", {"v": 99.0}))
+        await interface.apply_pending_commands()
         self.assertEqual(traci.simulation.scale, 5.0)
+
+    async def test_pending_commands_are_taken_only_once(self):
+        traci = FakeTraci(
+            vehicles={"veh0": (0.0, 0.0, 0.0, 4.0, 2.0, "passenger")})
+        interface, nats = self.make_started(traci)
+        await interface.handle_command(cmd_msg("scale", {"v": 2.0}))
+        await interface.handle_command(
+            cmd_msg("select", {"kind": "vehicle", "id": "veh0"}))
+
+        await interface.apply_pending_commands()
+        self.assertEqual(len(nats.published), 1)
+        traci.simulation.scale = None
+
+        # A second pass must neither re-apply nor re-publish
+        await interface.apply_pending_commands()
+        self.assertIsNone(traci.simulation.scale)
+        self.assertEqual(len(nats.published), 1)
+
+    async def test_select_while_paused_still_fills_the_panel(self):
+        traci = FakeTraci(
+            vehicles={"veh0": (0.0, 0.0, 0.0, 4.0, 2.0, "passenger")})
+        interface, nats = self.make_started(traci)
+        await interface.handle_command(cmd_msg("pause"))
+        gate = asyncio.ensure_future(interface.pause_gate())
+        await asyncio.sleep(0.05)
+
+        await interface.handle_command(
+            cmd_msg("select", {"kind": "vehicle", "id": "veh0"}))
+        await asyncio.sleep(0.15)  # the gate serves it while held
+        self.assertTrue(any(
+            json.loads(data.decode()).get("type") == "inspect"
+            for _, data in nats.published))
+
+        await interface.handle_command(cmd_msg("resume"))
+        await asyncio.wait_for(gate, timeout=1)
 
     async def test_stop_speed_and_unknown_commands_ignored(self):
         traci = FakeTraci()
@@ -392,6 +432,7 @@ class TestWebsumoInterface(unittest.IsolatedAsyncioTestCase):
         interface, nats = self.make_started(traci)
         await interface.handle_command(
             cmd_msg("select", {"kind": "vehicle", "id": "veh0"}))
+        await interface.apply_pending_commands()
 
         # Immediate one-shot inspect message
         self.assertEqual(len(nats.published), 1)
@@ -415,6 +456,7 @@ class TestWebsumoInterface(unittest.IsolatedAsyncioTestCase):
         interface, nats = self.make_started(traci)
         await interface.handle_command(
             cmd_msg("select", {"kind": "tls", "id": "tl0"}))
+        await interface.apply_pending_commands()
         block = json.loads(nats.published[0][1].decode())["inspect"]
         self.assertEqual(block["kind"], "tls")
         self.assertEqual(block["state"], "GGrr")
@@ -426,6 +468,7 @@ class TestWebsumoInterface(unittest.IsolatedAsyncioTestCase):
         interface, nats = self.make_started(FakeTraci())  # no vehicles
         await interface.handle_command(
             cmd_msg("select", {"kind": "vehicle", "id": "ghost"}))
+        await interface.apply_pending_commands()
         block = json.loads(nats.published[0][1].decode())["inspect"]
         self.assertEqual(block, {"kind": "vehicle", "id": "ghost",
                                  "gone": True})
