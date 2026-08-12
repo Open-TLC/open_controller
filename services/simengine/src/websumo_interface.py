@@ -146,21 +146,30 @@ class WebsumoInterface:
         """
         if not self.connected:
             return
-        state = {
-            "v": 1,
-            "t": round(libsumo.simulation.getTime(), 1),
-            "vehicles": get_vehicle_states(),
-            "persons": get_person_states(),
-            "tls": get_traffic_light_states(),
-            "detectors": get_detector_states(),
-            "_empty": libsumo.simulation.getMinExpectedNumber() == 0,
-        }
-        events = get_events()
-        if events:
-            state["events"] = events
-        selection = self._selected
-        if selection is not None:
-            state["inspect"] = get_inspect_state(selection)
+        # The engine must never be interrupted by the viewer: any
+        # failure here disables the interface instead of raising
+        try:
+            state = {
+                "v": 1,
+                "t": round(libsumo.simulation.getTime(), 1),
+                "vehicles": get_vehicle_states(),
+                "persons": get_person_states(),
+                "tls": get_traffic_light_states(),
+                "detectors": get_detector_states(),
+                "_empty": libsumo.simulation.getMinExpectedNumber() == 0,
+            }
+            events = get_events()
+            if events:
+                state["events"] = events
+            selection = self._selected
+            if selection is not None:
+                state["inspect"] = get_inspect_state(selection)
+        except Exception as e:
+            print("Warning: WebSUMO interface disabled, "
+                  "reading the simulation state failed:", e)
+            self.connected = False
+            self._stop_thread()
+            return
         self._publish(self._subject_prefix + ".state",
                       json.dumps(state).encode())
         if events:

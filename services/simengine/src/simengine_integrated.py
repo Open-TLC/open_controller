@@ -9,21 +9,14 @@ This module operates Sumo simulator and applies controller to it
 # rt random
 import json
 import os
-import platform
 import sys
 import time
 from typing import Any
 
-# Prefer libsumo when available because it avoids TraCI's socket
-# communication overhead and is significantly faster for simulation-heavy
-# workloads. The code aliases the selected backend as `traci` because both
-# libraries expose nearly identical APIs.
-if platform.system() == "Windows":
-    import traci
-elif platform.system() in ("Linux", "Darwin"):
-    import libsumo as traci
-else:
-    raise SystemError("Unknown operating system: ", platform.system())
+# The in-process sumo engine is used on every platform instead of the
+# TraCI socket. The module is aliased as `traci` because the APIs are
+# nearly identical.
+import libsumo as traci
 
 
 from confread_ms import GlobalConf
