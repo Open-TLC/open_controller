@@ -39,10 +39,16 @@ controllers from `services/control_engine/src/signal_controller.py` to publish
 might use native SUMO detectors or actual [Traffic Indicators](#traffic-indicators)
 detectors to decide the signal states.
 
+Clockwork can be turned on and off with [commands](#controller-commands) by other
+services. The status of Clockwork can be queried with requests to
+[clockwork status](#clockwork-status).
+
 #### Interactions
 
 **Sends:** [signal group states](#signal-states)  
-**Consumes:** [traffic data](#traffic-indicators-data)
+**Consumes:** [traffic data](#traffic-indicators-data),
+[controller commands](#controller-commands)  
+**Responds to:** [clockwork status](#clockwork-status)
 
 ### Traffic Indicators
 
@@ -131,3 +137,35 @@ well, the sub states here should match the [control states](#signal-states).
 ### Controller commands
 
 > Nro. 5
+
+Commands to control Clockwork. With these, you can turn the controller on and off.
+
+**Subject:** `clockwork.command`  
+**Format:**
+
+```text
+start
+```
+
+or
+
+```text
+stop
+```
+
+### Clockwork status
+
+Clockwork responds to status (like healtcheck) queries with its current working status.
+
+**Subject:** `clockwork.status`  
+**Format:**
+
+```text
+updating
+```
+
+or
+
+```text
+idling
+```
