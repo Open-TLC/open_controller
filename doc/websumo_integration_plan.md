@@ -253,6 +253,16 @@ is needed**:
 - The whole model directory is mounted (not just the scenario dir) so
   the scenario's relative references into the model — the net-file
   symlink in particular — resolve inside the container.
+- The network file is shared, not duplicated: a
+  `models/JS_266_DEMO/websumo/` scenario dir holds a `js266.net.xml`
+  symlink to `../net/JS_266-267K.net.xml`. SUMO loads the net via OC's
+  sumocfg; the viewer reads the same file through the symlink for its
+  map GeoJSON. OC code never parses the XML — vehicle lon/lat comes
+  from `traci.simulation.convertGeo()`, which uses the projection baked
+  into the net. Verified 2026-08-12: `JS_266-267K.net.xml` carries a
+  full geo projection (UTM 35 / WGS84 with `origBoundary`), which both
+  `convertGeo` and the viewer require. A model without one cannot be
+  viewed — check the `<location>` tag first when wiring a new model.
 - **Prerequisite on WebSUMO's `main`: a Dockerfile.** It currently has
   none — backend + built frontend, exposing 8775, honouring `NATS_URL`
   and `SCENARIOS_DIR`.
