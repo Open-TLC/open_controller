@@ -14,6 +14,7 @@ import asyncio
 
 from nats import connect
 from nats.aio.client import Client
+from nats.aio.msg import Msg
 
 from .configuration import (
     ClockworkConf,
@@ -34,8 +35,8 @@ async def main() -> None:
     await clockwork.run()
 
 
-# TODO: Start accepting commands
-COMMAND_SUBJECT_PREFIX = "clockwork.command"
+COMMAND_SUBJECT = "clockwork.command"
+STATUS_SUBJECT = "clockwork.status"
 
 
 class Clockwork:
@@ -47,6 +48,8 @@ class Clockwork:
         self._conf_file: str = args.conf_file
         self._conf = ClockworkConf(self._conf_file, print_status)
 
+        self._nc: Client
+
         self._publishers: dict[str, StatePublisher] = {}
         self._controllers: list[SignalController] = []
 
@@ -55,6 +58,11 @@ class Clockwork:
         # Clockwork caches the current signal states for each controller.
         # This is used to publish new states only when the state changes.
         self._signal_states: dict[str, str] = {}
+
+        self._keep_alive: bool = True
+        self._update: bool = False
+
+        self._state_changed: asyncio.Event = asyncio.Event()
 
     @classmethod
     async def create(cls, args: argparse.Namespace) -> "Clockwork":
@@ -65,6 +73,7 @@ class Clockwork:
         nats_port: int = instance._conf.nats.port
         nats_address: str = f"nats://{nats_url}:{nats_port}"
         nc: Client = await connect(nats_address)
+        instance._nc = nc
 
         detectors = await create_detectors(instance._conf.detectors, nc=nc)
 
@@ -99,21 +108,73 @@ class Clockwork:
 
         self._timer.reset()
 
-        while True:
-            # Synchronize update cycle to the timer.
-            await asyncio.sleep(self._timer.wall_time_to_next_step())
+        # Start response services for status requests and commands.
+        status_sub = await self._nc.subscribe(
+            STATUS_SUBJECT,
+            cb=self._handle_status,
+        )
+        command_sub = await self._nc.subscribe(COMMAND_SUBJECT, cb=self._handle_command)
 
-            # Advancing timer.
-            self._timer.tick()
+        await self._nc.publish(STATUS_SUBJECT, b"started")
 
-            # Update all controllers and publish their states.
+        try:
+            while self._keep_alive:
+                # When not updating, wait for state to change (start or exit) before
+                # advancing.
+                if not self._update:
+                    await self._state_changed.wait()
+                    self._state_changed.clear()
+                    continue
+
+                # Synchronize update cycle to the timer.
+                await asyncio.sleep(self._timer.wall_time_to_next_step())
+
+                # Check flags again in case they changed during sleep.
+                if not self._update or not self._keep_alive:
+                    continue
+
+                # Advancing timer.
+                self._timer.tick()
+
+                # Update all controllers and publish their states.
+                for controller in self._controllers:
+                    controller.tick()
+                    new_states: str = controller.signal_states
+                    await self._publishers[controller.id].publish(new_states)
+                    self._signal_states[controller.id] = new_states
+
+        finally:
+            # Clean up command subscription and NATS client.
+            await command_sub.unsubscribe()
+            await status_sub.unsubscribe()
+            await self._nc.drain()
+
+    async def _handle_command(self, msg: Msg) -> None:
+        command = msg.data.decode().strip()
+
+        if command == "stop":
+            print("Stopping the controller")
+            self._update = False
+            self._state_changed.set()
+
+        elif command == "start":
+            print("Starting the controller")
+            self._timer.reset()
             for controller in self._controllers:
-                controller.tick()
-                new_states: str = controller.signal_states
-                await self._publishers[controller.id].publish(new_states)
+                controller.reset()
+            self._update = True
+            self._state_changed.set()
 
-                # New states are saved.
-                self._signal_states[controller.id] = new_states
+        elif command == "exit":
+            print("Exiting Clockwork")
+            self._keep_alive = False
+            self._update = False
+            self._state_changed.set()
+
+    async def _handle_status(self, msg: Msg) -> None:
+        status = "updating" if self._update else "idling"
+        if msg.reply:
+            await msg.respond(status.encode())
 
 
 if __name__ == "__main__":
