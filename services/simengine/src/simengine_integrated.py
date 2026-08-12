@@ -26,9 +26,9 @@ else:
     raise SystemError("Unknown operating system: ", platform.system())
 
 
-from .confread_ms import GlobalConf
-from .timer import Timer
-from .websumo_interface import start_for_sync_engine
+from confread_ms import GlobalConf
+from timer import Timer
+from websumo_interface import start_for_sync_engine
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
