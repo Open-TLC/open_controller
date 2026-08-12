@@ -340,24 +340,22 @@ no calls at all.
 4. **Serving `.detectors` / `.routes`.** Deferred from phase 1 — without
    them the viewer renders no detector bars and no spawn markers
    (occupancy and signals are unaffected; they ride the state frame).
-   **Not already handled on the WebSUMO side**, in two specific ways
-   (checked 2026-08-12):
-   - *Multiplicity is ours*: the protocol carries one document per
-     subject, and OC owns the files — OC's model splits detectors
-     across `JS_266_e1dets.add.xml` + `JS_267_e1dets.add.xml` and
-     routes across cars/trams/bikes files. Combining into one reply is
-     inherently the file-owner's job (~10 lines: one `<additional>`
-     root wrapping all elements).
-   - *Tag-name mismatch*: OC's files use `<e1Detector>`; their parser
-     (`network.py:61`) iterates only `inductionLoop`. SUMO treats the
-     two as aliases, their XML parser does not — so even a merged
-     document would draw zero bars today. Either their parser accepts
-     the alias (one line, their side) or OC normalizes tag names while
-     merging (our side).
-   Decide both when the features are wanted; if spawn markers stay
-   unserved, dropping `spawn` from step 2 follows naturally.
-   *Status: Kari double-checking these findings before implementation;
-   deferred from phase 1 either way.*
+   Both review findings were confirmed and settled on the WebSUMO side
+   (their commit `fdf0c73`, 2026-08-12):
+   - *Tag-name mismatch — resolved, their side.* Their renderer now
+     accepts both `<inductionLoop>` and `<e1Detector>` (verified there:
+     the same detectors render either way). OC needs no tag
+     normalization.
+   - *Merge — confirmed ours, now in the contract.* `SIM_PROTOCOL.md`
+     states each file subject carries **one document** and the
+     simengine (the file owner) merges split files before replying. So
+     when these subjects are wanted, OC's remaining work is only the
+     merge: one `<additional>` root wrapping the elements of
+     `JS_266_e1dets.add.xml` + `JS_267_e1dets.add.xml` (and one merged
+     route file for cars/trams/bikes), ~10 lines in
+     `websumo_interface.py`.
+   If spawn markers stay unserved, dropping `spawn` from step 2 follows
+   naturally.
 
 ## Agreed on the WebSUMO side
 
