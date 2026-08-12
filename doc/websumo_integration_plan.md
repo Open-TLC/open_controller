@@ -313,21 +313,45 @@ no calls at all.
 
 1. ~~**Scenario discovery.**~~ Closed 2026-08-12 by the file-less
    protocol: publishing `.state` is discovery; no `.sumocfg` needed.
-2. **Build or pull.** Build the websumo image from the repo in compose,
-   or publish an image and pull it? (Blocked on their Dockerfile either
-   way.)
-3. **Scope of "operate".** Which of pause/resume/speed/scale/spawn are
-   actually wanted in phase 1.
+2. ~~**Build or pull.**~~ **Decided (2026-08-12): build.** Compose
+   builds the image straight from the public websumo repo (the
+   `context:` URL in step 3). If websumo later ships its own image we
+   may still keep building — an OC-tailored Dockerfile is likely wanted
+   anyway. Prerequisite unchanged: a Dockerfile on their `main`.
+3. **Scope of "operate" — which commands OC honours.** The safety split
+   found in review: OC's phase-1 engine is `simengine.py` in
+   distributed mode, where **clockwork is a separate process synced to
+   wall-clock time and does not hear `sim.cmd.*`**. Commands that bend
+   simulation time therefore desynchronize control from simulation:
+   `pause`/`resume` (sim freezes, clockwork keeps cycling; OC's timer
+   then tries to catch up) and `speed` (sim at 2×, signals still at
+   1×). Commands that leave time alone are safe: `scale` (one
+   `setScale` call — changes demand, not timing), `select` (read-only
+   inspection), `spawn` (single injection; needs `.routes` served
+   before the UI can offer it). Recommendation: phase 1 view-only;
+   then `scale` + `select`; time-bending commands only in integrated
+   mode (`simengine_integrated.py`, where controllers share the
+   process and its timer, so pausing pauses both coherently) or after
+   deciding clockwork should follow them.
 4. **Serving `.detectors` / `.routes`.** Deferred from phase 1 — without
    them the viewer renders no detector bars and no spawn markers
    (occupancy and signals are unaffected; they ride the state frame).
-   Serving them later needs one real piece of logic: OC's model splits
-   detectors and routes across several files (`JS_266_e1dets.add.xml` +
-   `JS_267_e1dets.add.xml`; cars/trams/bikes route files), and the
-   protocol wants one document per subject — so a small XML merge, or a
-   conf listing exactly one file per subject. Decide when the features
-   are wanted. Note: if spawn markers stay unserved, dropping the
-   `spawn` command from step 2's scope follows naturally.
+   **Not already handled on the WebSUMO side**, in two specific ways
+   (checked 2026-08-12):
+   - *Multiplicity is ours*: the protocol carries one document per
+     subject, and OC owns the files — OC's model splits detectors
+     across `JS_266_e1dets.add.xml` + `JS_267_e1dets.add.xml` and
+     routes across cars/trams/bikes files. Combining into one reply is
+     inherently the file-owner's job (~10 lines: one `<additional>`
+     root wrapping all elements).
+   - *Tag-name mismatch*: OC's files use `<e1Detector>`; their parser
+     (`network.py:61`) iterates only `inductionLoop`. SUMO treats the
+     two as aliases, their XML parser does not — so even a merged
+     document would draw zero bars today. Either their parser accepts
+     the alias (one line, their side) or OC normalizes tag names while
+     merging (our side).
+   Decide both when the features are wanted; if spawn markers stay
+   unserved, dropping `spawn` from step 2 follows naturally.
 
 ## Agreed on the WebSUMO side
 
