@@ -277,7 +277,6 @@ class SumoNatsInterface:
                 traci.vehicle.setSpeedMode(vehicleId,55) 
 
             if self.websumo:
-                await self.websumo.apply_pending_commands()
                 await self.websumo.pause_gate()
             if not self.update_sumo():
                 break

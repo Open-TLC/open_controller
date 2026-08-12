@@ -74,7 +74,7 @@ module imports nothing from OC's control engine.
 | `services/simengine/src/websumo_interface.py` | **new** — all of it |
 | `services/simengine/src/simengine.py` | construct the interface if configured; call publish + apply around the existing `simulationStep()` |
 | `services/simengine/src/confread.py` | **3 additive lines**: pass the `websumo` conf section through, plus a `get_websumo_params()` accessor returning `None` when absent (see below) |
-| `services/simengine/src/simengine_integrated.py` | import, construct after SUMO starts, three guarded calls in `run_sumo()`'s loop, one `close()` at shutdown |
+| `services/simengine/src/simengine_integrated.py` | later step — see "The two engines are different animals" |
 | `tests/test_websumo_interface.py` | **new** — unit tests |
 | a simengine conf + `docker-compose.yaml` | one conf block, one service |
 
@@ -106,26 +106,11 @@ says otherwise:
 - **`simengine_integrated.py`** is fully synchronous — a `while` /
   `time.sleep` loop with **no NATS connection anywhere** and no asyncio.
   Since `nats-py` is asyncio-only, publishing from it needs an event
-  loop in a background thread behind a small synchronous facade.
-  **Implemented 2026-08-12** as `SyncWebsumoInterface` in the same
-  module: it owns the loop, the thread and the connection, and the
-  engine calls plain methods from its step loop. Two constraints shaped
-  it:
-  - *libsumo is not thread safe*, so **every SUMO call happens on the
-    stepping thread**. Commands arriving on the NATS thread only park a
-    value (`pending_scale`, `inspect_pending`); the engine drains them
-    via `apply_pending_commands()` before stepping — which is also the
-    order `SIM_PROTOCOL.md` prescribes. The async engine now uses the
-    same deferred path, so there is one implementation, not two.
-  - *the two engines pace differently*. `simengine.py` uses the Timer's
-    drift integrator, so `Timer.reset_time_step()` is enough after a
-    pause. `simengine_integrated.py` paces against its own local
-    `next_update_time` accumulator, which that reset does not touch —
-    so `pause_gate()` **returns the paused wall-clock seconds** and the
-    engine adds them to the accumulator. Without it, a 4 s pause is
-    followed by the loop running flat out until it catches up
-    (measured: 7 sim-seconds in 3 wall-seconds before the fix, 4.0 in
-    4.0 after).
+  loop in a background thread behind a small synchronous facade. That
+  facade lives inside `websumo_interface.py` like everything else, but
+  it is real machinery, so integrated-mode support is a **separate later
+  step**, done after the async path has proven the frame — not smuggled
+  into step 1.
 
 One consequence for the module's design: the two engines also bind SUMO
 differently (`simengine.py` imports TraCI from `SUMO_HOME`;

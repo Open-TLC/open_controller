@@ -28,7 +28,6 @@ else:
 
 from .confread_ms import GlobalConf
 from .timer import Timer
-from .websumo_interface import create_sync_websumo_interface
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
@@ -166,17 +165,6 @@ def run_sumo():
 
     print(system_timer.steps, real_time, next_update_time, sleep_count)
 
-    # WebSUMO viewer interface; None unless the conf has a websumo block
-    nats_conf = sys_cnf.get("nats", {})
-    websumo = create_sync_websumo_interface(
-        sys_cnf.get("websumo"),
-        traci,
-        "nats://{}:{}".format(nats_conf.get("server", "localhost"),
-                              nats_conf.get("port", 4222)),
-        time_step,
-        timer=system_timer,
-    )
-
     # traci.vehicle.setLaneChangeMode(vehicleId,256) # Disable lane changing except from Traci
 
     #######SIMULATION STARTS################################################
@@ -286,21 +274,11 @@ def run_sumo():
                 pass
                 # Read detections from NATS
 
-            if websumo:
-                websumo.apply_pending_commands()
-                # Time spent paused is not simulation time: push the
-                # pacing accumulator forward by it, or the loop runs
-                # flat out after a resume until it catches up
-                next_update_time += websumo.pause_gate()
-
             try:
                 traci.simulationStep()
             except traci.exceptions.FatalTraCIError:
                 print("Fatal error in sumo, exiting")
                 break
-
-            if websumo:
-                websumo.publish_state()
 
             # print(system_timer.steps, '%.3f' % real_time, '%.3f' % next_update_time, sleep_count, '%.3f' % last_print )
 
@@ -314,9 +292,6 @@ def run_sumo():
             system_timer.sleep_tick()
             real_time = system_timer.real_seconds  # DBIK230711
             # print(sleep_count, real_time)
-
-    if websumo:
-        websumo.close()
 
     print("Closing traci")
     try:

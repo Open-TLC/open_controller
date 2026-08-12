@@ -38,8 +38,6 @@ broker, and works with both of OC's SUMO bindings (TraCI and libsumo).
 import asyncio
 import gzip
 import json
-import threading
-import time
 
 PROTOCOL_VERSION = 1
 
@@ -69,11 +67,6 @@ class WebsumoInterface:
         self.cmd_subject = "sim." + self.scenario + ".cmd.*"
         self.selected = None
         self.paused = False
-        # Commands arrive on the NATS thread but touch SUMO, so they are
-        # parked here and applied by the thread that steps the simulation
-        self.pending_scale = None
-        self.inspect_pending = False
-        self.inspect_error_reported = False
 
         # The net is read and compressed once, at construction, so a bad
         # path fails at startup rather than on the viewer's first request
@@ -115,7 +108,7 @@ class WebsumoInterface:
             # Traffic demand multiplier; time-neutral, so safe to honour
             value = data.get("v")
             if isinstance(value, (int, float)):
-                self.pending_scale = min(max(value, 0.0), 5.0)
+                self.traci.simulation.setScale(min(max(value, 0.0), 5.0))
 
         elif command == "select":
             # Single global selection for the inspection panel
@@ -123,41 +116,14 @@ class WebsumoInterface:
             element_id = data.get("id")
             if kind in ("vehicle", "tls") and element_id:
                 self.selected = {"kind": kind, "id": element_id}
-                self.inspect_error_reported = False
                 # One-shot so the panel fills without waiting for the
-                # next frame (mirrors WebSUMO's own adapter behaviour),
-                # and so selecting while paused works at all
-                self.inspect_pending = True
+                # next frame (mirrors WebSUMO's own adapter behaviour)
+                one_shot = {"type": "inspect",
+                            "inspect": self.build_inspect_block()}
+                await self.nats.publish(self.state_subject,
+                                        json.dumps(one_shot).encode())
             else:
                 self.selected = None
-                self.inspect_pending = False
-
-    def take_pending_scale(self):
-        """Returns a pending scale value once, or None. Applying it (a
-        traci call) is the caller's job so it happens on the thread that
-        steps SUMO - libsumo is not thread safe"""
-        value, self.pending_scale = self.pending_scale, None
-        return value
-
-    def take_pending_inspect(self):
-        """Returns the one-shot inspect message once, or None. Built by
-        the caller's thread for the same reason as take_pending_scale"""
-        if not self.inspect_pending or not self.selected:
-            return None
-        self.inspect_pending = False
-        return {"type": "inspect", "inspect": self.build_inspect_block()}
-
-    async def apply_pending_commands(self):
-        """Applies commands collected since the last step and publishes
-        any one-shot inspect; call from the step loop before advancing
-        SUMO (the order SIM_PROTOCOL.md prescribes)"""
-        scale = self.take_pending_scale()
-        if scale is not None:
-            self.traci.simulation.setScale(scale)
-        one_shot = self.take_pending_inspect()
-        if one_shot:
-            await self.nats.publish(self.state_subject,
-                                    json.dumps(one_shot).encode())
 
     def build_inspect_block(self):
         """Details of the selected element, or a 'gone' marker if it has
@@ -166,15 +132,7 @@ class WebsumoInterface:
             if self.selected["kind"] == "vehicle":
                 return self.inspect_vehicle(self.selected["id"])
             return self.inspect_tls(self.selected["id"])
-        except Exception as error:
-            # Usually the element simply left the simulation, which is a
-            # normal 'gone' answer - but the same catch would hide a real
-            # API mismatch, so report the first one per selection
-            if not self.inspect_error_reported:
-                self.inspect_error_reported = True
-                print("WebSUMO interface: inspect of {} {} failed: {}: {}"
-                      .format(self.selected["kind"], self.selected["id"],
-                              type(error).__name__, error))
+        except Exception:
             return {"kind": self.selected["kind"],
                     "id": self.selected["id"], "gone": True}
 
@@ -287,9 +245,6 @@ class WebsumoInterface:
             return
         print("WebSUMO interface: simulation paused by viewer")
         while self.paused:
-            # Keep serving selections while held, or the inspection
-            # panel would stay empty for anything clicked during a pause
-            await self.apply_pending_commands()
             await asyncio.sleep(0.05)
         if self.timer:
             self.timer.reset_time_step()
@@ -304,125 +259,3 @@ class WebsumoInterface:
         frame = self.build_state_frame()
         await self.nats.publish(self.state_subject,
                                 json.dumps(frame).encode())
-
-
-def create_sync_websumo_interface(conf, traci_mod, nats_url,
-                                  step_length=0.1, timer=None):
-    """Factory for a synchronous engine (simengine_integrated.py):
-    returns a SyncWebsumoInterface, or None when conf is None"""
-    if not conf:
-        return None
-    return SyncWebsumoInterface(conf, traci_mod, nats_url, step_length,
-                                timer)
-
-
-class SyncWebsumoInterface:
-    """The same interface for an engine with no asyncio of its own.
-
-    NATS is asyncio-only, so it runs in a background thread; the engine
-    calls the plain methods below from its step loop. Everything that
-    touches SUMO happens on the calling (stepping) thread - the
-    background thread only moves bytes - because libsumo is not thread
-    safe.
-    """
-
-    def __init__(self, conf, traci_mod, nats_url, step_length=0.1,
-                 timer=None, connect_timeout=10.0):
-        self.nats_url = nats_url
-        self.interface = None
-        self._loop = None
-        self._ready = threading.Event()
-        self._error = None
-        self._conf = conf
-        self._traci = traci_mod
-        self._step_length = step_length
-        self._timer = timer
-
-        self._thread = threading.Thread(target=self._run_loop, daemon=True,
-                                        name="websumo-nats")
-        self._thread.start()
-        # Fail loudly rather than handing back a half-built interface:
-        # a broker that is down makes nats-py retry with backoff, which
-        # would otherwise look like a silent timeout here
-        connected = self._ready.wait(timeout=connect_timeout)
-        if self._error:
-            raise self._error
-        if not connected or not self.interface:
-            raise RuntimeError(
-                "WebSUMO interface: could not connect to NATS at {} within "
-                "{} s".format(self.nats_url, connect_timeout))
-
-    def _run_loop(self):
-        "Owns the event loop and the NATS connection"
-        try:
-            self._loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self._loop)
-            self._loop.run_until_complete(self._connect())
-            self._loop.run_forever()
-        except Exception as error:  # noqa: BLE001 - reported to caller
-            self._error = error
-            self._ready.set()
-
-    async def _connect(self):
-        # Imported here, not at module level, so the unit tests can
-        # exercise this module without nats-py installed
-        import nats
-
-        nats_client = await nats.connect(self.nats_url)
-        self.interface = WebsumoInterface(self._conf, self._traci,
-                                          nats_client, self._step_length,
-                                          self._timer)
-        await self.interface.start()
-        self._ready.set()
-
-    def _publish(self, payload):
-        "Hands a built message to the background loop to send"
-        asyncio.run_coroutine_threadsafe(
-            self.interface.nats.publish(self.interface.state_subject,
-                                        json.dumps(payload).encode()),
-            self._loop)
-
-    def apply_pending_commands(self):
-        "Applies collected commands; call before stepping SUMO"
-        scale = self.interface.take_pending_scale()
-        if scale is not None:
-            self._traci.simulation.setScale(scale)
-        one_shot = self.interface.take_pending_inspect()
-        if one_shot:
-            self._publish(one_shot)
-
-    def pause_gate(self):
-        """Blocks while the viewer has paused; call before stepping SUMO.
-
-        Returns the number of wall-clock seconds spent paused (0.0 when
-        not paused). The integrated engine paces itself against its own
-        `next_update_time` accumulator, so it must add this to it -
-        otherwise it steps flat out after a resume until the accumulator
-        catches up with wall time.
-        """
-        if not self.interface.paused:
-            return 0.0
-        print("WebSUMO interface: simulation paused by viewer")
-        paused_at = time.time()
-        while self.interface.paused:
-            self.apply_pending_commands()
-            time.sleep(0.05)
-        paused_for = time.time() - paused_at
-        if self._timer:
-            self._timer.reset_time_step()
-        print("WebSUMO interface: simulation resumed after {:.1f} s"
-              .format(paused_for))
-        return paused_for
-
-    def publish_state(self):
-        "Publishes a state frame; call every simulation step"
-        self.interface.step_count += 1
-        if self.interface.step_count % self.interface.publish_every != 0:
-            return
-        self._publish(self.interface.build_state_frame())
-
-    def close(self):
-        "Stops the background loop; safe to call more than once"
-        if self._loop and self._loop.is_running():
-            self._loop.call_soon_threadsafe(self._loop.stop)
-            self._thread.join(timeout=2.0)
