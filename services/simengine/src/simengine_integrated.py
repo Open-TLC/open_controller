@@ -316,22 +316,13 @@ def run_sumo(conf_filename=None, runlog=None):
                 SumoTLScount = len(sumo_tls)
                 if ocTLScount < SumoTLScount:
                     states = 'r' + states  # DBIK20250129 add group 0 ?
+
                 try:
                     traci.trafficlight.setRedYellowGreenState(sumo_name, states)
                 except:
-
-                    print('Error in signal counts: OC count: ',ocTLScount, 'Sumo TLS: ', SumoTLScount)    
-
-
-                # traci.trafficlight.setRedYellowGreenState(sumo_name, states)
-
                     print('Error in signal counts: OC count: ',ocTLScount, 'Sumo TLS: ', SumoTLScount) 
-
-
-                traci.trafficlight.setRedYellowGreenState(sumo_name, states)
-
-
-                # Run-time outputs DBIK 20240411          
+                    sys.exit()   
+        
 
                 if controllers_dict[key]['print_status']:
                 
