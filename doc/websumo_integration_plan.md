@@ -156,23 +156,32 @@ OC publishes the state frame; the browser renders it. Pure addition:
 nothing in OC reads this frame, so with the conf block absent, not one
 code path changes.
 
-The payload is already fixed by WebSUMO's `_do_step()`
-(`backend/sumo_adapter.py`), and OC matches it rather than inventing a
-dialect:
+The payload is now **frozen by WebSUMO as `docs/SIM_PROTOCOL.md`
+(v1.0, 2026-08-11)** — the canonical contract, versioned via a `v`
+field. OC implements it rather than inventing a dialect:
 
 ```json
-{"t": 123.4,
+{"v": 1,
+ "t": 123.4,
  "vehicles": [["veh0", 24.9384, 60.1699, 91.2, 4.5, 1.8, "passenger"]],
+ "persons": [],
  "tls": {"266_Pork_Mech": "GgrrGGyy"},
- "det_on": ["266_102A"],
+ "detectors": {"266_102A": true, "266_102B": false},
  "events": []}
 ```
 
-`vehicles` is a positional array — `[id, lon, lat, angle, length, width,
-vClass]`. Everything needed is already read from SUMO elsewhere in
-simengine (vehicle geo positions in `outputs.py:update_radars()`,
-occupancy in `DetStorage`); the new module reads it directly rather than
-reaching into those classes.
+Required fields: `v`, `t`, `vehicles`, `persons`, `tls`, `detectors` —
+empty containers when nothing to report. `vehicles` is a positional
+array `[id, lon, lat, angle, length, width, vClass]`; `persons`
+(pedestrians/cyclists) is `[id, lon, lat, angle, speed]` and phase 1
+publishes it empty. Note **`detectors` is an object `{id: bool}`**, not
+the occupied-id list an earlier draft of this plan had. Optional fields
+(`events`, `maxRate`, `_empty`, `inspect`) are omitted in phase 1.
+
+Everything needed is already read from SUMO elsewhere in simengine
+(vehicle geo positions in `outputs.py:update_radars()`, occupancy in
+`DetStorage`); the new module reads it directly rather than reaching
+into those classes.
 
 **No WebSUMO code change in this step** — `main.py` already subscribes to
 `sim.{scenario}.state` and relays it to the browser.
@@ -192,7 +201,13 @@ and no interface object is ever constructed):
 ## Step 2 — Operate
 
 Subscribe to `sim.{scenario}.cmd.*` and apply the browser's commands
-(pause, resume, speed, scale, spawn) before the next step.
+before the next step. The command set, payloads, and semantics are
+defined in `SIM_PROTOCOL.md`: `pause`, `resume`, `stop`, `speed`
+(`{"v": float}`, clamped to 0.1–1000), `scale` (`{"v": float}`, 0–5),
+`select`, `spawn`. Its prescribed step flow — collect pending commands,
+apply, step, publish — matches where our two call sites already sit.
+Malformed or unsupported commands are silently ignored, per the
+protocol.
 
 This is the one place needing care: pause and speed act on the step loop,
 which is existing OC behaviour. To honour principle 1, the loop gains
@@ -278,19 +293,37 @@ commands; and that a disabled interface performs no calls at all.
 
 ## Agreed on the WebSUMO side
 
-Confirmed 2026-08-12 in WebSUMO commit `4965e39`, which sets the same
-direction in their repo:
+Confirmed 2026-08-12 in WebSUMO commits `4965e39` and `55897b1`:
 
 - `docs/INTEGRATION_ROADMAP.md` — *"Decision (2026-08-12): Option 3. OC's
   simengine owns the simulation and publishes `sim.{scenario}.state`;
   WebSUMO subscribes and renders, and does not run SUMO in integrated
   mode."* Options 2 and 4, and the `detector.control.*` /
   `group.control.*` bridge, are recorded as not planned.
-- `TODO.md` item 1 and the README section now say the same, and state
-  that OC keeps its detector and signal subjects to itself.
-- Their step 4 is *"OC publishes `sim.{scenario}.state`; WebSUMO renders
-  it"*, marked **OC-side work** — i.e. this document.
+- `docs/SIM_PROTOCOL.md` — the frozen v1 contract this plan's frame and
+  commands are written against.
+- `backend/simbridge.py`, `docs/INTEGRATING_WITH_OC.md`,
+  `docs/OC_INTEGRATION_HANDOFF.md` — WebSUMO's offered implementation
+  path (see below).
 
-Both repos now describe one architecture. The remaining WebSUMO-side work
-is the Dockerfile and the integrated mode that skips starting the adapter
-(steps 2–3 above).
+### simbridge.py: reference, not dependency
+
+WebSUMO ships `backend/simbridge.py` — the background-thread NATS facade
+with serializer helpers — and its guide says "copy simbridge.py into
+your repo". This plan **does not vendor it**; `websumo_interface.py`
+stays OC's own code, for the reasons the principles already give: it
+must live OC's lifecycle, carry OC's tests, and follow OC's idiom (its
+serializers also assume `sumolib` net loading, where OC uses traci's
+`convertGeo` and needs no extra dependency). WebSUMO's own handoff
+blesses this: *"Protocol-first: the contract is the NATS subject schema,
+not the code. OC can reimplement the bridge if needed."* simbridge.py is
+the reference implementation to check against — particularly its thread
+facade, when the later `simengine_integrated.py` step needs one.
+
+### Still open on the WebSUMO side
+
+- **No Dockerfile on `main`** (verified 2026-08-12) — step 3's
+  prerequisite stands.
+- **Scenario discovery unchanged** — `backend/main.py` still requires a
+  `{scenario}.sumocfg` on disk before it lists a scenario or accepts its
+  WebSocket; the open decision below stands.
