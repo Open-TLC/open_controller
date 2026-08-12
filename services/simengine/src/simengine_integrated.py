@@ -28,7 +28,6 @@ else:
 
 from .confread_ms import GlobalConf
 from .timer import Timer
-from .websumo_interface import start_for_sync_engine
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
@@ -166,24 +165,6 @@ def run_sumo():
 
     print(system_timer.steps, real_time, next_update_time, sleep_count)
 
-    # WebSUMO browser viewer: on by default, disabled with --nowebsumo.
-    # Settings default from the SUMO config, so no conf block is needed.
-    # If no broker answers, we warn and simulate without the viewer.
-    websumo = None
-    websumo_loop = None
-    # Command-line options land in the "sumo" section (see confread_ms),
-    # conf-file values are top level; the command line wins
-    sumo_cnf = sys_cnf["sumo"]
-    if not sumo_cnf.get("nowebsumo") and not sys_cnf.get("nowebsumo"):
-        nats_cnf = sys_cnf.get("nats", {})
-        nats_server = sumo_cnf.get("nats_server") or nats_cnf.get("server",
-                                                                 "localhost")
-        nats_port = sumo_cnf.get("nats_port") or nats_cnf.get("port", 4222)
-        websumo, websumo_loop = start_for_sync_engine(
-            sys_cnf.get("websumo"), traci,
-            "nats://{}:{}".format(nats_server, nats_port),
-            time_step, system_timer, sumo_config_path=sumo_file)
-
     # traci.vehicle.setLaneChangeMode(vehicleId,256) # Disable lane changing except from Traci
 
     #######SIMULATION STARTS################################################
@@ -298,16 +279,6 @@ def run_sumo():
             except traci.exceptions.FatalTraCIError:
                 print("Fatal error in sumo, exiting")
                 break
-
-            if websumo:
-                websumo_loop.run_until_complete(websumo.publish_state())
-                if websumo.paused:
-                    websumo_loop.run_until_complete(websumo.pause_gate())
-                    # Paused wall-clock time is not simulation time, so
-                    # restart the pacing from now (sleep_tick refreshes
-                    # real_seconds, which is only recomputed on a tick)
-                    system_timer.sleep_tick()
-                    next_update_time = system_timer.real_seconds
 
             # print(system_timer.steps, '%.3f' % real_time, '%.3f' % next_update_time, sleep_count, '%.3f' % last_print )
 
