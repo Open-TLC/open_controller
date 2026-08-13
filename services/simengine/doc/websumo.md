@@ -93,7 +93,8 @@ New websumo commits: `docker compose build --no-cache websumo`.
   `docker logs oc_simengine_container` for the line
   `WebSUMO interface publishing scenario ... to nats://...`. If the
   line is missing, the image is stale (rebuild, see above). If it says
-  `Warning: no NATS server`, the broker was not reachable at startup.
+  `Warning: running without WebSUMO - could not connect`, the broker
+  was not reachable at startup (the printed exception says why).
 - **Verify the stream directly**: `nats sub "sim.>"` — a healthy engine
   produces ~10 messages/s.
 - **Port conflicts**: 4222 (nats) and 8775 (viewer) must be free on the

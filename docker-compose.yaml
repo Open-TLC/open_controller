@@ -58,10 +58,15 @@ services:
       context: services/simengine/docker
       dockerfile_inline: |
         FROM node:20-slim AS frontend
+        # Pinned websumo commit: bump WEBSUMO_REF deliberately to take a
+        # newer viewer (docker compose build --no-cache websumo)
+        ARG WEBSUMO_REF=11c3b62fbb687e992b52729ac56ced6de3c6244d
         RUN apt-get update \
             && apt-get install -y --no-install-recommends git ca-certificates \
             && rm -rf /var/lib/apt/lists/*
-        RUN git clone --depth 1 https://github.com/Open-TLC/websumo.git /src
+        RUN git init -q /src \
+            && git -C /src fetch --depth 1 https://github.com/Open-TLC/websumo.git $WEBSUMO_REF \
+            && git -C /src checkout -q FETCH_HEAD
         WORKDIR /src/frontend
         RUN npm ci && npm run build
 

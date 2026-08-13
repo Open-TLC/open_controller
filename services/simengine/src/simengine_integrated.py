@@ -27,7 +27,6 @@ from websumo_interface import WebsumoInterface, nats_conf_from_sys_conf
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
 DEFAULT_SUMO_CNF = "testmodel/cross.sumocfg"
 SUMO_BIN_NAME = "sumo"
-SUMO_BIN_NAME_GRAPH = "sumo-gui"
 
 # Imprtinc components from control_engine
 # FIXME:We should not use paths, insteead different sercives should
@@ -103,16 +102,12 @@ def run_sumo():
 
     sumo_name = "0"  # DEBUG POINT, INIT OK
 
-    # Check whether the display is available before using gui
-    display_available = (
-        os.environ.get("DISPLAY") is not None and os.environ.get("DISPLAY") != ""
-    )
-
-    # Graph always if set in conf, and also if param says so, but not if display is not available
+    # Graphical mode is not available with libsumo (sumo-gui would abort
+    # the whole process); WebSUMO is the viewer
     if sys_cnf["sumo"]["graph"]:
-        sumo_bin = SUMO_BIN_NAME_GRAPH
-    else:
-        sumo_bin = SUMO_BIN_NAME
+        print("Warning: graphical mode is not available with libsumo, "
+              "running without a window - view with WebSUMO instead")
+    sumo_bin = SUMO_BIN_NAME
 
     # sumo_bin = SUMO_BIN_NAME # Debugging without graphics DBIK 24.7.23
 

@@ -5,8 +5,6 @@
 # All Rights Reserved
 #
 
-import os
-import sys
 import json
 from datetime import datetime
 from shapely.geometry import Polygon, Point

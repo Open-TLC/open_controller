@@ -1,0 +1,22 @@
+Notes to improve websumo:
+1) We should be able to run the websumo without config by setting default params:
+    - The xml file from sumoconfig
+    - Scneario on the name given by the sumoconfig
+    - 10 Hz as default
+
+2) We should make both integrated and normal sumo work with websumo by defaulf
+    - Separate flag --nowebsumo to "traditional" mode
+
+3) Documentation should be under services/simengine
+    - Descritption on how it works (NATS interfaces and integration)
+    - Insturctions we used for building the connection should reside there
+    - Instructions on how to use (conf flags)
+        - integrated
+        - container
+
+4) Integrated mode
+    - NATS server: default shouild be localhost, also params 
+        - as with other services, server and port command line
+    - Warning if no nats available, and then run without websumo
+    - Nowebsumo command line params simlarily as above
+    

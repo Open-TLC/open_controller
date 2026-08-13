@@ -95,6 +95,9 @@ class GlobalConf:
             "--nowebsumo",
             help="If set, the WebSUMO viewer interface is not started",
             action="store_true",
+            # None (not False) when absent, so that the conf file's own
+            # "nowebsumo" value survives the command line merge
+            default=None,
             required=False,
         )
 

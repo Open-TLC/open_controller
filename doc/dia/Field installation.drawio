@@ -1,0 +1,19 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="6pYiHzlWW6hkuAaDN4C1">
+    <mxGraphModel dx="1094" dy="1210" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="NWmR4eWpnMwRZxmccq93-1" parent="1" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=20;fontFamily=poppins;fontColor=#ffffff;spacing=3.8;strokeColor=#ffffff;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#000000;strokeWidth=2.3;lucidId=-wKok7.c4fji;" value="Traffic controller" vertex="1">
+          <mxGeometry height="120" width="120" x="110" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="NWmR4eWpnMwRZxmccq93-2" parent="1" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=20;fontFamily=poppins;fontColor=#ffffff;spacing=3.8;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#000000;strokeWidth=2.3;lucidId=-wKoPBgD4aw7;" value="Radars" vertex="1">
+          <mxGeometry height="50" width="110" x="640" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="NWmR4eWpnMwRZxmccq93-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontFamily=poppins;" value="Text" vertex="1">
+          <mxGeometry height="30" width="60" x="380" y="600" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

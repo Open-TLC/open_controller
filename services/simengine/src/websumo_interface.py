@@ -70,6 +70,7 @@ class WebsumoInterface:
             a no-op without touching NATS at all
         """
         self.connected = False
+        self._thread = None
         if not enabled:
             print("WebSUMO interface off (--nowebsumo)")
             return
@@ -77,6 +78,12 @@ class WebsumoInterface:
         # path with a trailing carriage return; sumo trims it, we must too
         sumocfg_file = sumocfg_file.strip()
         self.scenario = scenario_from_sumocfg(sumocfg_file)
+        # The scenario name becomes part of the NATS subjects, which must
+        # not contain spaces or wildcard characters
+        if any(char in self.scenario for char in " \t*>"):
+            print("Warning: running without WebSUMO - the sumocfg name",
+                  repr(self.scenario), "is not a valid NATS subject token")
+            return
         self._subject_prefix = "sim." + self.scenario
         self._nats_url = nats_url(nats_conf)
         self._nats = None
@@ -108,9 +115,9 @@ class WebsumoInterface:
             self.connected = True
             print("WebSUMO interface publishing scenario",
                   self.scenario, "to", self._nats_url)
-        except Exception:
-            print("Warning: no NATS server at", self._nats_url,
-                  "- running without WebSUMO")
+        except Exception as e:
+            print("Warning: running without WebSUMO - could not connect to",
+                  self._nats_url, ":", e)
             self._stop_thread()
 
     async def _connect_and_serve(self):
@@ -190,21 +197,34 @@ class WebsumoInterface:
 
     def close(self):
         """Flushes pending messages and stops the background thread"""
-        if not self.connected:
-            return
-        self.connected = False
-        try:
-            asyncio.run_coroutine_threadsafe(
-                self._nats.drain(), self._loop).result(
-                    timeout=CLOSE_TIMEOUT_SECONDS)
-        except Exception:
-            pass
-        self._stop_thread()
+        if self.connected:
+            self.connected = False
+            try:
+                asyncio.run_coroutine_threadsafe(
+                    self._nats.drain(), self._loop).result(
+                        timeout=CLOSE_TIMEOUT_SECONDS)
+            except Exception:
+                pass
+        if self._thread is not None:
+            self._stop_thread()
 
     def _publish(self, subject, payload):
-        # Fire and forget: the engine never waits for the delivery
-        asyncio.run_coroutine_threadsafe(
+        # Fire and forget: the engine never waits for the delivery, but
+        # a failed delivery (broker gone mid-run) disables the interface
+        future = asyncio.run_coroutine_threadsafe(
             self._nats.publish(subject, payload), self._loop)
+        future.add_done_callback(self._check_publish_result)
+
+    def _check_publish_result(self, future):
+        """Disables the interface when a publish fails (broker gone)"""
+        try:
+            error = future.exception()
+        except (Exception, asyncio.CancelledError):
+            return
+        if error is not None and self.connected:
+            print("Warning: WebSUMO interface disabled, "
+                  "publishing failed:", error)
+            self.connected = False
 
     def _stop_thread(self):
         self._loop.call_soon_threadsafe(self._loop.stop)

@@ -8,7 +8,6 @@ to a nats-server (in localhost or given address)
 # All Rights Reserved
 #
 
-import os
 import sys
 from datetime import datetime
 import asyncio
@@ -93,12 +92,12 @@ class SumoNatsInterface:
         # After this all the configuration is in the self.config"
         self.nats_server = self.config.get_nats_params()
         self.sumo_file = self.config.get_sumo_config()
-        # Graphical UI for SUMO
-        #if command_line_params.graph:
+        # Graphical mode is not available with libsumo (sumo-gui would
+        # abort the whole process); WebSUMO is the viewer
         if self.config.graph_mode():
-            self.sumo_bin=SUMO_BIN_GRAPH
-        else:
-            self.sumo_bin=SUMO_BIN_NO_GRAPH
+            print("Warning: graphical mode is not available with libsumo, "
+                  "running without a window - view with WebSUMO instead")
+        self.sumo_bin = SUMO_BIN_NO_GRAPH
 
 
         # Datasources
