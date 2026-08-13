@@ -53,7 +53,7 @@ class Clockwork:
         self._publishers: dict[str, StatePublisher] = {}
         self._controllers: list[SignalController] = []
 
-        self._timer: Timer = Timer(self._conf.timer)
+        self._timer: Timer = Timer(self._conf.timer, warnings=True)
 
         # Clockwork caches the current signal states for each controller.
         # This is used to publish new states only when the state changes.

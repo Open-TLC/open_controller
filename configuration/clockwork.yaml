@@ -1,6 +1,6 @@
 timer:
   timer_mode: real
-  real_time_multiplier: 200
+  real_time_multiplier: 100
   time_step: 0.1
 
 nats:
@@ -61,7 +61,7 @@ clockwork:
   publisher:
     mode: change
   controllers:
-    - id: j1
+    - id: "J1"
       type: fixed_time  # This is not actually meant to be used in production. It is here just for demonstration and testing.
       options:
         phases:

@@ -90,7 +90,7 @@ class TestClockworkE2E(unittest.IsolatedAsyncioTestCase):
                     if seen_states == expected_states:
                         states_received_future.set_result(seen_states)
 
-        subject = "group.control.j1.*"
+        subject = "group.control.J1.*"
         control_sub = await self.nc.subscribe(subject, cb=message_handler)
 
         await self._start_clockwork_and_wait_ready()
@@ -119,17 +119,17 @@ class TestClockworkE2E(unittest.IsolatedAsyncioTestCase):
 
         # Initial state should be idling
         status_res = await self.nc.request("clockwork.status", timeout=2.0)
-        self.assertEqual(status_res.data.decode().strip(), "idling")
-
-        # Send start command -> status should transition to updating
-        await self.nc.publish("clockwork.command", b"start")
-        status_res = await self.nc.request("clockwork.status", timeout=2.0)
         self.assertEqual(status_res.data.decode().strip(), "updating")
 
         # Send stop command -> status should transition back to idling
         await self.nc.publish("clockwork.command", b"stop")
         status_res = await self.nc.request("clockwork.status", timeout=2.0)
         self.assertEqual(status_res.data.decode().strip(), "idling")
+
+        # Send start command -> status should transition to updating
+        await self.nc.publish("clockwork.command", b"start")
+        status_res = await self.nc.request("clockwork.status", timeout=2.0)
+        self.assertEqual(status_res.data.decode().strip(), "updating")
 
         # Send start command again -> status should transition back to updating
         await self.nc.publish("clockwork.command", b"start")

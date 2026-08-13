@@ -14,13 +14,17 @@ logger = logging.getLogger(__name__)
 class Timer:
     """Timer for handling time steps and real-time synchronization."""
 
-    def __init__(self, conf: TimerConf) -> None:
+    def __init__(self, conf: TimerConf, warnings: bool = False) -> None:
         self._step_length: float = conf.time_step
         self._time_multiplier: float = conf.real_time_multiplier
         self._mode: str = conf.mode
 
+        self._target_wall_interval = self._step_length / self._time_multiplier
+
+        self._do_warnings = warnings
+
         self._steps: int = 0
-        self._last_update_wall_time: float = time.monotonic()
+        self._start_wall_time: float = time.monotonic()
 
     @property
     def seconds(self) -> float:
@@ -40,12 +44,11 @@ class Timer:
     def reset(self) -> None:
         """Start the timer from zero."""
         self._steps = 0
-        self._last_update_wall_time = time.monotonic()
+        self._start_wall_time = time.monotonic()
 
     def tick(self) -> None:
         """Advance simulation by one step."""
         self._steps += 1
-        self._last_update_wall_time = time.monotonic()
 
     def wall_time_to_next_step(self) -> float:
         """Wall-clock time (in seconds) to wait until the next step."""
@@ -54,11 +57,15 @@ class Timer:
         if self._mode == "fixed":
             return 0
 
-        now: float = time.monotonic()
-        elapsed_wall_time = now - self._last_update_wall_time
-        target_wall_interval = self._step_length / self._time_multiplier
-        diff = target_wall_interval - elapsed_wall_time
-        if diff < 0:
+        # The time it should have taken to complete current steps.
+        expected_wall_time = self._start_wall_time + (
+            self._steps * self._target_wall_interval
+        )
+
+        now = time.monotonic()
+        diff = expected_wall_time - now
+
+        if diff < 0 and self._do_warnings:
             logger.warning(
                 "Can't keep up. Controller is running %.3fs behind timer at step %d.",
                 -diff,
