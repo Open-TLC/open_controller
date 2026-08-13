@@ -60,7 +60,7 @@ class Clockwork:
         self._signal_states: dict[str, str] = {}
 
         self._keep_alive: bool = True
-        self._update: bool = False
+        self._update: bool = True
 
         self._state_changed: asyncio.Event = asyncio.Event()
 
