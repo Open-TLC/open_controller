@@ -57,6 +57,7 @@ class FixedTimeController(SignalController):
         # If enough time has passed, controller moves to the next phase.
         if time_since_update >= self._phases[self._cur_phase_idx][1]:
             self._cur_phase_idx = self._next_phase_idx()
+            self._last_changed = self._timer.seconds
 
     def reset(self) -> None:
         return self.reload()
