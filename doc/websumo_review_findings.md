@@ -1,5 +1,7 @@
 # WebSUMO branch review findings
 
+> Working paper — leave out of the final merge (PR #75 review note).
+
 Code review of `feat/websumo` vs `main` (2026-08-13, high effort: 8
 finder angles, adversarial verification; 3 candidates refuted, 10
 survived). Worklist — update the Status column as items are resolved.
