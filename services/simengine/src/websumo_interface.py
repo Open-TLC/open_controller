@@ -29,6 +29,16 @@ All NATS I/O runs in a background thread with its own asyncio event
 loop, so the same module works from the synchronous integrated engine
 and from the asynchronous independent engine. The thread only relays
 the messages, it never touches the simulation.
+
+The thread exists only because of simengine_integrated.py: it is a
+plain synchronous loop with no event loop of its own, and nats-py is
+asyncio-only, so a background loop is the only way to call it at all.
+simengine.py already runs its own asyncio loop and already holds a
+connected NATS client, so for that engine this thread is a second,
+redundant connection to the same broker - accepted here in exchange for
+one implementation shared by both engines instead of two. If
+simengine_integrated.py is ever rewritten around asyncio, this thread
+can go and both engines can call NATS directly on their own loop.
 """
 
 # Copyright 2026 by Conveqs Oy and Kari Koskinen
