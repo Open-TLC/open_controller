@@ -295,7 +295,7 @@ class SignalGroup(Machine):
             'Green_MinimumTime': '1',
             'Green_Extending': '5',
             'Green_RemainGreen': '4',
-            'Amber_MinimumTime': '>'     
+            'Amber_MinimumTime': '<'
         }
         status = grp_statuses.get(self.state, '*')
 
