@@ -46,7 +46,7 @@ class TestClockworkE2E(unittest.IsolatedAsyncioTestCase):
             "-m",
             "services.control_engine.src.clockwork",
             "--conf-file",
-            "./configuration/clockwork.yaml",
+            "./tests/integration/conf.yaml",
         ]
 
         self.process = await asyncio.create_subprocess_exec(
@@ -90,7 +90,7 @@ class TestClockworkE2E(unittest.IsolatedAsyncioTestCase):
                     if seen_states == expected_states:
                         states_received_future.set_result(seen_states)
 
-        subject = "group.control.J1.*"
+        subject = "group.control.j1.*"
         control_sub = await self.nc.subscribe(subject, cb=message_handler)
 
         await self._start_clockwork_and_wait_ready()
