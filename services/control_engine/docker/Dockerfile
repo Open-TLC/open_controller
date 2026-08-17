@@ -40,5 +40,5 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # when running int Docker
 ENV PYTHONUNBUFFERED=1
 
-CMD [ "uv", "run", "-m", "services.control_engine.src.clockwork", "--conf-file", "./configuration/clockwork.yaml" ]
+CMD [ "uv", "run", "-m", "services.control_engine.src.clockwork", "--conf-file", "models/dual/contr.yaml" ]
 

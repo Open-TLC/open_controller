@@ -38,8 +38,7 @@ def create_controller(
 
     controller: SignalController
     if controller_type == "phasering":
-        # TODO: Migrate PhaseRingController to standard signal controller.
-        controller = PhaseRingController(conf.options, timer)
+        controller = PhaseRingController(conf.id, conf.options, timer)
     elif controller_type == "fixed_time":
         controller = FixedTimeController(conf.id, timer, conf.options)
     elif controller_type == "syvari":

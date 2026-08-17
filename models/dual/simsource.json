@@ -1,0 +1,54 @@
+{
+  "simulation": {
+    "sumocfg": "../testmodels/otso/dual/dual.sumocfg",
+    "mode": "nats",
+    "nats": {
+      "ip": "nats",
+      "port": 4222
+    }
+  },
+
+  "outputs": {
+    "sig_outputs": {
+      "type": "group",
+      "trigger": "update",
+      "controller_mapping_mode": "direct",
+      "controller_map": {
+        "1": "j1",
+        "2": "j2"
+      },
+      "signal_mapping_mode": "direct",
+      "signal_map": {
+        "1": "1",
+        "2": "2"
+      }
+    },
+
+    "rad_outputs": {
+      "radars": {}
+    },
+
+    "det_outputs": {}
+  },
+  "inputs": {
+    "sig_inputs": {
+      "type": "group",
+      "trigger": "update",
+      "topic_prefix": "group.control",
+      "controller_mapping_mode": "direct",
+      "controller_map": {
+        "1": "j1",
+        "2": "j2"
+      },
+      "signal_mapping_mode": "direct",
+      "signal_map": {
+        "1": "1",
+        "2": "2"
+      }
+    },
+
+    "rad_inputs": {},
+
+    "det_inputs": {}
+  }
+}

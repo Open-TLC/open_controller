@@ -67,7 +67,7 @@ class Timer:
 
         if diff < 0 and self._do_warnings:
             logger.warning(
-                "Can't keep up. Controller is running %.3fs behind timer at step %d.",
+                "Can't keep up. Timer is running %.3fs behind timer at step %d.",
                 -diff,
                 self._steps,
             )
