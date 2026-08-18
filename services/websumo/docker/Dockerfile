@@ -5,7 +5,7 @@
 # Bump WEBSUMO_REF deliberately to take a newer viewer, then rebuild:
 #   docker compose build --no-cache websumo
 
-FROM node:22-slim AS frontend
+FROM node:26-slim AS frontend
 ARG WEBSUMO_REF=11c3b62fbb687e992b52729ac56ced6de3c6244d
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git ca-certificates \
