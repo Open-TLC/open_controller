@@ -57,6 +57,9 @@ services:
       - "8775:8775"
     environment:
       NATS_URL: nats://nats:4222
+      # Deliberately empty and non-persistent, not a volume: the viewer
+      # is file-free and fetches scenario files live over NATS
+      # request-reply (see services/simengine/doc/websumo.md)
       SCENARIOS_DIR: /app/scenarios-empty
     depends_on:
       - nats

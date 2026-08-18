@@ -122,11 +122,14 @@ def run_sumo():
         return
 
     # WebSUMO viewer interface: publishes the simulation state so it
-    # can be viewed with WebSUMO (no-op if there is no NATS server)
+    # can be viewed with WebSUMO (no-op if there is no NATS server).
+    # "nowebsumo" (conf/CLI) is an opt-out; turn it into a positive name
+    # here so the rest of the code never reads negated
+    websumo_enabled = not sys_cnf["sumo"].get("nowebsumo", False)
     websumo = WebsumoInterface(
         sumo_file,
         nats_conf_from_sys_conf(sys_cnf),
-        enabled=not sys_cnf["sumo"].get("nowebsumo", False),
+        enabled=websumo_enabled,
     )
 
     sumo_to_e1dets = get_e1det_mapping(e1dets)

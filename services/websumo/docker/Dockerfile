@@ -5,7 +5,7 @@
 # Bump WEBSUMO_REF deliberately to take a newer viewer, then rebuild:
 #   docker compose build --no-cache websumo
 
-FROM node:20-slim AS frontend
+FROM node:22-slim AS frontend
 ARG WEBSUMO_REF=11c3b62fbb687e992b52729ac56ced6de3c6244d
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git ca-certificates \
@@ -16,11 +16,17 @@ RUN git init -q /src \
 WORKDIR /src/frontend
 RUN npm ci && npm run build
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 WORKDIR /app
 COPY --from=frontend /src/backend backend
 COPY --from=frontend /src/frontend/dist frontend/dist
-RUN pip install --no-cache-dir -r backend/requirements.txt sumolib pyproj
+# requirements.txt comes from the websumo repository; requirements-oc.txt
+# holds the extra packages the OC deployment needs on top of it
+COPY services/websumo/docker/requirements-oc.txt requirements-oc.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt -r requirements-oc.txt
+# Deliberately empty and non-persistent: the viewer is file-free and
+# fetches scenario files live over NATS request-reply (see
+# services/simengine/doc/websumo.md); no volume is needed here
 RUN mkdir -p /app/scenarios-empty
 WORKDIR /app/backend
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8775"]

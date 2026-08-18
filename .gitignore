@@ -190,5 +190,4 @@ Pipfile
 
 # Simulation outputs and local working papers
 models/*/out/
-doc/websumo_notes_kk.txt
-doc/websumo_review_findings.md
+doc/local/
