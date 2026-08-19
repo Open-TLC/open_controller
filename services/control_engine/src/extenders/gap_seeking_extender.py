@@ -1,35 +1,10 @@
-"""Abstract extender class implementation.
-
-This module implements detecors for signal groups
-This is a separate from the SignalGroup in order to make
-it easier to implement external control schemes
-
-"""
-# Copyright 2020 by Conveqs Oy and Kari Koskinen
-# All Rights Reserved
-#
-
-from abc import ABC, abstractmethod
 from typing import Any
 
 from services.control_engine.src.detectors.area_detector import AreaDetector
 from services.control_engine.src.detectors.point_detector import PointDetector
+from services.control_engine.src.timer import Timer
 
-from .timer import Timer
-
-
-class Extender(ABC):
-    """Active green extender interface."""
-
-    @abstractmethod
-    def is_extending(self) -> bool:
-        """Check if extender is extending."""
-        ...
-
-    @abstractmethod
-    def tick(self) -> None:
-        """Update extending status."""
-        ...
+from .extender import Extender
 
 
 class GapSeekingExtender(Extender):
@@ -76,6 +51,12 @@ class GapSeekingExtender(Extender):
                 f"(got {self._gap})",
             )
 
+    @property
+    def id(self) -> str:
+        """Get ID of the extender."""
+        return self._id
+
+    @property
     def is_extending(self) -> bool:
         return self._is_extending
 
