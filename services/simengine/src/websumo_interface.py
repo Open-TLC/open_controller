@@ -46,7 +46,9 @@ can go and both engines can call NATS directly on their own loop.
 
 import asyncio
 import gzip
+import io
 import json
+import math
 import os
 import threading
 import xml.etree.ElementTree as ET
@@ -62,6 +64,21 @@ CLOSE_TIMEOUT_SECONDS = 3
 # WebSUMO renders detector bars from these elements (both tags name the
 # same SUMO e1 detector)
 E1_DETECTOR_TAGS = ("e1Detector", "inductionLoop")
+
+# Nets without a geo-reference (projParameter="!" in the <location>
+# element) still get a working viewer: the net is anchored at lon/lat
+# 0,0 using spherical web mercator - the projection MapLibre renders
+# in, so near 0,0 the shapes stay meter-true and undistorted. The
+# served net file gets this projection injected into its header, so
+# WebSUMO's own sumolib conversion of the network geometry agrees
+# exactly with the positions published from here. 0,0 is open ocean:
+# the viewer works normally, there is just no map background to toggle
+# on. (Revisit when WebSUMO gets a native no-geo mode.)
+NO_PROJECTION = b'projParameter="!"'
+SYNTHETIC_PROJ = ("+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 "
+                  "+x_0=0 +y_0=0 +k=1 +units=m +no_defs")
+SYNTHETIC_PROJECTION = ('projParameter="' + SYNTHETIC_PROJ + '"').encode()
+EARTH_RADIUS_M = 6378137.0
 
 
 class WebsumoInterface:
@@ -103,7 +120,15 @@ class WebsumoInterface:
         try:
             net_file = net_file_from_sumocfg(sumocfg_file)
             with open(net_file, "rb") as f:
-                self._net_payload = gzip.compress(f.read())
+                net_bytes = f.read()
+            net_bytes, self._geo_offset = geo_reference_net(net_bytes)
+            if self._geo_offset is None:
+                self._convert_geo = libsumo.simulation.convertGeo
+            else:
+                print("WebSUMO: the net has no geo-projection, "
+                      "anchoring the view at lon/lat 0,0")
+                self._convert_geo = self._synthetic_convert
+            self._net_payload = gzip.compress(net_bytes)
             detectors = merged_detectors_from_sumocfg(sumocfg_file)
             if detectors is None:
                 self._detectors_payload = None
@@ -174,8 +199,8 @@ class WebsumoInterface:
             state = {
                 "v": 1,
                 "t": round(libsumo.simulation.getTime(), 1),
-                "vehicles": get_vehicle_states(),
-                "persons": get_person_states(),
+                "vehicles": get_vehicle_states(self._convert_geo),
+                "persons": get_person_states(self._convert_geo),
                 "tls": get_traffic_light_states(),
                 "detectors": get_detector_states(),
                 "_empty": libsumo.simulation.getMinExpectedNumber() == 0,
@@ -240,13 +265,26 @@ class WebsumoInterface:
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._thread.join(timeout=CLOSE_TIMEOUT_SECONDS)
 
+    def _synthetic_convert(self, x, y):
+        """convertGeo() replacement for a net without a geo-projection
 
-def get_vehicle_states():
-    """Returns the vehicle list in the WebSUMO state format"""
+        libsumo's convertGeo() does not fail on such a net - it silently
+        returns the x/y meters unchanged, which the viewer would read as
+        degrees. This converts with the synthetic projection instead.
+        """
+        return synthetic_lonlat(x, y, self._geo_offset)
+
+
+def get_vehicle_states(convert_geo):
+    """Returns the vehicle list in the WebSUMO state format
+
+    convert_geo: the x/y meters to lon/lat conversion, normally
+        libsumo.simulation.convertGeo (synthetic for a no-geo net)
+    """
     vehicles = []
     for veh_id in libsumo.vehicle.getIDList():
         pos_x, pos_y = libsumo.vehicle.getPosition(veh_id)
-        lon, lat = libsumo.simulation.convertGeo(pos_x, pos_y)
+        lon, lat = convert_geo(pos_x, pos_y)
         vehicles.append([
             veh_id,
             lon,
@@ -259,12 +297,15 @@ def get_vehicle_states():
     return vehicles
 
 
-def get_person_states():
-    """Returns the pedestrian and cyclist list in the WebSUMO format"""
+def get_person_states(convert_geo):
+    """Returns the pedestrian and cyclist list in the WebSUMO format
+
+    convert_geo: as in get_vehicle_states()
+    """
     persons = []
     for person_id in libsumo.person.getIDList():
         pos_x, pos_y = libsumo.person.getPosition(person_id)
-        lon, lat = libsumo.simulation.convertGeo(pos_x, pos_y)
+        lon, lat = convert_geo(pos_x, pos_y)
         persons.append([
             person_id,
             lon,
@@ -384,6 +425,46 @@ def get_traffic_light_details(tls_id):
         "spent": round(trafficlight.getSpentDuration(tls_id), 1),
         "phases": phases,
     }
+
+
+def geo_reference_net(net_bytes):
+    """Injects the synthetic projection if the net has none
+
+    Returns (net_bytes, net_offset): the net file bytes to serve and,
+    when the synthetic projection was injected, the netOffset needed by
+    synthetic_lonlat(). net_offset is None for a net that already has a
+    real geo-projection (the bytes are returned unchanged).
+    """
+    if NO_PROJECTION not in net_bytes:
+        return net_bytes, None
+    return (net_bytes.replace(NO_PROJECTION, SYNTHETIC_PROJECTION, 1),
+            net_offset_from_net(net_bytes))
+
+
+def net_offset_from_net(net_bytes):
+    """Returns the netOffset pair of the net file's <location> element"""
+    for _, element in ET.iterparse(io.BytesIO(net_bytes)):
+        if element.tag == "location":
+            x_offset, _, y_offset = element.get(
+                "netOffset", "0.00,0.00").partition(",")
+            return float(x_offset), float(y_offset)
+    return 0.0, 0.0
+
+
+def synthetic_lonlat(x, y, net_offset=(0.0, 0.0)):
+    """Converts net x/y meters to lon/lat in the synthetic projection
+
+    The exact inverse of SYNTHETIC_PROJ (spherical web mercator), with
+    the netOffset removed first - the same conversion sumolib's
+    convertXY2LonLat() performs on the served net file, so the
+    published positions and the viewer's network geometry agree.
+    """
+    x -= net_offset[0]
+    y -= net_offset[1]
+    lon = math.degrees(x / EARTH_RADIUS_M)
+    lat = math.degrees(2.0 * math.atan(math.exp(y / EARTH_RADIUS_M))
+                       - math.pi / 2.0)
+    return lon, lat
 
 
 def scenario_from_sumocfg(sumocfg_file):
