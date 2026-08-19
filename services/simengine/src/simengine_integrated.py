@@ -15,10 +15,9 @@ from typing import Any
 # TraCI socket. The module is aliased as `traci` because the APIs are
 # nearly identical.
 import libsumo as traci
-
-from .confread_ms import GlobalConf
-from .timer import Timer
-from .websumo_interface import WebsumoInterface, nats_conf_from_sys_conf
+from confread_ms import GlobalConf
+from timer import Timer
+from websumo_interface import WebsumoInterface, nats_conf_from_sys_conf
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
