@@ -8,7 +8,6 @@ to a nats-server (in localhost or given address)
 # All Rights Reserved
 #
 
-import os
 import sys
 from datetime import datetime
 import asyncio
@@ -18,6 +17,7 @@ import json
 from timer import Timer
 from confread import GlobalConf
 from outputs import DetStorage, GroupStorage, RadarStorage
+from websumo_interface import WebsumoInterface
 
 
 SOFTWARE_NAME = "SUMO Simulation enngine"
@@ -34,21 +34,12 @@ OUTPUT_TYPES = {
 
 GREEN_SUBSTATES = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-# This will need:
-# export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
-
-# Alternatively:
-# we need to import python modules from the $SUMO_HOME/tools directory
-if 'SUMO_HOME' in os.environ:
-    SUMO_TOOLS = os.path.join(os.environ['SUMO_HOME'], 'tools')
-    sys.path.append(SUMO_TOOLS)
-    import traci
-else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
+# The in-process sumo engine is used instead of the TraCI socket
+import libsumo as traci
 
 
-# One of these is choden with the command line parameter
-SUMO_BIN_GRAPH = "sumo-gui"
+# Always the windowless binary: graphical mode is not available with
+# libsumo (--graph is accepted but only prints a warning)
 SUMO_BIN_NO_GRAPH = "sumo"
 
 TIMER_PARAMS = {
@@ -96,16 +87,19 @@ class SumoNatsInterface:
         # The command line params are set here
         command_line_params = read_command_line()
         self.config = GlobalConf(command_line_params=command_line_params, conf=command_line_params.conf)
+        # --nowebsumo is an opt-out; turn it into a positive name at the
+        # parse boundary so the rest of the code never reads negated
+        self.websumo_enabled = not command_line_params.nowebsumo
 
         # After this all the configuration is in the self.config"
         self.nats_server = self.config.get_nats_params()
         self.sumo_file = self.config.get_sumo_config()
-        # Graphical UI for SUMO
-        #if command_line_params.graph:
+        # Graphical mode is not available with libsumo (sumo-gui would
+        # abort the whole process); WebSUMO is the viewer
         if self.config.graph_mode():
-            self.sumo_bin=SUMO_BIN_GRAPH
-        else:
-            self.sumo_bin=SUMO_BIN_NO_GRAPH
+            print("Warning: graphical mode is not available with libsumo, "
+                  "running without a window - view with WebSUMO instead")
+        self.sumo_bin = SUMO_BIN_NO_GRAPH
 
 
         # Datasources
@@ -184,6 +178,10 @@ class SumoNatsInterface:
     async def run(self):
         """Runs the system"""
         self.start_sumo()
+        # WebSUMO viewer interface: publishes the simulation state so it
+        # can be viewed with WebSUMO (no-op if there is no NATS server)
+        self.websumo = WebsumoInterface(self.sumo_file, self.nats_server,
+                                        enabled=self.websumo_enabled)
         await self.connect_nats()
         # TODO: Callbacks for control messages to be added here
         # Loop for handling the simulation
@@ -274,10 +272,15 @@ class SumoNatsInterface:
             # This will handle all the data stream from sumo to nats
             await self.send_statuses_to_nats()
 
+            self.websumo.publish_state()
+
             # To sync with realtimer
             self.system_timer.tick()
             # Note, if Sumo is stopped by hand, this will try to catch up
             await asyncio.sleep(self.system_timer.get_next_time_step())
+
+        self.websumo.publish_end()
+        self.websumo.close()
 
 
 
@@ -392,12 +395,12 @@ async def main():
     # After this all the configuration is in the "config"
     nats_server = config.get_nats_params()
     sumo_file = config.get_sumo_config()
-    # Graphical UI for SUMO
-    #if command_line_params.graph:
+    # Graphical mode is not available with libsumo (sumo-gui would
+    # abort the whole process); WebSUMO is the viewer
     if config.graph_mode():
-        sumo_bin=SUMO_BIN_GRAPH
-    else:
-        sumo_bin=SUMO_BIN_NO_GRAPH
+        print("Warning: graphical mode is not available with libsumo, "
+              "running without a window - view with WebSUMO instead")
+    sumo_bin = SUMO_BIN_NO_GRAPH
 
     # External controller used
     if command_line_params.external_controller:
@@ -540,6 +543,13 @@ def get_traffic_light_statatuses():
 
 def read_command_line():
     """Returns parsed command line arguments
+
+    Note: this engine has its own argparse setup, separate from
+    confread_ms (used by simengine_integrated.py). The two engines are
+    run independently and have always had their own command lines; the
+    WebSUMO options (--nats-server, --nats-port, --nowebsumo) follow
+    each engine's existing pattern. Unifying the two parsers would be a
+    separate refactor.
     """
 
     operation_description = """
@@ -591,6 +601,11 @@ def read_command_line():
     parser.add_argument('--use-group-status',
                                 help='If set, we update the groups in the simulation with status messages'
                                     'If not set we use control messages',
+                                action='store_true',
+                                required=False)
+
+    parser.add_argument('--nowebsumo',
+                                help='If set, the WebSUMO viewer interface is not started',
                                 action='store_true',
                                 required=False)
 

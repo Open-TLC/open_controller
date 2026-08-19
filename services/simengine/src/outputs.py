@@ -5,23 +5,12 @@
 # All Rights Reserved
 #
 
-# This will need:
-# export PYTHONPATH=$PYTHONPATH:/usr/share/sumo/tools
-
-# Alternatively:
-# we need to import python modules from the $SUMO_HOME/tools directory
-import os
-import sys
 import json
 from datetime import datetime
 from shapely.geometry import Polygon, Point
 
-if 'SUMO_HOME' in os.environ:
-    SUMO_TOOLS = os.path.join(os.environ['SUMO_HOME'], 'tools')
-    sys.path.append(SUMO_TOOLS)
-    import traci
-else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
+# The in-process sumo engine is used instead of the TraCI socket
+import libsumo as traci
 
 
 CLENUP_TIME_LIMIT = 0.5 # seconds

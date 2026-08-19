@@ -9,31 +9,24 @@ This module operates Sumo simulator and applies controller to it
 # rt random
 import json
 import os
-import platform
 import sys
 import time
 from typing import Any
 
-# Prefer libsumo when available because it avoids TraCI's socket
-# communication overhead and is significantly faster for simulation-heavy
-# workloads. The code aliases the selected backend as `traci` because both
-# libraries expose nearly identical APIs.
-if platform.system() == "Windows":
-    import traci
-elif platform.system() in ("Linux", "Darwin"):
-    import libsumo as traci
-else:
-    raise SystemError("Unknown operating system: ", platform.system())
+# The in-process sumo engine is used on every platform instead of the
+# TraCI socket. The module is aliased as `traci` because the APIs are
+# nearly identical.
+import libsumo as traci
 
 
-from .confread_ms import GlobalConf
-from .timer import Timer
+from confread_ms import GlobalConf
+from timer import Timer
+from websumo_interface import WebsumoInterface, nats_conf_from_sys_conf
 
 # Note these are not in use at sig-group
 DEFAULT_ROUTE_FILE = "testmodel/cross.rou.xml"
 DEFAULT_SUMO_CNF = "testmodel/cross.sumocfg"
 SUMO_BIN_NAME = "sumo"
-SUMO_BIN_NAME_GRAPH = "sumo-gui"
 
 # Imprtinc components from control_engine
 # FIXME:We should not use paths, insteead different sercives should
@@ -109,16 +102,12 @@ def run_sumo():
 
     sumo_name = "0"  # DEBUG POINT, INIT OK
 
-    # Check whether the display is available before using gui
-    display_available = (
-        os.environ.get("DISPLAY") is not None and os.environ.get("DISPLAY") != ""
-    )
-
-    # Graph always if set in conf, and also if param says so, but not if display is not available
+    # Graphical mode is not available with libsumo (sumo-gui would abort
+    # the whole process); WebSUMO is the viewer
     if sys_cnf["sumo"]["graph"]:
-        sumo_bin = SUMO_BIN_NAME_GRAPH
-    else:
-        sumo_bin = SUMO_BIN_NAME
+        print("Warning: graphical mode is not available with libsumo, "
+              "running without a window - view with WebSUMO instead")
+    sumo_bin = SUMO_BIN_NAME
 
     # sumo_bin = SUMO_BIN_NAME # Debugging without graphics DBIK 24.7.23
 
@@ -131,6 +120,17 @@ def run_sumo():
     except Exception as e:
         print("Sumo start failed:", e)
         return
+
+    # WebSUMO viewer interface: publishes the simulation state so it
+    # can be viewed with WebSUMO (no-op if there is no NATS server).
+    # "nowebsumo" (conf/CLI) is an opt-out; turn it into a positive name
+    # here so the rest of the code never reads negated
+    websumo_enabled = not sys_cnf["sumo"].get("nowebsumo", False)
+    websumo = WebsumoInterface(
+        sumo_file,
+        nats_conf_from_sys_conf(sys_cnf),
+        enabled=websumo_enabled,
+    )
 
     sumo_to_e1dets = get_e1det_mapping(e1dets)
     print("sumo to e1 dets: ")
@@ -280,6 +280,8 @@ def run_sumo():
                 print("Fatal error in sumo, exiting")
                 break
 
+            websumo.publish_state()
+
             # print(system_timer.steps, '%.3f' % real_time, '%.3f' % next_update_time, sleep_count, '%.3f' % last_print )
 
             system_timer.tick()  # DBIK230711 imer tick only in the main loop
@@ -292,6 +294,9 @@ def run_sumo():
             system_timer.sleep_tick()
             real_time = system_timer.real_seconds  # DBIK230711
             # print(sleep_count, real_time)
+
+    websumo.publish_end()
+    websumo.close()
 
     print("Closing traci")
     try:

@@ -1,0 +1,5 @@
+# Extra packages the OC deployment installs on top of the websumo
+# repository's own backend/requirements.txt (see Dockerfile):
+# reading the SUMO network file and projecting its coordinates
+sumolib
+pyproj
