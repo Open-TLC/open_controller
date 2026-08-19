@@ -17,14 +17,18 @@ from jsmin import jsmin
 class GlobalConf:
     """Open Controller configuration object for runnin integrated simulations.
 
-    This contains configurable options for the simulation, timer, and controller."""
+    This contains configurable options for the simulation, timer, and controller.
+    """
 
-    def __init__(self):
+    def __init__(self, conf_filename: str | None = None):
         # Step 1: read the command line params.
         command_line_params = self._read_command_line()
 
+        if conf_filename is None:
+            conf_filename = str(command_line_params["conf_file"])
+
         # Step 2: read configuration from the file specified in command line.
-        file_conf = self._read_conf(command_line_params["conf_file"])
+        file_conf = self._read_conf(conf_filename)
 
         # Step 3: set the initial configuration to the file config.
         conf = file_conf
@@ -38,7 +42,8 @@ class GlobalConf:
             del command_line_params[k]
 
         # Step 5: override file options with command line options.
-        conf["sumo"].update(command_line_params)
+        if "sumo" in conf:
+            conf["sumo"].update(command_line_params)
 
         self.cnf = conf
 
@@ -47,8 +52,8 @@ class GlobalConf:
 
         Returns:
             Command line arguments as a dictionary.
-        """
 
+        """
         parser = argparse.ArgumentParser()
 
         parser.add_argument(
