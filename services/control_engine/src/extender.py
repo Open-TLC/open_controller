@@ -42,7 +42,6 @@ class GapSeekingExtender(Extender):
         raw_options: dict[str, Any],
         detectors: list[AreaDetector | PointDetector],
     ) -> None:
-
         self._timer: Timer = timer
         self._id: str = extender_id
         self._is_extending: bool = False
@@ -77,18 +76,21 @@ class GapSeekingExtender(Extender):
                 f"(got {self._gap})",
             )
 
-        def is_extending(self) -> bool:
-            return self._is_extending
+    def is_extending(self) -> bool:
+        return self._is_extending
 
-        def tick(self) -> None:
-
-            self._last_detector_state_on = self._detector.is_occupied
-            if self._last_detector_state_on:
-                self._last_occupied_time = self._timer.seconds
-            if self._last_occupied_time is None:
-                return
-            time_since_occupied = self._timer.seconds - self._last_occupied_time
-            if time_since_occupied > self._gap:
-                self._is_extending = False
-            else:
-                self._is_extending = True
+    def tick(self) -> None:
+        self._last_detector_state_on = self._detector.is_occupied
+        if self._last_detector_state_on:
+            self._last_occupied_time = self._timer.seconds
+        if self._last_occupied_time is None:
+            return
+        # Rounding is needed for floating point errors.
+        time_since_occupied = round(
+            self._timer.seconds - self._last_occupied_time,
+            9,
+        )
+        if time_since_occupied > self._gap:
+            self._is_extending = False
+        else:
+            self._is_extending = True
