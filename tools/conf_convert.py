@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import json
 import os
 from typing import Any
@@ -24,10 +25,10 @@ def main() -> None:
     )
     nats_conf: dict[str, Any] = _parse_nats_params(nats_raw)
 
-    clockwork_conf: dict[str, Any] = _parse_clockwork_params(old_conf.cnf, base_dir)
-
-    clockwork_conf["publisher"] = {}
-    clockwork_conf["publisher"]["mode"] = nats_conf.pop("mode")
+    clockwork_conf: dict[str, Any] = {
+        "publisher": {"mode": nats_conf.pop("mode")},
+        **_parse_clockwork_params(old_conf.cnf, base_dir),
+    }
 
     new_conf: dict[str, Any] = {
         "timer": timer_conf,
@@ -133,6 +134,12 @@ def _parse_clockwork_params(
 ) -> dict[str, Any]:
     """Parse all controllers from either a single or multi-controller configuration."""
     raw_controllers = _extract_raw_controllers(input_config, base_dir)
+
+    if len(raw_controllers) == 1 and "group_outputs" not in raw_controllers[0][1]:
+        sumo_options = input_config.get("sumo")
+        if sumo_options:
+            group_outputs = sumo_options.get("group_outputs")
+            raw_controllers[0][1]["group_outputs"] = group_outputs
 
     controllers_list = []
     for ctrl_id, ctrl_data in raw_controllers:
@@ -240,6 +247,11 @@ def _parse_single_controller(
         merged_sg = {**default_sg, **sg_data}
         signal_groups[sg_name] = merged_sg
 
+    for group_options in signal_groups.values():
+        with contextlib.suppress(KeyError):
+            del group_options["channel"]
+            del group_options["phase_request"]
+
     # Separate standard request detectors from e3 extension detectors.
     raw_detectors: dict[str, Any] = controller.get("detectors", {})
     raw_extenders: dict[str, Any] = controller.get("extenders", {})
@@ -259,7 +271,7 @@ def _parse_single_controller(
 
     options: dict[str, Any] = {
         "print_status": controller.get("print_status", False),
-        "group_outputs": controller.get("group_outputs", []),
+        "sumo_outputs": controller.get("group_outputs", []),
         "signal_groups": signal_groups,
         "detectors": detectors,
         "extenders": extenders,
