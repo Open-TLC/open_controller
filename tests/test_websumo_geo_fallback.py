@@ -9,9 +9,9 @@ sys.path.insert(0, "services/simengine/src")
 from websumo_interface import (  # noqa: E402
     EARTH_RADIUS_M,
     SYNTHETIC_PROJECTION,
-    geo_reference_net,
-    net_offset_from_net,
-    synthetic_lonlat,
+    _geo_reference_net,
+    _net_offset_from_net,
+    _synthetic_lonlat,
 )
 
 NO_GEO_NET = b"""<?xml version="1.0" encoding="UTF-8"?>
@@ -30,43 +30,43 @@ GEO_NET = b"""<?xml version="1.0" encoding="UTF-8"?>
 
 
 class TestGeoReferenceNet(unittest.TestCase):
-    def test_no_geo_net_gets_the_synthetic_projection(self):
-        served, offset = geo_reference_net(NO_GEO_NET)
+    def test_no_geo_net_gets_the_synthetic_projection(self) -> None:
+        served, offset = _geo_reference_net(NO_GEO_NET)
         self.assertIn(SYNTHETIC_PROJECTION, served)
         self.assertNotIn(b'projParameter="!"', served)
         self.assertEqual(offset, (10.0, 20.0))
 
-    def test_geo_net_passes_through_unchanged(self):
-        served, offset = geo_reference_net(GEO_NET)
+    def test_geo_net_passes_through_unchanged(self) -> None:
+        served, offset = _geo_reference_net(GEO_NET)
         self.assertEqual(served, GEO_NET)
         self.assertIsNone(offset)
 
-    def test_net_offset_defaults_to_zero_without_location(self):
-        self.assertEqual(net_offset_from_net(b"<net><edge/></net>"),
+    def test_net_offset_defaults_to_zero_without_location(self) -> None:
+        self.assertEqual(_net_offset_from_net(b"<net><edge/></net>"),
                          (0.0, 0.0))
 
 
 class TestSyntheticLonlat(unittest.TestCase):
-    def test_origin_is_null_island(self):
-        self.assertEqual(synthetic_lonlat(0.0, 0.0), (0.0, 0.0))
+    def test_origin_is_null_island(self) -> None:
+        self.assertEqual(_synthetic_lonlat(0.0, 0.0), (0.0, 0.0))
 
-    def test_net_offset_is_removed_first(self):
-        self.assertEqual(synthetic_lonlat(10.0, 20.0, (10.0, 20.0)),
+    def test_net_offset_is_removed_first(self) -> None:
+        self.assertEqual(_synthetic_lonlat(10.0, 20.0, (10.0, 20.0)),
                          (0.0, 0.0))
 
-    def test_matches_spherical_mercator_inverse(self):
+    def test_matches_spherical_mercator_inverse(self) -> None:
         # forward spherical web mercator of a known point, then back
         lon_deg, lat_deg = 0.01, -0.02
         x = EARTH_RADIUS_M * math.radians(lon_deg)
         y = EARTH_RADIUS_M * math.log(
             math.tan(math.pi / 4 + math.radians(lat_deg) / 2))
-        lon, lat = synthetic_lonlat(x, y)
+        lon, lat = _synthetic_lonlat(x, y)
         self.assertAlmostEqual(lon, lon_deg, places=12)
         self.assertAlmostEqual(lat, lat_deg, places=12)
 
-    def test_meter_scale_near_the_anchor(self):
+    def test_meter_scale_near_the_anchor(self) -> None:
         # one meter is about 1/111320 degrees at the equator
-        lon, lat = synthetic_lonlat(1.0, 1.0)
+        lon, lat = _synthetic_lonlat(1.0, 1.0)
         self.assertAlmostEqual(lon * 111320, 1.0, places=2)
         self.assertAlmostEqual(lat * 111320, 1.0, places=2)
 

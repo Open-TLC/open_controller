@@ -9,8 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install uv using the installation script
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Add SUMO PPA and install. libatomic1 is a runtime dependency of the
-# libsumo pip wheel, not covered by the apt sumo packages
+# Add SUMO PPA and install
 RUN add-apt-repository ppa:sumo/stable && \
 	apt-get update && apt-get install -y --no-install-recommends \
 	sumo sumo-tools sumo-doc libatomic1
