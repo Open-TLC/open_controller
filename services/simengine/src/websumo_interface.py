@@ -44,12 +44,18 @@ can go and both engines can call NATS directly on their own loop.
 # Copyright 2026 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 
+from __future__ import annotations
+
 import asyncio
 import gzip
+import io
 import json
+import math
 import os
 import threading
 import xml.etree.ElementTree as ET
+from concurrent.futures import Future
+from typing import Any, Callable
 
 import libsumo
 from nats.aio.client import Client as NATS
@@ -63,11 +69,30 @@ CLOSE_TIMEOUT_SECONDS = 3
 # same SUMO e1 detector)
 E1_DETECTOR_TAGS = ("e1Detector", "inductionLoop")
 
+# Nets without a geo-reference (projParameter="!" in the <location>
+# element) still get a working viewer: the net is anchored at lon/lat
+# 0,0 using spherical web mercator - the projection MapLibre renders
+# in, so near 0,0 the shapes stay meter-true and undistorted. The
+# served net file gets this projection injected into its header, so
+# WebSUMO's own sumolib conversion of the network geometry agrees
+# exactly with the positions published from here. 0,0 is open ocean:
+# the viewer works normally, there is just no map background to toggle
+# on. (Revisit when WebSUMO gets a native no-geo mode.)
+NO_PROJECTION = b'projParameter="!"'
+SYNTHETIC_PROJ = ("+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 "
+                  "+x_0=0 +y_0=0 +k=1 +units=m +no_defs")
+SYNTHETIC_PROJECTION = ('projParameter="' + SYNTHETIC_PROJ + '"').encode()
+EARTH_RADIUS_M = 6378137.0
+
+# An x/y meters to lon/lat degrees conversion function
+GeoConverter = Callable[[float, float], "tuple[float, float]"]
+
 
 class WebsumoInterface:
     """Publishes the simulation state of one scenario to NATS"""
 
-    def __init__(self, sumocfg_file, nats_conf=None, enabled=True):
+    def __init__(self, sumocfg_file: str, nats_conf: dict | str | None = None,
+                 enabled: bool = True) -> None:
         """Connects to NATS and starts serving the scenario files
 
         sumocfg_file: path of the sumocfg the engine is running, used
@@ -103,7 +128,15 @@ class WebsumoInterface:
         try:
             net_file = net_file_from_sumocfg(sumocfg_file)
             with open(net_file, "rb") as f:
-                self._net_payload = gzip.compress(f.read())
+                net_bytes = f.read()
+            net_bytes, self._geo_offset = _geo_reference_net(net_bytes)
+            if self._geo_offset is None:
+                self._convert_geo = libsumo.simulation.convertGeo
+            else:
+                print("WebSUMO: the net has no geo-projection, "
+                      "anchoring the view at lon/lat 0,0")
+                self._convert_geo = self._synthetic_convert
+            self._net_payload = gzip.compress(net_bytes)
             detectors = merged_detectors_from_sumocfg(sumocfg_file)
             if detectors is None:
                 self._detectors_payload = None
@@ -130,7 +163,7 @@ class WebsumoInterface:
                   self._nats_url, ":", e)
             self._stop_thread()
 
-    async def _connect_and_serve(self):
+    async def _connect_and_serve(self) -> None:
         """Connects to the nats server and answers the file requests"""
         self._nats = NATS()
         await self._nats.connect(
@@ -160,7 +193,7 @@ class WebsumoInterface:
         await self._nats.subscribe(self._subject_prefix + ".cmd.select",
                                    cb=on_select)
 
-    def publish_state(self):
+    def publish_state(self) -> None:
         """Reads the current state from sumo and publishes it
 
         Called from the engine's own update tick, right after
@@ -174,8 +207,8 @@ class WebsumoInterface:
             state = {
                 "v": 1,
                 "t": round(libsumo.simulation.getTime(), 1),
-                "vehicles": get_vehicle_states(),
-                "persons": get_person_states(),
+                "vehicles": get_vehicle_states(self._convert_geo),
+                "persons": get_person_states(self._convert_geo),
                 "tls": get_traffic_light_states(),
                 "detectors": get_detector_states(),
                 "_empty": libsumo.simulation.getMinExpectedNumber() == 0,
@@ -199,13 +232,13 @@ class WebsumoInterface:
             self._publish(self._subject_prefix + ".log",
                           json.dumps(log_message).encode())
 
-    def publish_end(self):
+    def publish_end(self) -> None:
         """Tells the viewer that the simulation has ended"""
         if not self.connected:
             return
         self._publish(self._subject_prefix + ".end", b"{}")
 
-    def close(self):
+    def close(self) -> None:
         """Flushes pending messages and stops the background thread"""
         if self.connected:
             self.connected = False
@@ -218,14 +251,14 @@ class WebsumoInterface:
         if self._thread is not None:
             self._stop_thread()
 
-    def _publish(self, subject, payload):
+    def _publish(self, subject: str, payload: bytes) -> None:
         # Fire and forget: the engine never waits for the delivery, but
         # a failed delivery (broker gone mid-run) disables the interface
         future = asyncio.run_coroutine_threadsafe(
             self._nats.publish(subject, payload), self._loop)
         future.add_done_callback(self._check_publish_result)
 
-    def _check_publish_result(self, future):
+    def _check_publish_result(self, future: Future) -> None:
         """Disables the interface when a publish fails (broker gone)"""
         try:
             error = future.exception()
@@ -236,17 +269,30 @@ class WebsumoInterface:
                   "publishing failed:", error)
             self.connected = False
 
-    def _stop_thread(self):
+    def _stop_thread(self) -> None:
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._thread.join(timeout=CLOSE_TIMEOUT_SECONDS)
 
+    def _synthetic_convert(self, x: float, y: float) -> tuple[float, float]:
+        """convertGeo() replacement for a net without a geo-projection
 
-def get_vehicle_states():
-    """Returns the vehicle list in the WebSUMO state format"""
+        libsumo's convertGeo() does not fail on such a net - it silently
+        returns the x/y meters unchanged, which the viewer would read as
+        degrees. This converts with the synthetic projection instead.
+        """
+        return _synthetic_lonlat(x, y, self._geo_offset)
+
+
+def get_vehicle_states(convert_geo: GeoConverter) -> list[list]:
+    """Returns the vehicle list in the WebSUMO state format
+
+    convert_geo: the x/y meters to lon/lat conversion, normally
+        libsumo.simulation.convertGeo (synthetic for a no-geo net)
+    """
     vehicles = []
     for veh_id in libsumo.vehicle.getIDList():
         pos_x, pos_y = libsumo.vehicle.getPosition(veh_id)
-        lon, lat = libsumo.simulation.convertGeo(pos_x, pos_y)
+        lon, lat = convert_geo(pos_x, pos_y)
         vehicles.append([
             veh_id,
             lon,
@@ -259,12 +305,15 @@ def get_vehicle_states():
     return vehicles
 
 
-def get_person_states():
-    """Returns the pedestrian and cyclist list in the WebSUMO format"""
+def get_person_states(convert_geo: GeoConverter) -> list[list]:
+    """Returns the pedestrian and cyclist list in the WebSUMO format
+
+    convert_geo: as in get_vehicle_states()
+    """
     persons = []
     for person_id in libsumo.person.getIDList():
         pos_x, pos_y = libsumo.person.getPosition(person_id)
-        lon, lat = libsumo.simulation.convertGeo(pos_x, pos_y)
+        lon, lat = convert_geo(pos_x, pos_y)
         persons.append([
             person_id,
             lon,
@@ -275,7 +324,7 @@ def get_person_states():
     return persons
 
 
-def get_traffic_light_states():
+def get_traffic_light_states() -> dict[str, str]:
     """Returns the signal state strings of all traffic lights"""
     lights = {}
     for tls_id in libsumo.trafficlight.getIDList():
@@ -283,7 +332,7 @@ def get_traffic_light_states():
     return lights
 
 
-def get_detector_states():
+def get_detector_states() -> dict[str, bool]:
     """Returns the occupancy status of all e1 detectors"""
     detectors = {}
     for det_id in libsumo.inductionloop.getIDList():
@@ -293,7 +342,7 @@ def get_detector_states():
     return detectors
 
 
-def get_events():
+def get_events() -> list[dict]:
     """Returns the exceptional events of this step
 
     Collisions, teleports and emergency stops, as shown in the
@@ -313,7 +362,7 @@ def get_events():
     return events
 
 
-def get_inspect_state(selection):
+def get_inspect_state(selection: dict) -> dict:
     """Returns the details of the element selected in the viewer
 
     The field names follow the WebSUMO protocol. A "gone" marker is
@@ -331,7 +380,7 @@ def get_inspect_state(selection):
             "gone": True}
 
 
-def get_vehicle_details(veh_id):
+def get_vehicle_details(veh_id: str) -> dict[str, Any]:
     """Returns the inspection details of one vehicle"""
     vehicle = libsumo.vehicle
     leader = vehicle.getLeader(veh_id)
@@ -365,7 +414,7 @@ def get_vehicle_details(veh_id):
     }
 
 
-def get_traffic_light_details(tls_id):
+def get_traffic_light_details(tls_id: str) -> dict[str, Any]:
     """Returns the inspection details of one traffic light"""
     trafficlight = libsumo.trafficlight
     program = trafficlight.getProgram(tls_id)
@@ -386,17 +435,60 @@ def get_traffic_light_details(tls_id):
     }
 
 
-def scenario_from_sumocfg(sumocfg_file):
+def _geo_reference_net(
+        net_bytes: bytes) -> tuple[bytes, tuple[float, float] | None]:
+    """Injects the synthetic projection if the net has none
+
+    Returns (net_bytes, net_offset): the net file bytes to serve and,
+    when the synthetic projection was injected, the netOffset needed by
+    _synthetic_lonlat(). net_offset is None for a net that already has a
+    real geo-projection (the bytes are returned unchanged).
+    """
+    if NO_PROJECTION not in net_bytes:
+        return net_bytes, None
+    return (net_bytes.replace(NO_PROJECTION, SYNTHETIC_PROJECTION, 1),
+            _net_offset_from_net(net_bytes))
+
+
+def _net_offset_from_net(net_bytes: bytes) -> tuple[float, float]:
+    """Returns the netOffset pair of the net file's <location> element"""
+    for _, element in ET.iterparse(io.BytesIO(net_bytes)):
+        if element.tag == "location":
+            x_offset, _, y_offset = element.get(
+                "netOffset", "0.00,0.00").partition(",")
+            return float(x_offset), float(y_offset)
+    return 0.0, 0.0
+
+
+def _synthetic_lonlat(x: float, y: float,
+                      net_offset: tuple[float, float] = (0.0, 0.0),
+                      ) -> tuple[float, float]:
+    """Converts net x/y meters to lon/lat in the synthetic projection
+
+    The exact inverse of SYNTHETIC_PROJ (spherical web mercator), with
+    the netOffset removed first - the same conversion sumolib's
+    convertXY2LonLat() performs on the served net file, so the
+    published positions and the viewer's network geometry agree.
+    """
+    x -= net_offset[0]
+    y -= net_offset[1]
+    lon = math.degrees(x / EARTH_RADIUS_M)
+    lat = math.degrees(2.0 * math.atan(math.exp(y / EARTH_RADIUS_M))
+                       - math.pi / 2.0)
+    return lon, lat
+
+
+def scenario_from_sumocfg(sumocfg_file: str) -> str:
     """Returns the scenario name: the sumocfg file name without suffix"""
     return os.path.splitext(os.path.basename(sumocfg_file))[0]
 
 
-def net_file_from_sumocfg(sumocfg_file):
+def net_file_from_sumocfg(sumocfg_file: str) -> str:
     """Returns the path of the net file the sumocfg points at"""
     return input_files_from_sumocfg(sumocfg_file, "net-file")[0]
 
 
-def merged_detectors_from_sumocfg(sumocfg_file):
+def merged_detectors_from_sumocfg(sumocfg_file: str) -> bytes | None:
     """Returns all e1 detectors of the scenario as one xml document
 
     WebSUMO renders the detector bars from a single detector file, but
@@ -420,7 +512,7 @@ def merged_detectors_from_sumocfg(sumocfg_file):
     return ET.tostring(merged)
 
 
-def input_files_from_sumocfg(sumocfg_file, tag):
+def input_files_from_sumocfg(sumocfg_file: str, tag: str) -> list[str]:
     """Returns the paths listed in one input tag of the sumocfg
 
     The paths in the sumocfg are relative to the sumocfg itself; the
@@ -437,7 +529,7 @@ def input_files_from_sumocfg(sumocfg_file, tag):
             for name in value.split(",") if name.strip()]
 
 
-def nats_conf_from_sys_conf(sys_cnf):
+def nats_conf_from_sys_conf(sys_cnf: dict) -> dict:
     """Returns the nats parameters for the interface from the conf
 
     The conf file's "nats" section, overridden by the --nats-server and
@@ -453,7 +545,7 @@ def nats_conf_from_sys_conf(sys_cnf):
     return nats_conf
 
 
-def nats_url(nats_conf):
+def nats_url(nats_conf: dict | str | None) -> str:
     """Returns the nats server url for the given conf value
 
     Accepts the conf dictionary format ({"server": ..., "port": ...},

@@ -37,11 +37,16 @@ merged into one document. The viewer needs nothing on its own disk.
 - A NATS server. Address resolution, in order: `--nats-server` /
   `--nats-port` command line params, the conf file's `nats` section,
   `localhost:4222`.
-- **A geo-referenced net.** WebSUMO renders in WGS84; the net must have
-  a real `projParameter` in its `<location>` element. A synthetic net
-  (`projParameter="!"`) disables the interface at the first publish. A
-  synthetic net can be geo-referenced by borrowing the `<location>`
-  line of a real model.
+- A geo-referenced net is **not** required. WebSUMO renders in WGS84,
+  so a net with a real `projParameter` in its `<location>` element is
+  shown where it lives on the map. A net without one
+  (`projParameter="!"`) still works: the interface anchors it at
+  lon/lat 0,0 ("null island", open ocean) by injecting a synthetic
+  spherical web mercator projection into the served net file and
+  converting the published positions with the same projection. The
+  viewer works normally there - the model just has no real map
+  background to toggle on. Revisit if WebSUMO gets a native no-geo
+  mode (see the issue tracker).
 - For real-time viewing, use `"timer_mode": "real"` in the conf's timer
   section. In `fixed` mode the engine runs at full CPU speed and the
   viewer shows a fast-forward simulation — the interface adds no timing
@@ -103,5 +108,6 @@ New websumo commits: `docker compose build --no-cache websumo`.
   the container entrypoints break on a CRLF checkout. Docker Desktop's
   restart button never picks up a rebuilt image — use
   `docker compose up` from a terminal.
-- **Viewer loads but Load fails with a geo-projection error**: the net
-  is not geo-referenced, see Requirements.
+- **Viewer loads but the model is nowhere to be found**: a net without
+  a geo-reference is anchored at lon/lat 0,0, see Requirements - use
+  the viewer's fit-to-network, not the map location you expected.
