@@ -117,6 +117,16 @@ class SmartExtender(Extender):
 
         return resolved
 
+    @property
+    def id(self) -> str:
+        """Get ID of the extender."""
+        return self._id
+
+    @property
+    def is_extending(self) -> bool:
+        """Check if extender is extending."""
+        return self._is_extending
+
     def tick(self) -> None:
         """Update extending status."""
         self._is_extending = self._calculate_extension()
