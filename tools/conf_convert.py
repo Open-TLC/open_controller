@@ -142,11 +142,27 @@ def _parse_clockwork_params(
             raw_controllers[0][1]["group_outputs"] = group_outputs
 
     controllers_list = []
+    detectors_list = []
     for ctrl_id, ctrl_data in raw_controllers:
+        detectors = _extract_detectors(ctrl_data)
         parsed_ctrl = _parse_single_controller(ctrl_id, ctrl_data)
         controllers_list.append(parsed_ctrl)
+        detectors_list.extend(detectors)
 
-    return {"controllers": controllers_list}
+    # Detectors by ID.
+    cleaned_detectors: dict[str, dict[str, Any]] = {}
+
+    # Remove possible duplicate entries.
+    for det in detectors_list:
+        if det["id"] in cleaned_detectors:
+            continue
+
+        cleaned_detectors[det["id"]] = det
+
+    return {
+        "controllers": controllers_list,
+        "detectors": list(cleaned_detectors.values()),
+    }
 
 
 def _extract_raw_controllers(
@@ -227,6 +243,37 @@ def _extract_raw_controllers(
     return resolved_list
 
 
+def _extract_detectors(controller_conf: dict[str, Any]) -> list[dict[str, Any]]:
+    detectors_conf = dict(controller_conf.get("detectors", {}))
+
+    result_configurations: list[dict[str, Any]] = []
+    for det_conf in detectors_conf.values():
+        det_id = det_conf.get("sumo_id", "")
+        raw_det_type = det_conf.get("type", "")
+
+        if not raw_det_type:
+            raise ValueError(f"No type found for detector {det_id}")
+
+        if raw_det_type == "request":
+            det_type = "e1_detector"
+        elif raw_det_type == "e3detector":
+            det_type = "e3_detector"
+        else:
+            raise ValueError(
+                f"Unknown detector type {raw_det_type} for detector {det_id}",
+            )
+
+        result_conf = {
+            "id": det_id,
+            "type": det_type,
+            "options": {},
+        }
+
+        result_configurations.append(result_conf)
+
+    return result_configurations
+
+
 def _parse_single_controller(
     ctrl_id: str | None,
     controller: dict[str, Any],
@@ -252,19 +299,8 @@ def _parse_single_controller(
             del group_options["channel"]
             del group_options["phase_request"]
 
-    # Separate standard request detectors from e3 extension detectors.
-    raw_detectors: dict[str, Any] = controller.get("detectors", {})
-    raw_extenders: dict[str, Any] = controller.get("extenders", {})
-
-    detectors: dict[str, Any] = {}
-    extenders: dict[str, Any] = dict(raw_extenders)
-
-    for det_key, det_val in raw_detectors.items():
-        det_type = det_val.get("type", "")
-        if det_type in ("e3detector", "extender"):
-            extenders[det_key] = det_val
-        else:
-            detectors[det_key] = det_val
+    extenders = _parse_extenders(controller)
+    requesters = _parse_requesters(controller)
 
     phases = [_FlowList(row) for row in controller.get("phases", [])]
     intergreens = [_FlowList(row) for row in controller.get("intergreens", [])]
@@ -273,8 +309,8 @@ def _parse_single_controller(
         "print_status": controller.get("print_status", False),
         "sumo_outputs": controller.get("group_outputs", []),
         "signal_groups": signal_groups,
-        "detectors": detectors,
         "extenders": extenders,
+        "requesters": requesters,
         "group_list": controller.get("group_list", []),
         "phases": phases,
         "intergreens": intergreens,
@@ -285,6 +321,79 @@ def _parse_single_controller(
         "type": controller.get("type", "phasering"),
         "options": options,
     }
+
+
+MODE_MAP = {
+    1: "simple",
+    2: "pressure",
+    3: "pressure_and_time",
+    4: "momentum_and_time",
+}
+
+
+def _parse_extenders(config: dict[str, Any]) -> list[dict[str, Any]]:
+    detectors = config.get("detectors", {})
+    extenders = config.get("extenders", {})
+
+    # Map group IDs to associated detector IDs (e.g. e3detectors)
+    group_to_detectors: dict[str, list[str]] = {}
+    for det_id, det_info in detectors.items():
+        group = det_info.get("group")
+        if group:
+            group_to_detectors.setdefault(group, []).append(det_id)
+
+    output = []
+    for ext_id, ext_info in extenders.items():
+        group = ext_info.get("group")
+        ext_mode = ext_info.get("ext_mode")
+
+        options = {
+            "mode": MODE_MAP.get(ext_mode, str(ext_mode)),
+            "threshold": ext_info.get("ext_threshold"),
+            "time_discount": ext_info.get("time_discount"),
+            "detectors": group_to_detectors.get(group, []),
+        }
+
+        output.append(
+            {
+                "id": ext_id,
+                "type": "smart",
+                "group": group,
+                "options": options,
+            },
+        )
+
+    return output
+
+
+def _parse_requesters(config: dict[str, Any]) -> list[dict[str, Any]]:
+    detectors = config.get("detectors", {})
+    output = []
+
+    for det_id, det_info in detectors.items():
+        if det_info.get("type") == "request":
+            request_groups = det_info.get("request_groups", [])
+
+            # Primary group is the first element; remaining elements go to side_groups
+            main_group = request_groups[0] if request_groups else ""
+            side_groups = request_groups[1:]
+
+            sumo_id = det_info.get("sumo_id")
+            detector_list = [sumo_id] if sumo_id else []
+
+            output.append(
+                {
+                    "id": det_id,
+                    "type": "trigger",
+                    "group": main_group,
+                    "side_groups": side_groups,
+                    "options": {
+                        "detectors": detector_list,
+                    },
+                },
+            )
+
+    return output
 
 
 class _FlowList(list):
