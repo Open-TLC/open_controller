@@ -41,8 +41,8 @@ SUMO_BIN_NO_GRAPH = "sumo"
 
 TIMER_PARAMS = {
     "time_step": 0.1,
-    "timer_mode": "real",
-    "real_time_multiplier": 50,
+    "mode": "real",
+    "real_time_multiplier": 1,
 }
 
 GROUP_CHANNEL_CONTROL = "group.control"
