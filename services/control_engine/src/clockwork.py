@@ -16,6 +16,9 @@ from nats import connect
 from nats.aio.client import Client
 from nats.aio.msg import Msg
 
+from services.control_engine.src.detectors.area_detector import AreaDetector
+from services.control_engine.src.detectors.point_detector import PointDetector
+
 from .configuration import (
     ClockworkConf,
     read_command_line,
@@ -52,6 +55,7 @@ class Clockwork:
 
         self._publishers: dict[str, StatePublisher] = {}
         self._controllers: list[SignalController] = []
+        self._detectors: tuple[list[PointDetector], list[AreaDetector]] = ([], [])
 
         self._timer: Timer = Timer(self._conf.timer, warnings=True)
 
@@ -75,11 +79,11 @@ class Clockwork:
         nc: Client = await connect(nats_address)
         instance._nc = nc
 
-        detectors = await create_detectors(instance._conf.detectors, nc=nc)
+        instance._detectors = await create_detectors(instance._conf.detectors, nc=nc)
 
         for conf in instance._conf.controllers:
             # Create controller.
-            controller = create_controller(conf, instance._timer, detectors)
+            controller = create_controller(conf, instance._timer, instance._detectors)
             instance._controllers.append(controller)
 
             example_states = controller.signal_states
@@ -135,6 +139,10 @@ class Clockwork:
 
                 # Advancing timer.
                 self._timer.tick()
+
+                # Update all detectors.
+                for detector in self._detectors[0] + self._detectors[1]:
+                    detector.tick()
 
                 # Update all controllers and publish their states.
                 for controller in self._controllers:
