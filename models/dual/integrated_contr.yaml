@@ -1,0 +1,180 @@
+timer:
+  mode: real
+  time_step: 0.1
+  real_time_multiplier: 1
+
+nats:
+  url: nats
+  port: 4222
+
+simengine:
+  sumo_conf: models/dual/dual.sumocfg
+
+clockwork:
+  publisher:
+    mode: change
+  controllers:
+  - id: j2
+    type: fixed_time
+    options:
+      phases:
+      - signal_states: ggrrrr
+        duration: 10
+      - signal_states: rrggrr
+        duration: 10
+      - signal_states: rrrrgg
+        duration: 10
+      yellow_duration: 3
+  - id: j1
+    type: phasering
+    options:
+      print_status: false
+      sumo_outputs:
+      - east-r
+      - east-l
+      - south-r
+      - south-l
+      - west-r
+      - west-l
+      signal_groups:
+        east-r:
+          min_green: 3
+          min_amber_red: 1
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: false
+        east-l:
+          min_green: 3
+          min_amber_red: 1
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: false
+        south-r:
+          min_green: 3
+          min_amber_red: 1
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: false
+        south-l:
+          min_green: 3
+          min_amber_red: 1
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: false
+        west-r:
+          min_green: 3
+          min_amber_red: 1
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: false
+        west-l:
+          min_green: 3
+          min_amber_red: 1
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: false
+      extenders:
+      - id: ext_east_r
+        type: smart
+        group: east-r
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - j1.0
+      - id: ext_east_l
+        type: smart
+        group: east-l
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - j1.1
+      - id: ext_south_r
+        type: smart
+        group: south-r
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - j1.2
+      - id: ext_south_l
+        type: smart
+        group: south-l
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - j1.3
+      - id: ext_west_r
+        type: smart
+        group: west-r
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - j1.4
+      - id: ext_west_l
+        type: smart
+        group: west-l
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - j1.5
+      requesters: []
+      group_list:
+      - east-r
+      - east-l
+      - south-r
+      - south-l
+      - west-r
+      - west-l
+      phases:
+      - [1, 1, 0, 0, 0, 0]
+      - [0, 0, 1, 1, 0, 0]
+      - [0, 0, 0, 0, 1, 1]
+      intergreens:
+      - [0, 0, 0, 5, 0, 0]
+      - [0, 0, 0, 5, 5, 5]
+      - [0, 0, 0, 0, 0, 5]
+      - [5, 5, 0, 0, 0, 5]
+      - [0, 5, 0, 0, 0, 0]
+      - [0, 5, 5, 5, 0, 0]
+  detectors:
+  - id: j1.0
+    type: e2_detector
+    options: {}
+  - id: j1.1
+    type: e2_detector
+    options: {}
+  - id: j1.2
+    type: e2_detector
+    options: {}
+  - id: j1.3
+    type: e2_detector
+    options: {}
+  - id: j1.4
+    type: e2_detector
+    options: {}
+  - id: j1.5
+    type: e2_detector
+    options: {}

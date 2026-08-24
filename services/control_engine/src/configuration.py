@@ -104,6 +104,40 @@ class TimerConf:
         self.real_time_multiplier: float = float(raw_conf["real_time_multiplier"])
 
 
+class SimEngineConf:
+    """Configuration object for simulation engine settings."""
+
+    def __init__(self, raw_conf: dict[str, Any]) -> None:
+        sumo_conf_filename = str(raw_conf["simengine"].get("sumo_conf", ""))
+        if not sumo_conf_filename:
+            raise ValueError("sumo_conf not configured in simulation engine")
+
+        self.sumo_conf_filename: str = sumo_conf_filename
+
+        # Simulation engine also includes timer and clockwork.
+        self.timer: TimerConf = TimerConf(raw_conf["timer"])
+
+        # TODO: Override controllers print_status if print_status is set to True
+        self.controllers: list[ControllerConf] = []
+        for raw_controller_conf in raw_conf["clockwork"]["controllers"]:
+            controller_conf = ControllerConf(raw_controller_conf)
+            self.controllers.append(controller_conf)
+
+        self.detectors = [
+            DetectorConfiguration(d)
+            for d in raw_conf.get("clockwork", {}).get("detectors", [])
+        ]
+
+
+def load_sim_engine_conf_from_file(filename) -> SimEngineConf:
+    """Load configuration from file."""
+    raw_conf: dict[str, Any]
+    with open(filename) as f:
+        raw_conf = yaml.safe_load(f)
+
+    return SimEngineConf(raw_conf)
+
+
 def read_command_line():
     """Read command line arguments."""
     parser = argparse.ArgumentParser()
