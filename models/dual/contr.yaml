@@ -91,7 +91,7 @@ clockwork:
           threshold: 0.25
           time_discount: 60
           detectors:
-          - e3_east_r
+          - j1.0
       - id: ext_east_l
         type: smart
         group: east-l
@@ -100,7 +100,7 @@ clockwork:
           threshold: 0.25
           time_discount: 60
           detectors:
-          - e3_east_l
+          - j1.1
       - id: ext_south_r
         type: smart
         group: south-r
@@ -109,7 +109,7 @@ clockwork:
           threshold: 0.25
           time_discount: 60
           detectors:
-          - e3_south_r
+          - j1.2
       - id: ext_south_l
         type: smart
         group: south-l
@@ -118,7 +118,7 @@ clockwork:
           threshold: 0.25
           time_discount: 60
           detectors:
-          - e3_south_l
+          - j1.3
       - id: ext_west_r
         type: smart
         group: west-r
@@ -127,7 +127,7 @@ clockwork:
           threshold: 0.25
           time_discount: 60
           detectors:
-          - e3_west_r
+          - j1.4
       - id: ext_west_l
         type: smart
         group: west-l
@@ -136,50 +136,8 @@ clockwork:
           threshold: 0.25
           time_discount: 60
           detectors:
-          - e3_west_l
-      requesters:
-      - id: e1_east_1
-        type: trigger
-        group: east-r
-        side_groups: []
-        options:
-          detectors:
-          - e1_0
-      - id: e1_east_2
-        type: trigger
-        group: east-l
-        side_groups: []
-        options:
-          detectors:
-          - e1_1
-      - id: e1_south_1
-        type: trigger
-        group: south-r
-        side_groups: []
-        options:
-          detectors:
-          - e1_2
-      - id: e1_south_2
-        type: trigger
-        group: south-l
-        side_groups: []
-        options:
-          detectors:
-          - e1_3
-      - id: e1_west_1
-        type: trigger
-        group: west-r
-        side_groups: []
-        options:
-          detectors:
-          - e1_4
-      - id: e1_west_2
-        type: trigger
-        group: west-l
-        side_groups: []
-        options:
-          detectors:
-          - e1_5
+          - j1.5
+      requesters: []
       group_list:
       - east-r
       - east-l
@@ -199,39 +157,21 @@ clockwork:
       - [0, 3, 0, 0, 0, 0]
       - [0, 3, 3, 3, 0, 0]
   detectors:
-  - id: e1_0
-    type: e1_detector
+  - id: j1.0
+    type: traffic_indicators_detector
     options: {}
-  - id: e1_1
-    type: e1_detector
+  - id: j1.1
+    type: traffic_indicators_detector
     options: {}
-  - id: e1_2
-    type: e1_detector
+  - id: j1.2
+    type: traffic_indicators_detector
     options: {}
-  - id: e1_3
-    type: e1_detector
+  - id: j1.3
+    type: traffic_indicators_detector
     options: {}
-  - id: e1_4
-    type: e1_detector
+  - id: j1.4
+    type: traffic_indicators_detector
     options: {}
-  - id: e1_5
-    type: e1_detector
-    options: {}
-  - id: e3_east_r
-    type: e3_detector
-    options: {}
-  - id: e3_east_l
-    type: e3_detector
-    options: {}
-  - id: e3_south_r
-    type: e3_detector
-    options: {}
-  - id: e3_south_l
-    type: e3_detector
-    options: {}
-  - id: e3_west_r
-    type: e3_detector
-    options: {}
-  - id: e3_west_l
-    type: e3_detector
+  - id: j1.5
+    type: traffic_indicators_detector
     options: {}

@@ -1,6 +1,6 @@
 {
   "simulation": {
-    "sumocfg": "../testmodels/otso/dual/dual.sumocfg",
+    "sumocfg": "models/dual/dual.sumocfg",
     "mode": "nats",
     "nats": {
       "ip": "nats",
