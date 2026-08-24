@@ -38,7 +38,8 @@ def create_controller(
 
     controller: SignalController
     if controller_type == "phasering":
-        controller = PhaseRingController(conf.id, conf.options, timer)
+        dets = detectors[0] + detectors[1]
+        controller = PhaseRingController(conf.id, conf.options, timer, dets)
     elif controller_type == "fixed_time":
         controller = FixedTimeController(conf.id, timer, conf.options)
     elif controller_type == "syvari":

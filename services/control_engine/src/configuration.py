@@ -63,7 +63,7 @@ class NatsConf:
     """Configuration object for Clockwork NATS settings."""
 
     def __init__(self, raw_conf: dict[str, Any]) -> None:
-        self.server = raw_conf.get("server") or DEFAULT_NATS_SERVER
+        self.server = raw_conf.get("url") or DEFAULT_NATS_SERVER
         self.port = raw_conf.get("port") or DEFAULT_NATS_PORT
 
 
@@ -89,7 +89,7 @@ class TimerConf:
     """Configuration object for timer settings."""
 
     def __init__(self, raw_conf: dict[str, Any]) -> None:
-        timer_mode = str(raw_conf.get("timer_mode"))
+        timer_mode = str(raw_conf.get("mode"))
         if timer_mode not in SUPPORTED_TIMER_MODES:
             raise ValueError(
                 f"Unknown timer mode {timer_mode}. "
