@@ -193,6 +193,8 @@ class SumoNatsInterface:
             # Note, if Sumo is stopped by hand, this will try to catch up
             await asyncio.sleep(self.system_timer.wall_time_to_next_step())
 
+            self.update_sumo()
+
             self.websumo.publish_state()
 
             # To sync with realtimer
