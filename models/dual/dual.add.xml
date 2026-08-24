@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2026-07-13 17:50:58 by Eclipse SUMO netedit Version 1.18.0
+<!-- generated on 2026-08-24T19:10:57.924608+02:00 by Eclipse SUMO netedit v1_27_1+0443-212e5431948
 -->
 
 <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
     <!-- Detectors -->
-    <laneAreaDetector id="j1.0" lane="E6_0" pos="63.36" length="30.00" period="300.00" file="/dev/null"/>
-    <laneAreaDetector id="j1.1" lane="E6_1" pos="63.20" length="30.00" period="300.00" file="/dev/null"/>
+    <inductionLoop id="j1.e1_0" lane="E6_0" pos="91.39" period="300.00" file="e1_0.xml"/>
+    <inductionLoop id="j1.e1_1" lane="E6_1" pos="91.29" period="300.00" file="e1_1.xml"/>
+    <inductionLoop id="j1.e1_2" lane="-E5_0" pos="84.40" period="300.00" file="e1_2.xml"/>
+    <inductionLoop id="j1.e1_3" lane="-E5_1" pos="84.43" period="300.00" file="e1_3.xml"/>
+    <inductionLoop id="j1.e1_4" lane="E0_0" pos="82.92" period="300.00" file="e1_4.xml"/>
+    <inductionLoop id="j1.e1_5" lane="E0_1" pos="83.03" period="300.00" file="e1_5.xml"/>
+    <laneAreaDetector id="j1.0" lane="E6_0" pos="63.12" length="30.00" period="300.00" file="/dev/null"/>
+    <laneAreaDetector id="j1.1" lane="E6_1" pos="63.00" length="30.00" period="300.00" file="/dev/null"/>
     <laneAreaDetector id="j1.1a" lane="-E6_1" pos="0.45" length="30.00" period="300.00" file="/dev/null"/>
     <laneAreaDetector id="j1.1b" lane="-E6_0" pos="0.55" length="30.00" period="300.00" file="/dev/null"/>
-    <laneAreaDetector id="j1.2" lane="-E5_0" pos="56.52" length="30.00" period="300.00" file="/dev/null"/>
-    <laneAreaDetector id="j1.3" lane="-E5_1" pos="56.45" length="30.00" period="300.00" file="/dev/null"/>
+    <laneAreaDetector id="j1.2" lane="-E5_0" pos="56.03" length="30.00" period="300.00" file="/dev/null"/>
+    <laneAreaDetector id="j1.3" lane="-E5_1" pos="56.04" length="30.00" period="300.00" file="/dev/null"/>
     <laneAreaDetector id="j1.3a" lane="E5_0" pos="0.65" length="30.00" period="300.00" file="/dev/null"/>
-    <laneAreaDetector id="j1.4" lane="E0_0" pos="55.20" length="30.00" period="300.00" file="/dev/null"/>
-    <laneAreaDetector id="j1.5" lane="E0_1" pos="55.12" length="30.00" period="300.00" file="/dev/null"/>
+    <laneAreaDetector id="j1.4" lane="E0_0" pos="54.72" length="30.00" period="300.00" file="/dev/null"/>
+    <laneAreaDetector id="j1.5" lane="E0_1" pos="54.73" length="30.00" period="300.00" file="/dev/null"/>
     <laneAreaDetector id="j1.5a" lane="-E0_0" pos="0.54" length="30.00" period="300.00" file="/dev/null"/>
     <laneAreaDetector id="j2.0" lane="-E2_0" pos="51.38" length="30.00" period="300.00" file="/dev/null"/>
     <laneAreaDetector id="j2.1" lane="-E2_1" pos="51.30" length="30.00" period="300.00" file="/dev/null"/>

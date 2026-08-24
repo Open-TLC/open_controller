@@ -33,14 +33,24 @@ class PresenceRequester(Requester):
         self._point_detectors: list[PointDetector] = []
         self._area_detectors: list[AreaDetector] = []
 
+        found_ids: set[str] = set()
         for detector in detectors:
-            if detector.id not in target_ids:
+            det_id_str = str(detector.id)
+            if det_id_str not in target_ids:
                 continue
 
+            found_ids.add(det_id_str)
             if isinstance(detector, AreaDetector):
                 self._area_detectors.append(detector)
             elif isinstance(detector, PointDetector):
                 self._point_detectors.append(detector)
+
+        missing_ids = target_ids - found_ids
+        if missing_ids:
+            raise ValueError(
+                f"Requester {requester_id} referenced non-existent detector "
+                f"IDs: {missing_ids}",
+            )
 
     @property
     def id(self) -> str:

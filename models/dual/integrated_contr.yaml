@@ -43,7 +43,7 @@ clockwork:
           min_red: 3
           min_amber: 3
           max_green: 30
-          constant_request: true
+          constant_request: false
           remain_green: false
         east-l:
           min_green: 3
@@ -51,7 +51,7 @@ clockwork:
           min_red: 3
           min_amber: 3
           max_green: 30
-          constant_request: true
+          constant_request: false
           remain_green: false
         south-r:
           min_green: 3
@@ -59,7 +59,7 @@ clockwork:
           min_red: 3
           min_amber: 3
           max_green: 30
-          constant_request: true
+          constant_request: false
           remain_green: false
         south-l:
           min_green: 3
@@ -67,7 +67,7 @@ clockwork:
           min_red: 3
           min_amber: 3
           max_green: 30
-          constant_request: true
+          constant_request: false
           remain_green: false
         west-r:
           min_green: 3
@@ -75,7 +75,7 @@ clockwork:
           min_red: 3
           min_amber: 3
           max_green: 30
-          constant_request: true
+          constant_request: false
           remain_green: false
         west-l:
           min_green: 3
@@ -83,7 +83,7 @@ clockwork:
           min_red: 3
           min_amber: 3
           max_green: 30
-          constant_request: true
+          constant_request: false
           remain_green: false
       extenders:
       - id: ext_east_r
@@ -140,7 +140,56 @@ clockwork:
           time_discount: 60
           detectors:
           - j1.5
-      requesters: []
+      requesters:
+      - id: e1_east_1
+        type: presence
+        group: east-r
+        side_groups: []
+        options:
+          detectors:
+          - j1.0
+          - j1.e1_0
+      - id: e1_east_2
+        type: presence
+        group: east-l
+        side_groups: []
+        options:
+          detectors:
+          - j1.1
+          - j1.e1_1
+      - id: e1_south_1
+        type: presence
+        group: south-r
+        side_groups: []
+        options:
+          detectors:
+          - j1.2
+          - j1.e1_2
+      - id: e1_south_2
+        type: presence
+        group: south-l
+        side_groups: []
+        options:
+          detectors:
+          - j1.3
+          - j1.e1_3
+      - id: e1_west_1
+        type: presence
+        group: west-r
+        side_groups: []
+        options:
+          detectors:
+          - j1.4
+          - j1.e1_4
+      - id: e1_west_2
+        type: presence
+        group: west-l
+        side_groups: []
+        options:
+          detectors:
+          - j1.5
+          - j1.e1_5
+ 
       group_list:
       - east-r
       - east-l
@@ -160,6 +209,25 @@ clockwork:
       - [0, 5, 0, 0, 0, 0]
       - [0, 5, 5, 5, 0, 0]
   detectors:
+  - id: j1.e1_0
+    type: e1_detector
+    options: {}
+  - id: j1.e1_1
+    type: e1_detector
+    options: {}
+  - id: j1.e1_2
+    type: e1_detector
+    options: {}
+  - id: j1.e1_3
+    type: e1_detector
+    options: {}
+  - id: j1.e1_4
+    type: e1_detector
+    options: {}
+  - id: j1.e1_5
+    type: e1_detector
+    options: {}
+ 
   - id: j1.0
     type: e2_detector
     options: {}

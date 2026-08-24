@@ -25,6 +25,8 @@ from services.control_engine.src.extenders.gap_seeking_extender import (
     GapSeekingExtender,
 )
 from services.control_engine.src.extenders.smart_extender import SmartExtender
+from services.control_engine.src.requesters.presence_requester import PresenceRequester
+from services.control_engine.src.requesters.requester import Requester
 
 from .phase import SimplePhase
 from .signal_controller import ControllerStatus, SignalController
@@ -98,8 +100,14 @@ class PhaseRingController(SignalController):
             options.get("extenders", []),
             detectors,
         )
+        requesters_by_group = self._create_requesters(
+            options.get("requesters", []),
+            detectors,
+        )
+
         for group in self._groups:
             group.add_extenders(extenders_by_group.get(group.id, []))
+            group.add_requesters(requesters_by_group.get(group.id, []))
 
         self.sumo_outputs: list[SignalGroup] = list(self._groups)
         self._set_phase_ring(phase_ring)
@@ -282,6 +290,31 @@ class PhaseRingController(SignalController):
             extenders.setdefault(group_id, []).append(extender)
 
         return extenders
+
+    def _create_requesters(
+        self,
+        requester_options: list[dict[str, Any]],
+        detectors: list[AreaDetector | PointDetector],
+    ) -> dict[str, list[Requester]]:
+        """Intantiante requesters mapped by group ID."""
+        requesters: dict[str, list[Requester]] = {}
+        for opts in requester_options:
+            r_type = str(opts.get("type"))
+            r_id = str(opts.get("id", ""))
+            group_id = str(opts.get("group", ""))
+
+            requester: Requester
+
+            if r_type == "presence":
+                requester = PresenceRequester(r_id, opts["options"], detectors)
+            else:
+                raise ValueError(
+                    f"Unknown requester type {r_type} for requester with ID {r_id}",
+                )
+
+            requesters.setdefault(group_id, []).append(requester)
+
+        return requesters
 
     def get_conf_as_dict(self) -> dict[str, Any]:
         """Return full controller configuration dictionary."""
