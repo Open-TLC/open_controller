@@ -1,5 +1,4 @@
 import argparse
-import contextlib
 import json
 import os
 from typing import Any
@@ -295,9 +294,30 @@ def _parse_single_controller(
         signal_groups[sg_name] = merged_sg
 
     for group_options in signal_groups.values():
-        with contextlib.suppress(KeyError):
-            del group_options["channel"]
-            del group_options["phase_request"]
+        if group_options["request_type"] == "detector":
+            group_options["constant_request"] = False
+        elif group_options["request_type"] == "fixed":
+            group_options["constant_request"] = True
+        else:
+            raise ValueError(f"Unknown request_type {group_options['request_type']}")
+
+        if group_options["green_end"] == "remain":
+            group_options["remain_green"] = True
+        elif group_options["green_end"] == "after_ext":
+            group_options["remain_green"] = False
+        else:
+            raise ValueError(f"Unknown green_end {group_options['green_end']}")
+
+        for key in (
+            "channel",
+            "phase_request",
+            "request_type",
+            "max_amber",
+            "max_amber_red",
+            "max_red",
+            "green_end",
+        ):
+            group_options.pop(key, None)
 
     extenders = _parse_extenders(controller)
     requesters = _parse_requesters(controller)
