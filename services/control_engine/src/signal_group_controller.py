@@ -258,7 +258,7 @@ class PhaseRingController(SignalController):
                 )
             elif e_type == "smart":
                 grp = self._groups_by_id[group_id]
-                conflicting_ids = [c.id for c in grp._conflict_groups]
+                conflicting_ids = [c.id for c in grp.conflict_groups]
                 conflicting_dets: list[str] = [
                     d
                     for other in extender_options

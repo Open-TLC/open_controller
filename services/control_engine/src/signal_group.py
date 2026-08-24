@@ -66,7 +66,7 @@ class SignalGroup(HierarchicalMachine):
         self._timer = timer
         self._intergreens = intergreens
 
-        self._conflict_groups: list[SignalGroup] = []
+        self.conflict_groups: list[SignalGroup] = []
 
         self._extenders: list[Extender] = []
         self._requesters: list[Requester] = []
@@ -161,7 +161,7 @@ class SignalGroup(HierarchicalMachine):
 
     def add_conflict_groups(self, groups: list["SignalGroup"]) -> None:
         """Add conflicting groups for the group."""
-        self._conflict_groups.extend(groups)
+        self.conflict_groups.extend(groups)
 
     def add_extenders(self, extenders: list[Extender]) -> None:
         """Add extenders for the group."""
@@ -184,7 +184,7 @@ class SignalGroup(HierarchicalMachine):
     @property
     def is_blocking(self) -> bool:
         """Group is in state, that blocks conflict groups."""
-        return self.state in BLOCKING_STATES
+        return self.signal_state in BLOCKING_STATES
 
     def tick(self) -> None:
         """Update signal group."""
@@ -211,11 +211,11 @@ class SignalGroup(HierarchicalMachine):
 
     def conflict_group_blocking(self) -> bool:
         """Check if any conflicting group is blocking."""
-        return any(grp.is_blocking for grp in self._conflict_groups)
+        return any(grp.is_blocking for grp in self.conflict_groups)
 
     def end_conflict_greens(self) -> None:
         """Request all conflicting groups to end their greens."""
-        for group in self._conflict_groups:
+        for group in self.conflict_groups:
             if group.is_blocking:
                 group.end_green_requested = True
 
@@ -223,7 +223,7 @@ class SignalGroup(HierarchicalMachine):
         """Check if all conflict group intergreen times have passed."""
         return all(
             self._timer.seconds - grp.amber_started_at > self._intergreens[grp.id]
-            for grp in self._conflict_groups
+            for grp in self.conflict_groups
         )
 
     def _amber_start_cb(self) -> None:
