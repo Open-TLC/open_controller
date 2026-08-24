@@ -7,25 +7,22 @@ to a nats-server (in localhost or given address)
 # All Rights Reserved
 #
 
+import argparse
+import asyncio
+import json
 import sys
 from datetime import datetime
-import asyncio
-import argparse
-from nats.aio.client import Client as NATS
-import json
-from timer import Timer
-from confread import GlobalConf
-from outputs import DetStorage, GroupStorage, RadarStorage
-from websumo_interface import WebsumoInterface
 
 import libsumo as traci
 from nats.aio.client import Client
+from nats.aio.client import Client as NATS
 
 from services.control_engine.src.configuration import TimerConf
 from services.control_engine.src.timer import Timer
 
 from .confread import GlobalConf
 from .outputs import DetStorage, GroupStorage, RadarStorage
+from .websumo_interface import WebsumoInterface
 
 SOFTWARE_NAME = "SUMO Simulation enngine"
 IMPL_VERSION = "0.1"
@@ -73,7 +70,10 @@ class SumoNatsInterface:
         """Sets the parameters for the interface based on command line and conf file"""
         # The command line params are set here
         command_line_params = read_command_line()
-        self.config = GlobalConf(command_line_params=command_line_params, conf=command_line_params.conf)
+        self.config = GlobalConf(
+            command_line_params=command_line_params,
+            conf=command_line_params.conf,
+        )
         # --nowebsumo is an opt-out; turn it into a positive name at the
         # parse boundary so the rest of the code never reads negated
         self.websumo_enabled = not command_line_params.nowebsumo
@@ -84,10 +84,11 @@ class SumoNatsInterface:
         # Graphical mode is not available with libsumo (sumo-gui would
         # abort the whole process); WebSUMO is the viewer
         if self.config.graph_mode():
-            print("Warning: graphical mode is not available with libsumo, "
-                  "running without a window - view with WebSUMO instead")
+            print(
+                "Warning: graphical mode is not available with libsumo, "
+                "running without a window - view with WebSUMO instead",
+            )
         self.sumo_bin = SUMO_BIN_NO_GRAPH
-
 
         # Datasources
         self.ds_each_update = []
@@ -163,8 +164,11 @@ class SumoNatsInterface:
         self.start_sumo()
         # WebSUMO viewer interface: publishes the simulation state so it
         # can be viewed with WebSUMO (no-op if there is no NATS server)
-        self.websumo = WebsumoInterface(self.sumo_file, self.nats_server,
-                                        enabled=self.websumo_enabled)
+        self.websumo = WebsumoInterface(
+            self.sumo_file,
+            self.nats_server,
+            enabled=self.websumo_enabled,
+        )
         await self.connect_nats()
         # TODO: Callbacks for control messages to be added here
         # Loop for handling the simulation
@@ -194,12 +198,11 @@ class SumoNatsInterface:
             # To sync with realtimer
             self.system_timer.tick()
 
-        self.websumo.publish_end()
-        self.websumo.close()
-
-
             # This will handle all the data stream from sumo to nats
             await self.send_statuses_to_nats()
+
+        self.websumo.publish_end()
+        self.websumo.close()
 
         await self.nats.publish("clockwork.command", b"exit")
 
@@ -282,25 +285,24 @@ class SumoNatsInterface:
 
         traci.trafficlight.setLinkState(controller_sumo_id, light_id, sumo_group_state)
 
-
-    def control_V2X_speed(self,subject,msg_dict):
-        """Sets the speed for given V2X vehicles """
+    def control_V2X_speed(self, subject, msg_dict):
+        """Sets the speed for given V2X vehicles"""
         vehicle_ids = traci.vehicle.getIDList()
         controlled_vehs = msg_dict["vehicles"]
         # control_veh_type = "v2x_stop_"
-        print("Controlling the speed of vehicles: ",controlled_vehs)
+        print("Controlling the speed of vehicles: ", controlled_vehs)
         for vehid in vehicle_ids:
-            if "v2x_stop" in vehid:           
+            if "v2x_stop" in vehid:
                 TLSinfo = traci.vehicle.getNextTLS(vehid)
                 leaderInfo = traci.vehicle.getLeader(vehid, dist=30.0)
                 leaderDist = 1000
                 # leaderSpeed = traci.vehicle.getSpeed(vehid)
                 try:
-                    TLSdist = round(TLSinfo[0][2],1)
-                    leaderDist = round(leaderInfo[1],1)
+                    TLSdist = round(TLSinfo[0][2], 1)
+                    leaderDist = round(leaderInfo[1], 1)
                 except:
-                    print('Error in Distance')
-                if True or ((TLSdist < 120) and (TLSdist >40)):
+                    print("Error in Distance")
+                if True or ((TLSdist < 120) and (TLSdist > 40)):
                     vehspeed = 8.0
                     traci.vehicle.setSpeed(vehid, vehspeed)
                     # print("Set the speed of: ", vehid, "to: vehspeed", vehspeed, "DistSig: ", TLSdist, "DistVeh: ", leaderDist)
@@ -310,11 +312,13 @@ class SumoNatsInterface:
                     traci.vehicle.setColor(vehid, (255, 255, 0, 255))
 
 
-
 async def main():
     # The command line params are set here
     command_line_params = read_command_line()
-    config = GlobalConf(command_line_params=command_line_params, conf=command_line_params.conf)
+    config = GlobalConf(
+        command_line_params=command_line_params,
+        conf=command_line_params.conf,
+    )
 
     # After this all the configuration is in the "config"
     nats_server = config.get_nats_params()
@@ -322,8 +326,10 @@ async def main():
     # Graphical mode is not available with libsumo (sumo-gui would
     # abort the whole process); WebSUMO is the viewer
     if config.graph_mode():
-        print("Warning: graphical mode is not available with libsumo, "
-              "running without a window - view with WebSUMO instead")
+        print(
+            "Warning: graphical mode is not available with libsumo, "
+            "running without a window - view with WebSUMO instead",
+        )
     sumo_bin = SUMO_BIN_NO_GRAPH
 
     # External controller used
@@ -333,23 +339,25 @@ async def main():
     else:
         external_controller = False
 
-
-    # FIX ME 
+    # FIX ME
     if command_line_params.use_group_status:
         group_control_channel_prefix = GROUP_CHANNEL_STATUS
     else:
         group_control_channel_prefix = GROUP_CHANNEL_CONTROL
-        
+
     # Start the sumo
     try:
         traci.start(
-            [sumo_bin, 
-             "-c", 
-             sumo_file,
-             "--step-length", str(TIMER_PARAMS["time_step"]),
-             "--start",
-             "--quit-on-end"]
-             )
+            [
+                sumo_bin,
+                "-c",
+                sumo_file,
+                "--step-length",
+                str(TIMER_PARAMS["time_step"]),
+                "--start",
+                "--quit-on-end",
+            ],
+        )
     except Exception as e:
         print("Error starting sumo:", e)
         sys.exit(1)
@@ -366,17 +374,19 @@ async def main():
         subject = msg.subject
         reply = msg.reply
         data = msg.data.decode()
-        #print("Received a message on '{subject} {reply}': {data}".format(
+        # print("Received a message on '{subject} {reply}': {data}".format(
         #    subject=subject, reply=reply, data=dat a))
         msg_dict = json.loads(data)
         self.set_sumo_traffic_light_state(subject, msg_dict)
-    
+
     # All red and expecting messages
     if external_controller:
         print("Subscribing to:", group_control_channel_prefix)
-        sub = await nats.subscribe(group_control_channel_prefix, cb=sig_group_message_handler)
+        sub = await nats.subscribe(
+            group_control_channel_prefix,
+            cb=sig_group_message_handler,
+        )
         set_all_sumo_groups_to_red()
-
 
     det_storage = DetStorage()
     DetStorage.test()
@@ -386,19 +396,21 @@ async def main():
         except traci.exceptions.FatalTraCIError as e:
             print("Error in simulation step:", e)
             break
-        
+
         # This is changes the yelding operation of the vehicles
         # That is, they will enter "congested" junctions as well
         # Could the be done for all vehicles without a need to do it at every update?
         for vehicleId in traci.vehicle.getIDList():
-            traci.vehicle.setSpeedMode(vehicleId,55) # disable right of way check, vehicles can enter the junction, despite queue end
-
+            traci.vehicle.setSpeedMode(
+                vehicleId,
+                55,
+            )  # disable right of way check, vehicles can enter the junction, despite queue end
 
         system_timer.tick()
         # Note, if Sumo is stopped by hand, this will try to catch up
         await asyncio.sleep(system_timer.get_next_time_step())
         if config.send_det_statuses():
-            #det_statuses = get_detector_statuses()
+            # det_statuses = get_detector_statuses()
             det_statuses = det_storage.read_det_values_from_sumo()
             for det_status in det_statuses:
                 # We only send the status if it has changed
@@ -408,19 +420,19 @@ async def main():
                     det_status_json = json.dumps(det_status)
                     # Debug: we remove all the publishes REMOVE
                     await nats.publish(det_id, det_status_json.encode())
-        #det_statuses_json = json.dumps(det_statuses)
-        #await nats.publish(DET_CHANNEL_PREFIX, det_statuses_json.encode())
+        # det_statuses_json = json.dumps(det_statuses)
+        # await nats.publish(DET_CHANNEL_PREFIX, det_statuses_json.encode())
         light_statuses = get_traffic_light_statatuses()
         for light_status in light_statuses:
-            light_id = GROUP_CHANNEL_PREFIX + "." +  light_status["id"].rsplit(".")[-1]
+            light_id = GROUP_CHANNEL_PREFIX + "." + light_status["id"].rsplit(".")[-1]
             light_status["id"] = light_id
-            #print(light_status)
+            # print(light_status)
             light_status_json = json.dumps(light_status)
             # Debug: we remove all the publishes REMOVE
             await nats.publish(light_id, light_status_json.encode())
-        #print(system_timer.aggregate_time_drift)
+        # print(system_timer.aggregate_time_drift)
 
-            
+
 def get_detector_statuses():
     """Returns dict of detector statuses"""
     sumo_loops = traci.inductionloop.getIDList()
@@ -473,7 +485,6 @@ def read_command_line():
     each engine's existing pattern. Unifying the two parsers would be a
     separate refactor.
     """
-
     operation_description = """
     Runs the sumo in real time and relays the detector and group states
     to a nats-server
@@ -528,10 +539,12 @@ def read_command_line():
         required=False,
     )
 
-    parser.add_argument('--nowebsumo',
-                                help='If set, the WebSUMO viewer interface is not started',
-                                action='store_true',
-                                required=False)
+    parser.add_argument(
+        "--nowebsumo",
+        help="If set, the WebSUMO viewer interface is not started",
+        action="store_true",
+        required=False,
+    )
 
     args = parser.parse_args()
 
