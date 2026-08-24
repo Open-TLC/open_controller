@@ -187,3 +187,7 @@ Pipfile
 
 # Dia 
 .$*.bkp
+
+# Simulation outputs and local working papers
+models/*/out/
+doc/local/

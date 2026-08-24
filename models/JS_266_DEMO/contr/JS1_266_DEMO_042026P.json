@@ -1,7 +1,7 @@
 {
 
 "timer":{
-    "timer_mode": "fixed",
+    "timer_mode": "real",
     "time_step":0.1,
     "real_time_multiplier":1
 },
@@ -12,7 +12,7 @@
 "vis_mode": "main_states",
 
 "nats":{
-    "server": "10.8.0.36",
+    "server": "localhost",
     "port": "4222",
     "mode": "change"
 },

@@ -12,7 +12,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Add SUMO PPA and install
 RUN add-apt-repository ppa:sumo/stable && \
 	apt-get update && apt-get install -y --no-install-recommends \
-	sumo sumo-tools sumo-doc
+	sumo sumo-tools sumo-doc libatomic1
 
 # Export SUMO_HOME so traci and libsumo can be found in python
 ENV SUMO_HOME="/usr/share/sumo"
