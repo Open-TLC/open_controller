@@ -24,7 +24,7 @@ MACHINE_STATE_TO_OC_MAP: dict[str, str] = {
     "Green_MinimumTime": "1",
     "Green_Extending": "5",
     "Green_RemainGreen": "4",
-    "Amber_MinimumTime": ">",
+    "Amber_MinimumTime": "<",
 }
 
 
