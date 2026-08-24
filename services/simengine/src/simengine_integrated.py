@@ -91,6 +91,9 @@ class SimEngine:
                 print(f"Applying states {controller.id} -> {new_states}")
                 libsumo.trafficlight.setRedYellowGreenState(controller.id, new_states)
 
+            # Advance simulation.
+            libsumo.simulationStep()
+
 
 if __name__ == "__main__":
     main()
