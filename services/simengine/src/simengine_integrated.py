@@ -22,6 +22,8 @@ from services.control_engine.src.detectors.point_detector import PointDetector
 from services.control_engine.src.signal_controller import SignalController
 from services.control_engine.src.timer import Timer
 
+from .websumo_interface import WebsumoInterface
+
 SUMO_BIN: str = "sumo"
 
 
@@ -44,6 +46,17 @@ class SimEngine:
         self._sync_real_time: bool = conf.timer.mode == "real"
 
         self._start_sumo(conf.sumo_conf_filename, self._timer.step_length)
+
+        nats_conf = {
+            "server": "nats",
+            "port": 4222,
+        }
+
+        self._websumo = WebsumoInterface(
+            conf.sumo_conf_filename,
+            nats_conf,
+            enabled=True,
+        )
 
         # create_detectors is an async function so it must be ran inside the
         # asyncio wrapper.
@@ -71,28 +84,36 @@ class SimEngine:
         libsumo.start(sumo_args)
 
     def run(self) -> None:
-        while libsumo.simulation.getMinExpectedNumber() > 0:
-            if self._sync_real_time:
-                # Synchronize update cycle to the timer.
-                time.sleep(self._timer.wall_time_to_next_step())
+        try:
+            while libsumo.simulation.getMinExpectedNumber() > 0:
+                if self._sync_real_time:
+                    # Synchronize update cycle to the timer.
+                    time.sleep(self._timer.wall_time_to_next_step())
 
-            # Advancing timer.
-            self._timer.tick()
-            print(round(self._timer.seconds, 1))
+                # Advancing timer.
+                self._timer.tick()
 
-            # Update all detectors.
-            for detector in self._detectors[0] + self._detectors[1]:
-                detector.tick()
+                # Update all detectors.
+                for detector in self._detectors[0] + self._detectors[1]:
+                    detector.tick()
 
-            # Update all controllers and apply their states in SUMO.
-            for controller in self._controllers:
-                controller.tick()
-                new_states: str = controller.signal_states_sumo
-                print(f"Applying states {controller.id} -> {new_states}")
-                libsumo.trafficlight.setRedYellowGreenState(controller.id, new_states)
+                # Update all controllers and apply their states in SUMO.
+                for controller in self._controllers:
+                    controller.tick()
+                    new_states: str = controller.signal_states_sumo
+                    libsumo.trafficlight.setRedYellowGreenState(
+                        controller.id,
+                        new_states,
+                    )
 
-            # Advance simulation.
-            libsumo.simulationStep()
+                # Advance simulation.
+                libsumo.simulationStep()
+
+                # Publish state to WebSUMO.
+                self._websumo.publish_state()
+        finally:
+            self._websumo.publish_end()
+            self._websumo.close()
 
 
 if __name__ == "__main__":

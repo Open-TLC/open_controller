@@ -5,6 +5,10 @@ up:
 
 down:
 	@docker compose down
+	@docker compose -f integrated.compose.yaml down
+
+integrated:
+	@docker compose -f integrated.compose.yaml up --build
 
 lint:
 	@ruff check
