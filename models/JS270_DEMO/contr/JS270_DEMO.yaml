@@ -1,0 +1,469 @@
+timer:
+  mode: fixed
+  time_step: 0.1
+  real_time_multiplier: 1.0
+nats:
+  url: localhost
+  port: 4222
+simengine:
+  sumo_conf: models/JS270_DEMO/cfgFiles/JS270_DEMO.sumocfg
+clockwork:
+  publisher:
+    mode: change
+  controllers:
+  - id: JS270
+    type: phasering
+    options:
+      print_status: false
+      sumo_outputs:
+      - group1
+      - group1
+      - group2
+      - group3
+      - group4
+      - group5
+      - group6
+      - group7
+      - group8
+      - group9
+      - group10
+      - group11
+      - group12
+      - group13
+      - group14
+      - group15
+      signal_groups:
+        group1:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 25
+          delaying_groups:
+            group15: 5.0
+          constant_request: false
+          remain_green: true
+        group2:
+          min_green: 8
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 15
+          constant_request: false
+          remain_green: true
+        group3:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 20
+          constant_request: false
+          remain_green: true
+        group4:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 20
+          constant_request: false
+          remain_green: true
+        group5:
+          min_green: 10
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 35
+          constant_request: false
+          remain_green: true
+        group6:
+          min_green: 9
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 45
+          constant_request: false
+          remain_green: true
+        group7:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 15
+          min_amber: 3
+          max_green: 20
+          delaying_groups:
+            group12: 5.0
+          constant_request: false
+          remain_green: true
+        group8:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 30
+          constant_request: false
+          remain_green: true
+        group9:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 30
+          constant_request: false
+          remain_green: true
+        group10:
+          min_green: 20
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 33
+          constant_request: false
+          remain_green: true
+        group11:
+          min_green: 20
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 33
+          constant_request: false
+          remain_green: true
+        group12:
+          min_green: 20
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 33
+          constant_request: false
+          remain_green: true
+        group13:
+          min_green: 20
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 33
+          constant_request: false
+          remain_green: true
+        group14:
+          min_green: 20
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 33
+          constant_request: false
+          remain_green: true
+        group15:
+          min_green: 20
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 33
+          constant_request: false
+          remain_green: true
+      extenders: []
+      requesters:
+      - id: req1m01
+        type: trigger
+        group: group1
+        side_groups: []
+        options:
+          detectors:
+          - 1-001
+      - id: req1m40
+        type: trigger
+        group: group1
+        side_groups: []
+        options:
+          detectors:
+          - 1-040
+      - id: req2m01
+        type: trigger
+        group: group2
+        side_groups: []
+        options:
+          detectors:
+          - 2-001
+      - id: req2m40
+        type: trigger
+        group: group2
+        side_groups: []
+        options:
+          detectors:
+          - 2-040
+      - id: req3m02
+        type: trigger
+        group: group3
+        side_groups: []
+        options:
+          detectors:
+          - 3-002
+      - id: req4m02
+        type: trigger
+        group: group4
+        side_groups: []
+        options:
+          detectors:
+          - 4-002
+      - id: req5m02
+        type: trigger
+        group: group5
+        side_groups: []
+        options:
+          detectors:
+          - 5-002
+      - id: req5m40
+        type: trigger
+        group: group5
+        side_groups: []
+        options:
+          detectors:
+          - 5-040
+      - id: req6m02A
+        type: trigger
+        group: group6
+        side_groups: []
+        options:
+          detectors:
+          - 6-002A
+      - id: req6m02B
+        type: trigger
+        group: group6
+        side_groups: []
+        options:
+          detectors:
+          - 6-002B
+      - id: req6m30
+        type: trigger
+        group: group6
+        side_groups: []
+        options:
+          detectors:
+          - 6-030
+      - id: req6m40
+        type: trigger
+        group: group6
+        side_groups: []
+        options:
+          detectors:
+          - 6-040
+      - id: req7m01
+        type: trigger
+        group: group7
+        side_groups: []
+        options:
+          detectors:
+          - 7-001
+      - id: req7m20
+        type: trigger
+        group: group7
+        side_groups: []
+        options:
+          detectors:
+          - 7-020
+      - id: req9m02R
+        type: trigger
+        group: group9
+        side_groups: []
+        options:
+          detectors:
+          - 9-002R
+      - id: req9m25R
+        type: trigger
+        group: group9
+        side_groups: []
+        options:
+          detectors:
+          - R9PY
+      - id: req4m02R9
+        type: trigger
+        group: group4
+        side_groups: []
+        options:
+          detectors:
+          - 4-002R9
+      - id: req4m180R9
+        type: trigger
+        group: group4
+        side_groups: []
+        options:
+          detectors:
+          - R4PY
+      - id: req8m08R7
+        type: trigger
+        group: group8
+        side_groups: []
+        options:
+          detectors:
+          - 8-008R7
+      - id: req8m180R7
+        type: trigger
+        group: group8
+        side_groups: []
+        options:
+          detectors:
+          - R8PY
+      - id: req3m02R
+        type: trigger
+        group: group3
+        side_groups: []
+        options:
+          detectors:
+          - 3-002R
+      - id: req3m25R
+        type: trigger
+        group: group3
+        side_groups: []
+        options:
+          detectors:
+          - R3PY
+      - id: req10m01P
+        type: trigger
+        group: group10
+        side_groups:
+        - group11
+        - group12
+        options:
+          detectors:
+          - 10-001P
+      - id: req13m01P
+        type: trigger
+        group: group13
+        side_groups:
+        - group14
+        - group15
+        options:
+          detectors:
+          - 13-001P
+      - id: req15m01P
+        type: trigger
+        group: group13
+        side_groups:
+        - group14
+        - group15
+        options:
+          detectors:
+          - 15-001P
+      group_list:
+      - group1
+      - group2
+      - group3
+      - group4
+      - group5
+      - group6
+      - group7
+      - group8
+      - group9
+      - group10
+      - group11
+      - group12
+      - group13
+      - group14
+      - group15
+      phases:
+      - [0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0]
+      - [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+      - [0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0]
+      intergreens:
+      - [0.0, 0.0, 0.0, 0.0, 5.0, 7.0, 6.0, 6.0, 6.0, 4.0, 4.0, 0.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 4.0, 8.0, 8.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 9.0, 0.0, 8.0, 9.0, 8.0, 1.0, 5.0, 1.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 7.0, 4.0, 0.0, 6.0, 10.0, 6.0, 0.0, 0.0, 0.0]
+      - [7.0, 0.0, 5.0, 5.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 8.0, 8.0]
+      - [5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.5, 4.5, 0.5]
+      - [6.0, 8.0, 8.0, 7.0, 7.0, 0.0, 0.0, 6.0, 6.0, 0.0, 0.0, 0.0, 4.5, 4.5, 0.5]
+      - [8.0, 8.0, 8.0, 4.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 10.0, 6.0]
+      - [7.0, 0.0, 7.0, 0.0, 0.0, 0.0, 7.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 5.0, 1.0]
+      - [5.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      - [5.0, 4.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      - [1.0, 4.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 1.0, 9.0, 9.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 2.0, 6.0, 6.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 5.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  detectors:
+  - id: 1-001
+    type: e1_detector
+    options: {}
+  - id: 1-040
+    type: e1_detector
+    options: {}
+  - id: 2-001
+    type: e1_detector
+    options: {}
+  - id: 2-040
+    type: e1_detector
+    options: {}
+  - id: 3-002
+    type: e1_detector
+    options: {}
+  - id: 4-002
+    type: e1_detector
+    options: {}
+  - id: 5-002
+    type: e1_detector
+    options: {}
+  - id: 5-040
+    type: e1_detector
+    options: {}
+  - id: 6-002A
+    type: e1_detector
+    options: {}
+  - id: 6-002B
+    type: e1_detector
+    options: {}
+  - id: 6-030
+    type: e1_detector
+    options: {}
+  - id: 6-040
+    type: e1_detector
+    options: {}
+  - id: 7-001
+    type: e1_detector
+    options: {}
+  - id: 7-020
+    type: e1_detector
+    options: {}
+  - id: 9-002R
+    type: e1_detector
+    options: {}
+  - id: R9PY
+    type: e1_detector
+    options: {}
+  - id: 4-002R9
+    type: e1_detector
+    options: {}
+  - id: R4PY
+    type: e1_detector
+    options: {}
+  - id: 8-008R7
+    type: e1_detector
+    options: {}
+  - id: R8PY
+    type: e1_detector
+    options: {}
+  - id: 3-002R
+    type: e1_detector
+    options: {}
+  - id: R3PY
+    type: e1_detector
+    options: {}
+  - id: 10-001P
+    type: e1_detector
+    options: {}
+  - id: 13-001P
+    type: e1_detector
+    options: {}
+  - id: 15-001P
+    type: e1_detector
+    options: {}
+  - id: e3Det_270_Vali
+    type: e3_detector
+    options: {}
+  - id: e3Det_270_Jatk_Right
+    type: e3_detector
+    options: {}
+  - id: e3Det_270_Jatk
+    type: e3_detector
+    options: {}
+  - id: e3Det_270_Tyyn
+    type: e3_detector
+    options: {}
+  - id: e3Det_270_Tyyn_Left
+    type: e3_detector
+    options: {}
