@@ -373,6 +373,11 @@ MODE_MAP = {
 }
 
 
+DEFAULT_EXT_MODE = "pressure_and_time"
+DEFAULT_EXT_THRESHOLD = 0.25
+DEFAULT_TIME_DISCOUNT = 60
+
+
 def _parse_extenders(
     config: dict[str, Any],
     detector_ids: list[str],
@@ -380,8 +385,10 @@ def _parse_extenders(
     detectors = config.get("detectors", {})
     extenders = config.get("extenders", {})
 
-    # Map group IDs to associated detector IDs (e.g. e3detectors)
+    # Map group IDs to associated detector IDs and track groups containing e3detectors
     group_to_detectors: dict[str, list[str]] = {}
+    e3_groups: set[str] = set()
+
     for det_id, det_info in detectors.items():
         if det_info["sumo_id"] not in detector_ids:
             print(f"WARNING: Skipping detector {det_id}")
@@ -389,11 +396,19 @@ def _parse_extenders(
 
         group = det_info.get("group")
         if group:
-            group_to_detectors.setdefault(group, []).append(det_id)
+            group_to_detectors.setdefault(group, []).append(det_info["sumo_id"])
+            if det_info.get("type") == "e3detector":
+                e3_groups.add(group)
 
     output = []
+    processed_groups: set[str] = set()
+
+    # Process explicitly defined extenders in the config
     for ext_id, ext_info in extenders.items():
         group = ext_info.get("group")
+        if group:
+            processed_groups.add(group)
+
         ext_mode = ext_info.get("ext_mode")
 
         options = {
@@ -406,6 +421,27 @@ def _parse_extenders(
         output.append(
             {
                 "id": ext_id,
+                "type": "smart",
+                "group": group,
+                "options": options,
+            },
+        )
+
+    # Generate default extender entries for e3detector groups missing from "extenders"
+    for group in e3_groups:
+        if group in processed_groups:
+            continue
+
+        options = {
+            "mode": DEFAULT_EXT_MODE,
+            "threshold": DEFAULT_EXT_THRESHOLD,
+            "time_discount": DEFAULT_TIME_DISCOUNT,
+            "detectors": group_to_detectors.get(group, []),
+        }
+
+        output.append(
+            {
+                "id": group,
                 "type": "smart",
                 "group": group,
                 "options": options,
