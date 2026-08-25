@@ -156,9 +156,9 @@ def _parse_clockwork_params(
 
     controllers_list = []
     detectors_list = []
-    for ctrl_id, ctrl_data in raw_controllers:
+    for _, ctrl_data in raw_controllers:
         detectors = _extract_detectors(ctrl_data)
-        parsed_ctrl = _parse_single_controller(ctrl_id, ctrl_data, detector_ids)
+        parsed_ctrl = _parse_single_controller(ctrl_data, detector_ids)
         controllers_list.append(parsed_ctrl)
         detectors_list.extend(detectors)
 
@@ -295,12 +295,11 @@ def _extract_detectors(controller_conf: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _parse_single_controller(
-    ctrl_id: str | None,
     controller: dict[str, Any],
     detector_ids: list[str],
 ) -> dict[str, Any]:
     """Parse a single controller configuration dictionary."""
-    controller_id: str = ctrl_id or str(controller.get("name", ""))
+    controller_id: str = str(controller.get("sumo_name", ""))
     if not controller_id:
         raise ValueError("Input configuration doesn't include controller name")
 
