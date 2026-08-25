@@ -155,4 +155,10 @@ def read_command_line():
         required=False,
     )
 
+    parser.add_argument(
+        "--nowebsumo",
+        help="Set flag to disable WebSUMO (default: enabled).",
+        action="store_true",
+    )
+
     return parser.parse_args()

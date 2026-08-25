@@ -32,7 +32,7 @@ def main() -> None:
 
     conf = load_sim_engine_conf_from_file(args.conf_file)
 
-    simengine = SimEngine(conf)
+    simengine = SimEngine(conf, websumo_enabled=not args.nowebsumo)
 
     simengine.run()
 
@@ -41,6 +41,7 @@ class SimEngine:
     def __init__(
         self,
         conf: SimEngineConf,
+        websumo_enabled: bool = False,
     ) -> None:
         self._timer = Timer(conf.timer)
         self._sync_real_time: bool = conf.timer.mode == "real"
@@ -55,7 +56,7 @@ class SimEngine:
         self._websumo = WebsumoInterface(
             conf.sumo_conf_filename,
             nats_conf,
-            enabled=True,
+            enabled=websumo_enabled,
         )
 
         # create_detectors is an async function so it must be ran inside the
