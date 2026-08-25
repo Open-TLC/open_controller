@@ -1,8 +1,12 @@
 import argparse
 import json
 import os
+import sys
+from contextlib import contextmanager
+from pathlib import Path
 from typing import Any
 
+import libsumo
 import yaml
 from jsmin import jsmin
 
@@ -27,9 +31,14 @@ def main() -> None:
     sumo_conf = old_conf.cnf.get("sumo", {}).get("file_name", "")
     simengine_conf = {"sumo_conf": sumo_conf}
 
+    detector_ids_by_type = _get_detector_ids(sumo_conf)
+    detector_ids = [
+        item for sublist in detector_ids_by_type.values() for item in sublist
+    ]
+
     clockwork_conf: dict[str, Any] = {
         "publisher": {"mode": nats_conf.pop("mode")},
-        **_parse_clockwork_params(old_conf.cnf, base_dir),
+        **_parse_clockwork_params(old_conf.cnf, detector_ids, base_dir),
     }
 
     new_conf: dict[str, Any] = {
@@ -133,6 +142,7 @@ def _parse_nats_params(nats_params: dict[str, Any]) -> dict[str, Any]:
 
 def _parse_clockwork_params(
     input_config: dict[str, Any],
+    detector_ids: list[str],
     base_dir: str = ".",
 ) -> dict[str, Any]:
     """Parse all controllers from either a single or multi-controller configuration."""
@@ -148,7 +158,7 @@ def _parse_clockwork_params(
     detectors_list = []
     for ctrl_id, ctrl_data in raw_controllers:
         detectors = _extract_detectors(ctrl_data)
-        parsed_ctrl = _parse_single_controller(ctrl_id, ctrl_data)
+        parsed_ctrl = _parse_single_controller(ctrl_id, ctrl_data, detector_ids)
         controllers_list.append(parsed_ctrl)
         detectors_list.extend(detectors)
 
@@ -158,6 +168,13 @@ def _parse_clockwork_params(
     # Remove possible duplicate entries.
     for det in detectors_list:
         if det["id"] in cleaned_detectors:
+            continue
+
+        if det["id"] not in detector_ids:
+            print(
+                f"WARNING: Removing detector {det['id']} from configuration, "
+                "since it doesn't exist in the simulation.",
+            )
             continue
 
         cleaned_detectors[det["id"]] = det
@@ -280,6 +297,7 @@ def _extract_detectors(controller_conf: dict[str, Any]) -> list[dict[str, Any]]:
 def _parse_single_controller(
     ctrl_id: str | None,
     controller: dict[str, Any],
+    detector_ids: list[str],
 ) -> dict[str, Any]:
     """Parse a single controller configuration dictionary."""
     controller_id: str = ctrl_id or str(controller.get("name", ""))
@@ -323,8 +341,8 @@ def _parse_single_controller(
         ):
             group_options.pop(key, None)
 
-    extenders = _parse_extenders(controller)
-    requesters = _parse_requesters(controller)
+    extenders = _parse_extenders(controller, detector_ids)
+    requesters = _parse_requesters(controller, detector_ids)
 
     phases = [_FlowList(row) for row in controller.get("phases", [])]
     intergreens = [_FlowList(row) for row in controller.get("intergreens", [])]
@@ -355,13 +373,20 @@ MODE_MAP = {
 }
 
 
-def _parse_extenders(config: dict[str, Any]) -> list[dict[str, Any]]:
+def _parse_extenders(
+    config: dict[str, Any],
+    detector_ids: list[str],
+) -> list[dict[str, Any]]:
     detectors = config.get("detectors", {})
     extenders = config.get("extenders", {})
 
     # Map group IDs to associated detector IDs (e.g. e3detectors)
     group_to_detectors: dict[str, list[str]] = {}
     for det_id, det_info in detectors.items():
+        if det_info["sumo_id"] not in detector_ids:
+            print(f"WARNING: Skipping detector {det_id}")
+            continue
+
         group = det_info.get("group")
         if group:
             group_to_detectors.setdefault(group, []).append(det_id)
@@ -390,11 +415,18 @@ def _parse_extenders(config: dict[str, Any]) -> list[dict[str, Any]]:
     return output
 
 
-def _parse_requesters(config: dict[str, Any]) -> list[dict[str, Any]]:
+def _parse_requesters(
+    config: dict[str, Any],
+    detector_ids: list[str],
+) -> list[dict[str, Any]]:
     detectors = config.get("detectors", {})
     output = []
 
     for det_id, det_info in detectors.items():
+        if det_info["sumo_id"] not in detector_ids:
+            print(f"WARNING: Skipping detector {det_id}")
+            continue
+
         if det_info.get("type") == "request":
             request_groups = det_info.get("request_groups", [])
 
@@ -418,6 +450,46 @@ def _parse_requesters(config: dict[str, Any]) -> list[dict[str, Any]]:
             )
 
     return output
+
+
+@contextmanager
+def suppress_c_output():
+    """Redirects stdout (1) and stderr (2) at the C/OS level to /dev/null."""
+    null_fd = os.open(os.devnull, os.O_WRONLY)
+    old_stdout = os.dup(1)
+    old_stderr = os.dup(2)
+
+    try:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os.dup2(null_fd, 1)
+        os.dup2(null_fd, 2)
+        yield
+    finally:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os.dup2(old_stdout, 1)
+        os.dup2(old_stderr, 2)
+        os.close(old_stdout)
+        os.close(old_stderr)
+        os.close(null_fd)
+
+
+def _get_detector_ids(sumocfg_path: str) -> dict[str, list[str]]:
+    cfg_file = str(Path(sumocfg_path).resolve())
+
+    with suppress_c_output():
+        libsumo.start(["sumo", "-c", cfg_file, "--no-warnings", "true"])
+        try:
+            detectors: dict[str, list[str]] = {
+                "e1_detector": list(libsumo.inductionloop.getIDList()),
+                "e2_detector": list(libsumo.lanearea.getIDList()),
+                "e3_detector": list(libsumo.multientryexit.getIDList()),
+            }
+        finally:
+            libsumo.close()
+
+    return detectors
 
 
 class _FlowList(list):
