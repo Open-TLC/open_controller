@@ -63,6 +63,10 @@ class PhaseRingController(SignalController):
         self._detectors: list[AreaDetector | PointDetector] = detectors
         self._print_status: bool = bool(options.get("print_status", False))
 
+        # sumo_outputs is a list of signal group IDs. The SUMO signal string should be
+        # pieced together from signal group states in this order.
+        self._sumo_outputs: list[str] = options.get("sumo_outputs", [])
+
         self._group_ids: list[str] = options["group_list"]
         phase_ring = tuple(tuple(row) for row in options["phases"])
         intergreen_matrix = options["intergreens"]
@@ -165,7 +169,8 @@ class PhaseRingController(SignalController):
     def signal_states_sumo(self) -> str:
         """Return signal states mapped to SUMO formatting."""
         return "".join(
-            OC_TO_SUMO_MAP.get(grp.signal_state, "r") for grp in self._groups
+            OC_TO_SUMO_MAP.get(self._groups_by_id[grp_id].signal_state, "r")
+            for grp_id in self._sumo_outputs
         )
 
     def tick(self) -> None:
