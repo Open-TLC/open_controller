@@ -80,6 +80,8 @@ class SignalGroup(HierarchicalMachine):
         self.amber_started_at: float = 0.0
         self.green_started_at: float = 0.0
 
+        self._amber_red_length: float = group_conf["min_amber_red"]
+
         # Signal group has four main states: Amber red, green, amber, and red.
         # They are all sub state machines and will trigger the exit transitions
         # themselves. This triggers the main state to transition to the next main state.
@@ -222,7 +224,8 @@ class SignalGroup(HierarchicalMachine):
     def intergreens_passed(self) -> bool:
         """Check if all conflict group intergreen times have passed."""
         return all(
-            self._timer.seconds - grp.amber_started_at > self._intergreens[grp.id]
+            self._timer.seconds - grp.amber_started_at
+            > self._intergreens[grp.id] - self._amber_red_length
             for grp in self.conflict_groups
         )
 
