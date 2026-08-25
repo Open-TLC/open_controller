@@ -27,6 +27,7 @@ from services.control_engine.src.extenders.gap_seeking_extender import (
 from services.control_engine.src.extenders.smart_extender import SmartExtender
 from services.control_engine.src.requesters.presence_requester import PresenceRequester
 from services.control_engine.src.requesters.requester import Requester
+from services.control_engine.src.requesters.trigger_requester import TriggerRequester
 
 from .phase import SimplePhase
 from .signal_controller import ControllerStatus, SignalController
@@ -39,7 +40,7 @@ OC_TO_SUMO_MAP: dict[str, str] = {
     "f": "r",  # Red Ending Conflicts
     "g": "r",  # Red Wait Intergreen
     "0": "u",  # Amber-Red
-    "1": "G",  # Green Minimum Time
+    "1": "g",  # Green Minimum Time
     "5": "g",  # Green Extending
     "4": "g",  # Green Passive/Remain Green
     "<": "y",  # Amber
@@ -109,7 +110,6 @@ class PhaseRingController(SignalController):
             group.add_extenders(extenders_by_group.get(group.id, []))
             group.add_requesters(requesters_by_group.get(group.id, []))
 
-        self.sumo_outputs: list[SignalGroup] = list(self._groups)
         self._set_phase_ring(phase_ring)
         self._state: str = "Scan"
 
@@ -280,7 +280,7 @@ class PhaseRingController(SignalController):
                     opts["options"],
                     conflicting_dets,
                     detectors,
-                    lambda: grp.green_started_at,
+                    lambda g=grp: g.green_started_at,
                 )
             else:
                 raise ValueError(
@@ -307,6 +307,14 @@ class PhaseRingController(SignalController):
 
             if r_type == "presence":
                 requester = PresenceRequester(r_id, opts["options"], detectors)
+            elif r_type == "trigger":
+                grp = self._groups_by_id[group_id]
+                requester = TriggerRequester(
+                    r_id,
+                    opts["options"],
+                    lambda g=grp: g.is_blocking,
+                    detectors,
+                )
             else:
                 raise ValueError(
                     f"Unknown requester type {r_type} for requester with ID {r_id}",
