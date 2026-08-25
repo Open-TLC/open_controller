@@ -1,9 +1,14 @@
 from enum import Enum
 
-from services.control_engine.src.detectors.area_detector import AreaDetector
-from services.control_engine.src.detectors.point_detector import PointDetector
-from services.control_engine.src.detectors.sumo_e1_detector import E1PointDetector
-from services.control_engine.src.detectors.sumo_e3_detector import E3AreaDetector
+from services.control_engine.src.detectors.area_detector import (
+    AreaDetector,
+    TransitAreaDetector,
+)
+from services.control_engine.src.detectors.configuration import create_detectors
+from services.control_engine.src.detectors.point_detector import (
+    PointDetector,
+    TransitPointDetector,
+)
 
 from .configuration import SyvariGroupConfiguration
 from .cycle_timer import CycleTimer
@@ -43,12 +48,16 @@ class SignalGroup:
         self,
         timer: CycleTimer,
         conf: SyvariGroupConfiguration,
+        point_detectors: list[PointDetector] | None = None,
+        area_detectors: list[AreaDetector] | None = None,
     ) -> None:
         """Create new SYVARI signal group.
 
         Args:
             timer: Cycle timer used by the controller.
             conf: Signal group configuration.
+            point_detectors: Initialized point detectors for this group.
+            area_detectors: Initialized area detectors for this group.
 
         Raises:
             ValueError
@@ -110,20 +119,32 @@ class SignalGroup:
         self._is_requesting: bool = False
         self._is_priority_requesting: bool = False
 
-        self._area_detectors: list[AreaDetector] = []
-        self._point_detectors: list[PointDetector] = []
+        self._point_detectors: list[PointDetector] = point_detectors or []
+        self._area_detectors: list[AreaDetector] = area_detectors or []
 
-        for det_conf in conf.detector_confs:
-            det_type: str = det_conf["type"]
-            det_id: str = det_conf["id"]
-            if det_type == "e1_detector":
-                det = E1PointDetector(det_id)
-                self._point_detectors.append(det)
-            elif det_type == "e3_detector":
-                det = E3AreaDetector(det_id)
-                self._area_detectors.append(det)
-            else:
-                raise TypeError(f"Unknown detector type for {det_id}: {det_type}")
+    @classmethod
+    async def create(
+        cls,
+        timer: CycleTimer,
+        conf: SyvariGroupConfiguration,
+    ) -> "SignalGroup":
+        """Asynchronously create SYVARI signal group with detectors.
+
+        Args:
+            timer: Cycle timer used by the controller.
+            conf: Signal group configuration.
+
+        Returns:
+            Fully initialized SignalGroup.
+
+        """
+        point_dets, area_dets = await create_detectors(conf.detector_confs)
+        return cls(
+            timer=timer,
+            conf=conf,
+            point_detectors=point_dets,
+            area_detectors=area_dets,
+        )
 
     @property
     def name(self) -> str:
@@ -369,12 +390,12 @@ class SignalGroup:
         return veh_count > 0 or has_loop_activations
 
     def _has_priority_vehicles(self) -> bool:
-        veh_count = sum(det.vehicle_count for det in self._area_detectors)
+        for det in self._point_detectors:
+            if isinstance(det, TransitPointDetector) and det.is_occupied:
+                return True
 
-        # TODO: Currently broken, since area detectors
-        # can't differentiate between vehicle types.
-        # We should add a new detector type for detecting
-        # special vehicle types, like transit, emergency etc.
+        for det in self._area_detectors:
+            if isinstance(det, TransitAreaDetector) and det.vehicle_count > 0:
+                return True
 
-        transit_threshold = 100
-        return veh_count >= transit_threshold
+        return False

@@ -19,6 +19,9 @@ class TrafficIndicatorsAreaDetector(AreaDetector):
         self._junction_id = junction_id
         self._group_id = group_id
 
+        # ID string for debugging.
+        self._id: str = f"{junction_id}.{group_id}"
+
         self._nc: Client | None = None
 
         self._vehicle_count: float = 0.0
@@ -53,6 +56,11 @@ class TrafficIndicatorsAreaDetector(AreaDetector):
         )
 
         return instance
+
+    @property
+    def id(self) -> str:
+        """ID of the detector."""
+        return self._id
 
     def tick(self) -> None:
         """Override tick method to implement interface.

@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install necessary system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	ca-certificates software-properties-common
+	ca-certificates software-properties-common libatomic1
 
 # Install uv using the installation script
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
