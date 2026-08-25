@@ -90,7 +90,7 @@ clockwork:
         type: smart
         group: east-r
         options:
-          mode: momentum_and_time
+          mode: pressure_and_time
           threshold: 0.25
           time_discount: 60
           detectors:
@@ -99,7 +99,7 @@ clockwork:
         type: smart
         group: east-l
         options:
-          mode: momentum_and_time
+          mode: pressure_and_time
           threshold: 0.25
           time_discount: 60
           detectors:
@@ -108,7 +108,7 @@ clockwork:
         type: smart
         group: south-r
         options:
-          mode: momentum_and_time
+          mode: pressure_and_time
           threshold: 0.25
           time_discount: 60
           detectors:
@@ -117,7 +117,7 @@ clockwork:
         type: smart
         group: south-l
         options:
-          mode: momentum_and_time
+          mode: pressure_and_time
           threshold: 0.25
           time_discount: 60
           detectors:
@@ -126,7 +126,7 @@ clockwork:
         type: smart
         group: west-r
         options:
-          mode: momentum_and_time
+          mode: pressure_and_time
           threshold: 0.25
           time_discount: 60
           detectors:
@@ -135,7 +135,7 @@ clockwork:
         type: smart
         group: west-l
         options:
-          mode: momentum_and_time
+          mode: pressure_and_time
           threshold: 0.25
           time_discount: 60
           detectors:
