@@ -24,6 +24,9 @@ def main() -> None:
     )
     nats_conf: dict[str, Any] = _parse_nats_params(nats_raw)
 
+    sumo_conf = old_conf.cnf.get("sumo", {}).get("file_name", "")
+    simengine_conf = {"sumo_conf": sumo_conf}
+
     clockwork_conf: dict[str, Any] = {
         "publisher": {"mode": nats_conf.pop("mode")},
         **_parse_clockwork_params(old_conf.cnf, base_dir),
@@ -32,6 +35,7 @@ def main() -> None:
     new_conf: dict[str, Any] = {
         "timer": timer_conf,
         "nats": nats_conf,
+        "simengine": simengine_conf,
         "clockwork": clockwork_conf,
     }
 
