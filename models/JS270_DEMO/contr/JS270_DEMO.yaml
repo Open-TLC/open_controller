@@ -1,5 +1,5 @@
 timer:
-  mode: fixed
+  mode: real
   time_step: 0.1
   real_time_multiplier: 1.0
 nats:
@@ -11,7 +11,7 @@ clockwork:
   publisher:
     mode: change
   controllers:
-  - id: JS270
+  - id: 270_Tyyn_Vali
     type: phasering
     options:
       print_status: false
@@ -157,15 +157,53 @@ clockwork:
           max_green: 33
           constant_request: false
           remain_green: true
-      extenders: []
-      requesters:
-      - id: req1m01
-        type: trigger
+      extenders:
+      - id: group1
+        type: smart
         group: group1
-        side_groups: []
         options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
           detectors:
-          - 1-001
+          - e3Det_270_Vali
+      - id: group7
+        type: smart
+        group: group7
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_270_Tyyn_Left
+      - id: group5
+        type: smart
+        group: group5
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_270_Jatk
+      - id: group2
+        type: smart
+        group: group2
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_270_Jatk_Right
+      - id: group6
+        type: smart
+        group: group6
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_270_Tyyn
+      requesters:
       - id: req1m40
         type: trigger
         group: group1
@@ -173,13 +211,6 @@ clockwork:
         options:
           detectors:
           - 1-040
-      - id: req2m01
-        type: trigger
-        group: group2
-        side_groups: []
-        options:
-          detectors:
-          - 2-001
       - id: req2m40
         type: trigger
         group: group2
@@ -187,20 +218,6 @@ clockwork:
         options:
           detectors:
           - 2-040
-      - id: req3m02
-        type: trigger
-        group: group3
-        side_groups: []
-        options:
-          detectors:
-          - 3-002
-      - id: req4m02
-        type: trigger
-        group: group4
-        side_groups: []
-        options:
-          detectors:
-          - 4-002
       - id: req5m02
         type: trigger
         group: group5
@@ -377,22 +394,10 @@ clockwork:
       - [0.0, 0.0, 0.0, 0.0, 2.0, 6.0, 6.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
       - [0.0, 0.0, 0.0, 0.0, 5.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
   detectors:
-  - id: 1-001
-    type: e1_detector
-    options: {}
   - id: 1-040
     type: e1_detector
     options: {}
-  - id: 2-001
-    type: e1_detector
-    options: {}
   - id: 2-040
-    type: e1_detector
-    options: {}
-  - id: 3-002
-    type: e1_detector
-    options: {}
-  - id: 4-002
     type: e1_detector
     options: {}
   - id: 5-002

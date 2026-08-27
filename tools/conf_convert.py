@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-import libsumo
+import traci as libsumo
 import yaml
 from jsmin import jsmin
 
