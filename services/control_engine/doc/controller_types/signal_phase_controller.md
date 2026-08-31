@@ -1,4 +1,10 @@
-# Configuration
+# Signal phase (phase ring) controller - legacy configuration reference
+
+> **Note:** this document describes the controller options in the **legacy
+> JSON** configuration format. The current configuration format is YAML (see
+> [../configuration.md](../configuration.md)); legacy files can be converted
+> with `tools/conf_convert.py`. The option semantics described here still
+> apply to the phase ring controller (`type: phasering`).
 
 The configuration file of the open controller is a JSON-file, in which the each data type has a header called 'key'. The key can be
 a title which defines the data item e.g. the maximum green time 'maxgreen'. The key can also be a given name of a component like signa group e.g. 'group1'.

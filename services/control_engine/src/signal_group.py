@@ -543,10 +543,10 @@ def draw_submachine_graphs():
     with _graph_capable():
         sg = _build_signal_group()
         submachines = {
-            "red": sg.group_based_red,
-            "amber_red": sg.fixed_amber_red,
-            "green": sg.va_green,
-            "amber": sg.fixed_amber,
+            "red": sg._red_state,
+            "amber_red": sg._amber_red_state,
+            "green": sg._green_state,
+            "amber": sg._amber_state,
         }
         for name, machine in submachines.items():
             _style_diagram(machine, f"Signal group - {name} substate machine")
