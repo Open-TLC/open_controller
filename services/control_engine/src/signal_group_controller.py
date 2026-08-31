@@ -266,7 +266,7 @@ class PhaseRingController(SignalController):
                 extender: Extender = GapSeekingExtender(
                     str(opts.get("id")),
                     self._timer,
-                    opts,
+                    opts["options"],
                     detectors,
                 )
             elif e_type == "smart":

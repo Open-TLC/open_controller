@@ -274,7 +274,7 @@ def _extract_detectors(controller_conf: dict[str, Any]) -> list[dict[str, Any]]:
         if not raw_det_type:
             raise ValueError(f"No type found for detector {det_id}")
 
-        if raw_det_type == "request":
+        if raw_det_type in {"request", "extender"}:
             det_type = "e1_detector"
         elif raw_det_type == "e3detector":
             det_type = "e3_detector"
@@ -387,6 +387,7 @@ def _parse_extenders(
     # Map group IDs to associated detector IDs and track groups containing e3detectors
     group_to_detectors: dict[str, list[str]] = {}
     e3_groups: set[str] = set()
+    output = []
 
     for det_id, det_info in detectors.items():
         if det_info["sumo_id"] not in detector_ids:
@@ -398,8 +399,20 @@ def _parse_extenders(
             group_to_detectors.setdefault(group, []).append(det_info["sumo_id"])
             if det_info.get("type") == "e3detector":
                 e3_groups.add(group)
+            if det_info.get("type") == "extender":
+                detector_id = det_info.get("sumo_id")
+                gap_time = det_info.get("ext_time")
+                group_id = det_info.get("group")
+                ext_options = {"detector": detector_id, "gap": gap_time}
+                output.append(
+                    {
+                        "id": det_id,
+                        "type": "gap_seeking",
+                        "group": group_id,
+                        "options": ext_options,
+                    },
+                )
 
-    output = []
     processed_groups: set[str] = set()
 
     # Process explicitly defined extenders in the config
