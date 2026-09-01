@@ -213,13 +213,15 @@ class SignalGroup(HierarchicalMachine):
 
     def conflict_group_blocking(self) -> bool:
         """Check if any conflicting group is blocking."""
+        for grp in self.conflict_groups:
+            if grp.is_blocking:
+                pass
         return any(grp.is_blocking for grp in self.conflict_groups)
 
     def end_conflict_greens(self) -> None:
         """Request all conflicting groups to end their greens."""
         for group in self.conflict_groups:
-            if group.is_blocking:
-                group.end_green_requested = True
+            group.end_green_requested = True
 
     def intergreens_passed(self) -> bool:
         """Check if all conflict group intergreen times have passed."""
@@ -228,6 +230,13 @@ class SignalGroup(HierarchicalMachine):
             > self._intergreens[grp.id] - self._amber_red_length
             for grp in self.conflict_groups
         )
+
+    def give_green_permission(self) -> None:
+        """Give green permission to group and take conflict green permissions away."""
+        for grp in self.conflict_groups:
+            grp.green_permission = False
+
+        self.green_permission = True
 
     def _amber_start_cb(self) -> None:
         self.amber_started_at = self._timer.seconds
@@ -301,6 +310,7 @@ class ExtendedGreen(FixedTime):
 
         # Don't transition away without extending.
         self.remove_transition(trigger="next_state", dest="Exit")
+
         # Instead transition from minimum to extending.
         self.add_transition(
             trigger="next_state",
@@ -315,9 +325,10 @@ class ExtendedGreen(FixedTime):
             source="Extending",
             dest="Exit",
             conditions=[
-                lambda: not self._group.is_extending,
+                lambda: not self._group.is_extending or self._max_time_passed(),
                 lambda: not self._remain_green,
             ],
+            before=self._end_green_cb,
         )
 
         # Transition to passive green if group is no longer extending and is set to
@@ -327,27 +338,9 @@ class ExtendedGreen(FixedTime):
             source="Extending",
             dest="RemainGreen",
             conditions=[
-                lambda: not self._group.is_extending,
+                lambda: not self._group.is_extending or self._max_time_passed(),
                 lambda: self._remain_green,
             ],
-        )
-
-        # End green if group has extended past its maximum time and
-        # is set to not remain green.
-        self.add_transition(
-            trigger="next_state",
-            source="Extending",
-            dest="Exit",
-            conditions=[self._max_time_passed, lambda: not self._remain_green],
-        )
-
-        # Transition to passive green if group has extended past its maximum time and
-        # is set to remain green.
-        self.add_transition(
-            trigger="next_state",
-            source="Extending",
-            dest="RemainGreen",
-            conditions=[self._max_time_passed, lambda: self._remain_green],
         )
 
         # End green if another group requests group to end green.
@@ -356,13 +349,20 @@ class ExtendedGreen(FixedTime):
             source="RemainGreen",
             dest="Exit",
             conditions=[
-                lambda: self._group.end_green_requested,
+                self._end_green_requested,
             ],
+            before=self._end_green_cb,
         )
 
     def _max_time_passed(self) -> bool:
         """Group has extended past its maximum allowed time."""
         return self._min_started_at + self._max_length < self._timer.seconds
+
+    def _end_green_requested(self) -> bool:
+        return self._group.end_green_requested
+
+    def _end_green_cb(self) -> None:
+        self._group.end_green_requested = False
 
 
 class GroupBasedRed(FixedTime):
@@ -426,7 +426,6 @@ class GroupBasedRed(FixedTime):
         )
 
     def _start_waiting_req_and_perm(self) -> None:
-        self._group.end_green_requested = False
         self._group.next_state()
 
     def _start_ending_conflicts(self) -> None:

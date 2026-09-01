@@ -29,7 +29,6 @@ from services.control_engine.src.requesters.presence_requester import PresenceRe
 from services.control_engine.src.requesters.requester import Requester
 from services.control_engine.src.requesters.trigger_requester import TriggerRequester
 
-from .phase import SimplePhase
 from .signal_controller import ControllerStatus, SignalController
 from .signal_group import SignalGroup
 from .timer import Timer
@@ -68,7 +67,9 @@ class PhaseRingController(SignalController):
         self._sumo_outputs: list[str] = options.get("sumo_outputs", [])
 
         self._group_ids: list[str] = options["group_list"]
-        phase_ring = tuple(tuple(row) for row in options["phases"])
+
+        phase_ring: list[list[int]] = options.get("phases", [])
+
         intergreen_matrix = options["intergreens"]
 
         if len(phase_ring[0]) != len(self._group_ids):
@@ -114,8 +115,13 @@ class PhaseRingController(SignalController):
             group.add_extenders(extenders_by_group.get(group.id, []))
             group.add_requesters(requesters_by_group.get(group.id, []))
 
-        self._set_phase_ring(phase_ring)
-        self._state: str = "Scan"
+        self._phases: list[list[SignalGroup]] = self._get_groups_by_phase(phase_ring)
+
+        # Initially the controller is locked to the first phase. It will then start
+        # transitioning all groups in that phase to green.
+        self._state: str = "locked"
+        self._current_phase_idx: int = 0
+        self._next_phase_idx: int | None = None
 
     @property
     def id(self) -> str:
@@ -146,8 +152,8 @@ class PhaseRingController(SignalController):
         """Controller's internal status as an object."""
         return ControllerStatus(
             self._timer.steps,
-            str(self.current_main_phase) if self.current_main_phase else "",
-            str(self.next_main_phase) if self.next_main_phase else "",
+            str(self._current_phase_idx),
+            str(self._next_phase_idx) if self._next_phase_idx else "",
         )
 
     @property
@@ -175,53 +181,108 @@ class PhaseRingController(SignalController):
 
     def tick(self) -> None:
         """Advance all signal groups and process phase transitions."""
+        states = ""
         for grp in self._groups:
             grp.tick()
-        self._update_states()
+            states += grp.signal_state
 
-    def _update_states(self) -> None:
-        """Manage round-robin phase selection and state flow."""
-        if self._state == "Scan":
-            self.next_main_phase = self._find_next_main_phase()
-            if self.next_main_phase:
-                self.next_main_phase.set_signalgroup_green_permissions(do_permit=True)
+        if self._state == "minimum":
+            self._tick_minimum()
+        elif self._state == "locked":
+            self._tick_locked()
+        elif self._state == "transition":
+            self._tick_transition()
 
-        # Clear green permission once minimum green step initiates
-        for grp in self._groups:
-            if grp.state == "Green_MinimumTime":
-                grp.green_permission = False
+        print(
+            f"{round(self._timer.seconds, 1)} {self._state} "
+            f"Cur: {self._current_phase_idx} Next: {self._next_phase_idx} "
+            f"{states}",
+        )
 
-        # Transition to Hold state once next phase has started
-        if self.next_main_phase and self.next_main_phase.phase_has_started():
-            self.current_main_phase = self.next_main_phase
-            self.next_main_phase = None
-            self._state = "Hold"
-            if self._print_status:
-                print(
-                    f"{self._timer.seconds}s {self.id} "
-                    f"STARTED: {self.current_main_phase}",
+    def _tick_minimum(self) -> None:
+        groups_in_minimum: bool = any(
+            grp.signal_state in {"g", "0", "1"}
+            for grp in self._phases[self._current_phase_idx]
+        )
+        # Do not advance, until all groups have started their greens and
+        # cleared their minimum times.
+        if groups_in_minimum:
+            return
+
+        next_phase_idx = self._find_next_phase_idx()
+
+        # Only advance if a new phase is found.
+        if next_phase_idx is None:
+            return
+
+        self._next_phase_idx = next_phase_idx
+        self._state = "locked"
+
+    def _tick_locked(self) -> None:
+        if self._next_phase_idx is None:
+            self._state = "minimum"
+            return
+
+        # Check if a requesting group in next phase can start.
+        for group in self._phases[self._next_phase_idx]:
+            has_request = group.is_requesting
+            can_start = not any(
+                grp.signal_state in {"0", "1", "5"} for grp in group.conflict_groups
+            )
+
+            # If such group is found, the group is given a green permission and
+            # controller advances to transition mode.
+            if has_request and can_start:
+                group.give_green_permission()
+                self._current_phase_idx = (
+                    self._next_phase_idx
+                    if self._next_phase_idx is not None
+                    else self._current_phase_idx
                 )
+                self._next_phase_idx = None
+                self._state = "transition"
 
-        # Maintain permissions during Hold until minimum greens complete
-        if self._state == "Hold" and self.current_main_phase:
-            self.current_main_phase.set_signalgroup_green_permissions(do_permit=True)
-            if self.current_main_phase.all_min_greens_have_ended():
-                self._state = "Scan"
-                if self._print_status:
-                    print(
-                        f"{self._timer.seconds}s {self.id} "
-                        f"MIN TIMES ENDED: {self.current_main_phase}",
-                    )
+    def _tick_transition(self) -> None:
+        num_groups_waiting: int = 0
 
-    def _find_next_main_phase(self) -> SimplePhase | None:
-        """Find next phase with an active request using round-robin scan."""
-        if self.current_main_phase in self.main_phases:
-            idx = self.main_phases.index(self.current_main_phase)
-            phase_order = self.main_phases[idx + 1 :] + self.main_phases[: idx + 1]
-        else:
-            phase_order = list(self.main_phases)
+        for group in self._phases[self._current_phase_idx]:
+            has_request = group.is_requesting
+            can_start = not any(
+                grp.signal_state in {"0", "1", "5"} for grp in group.conflict_groups
+            )
 
-        return next((p for p in phase_order if p.phase_has_a_request()), None)
+            # Requesting group in current phase is still waiting for conflicts to end
+            # active green.
+            if has_request and not can_start:
+                num_groups_waiting += 1
+
+            # Requesting group in current phase is started when possible.
+            elif has_request and can_start:
+                group.give_green_permission()
+
+        # Controller can advance, once no requesting groups in the current phase are
+        # waiting for their green to start.
+        if num_groups_waiting == 0:
+            self._state = "minimum"
+
+    def _find_next_phase_idx(self) -> int | None:
+        """Find the index of the next phase with a green request."""
+        if not self._phases:
+            return None
+
+        num_phases = len(self._phases)
+        # Start checking immediately after current phase
+        # (or at 0 if no phase is current)
+        start_offset = (
+            (self._current_phase_idx + 1) if self._current_phase_idx is not None else 0
+        )
+
+        for offset in range(num_phases):
+            idx = (start_offset + offset) % num_phases
+            if any(group.is_requesting for group in self._phases[idx]):
+                return idx
+
+        return None
 
     def _set_conflict_groups(self, intergreen_matrix: list[list[float]]) -> None:
         """Assign conflicting signal groups based on the intergreen matrix."""
@@ -233,19 +294,27 @@ class PhaseRingController(SignalController):
             ]
             grp.add_conflict_groups(conflicts)
 
-    def _set_phase_ring(self, phase_ring: tuple[tuple[int, ...], ...]) -> None:
-        """Configure main phase ring matrix."""
-        self.main_phases: list[SimplePhase] = []
-        for idx, row in enumerate(phase_ring, start=1):
-            phase_groups = [
-                grp
-                for grp, active in zip(self._groups, row, strict=True)
-                if active == 1
-            ]
-            self.main_phases.append(SimplePhase(idx, phase_groups))
+    def _get_groups_by_phase(
+        self,
+        group_phase_mapping: list[list[int]],
+    ) -> list[list[SignalGroup]]:
+        """Assign groups to phases according to group phase mapping."""
+        group_indices_by_phase: list[list[int]] = [
+            [i for i, val in enumerate(sublist) if val == 1]
+            for sublist in group_phase_mapping
+        ]
 
-        self.current_main_phase: SimplePhase | None = None
-        self.next_main_phase: SimplePhase | None = None
+        groups_by_phase: list[list[SignalGroup]] = []
+
+        for group_indices in group_indices_by_phase:
+            groups: list[SignalGroup] = []
+            for index in group_indices:
+                group_id: str = self._group_ids[index]
+                group: SignalGroup = self._groups_by_id[group_id]
+                groups.append(group)
+            groups_by_phase.append(groups)
+
+        return groups_by_phase
 
     def _create_extenders(
         self,
