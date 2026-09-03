@@ -259,7 +259,7 @@ The core component of Open Controller is the signal group based control engine. 
 The [Open Controller web page](https://www.opencontroller.org): 
 
 # Known issues
-[Known issues](https://github.com/Open-TLC/open_controller/blob/main/doc/Known_issues)
+[Known issues](https://github.com/Open-TLC/open_controller/blob/main/doc/known_issues.md)
 
 
 # License
