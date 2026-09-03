@@ -4,7 +4,7 @@ timer:
   real_time_multiplier: 1
 
 nats:
-  url: nats
+  url: "localhost"
   port: 4222
 
 simengine:

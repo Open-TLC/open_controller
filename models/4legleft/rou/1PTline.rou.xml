@@ -1,0 +1,18 @@
+<routes>
+        <vType id="truck" accel="0.8" decel="2.5" sigma="0.5" length="18"  minGap="2.5" maxSpeed="16" guiShape="passenger"/>
+        
+        <route id="RSN" edges="E_S0 -E_N0" />
+            
+        <vehicle id="PT1_SN" type="truck" route="RSN" color="0,255,0" depart="20" departSpeed="10"/>
+                
+        <vehicle id="PT2_SN" type="truck" route="RSN" color="0,255,0" depart="60" departSpeed="10"/>
+            
+        <vehicle id="PT3_SN" type="truck" route="RSN" color="0,255,0" depart="90" departSpeed="10"/>
+        
+        <vehicle id="PT4_SN" type="truck" route="RSN" color="0,255,0" depart="120" departSpeed="10"/>
+        
+        <vehicle id="PT5_SN" type="truck" route="RSN" color="0,255,0" depart="200" departSpeed="10"/>
+        
+        <vehicle id="PT6_SN" type="truck" route="RSN" color="0,255,0" depart="270" departSpeed="10"/>
+        
+</routes>

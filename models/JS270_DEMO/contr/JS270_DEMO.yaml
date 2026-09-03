@@ -1,5 +1,5 @@
 timer:
-  mode: real
+  mode: fixed
   time_step: 0.1
   real_time_multiplier: 1.0
 nats:
@@ -167,24 +167,6 @@ clockwork:
           time_discount: 60
           detectors:
           - e3Det_270_Vali
-      - id: group7
-        type: smart
-        group: group7
-        options:
-          mode: pressure_and_time
-          threshold: 0.25
-          time_discount: 60
-          detectors:
-          - e3Det_270_Tyyn_Left
-      - id: group5
-        type: smart
-        group: group5
-        options:
-          mode: pressure_and_time
-          threshold: 0.25
-          time_discount: 60
-          detectors:
-          - e3Det_270_Jatk
       - id: group2
         type: smart
         group: group2
@@ -203,6 +185,24 @@ clockwork:
           time_discount: 60
           detectors:
           - e3Det_270_Tyyn
+      - id: group5
+        type: smart
+        group: group5
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_270_Jatk
+      - id: group7
+        type: smart
+        group: group7
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_270_Tyyn_Left
       requesters:
       - id: req1m40
         type: trigger

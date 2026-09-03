@@ -1,0 +1,50 @@
+<routes>
+        <vType id="Tcar" accel="0.8" decel="4.5" sigma="0.5" length="5" minGap="2.5" maxSpeed="13" guiShape="passenger"/>
+        <vType id="bike" vClass="bicycle"/>
+        
+        <route id="RWE" edges="E_W0 E_W1 -E_E1 -E_E0" />
+        <route id="REW" edges="E_E0 E_E1 -E_W1 -E_W0" />
+        
+        <route id="RNS" edges="E_N0 -E_S0" />
+        <route id="RSN" edges="E_S0 -E_N0" />
+        
+        <route id="RWN" edges="E_W0 E_W1 -E_N0" />
+        <route id="RES" edges="E_E0 E_E1 -E_S0" />
+        
+        <route id="bREW" edges="E_bE0 -E_bW0" />
+        
+        
+      
+      <vehicle id="V_WE1" type="Tcar" route="RWE" depart="0" departSpeed="13"/>
+      
+      <vehicle id="b_EW1" type="bike" route="bREW" depart="1" />
+      
+      <vehicle id="V_WN1" type="Tcar" route="RWN" depart="2" departSpeed="13"/>
+      
+      <vehicle id="b_EW2" type="bike" route="bREW" depart="6" />
+      
+      <vehicle id="V_ES1" type="Tcar" route="RES" depart="10" departSpeed="13"/>
+
+      <vehicle id="V_EW1" type="Tcar" route="REW" depart="7" departSpeed="13"/>
+
+      <vehicle id="V_NS1" type="Tcar" route="RNS" depart="40"  />
+      <vehicle id="V_SN1" type="Tcar" route="RSN" depart="44" />       
+      <vehicle id="V_WE2" type="Tcar" route="RWE" depart="10000" />       	
+        
+        
+<!-- 
+
+    
+                      
+        <flow id="RWE"   from="E_W0"   to="-E_E0"  route="RWE"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+        <flow id="REW"   from="E_E0"   to="-E_W0"  route="REW"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+   
+        <flow id="RNS"   from="E_N0"   to="-E_S0"  route="RNS"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+        <flow id="RSN"   from="E_S0"   to="-E_N0"  route="RSN"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+
+        <flow id="RWN"   from="E_W0"   to="-E_N0"  route="RWN"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+        <flow id="RES"   from="E_E0"   to="-E_S0"  route="RES"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+
+-->
+
+</routes>
