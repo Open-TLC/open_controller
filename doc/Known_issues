@@ -1,3 +1,114 @@
 # Known issues in operating and running Open Controller
 
+## Windows: libsumo fails to load due to Smart App Control
+
+### Background
+
+Open Controller can use **Eclipse SUMO** through the Python `libsumo` interface. On Windows, `libsumo` uses native compiled components (`.pyd` and `.dll` files) in addition to the Python modules.
+
+For example, importing `libsumo` loads the native `_libsumo.pyd` Python extension, which in turn depends on several native SUMO libraries.
+
+### Problem
+
+On some Windows 11 systems, **Windows Smart App Control** may prevent the native SUMO libraries from being loaded. This can cause Open Controller to terminate during startup when `libsumo` is imported.
+
+A typical error is:
+
+```text
+ImportError: DLL load failed while importing _libsumo:
+An Application Control policy has blocked this file.
+```
+
+The error may initially appear to indicate that `_libsumo.pyd` itself is blocked. However, the actual blocked files may be DLL dependencies loaded by `_libsumo.pyd`.
+
+For example, Windows Code Integrity logs may report blocked SUMO libraries such as:
+
+```text
+gdal.dll
+xerces-c_3_3.dll
+fox-16.dll
+```
+
+with messages similar to:
+
+```text
+Code Integrity determined that a process (python.exe) attempted
+to load ...\sumo_data\bin\gdal.dll that did not meet the
+Enterprise signing level requirements or violated code integrity policy.
+```
+
+The Code Integrity event log may also explicitly identify the event as:
+
+```text
+Smart App Control Block Details
+```
+
+This is therefore not an Open Controller or Python import-path problem. Windows Smart App Control is preventing Python from loading native libraries required by SUMO.
+
+### Diagnosing the problem
+
+First, test `libsumo` independently of Open Controller:
+
+```powershell
+python -c "import libsumo"
+```
+
+If this produces:
+
+```text
+ImportError: DLL load failed while importing _libsumo:
+An Application Control policy has blocked this file.
+```
+
+the problem can be investigated using the Windows Code Integrity event log.
+
+Immediately after reproducing the error, run:
+
+```powershell
+Get-WinEvent -LogName "Microsoft-Windows-CodeIntegrity/Operational" -MaxEvents 20 | Format-List TimeCreated,Id,Message
+```
+
+Look for events generated at the same time as the failed `libsumo` import. In particular, events referring to `python.exe`, `sumo_data`, SUMO DLL files, or **Smart App Control** indicate that Windows application-control policy is responsible.
+
+The location of the installed `libsumo` package can also be checked with:
+
+```powershell
+python -m pip show libsumo
+```
+
+### Solution
+
+If the computer is personally administered and Smart App Control is responsible for blocking the SUMO libraries, Smart App Control can be disabled from Windows Security:
+
+**Windows Security → App & browser control → Smart App Control settings → Off**
+
+After changing the setting, verify that `libsumo` can be imported:
+
+```powershell
+python -c "import libsumo"
+```
+
+If the command completes without an `ImportError`, the SUMO libraries can now be loaded and Open Controller should be able to use `libsumo`.
+
+### Security considerations
+
+Disabling Smart App Control removes one layer of Windows application protection. It does **not** by itself disable antivirus protection, Windows Firewall, or other Windows security mechanisms.
+
+On a development computer, Smart App Control can conflict with legitimate development tools that use native libraries that do not satisfy its signing or reputation requirements. Whether Smart App Control should be disabled therefore depends on the security policy and intended use of the computer.
+
+Other security mechanisms, particularly real-time antivirus protection, Windows Firewall, and regular Windows security updates, should remain enabled.
+
+On an organization-managed computer, **do not disable or attempt to circumvent organizational application-control policies**. Contact the system administrator and request that the required SUMO components be approved according to the organization's security policy.
+
+### Additional libsumo/pyarrow warning
+
+After resolving the Smart App Control problem, `libsumo` may produce a warning such as:
+
+```text
+Warning! pyarrow is installed with version 22.0.0 which might be
+incompatible with libsumo which is compiled against libarrow2300.
+```
+
+This warning is separate from the Smart App Control issue. If `libsumo` imports successfully and Open Controller operates normally, the warning does not necessarily require immediate action. If Arrow-related runtime problems occur, the installed `pyarrow` version should be checked against the version expected by the installed `libsumo` release.
+
 ## Windows specific issues
