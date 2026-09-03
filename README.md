@@ -258,6 +258,10 @@ The core component of Open Controller is the signal group based control engine. 
 
 The [Open Controller web page](https://www.opencontroller.org): 
 
+# Known issues
+[Known issues](https://github.com/Open-TLC/open_controller/blob/main/services/control_engine/doc/Known_issues.md)
+
+
 # License
 
 The software is released under the EUPL-1.2 licence. Click [here](https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12) for more details.
