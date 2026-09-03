@@ -117,6 +117,9 @@ class SimEngineConf:
         # Simulation engine also includes timer and clockwork.
         self.timer: TimerConf = TimerConf(raw_conf["timer"])
 
+        # Simulation engine needs access to NATS settings in order to run WebSUMO.
+        self.nats: NatsConf = NatsConf(raw_conf["nats"])
+
         # TODO: Override controllers print_status if print_status is set to True
         self.controllers: list[ControllerConf] = []
         for raw_controller_conf in raw_conf["clockwork"]["controllers"]:

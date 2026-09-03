@@ -48,14 +48,9 @@ class SimEngine:
 
         self._start_sumo(conf.sumo_conf_filename, self._timer.step_length)
 
-        nats_conf = {
-            "server": "nats",
-            "port": 4222,
-        }
-
         self._websumo = WebsumoInterface(
             conf.sumo_conf_filename,
-            nats_conf,
+            {"server": conf.nats.server, "port": conf.nats.port},
             enabled=websumo_enabled,
         )
 
