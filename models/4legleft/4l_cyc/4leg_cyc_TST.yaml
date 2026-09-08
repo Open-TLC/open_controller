@@ -1,7 +1,7 @@
 timer:
   mode: real
   time_step: 0.1
-  real_time_multiplier: 1.0
+  real_time_multiplier: 0.1
 nats:
   url: localhost
   port: 4222

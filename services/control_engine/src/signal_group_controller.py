@@ -122,6 +122,8 @@ class PhaseRingController(SignalController):
         self._state: str = "locked"
         self._current_phase_idx: int = 0
         self._next_phase_idx: int | None = None
+        self._last_print_data = ""
+        self._last_print_time = 0
 
     @property
     def id(self) -> str:
@@ -193,11 +195,31 @@ class PhaseRingController(SignalController):
         elif self._state == "transition":
             self._tick_transition()
 
-        print(
-            f"{round(self._timer.seconds, 1)} {self._state} "
-            f"Cur: {self._current_phase_idx} Next: {self._next_phase_idx} "
-            f"{states}",
+        _print_data = (
+            " State: "
+            + str(self._state)
+            + " Cur: "
+            + str(self._current_phase_idx)
+            + " Next: "
+            + str(self._next_phase_idx)
+            + " Sig: "
+            + states
         )
+
+        _print_time = round(self._timer.seconds, 1)
+
+        if (_print_time - self._last_print_time >= 1.0) or (
+            _print_data != self._last_print_data
+        ):
+            print("Time: ", _print_time, " ", _print_data)
+            self._last_print_data = _print_data
+            self._last_print_time = _print_time
+
+        # print(
+        #     f"{round(self._timer.seconds, 1)} {self._state} "
+        #     f"Cur: {self._current_phase_idx} Next: {self._next_phase_idx} "
+        #     f"{states}",
+        # )
 
     def _tick_minimum(self) -> None:
         groups_in_minimum: bool = any(
