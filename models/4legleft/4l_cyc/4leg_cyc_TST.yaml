@@ -1,0 +1,316 @@
+timer:
+  mode: real
+  time_step: 0.1
+  real_time_multiplier: 0.1
+nats:
+  url: localhost
+  port: 4222
+simengine:
+  sumo_conf: ../testmodels/basic/4legleft/4l_cyc/4leg_cyc.sumocfg
+clockwork:
+  publisher:
+    mode: change
+  controllers:
+  - id: N_J1
+    type: phasering
+    options:
+      print_status: true
+      sumo_outputs:
+      - group5
+      - group6
+      - group6
+      - group0
+      - group0
+      - group1
+      - group2
+      - group3
+      - group3
+      - group4
+      signal_groups:
+        group0:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 1000
+          constant_request: false
+          remain_green: true
+        group1:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 1000
+          constant_request: false
+          remain_green: true
+        group2:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 1000
+          constant_request: false
+          remain_green: true
+        group3:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 1000
+          constant_request: false
+          remain_green: true
+        group4:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 1000
+          constant_request: false
+          remain_green: true
+        group5:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 1000
+          constant_request: false
+          remain_green: true
+        group6:
+          min_green: 5
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 1000
+          constant_request: false
+          remain_green: true
+      extenders:
+      - id: ext0m5
+        type: gap_seeking
+        group: group0
+        options:
+          detector: e1Det_E_E1_0_5
+          gap: 2.0
+      - id: ext0m100
+        type: gap_seeking
+        group: group0
+        options:
+          detector: e1Det_E_E0_0_100
+          gap: 6.0
+      - id: ext1m5
+        type: gap_seeking
+        group: group1
+        options:
+          detector: e1Det_E_E1_1_5
+          gap: 2.0
+      - id: ext1m60
+        type: gap_seeking
+        group: group1
+        options:
+          detector: e1Det_E_E1_1_60
+          gap: 6.0
+      - id: ext2m5
+        type: gap_seeking
+        group: group2
+        options:
+          detector: e1Det_E_S0_0_5
+          gap: 2.0
+      - id: ext2m60
+        type: gap_seeking
+        group: group2
+        options:
+          detector: e1Det_E_S0_0_60
+          gap: 6.0
+      - id: ext3m5
+        type: gap_seeking
+        group: group3
+        options:
+          detector: e1Det_E_W1_0_5
+          gap: 2.0
+      - id: ext3m100
+        type: gap_seeking
+        group: group3
+        options:
+          detector: e1Det_E_W0_0_100
+          gap: 6.0
+      - id: ext4m5
+        type: gap_seeking
+        group: group4
+        options:
+          detector: e1Det_E_W1_1_5
+          gap: 2.0
+      - id: ext4m60
+        type: gap_seeking
+        group: group4
+        options:
+          detector: e1Det_E_W1_1_60
+          gap: 6.0
+      - id: ext5m5
+        type: gap_seeking
+        group: group5
+        options:
+          detector: e1Det_E_N0_0_5
+          gap: 2.0
+      - id: ext5m60
+        type: gap_seeking
+        group: group5
+        options:
+          detector: e1Det_E_N0_0_60
+          gap: 6.0
+      - id: ext6m5
+        type: gap_seeking
+        group: group6
+        options:
+          detector: e1Det_E_bE0_0_5
+          gap: 3.0
+      requesters:
+      - id: req0m5
+        type: trigger
+        group: group0
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_E1_0_5
+      - id: req0m100
+        type: trigger
+        group: group0
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_E0_0_100
+      - id: req1m5
+        type: trigger
+        group: group1
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_E1_1_5
+      - id: req1m60
+        type: trigger
+        group: group1
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_E1_1_60
+      - id: req2m5
+        type: trigger
+        group: group2
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_S0_0_5
+      - id: req2m60
+        type: trigger
+        group: group2
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_S0_0_60
+      - id: req3m5
+        type: trigger
+        group: group3
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_W1_0_5
+      - id: req3m100
+        type: trigger
+        group: group3
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_W0_0_100
+      - id: req4m5
+        type: trigger
+        group: group4
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_W1_1_5
+      - id: req4m60
+        type: trigger
+        group: group4
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_W1_1_60
+      - id: req5m5
+        type: trigger
+        group: group5
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_N0_0_5
+      - id: req5m60
+        type: trigger
+        group: group5
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_N0_0_60
+      - id: req6m5
+        type: trigger
+        group: group6
+        side_groups: []
+        options:
+          detectors:
+          - e1Det_E_bE0_0_5
+      group_list:
+      - group0
+      - group1
+      - group2
+      - group3
+      - group4
+      - group5
+      - group6
+      phases:
+      - [1, 0, 0, 1, 0, 0, 1]
+      - [0, 1, 0, 0, 1, 0, 0]
+      - [0, 0, 1, 0, 0, 1, 0]
+      intergreens:
+      - [0.0, 0.0, 2.0, 0.0, 2.0, 2.0, 0.0]
+      - [0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0]
+      - [2.0, 2.0, 0.0, 2.0, 2.0, 0.0, 2.0]
+      - [0.0, 2.0, 2.0, 0.0, 0.0, 2.0, 0.0]
+      - [2.0, 0.0, 2.0, 0.0, 0.0, 2.0, 2.0]
+      - [2.0, 2.0, 0.0, 2.0, 2.0, 0.0, 2.0]
+      - [0.0, 0.0, 2.0, 0.0, 2.0, 2.0, 0.0]
+  detectors:
+  - id: e1Det_E_E1_0_5
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_E0_0_100
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_E1_1_5
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_E1_1_60
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_S0_0_5
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_S0_0_60
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_W1_0_5
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_W0_0_100
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_W1_1_5
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_W1_1_60
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_N0_0_5
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_N0_0_60
+    type: e1_detector
+    options: {}
+  - id: e1Det_E_bE0_0_5
+    type: e1_detector
+    options: {}

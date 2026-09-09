@@ -1,0 +1,224 @@
+timer:
+  mode: fixed
+  time_step: 1.0
+  real_time_multiplier: 1.0
+nats:
+  url: localhost
+  port: 4222
+clockwork:
+  publisher:
+    mode: change
+  controllers:
+  - id: j1
+    type: phasering
+    options:
+      print_status: false
+      sumo_outputs:
+      - east-r
+      - east-l
+      - south-r
+      - south-l
+      - west-r
+      - west-l
+      signal_groups:
+        east-r:
+          min_green: 3
+          min_amber_red: 0
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: false
+        east-l:
+          min_green: 3
+          min_amber_red: 0
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: false
+          remain_green: false
+        south-r:
+          min_green: 3
+          min_amber_red: 0
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: false
+          remain_green: false
+        south-l:
+          min_green: 3
+          min_amber_red: 0
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: false
+          remain_green: false
+        west-r:
+          min_green: 3
+          min_amber_red: 0
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: false
+          remain_green: false
+        west-l:
+          min_green: 3
+          min_amber_red: 0
+          min_red: 3
+          min_amber: 3
+          max_green: 30
+          constant_request: false
+          remain_green: false
+      extenders:
+      - id: ext_east_r
+        type: smart
+        group: east-r
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3_east_r
+      - id: ext_east_l
+        type: smart
+        group: east-l
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3_east_l
+      - id: ext_south_r
+        type: smart
+        group: south-r
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3_south_r
+      - id: ext_south_l
+        type: smart
+        group: south-l
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3_south_l
+      - id: ext_west_r
+        type: smart
+        group: west-r
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3_west_r
+      - id: ext_west_l
+        type: smart
+        group: west-l
+        options:
+          mode: momentum_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3_west_l
+      requesters:
+      - id: e1_east_1
+        type: trigger
+        group: east-r
+        side_groups: []
+        options:
+          detectors:
+          - e1_0
+      - id: e1_east_2
+        type: trigger
+        group: east-l
+        side_groups: []
+        options:
+          detectors:
+          - e1_1
+      - id: e1_south_1
+        type: trigger
+        group: south-r
+        side_groups: []
+        options:
+          detectors:
+          - e1_2
+      - id: e1_south_2
+        type: trigger
+        group: south-l
+        side_groups: []
+        options:
+          detectors:
+          - e1_3
+      - id: e1_west_1
+        type: trigger
+        group: west-r
+        side_groups: []
+        options:
+          detectors:
+          - e1_4
+      - id: e1_west_2
+        type: trigger
+        group: west-l
+        side_groups: []
+        options:
+          detectors:
+          - e1_5
+      group_list:
+      - east-r
+      - east-l
+      - south-r
+      - south-l
+      - west-r
+      - west-l
+      phases:
+      - [1, 1, 0, 0, 0, 0]
+      - [0, 0, 1, 1, 0, 0]
+      - [0, 0, 0, 0, 1, 1]
+      intergreens:
+      - [0, 0, 0, 3, 0, 0]
+      - [0, 0, 0, 3, 3, 3]
+      - [0, 0, 0, 0, 0, 3]
+      - [3, 3, 0, 0, 0, 3]
+      - [0, 3, 0, 0, 0, 0]
+      - [0, 3, 3, 3, 0, 0]
+  detectors:
+  - id: e1_0
+    type: e1_detector
+    options: {}
+  - id: e1_1
+    type: e1_detector
+    options: {}
+  - id: e1_2
+    type: e1_detector
+    options: {}
+  - id: e1_3
+    type: e1_detector
+    options: {}
+  - id: e1_4
+    type: e1_detector
+    options: {}
+  - id: e1_5
+    type: e1_detector
+    options: {}
+  - id: e3_east_r
+    type: e3_detector
+    options: {}
+  - id: e3_east_l
+    type: e3_detector
+    options: {}
+  - id: e3_south_r
+    type: e3_detector
+    options: {}
+  - id: e3_south_l
+    type: e3_detector
+    options: {}
+  - id: e3_west_r
+    type: e3_detector
+    options: {}
+  - id: e3_west_l
+    type: e3_detector
+    options: {}

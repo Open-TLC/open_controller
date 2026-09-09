@@ -1,0 +1,34 @@
+services:
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"
+
+  simengine:
+    container_name: simengine_integrated_container
+    build:
+      context: .
+      dockerfile: services/simengine/docker/integrated.Dockerfile
+    depends_on:
+      - nats
+
+  # The WebSUMO viewer. Runs file-free: it discovers the scenario and
+  # fetches the net and the state over NATS from the simengine, so no
+  # scenario files or volumes are needed. The image is self-contained
+  # (the build clones the pinned public websumo repository); see
+  # services/websumo/docker/Dockerfile.
+  websumo:
+    container_name: oc_websumo_container
+    build:
+      context: .
+      dockerfile: services/websumo/docker/Dockerfile
+    ports:
+      - "8775:8775"
+    environment:
+      NATS_URL: nats://nats:4222
+      # Deliberately empty and non-persistent, not a volume: the viewer
+      # is file-free and fetches scenario files live over NATS
+      # request-reply (see services/simengine/doc/websumo.md)
+      SCENARIOS_DIR: /app/scenarios-empty
+    depends_on:
+      - nats

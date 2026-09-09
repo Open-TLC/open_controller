@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<vTypes>
+    <vType id="car1" vClass="passenger"/>
+    <vType id="bus1" vClass="bus" length="12" personCapacity="60"/>
+    <vType id="bus2" vClass="bus" length="8" personCapacity="20"/>
+    <vType id="tram1" vClass="tram" length="27.60" height="3.83" maxSpeed="15" personCapacity="200"/>
+    <vType id="truck1" length="16.50" vClass="trailer"/>
+</vTypes>

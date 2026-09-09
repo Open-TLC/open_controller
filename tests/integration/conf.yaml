@@ -1,0 +1,29 @@
+timer:
+  mode: real
+  real_time_multiplier: 100
+  time_step: 0.1
+
+nats:
+  url: nats
+  port: 4222
+
+clockwork:
+  publisher:
+    mode: change
+  controllers:
+    - id: "j1"
+      type: fixed_time
+      options:
+        phases:
+          - signal_states: ggrrrr
+            duration: 10
+          - signal_states: rrggrr
+            duration: 10
+          - signal_states: rrrrgg
+            duration: 10
+        yellow_duration: 3
+
+  detectors:
+    - id: j1.0
+      type: e1_detector
+      options: {}
