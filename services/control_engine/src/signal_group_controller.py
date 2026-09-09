@@ -183,10 +183,14 @@ class PhaseRingController(SignalController):
 
     def tick(self) -> None:
         """Advance all signal groups and process phase transitions."""
-        states = ""
+        states_out = ""
+        grp_no = 1
         for grp in self._groups:
             grp.tick()
-            states += grp.signal_state
+            states_out += grp.signal_state
+            if grp_no % 5 == 0:
+                states_out += " "
+            grp_no += 1
 
         if self._state == "minimum":
             self._tick_minimum()
@@ -195,31 +199,16 @@ class PhaseRingController(SignalController):
         elif self._state == "transition":
             self._tick_transition()
 
-        _print_data = (
-            " State: "
-            + str(self._state)
-            + " Cur: "
-            + str(self._current_phase_idx)
-            + " Next: "
-            + str(self._next_phase_idx)
-            + " Sig: "
-            + states
-        )
+        _print_data = f"{'State:'}{self._state:<15} Cur: {str(self._current_phase_idx)} Next: {str(self._next_phase_idx):<5} Sig: {states_out}"
 
         _print_time = round(self._timer.seconds, 1)
 
         if (_print_time - self._last_print_time >= 1.0) or (
             _print_data != self._last_print_data
         ):
-            print("Time: ", _print_time, " ", _print_data)
+            print(f"Time: {_print_time:<8}{_print_data}")
             self._last_print_data = _print_data
             self._last_print_time = _print_time
-
-        # print(
-        #     f"{round(self._timer.seconds, 1)} {self._state} "
-        #     f"Cur: {self._current_phase_idx} Next: {self._next_phase_idx} "
-        #     f"{states}",
-        # )
 
     def _tick_minimum(self) -> None:
         groups_in_minimum: bool = any(
