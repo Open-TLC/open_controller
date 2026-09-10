@@ -212,7 +212,7 @@ class PhaseRingController(SignalController):
 
     def _tick_minimum(self) -> None:
         groups_in_minimum: bool = any(
-            grp.signal_state in {"g", "0", "1"}
+            grp.signal_state in {"f", "g", "0", "1"}  # DBIK20260910 added state "f"
             for grp in self._phases[self._current_phase_idx]
         )
         # Do not advance, until all groups have started their greens and
