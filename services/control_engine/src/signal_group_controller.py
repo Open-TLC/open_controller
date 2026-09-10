@@ -238,7 +238,9 @@ class PhaseRingController(SignalController):
         for group in self._phases[self._next_phase_idx]:
             has_request = group.is_requesting
             can_start = not any(
-                grp.signal_state in {"0", "1", "5"} for grp in group.conflict_groups
+                grp.signal_state
+                in {"f", "g", "0", "1", "5"}  # DBIK20260910 added states "f" and "g"
+                for grp in group.conflict_groups
             )
 
             # If such group is found, the group is given a green permission and
