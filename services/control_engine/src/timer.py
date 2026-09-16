@@ -21,7 +21,7 @@ class Timer:
 
         self._target_wall_interval = self._step_length / self._time_multiplier
 
-        self._do_warnings = warnings
+        self._do_warnings = True  # warnings
 
         self._steps: int = 0
         self._start_wall_time: float = time.monotonic()
@@ -57,19 +57,20 @@ class Timer:
         if self._mode == "fixed":
             return 0
 
-        # The time it should have taken to complete current steps.
-        expected_wall_time = self._start_wall_time + (
-            self._steps * self._target_wall_interval
-        )
-
         now = time.monotonic()
+
+        # The time it should have taken to complete current steps.
+        expected_wall_time = now + self._target_wall_interval
+
         diff = expected_wall_time - now
 
         if diff < 0 and self._do_warnings:
             logger.warning(
-                "Can't keep up. Timer is running %.3fs behind timer at step %d.",
-                -diff,
+                "Can't keep up. Timer is running %.3fs behind timer at step %d. Wall time %.1fs Now %.1fs)",
+                diff,
                 self._steps,
+                expected_wall_time,
+                now,
             )
 
         return max(0.0, diff)
