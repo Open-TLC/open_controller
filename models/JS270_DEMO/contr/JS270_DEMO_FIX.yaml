@@ -41,7 +41,7 @@ clockwork:
           max_green: 25
           delaying_groups:
             group15: 5.0
-          constant_request: false
+          constant_request: true
           remain_green: true
         group2:
           min_green: 8
@@ -49,7 +49,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 15
-          constant_request: false
+          constant_request: true
           remain_green: true
         group3:
           min_green: 5
@@ -57,7 +57,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 20
-          constant_request: false
+          constant_request: true
           remain_green: true
         group4:
           min_green: 5
@@ -65,7 +65,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 20
-          constant_request: false
+          constant_request: true
           remain_green: true
         group5:
           min_green: 10
@@ -73,7 +73,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 35
-          constant_request: false
+          constant_request: true
           remain_green: true
         group6:
           min_green: 9
@@ -81,7 +81,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 45
-          constant_request: false
+          constant_request: true
           remain_green: true
         group7:
           min_green: 5
@@ -91,7 +91,7 @@ clockwork:
           max_green: 20
           delaying_groups:
             group12: 5.0
-          constant_request: false
+          constant_request: true
           remain_green: true
         group8:
           min_green: 5
@@ -99,7 +99,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 30
-          constant_request: false
+          constant_request: true
           remain_green: true
         group9:
           min_green: 5
@@ -107,7 +107,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 30
-          constant_request: false
+          constant_request: true
           remain_green: true
         group10:
           min_green: 20
@@ -115,7 +115,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 33
-          constant_request: false
+          constant_request: true
           remain_green: true
         group11:
           min_green: 20
@@ -123,7 +123,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 33
-          constant_request: false
+          constant_request: true
           remain_green: true
         group12:
           min_green: 20
@@ -131,7 +131,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 33
-          constant_request: false
+          constant_request: true
           remain_green: true
         group13:
           min_green: 20
@@ -139,7 +139,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 33
-          constant_request: false
+          constant_request: true
           remain_green: true
         group14:
           min_green: 20
@@ -147,7 +147,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 33
-          constant_request: false
+          constant_request: true
           remain_green: true
         group15:
           min_green: 20
@@ -155,7 +155,7 @@ clockwork:
           min_red: 5
           min_amber: 3
           max_green: 33
-          constant_request: false
+          constant_request: true
           remain_green: true
       extenders:
       - id: group1

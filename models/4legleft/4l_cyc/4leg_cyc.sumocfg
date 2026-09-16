@@ -7,7 +7,7 @@
         
         <additional-files value="../det/4legleft_13dets65mb.det.xml"/> 
                 
-        <route-files  value="../rou/4leg_flows_medium_bikes.rou.xml"/>          
+        <route-files  value="../rou/4leg_flows_medium_asym.rou.xml"/>          
                         
         <!-- COMMENTED OUT:
         

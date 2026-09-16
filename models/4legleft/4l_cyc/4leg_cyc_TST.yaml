@@ -6,7 +6,7 @@ nats:
   url: localhost
   port: 4222
 simengine:
-  sumo_conf: ../testmodels/basic/4legleft/4l_cyc/4leg_cyc.sumocfg
+  sumo_conf: models/4legleft/4l_cyc/4leg_cyc.sumocfg
 clockwork:
   publisher:
     mode: change
