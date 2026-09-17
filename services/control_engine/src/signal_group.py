@@ -218,10 +218,24 @@ class SignalGroup(HierarchicalMachine):
                 pass
         return any(grp.is_blocking for grp in self.conflict_groups)
 
-    def end_conflict_greens(self) -> None:
+    def end_conflict_greens_old(self) -> None:
         """Request all conflicting groups to end their greens."""
         for group in self.conflict_groups:
             group.end_green_requested = True
+
+    def end_conflict_greens(self) -> None:
+        """Request all conflicting groups to end their greens."""
+        for group in self.conflict_groups:
+            if self.signal_state in ["f"]:
+                print(
+                    "group: ",
+                    self._id,
+                    " state: ",
+                    self.signal_state,
+                    " end group: ",
+                    group._id,
+                )
+                group.end_green_requested = True
 
     def intergreens_passed(self) -> bool:
         """Check if all conflict group intergreen times have passed."""

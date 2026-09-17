@@ -90,10 +90,7 @@ class PhaseRingController(SignalController):
         # Initialize SignalGroups with mandatory intergreens dict
         self._groups: list[SignalGroup] = [
             SignalGroup(
-                self._timer,
-                group_id,
-                group_options,
-                intergreens_by_group[group_id],
+                self._timer, group_id, group_options, intergreens_by_group[group_id]
             )
             for group_id, group_options in options["signal_groups"].items()
         ]
@@ -203,10 +200,11 @@ class PhaseRingController(SignalController):
 
         _print_time = round(self._timer.seconds, 1)
 
-        if (_print_time - self._last_print_time >= 1.0) or (
-            _print_data != self._last_print_data
+        if self._print_status and (
+            (_print_time - self._last_print_time >= 0.01)
+            or (_print_data != self._last_print_data)
         ):
-            print(f"Time: {_print_time:<8}{_print_data}")
+            print(f"Time: {_print_time:<8}{self._id:<15}{_print_data}")
             self._last_print_data = _print_data
             self._last_print_time = _print_time
 
