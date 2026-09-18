@@ -1,0 +1,332 @@
+{
+"timer":{
+    "timer_mode": "fixed",
+    "time_step":0.1,
+    "real_time_multiplier":1
+},
+
+// Modes will be: sumo, test, realtime
+"operation_mode":"test",
+
+"nats":{
+    "server": "localhost",
+    "port": "4222",
+    "mode": "change"
+},
+
+// "../models/4legleft/4l_50m/4legleft_50m6dets.sumocfg"
+// "../models/4legleft/4l_70m/4legleft_70m12dets.sumocfg"
+// "../models/4legleft/4l_ped/4leg_ped.sumocfg"
+
+"sumo":{
+    "graph" : true,
+    "file_name": "../models/4legleft/4l_PT/4leg_PT.sumocfg",
+    "print_status": true,
+        "group_outputs": ["group5", "group6", "group6", "group0", "group0", "group1", "group2", "group3", "group3", "group4"]
+//  "group_outputs": ["group5", "group0", "group0", "group1", "group2", "group3", "group3", "group4"]
+//  "group_outputs": ["group0", "group1", "group2", "group3", "group4", "group5"]
+},
+
+// Controller operations
+"controller":{
+    "name": "test",
+    "sumo_name": "N_J1",
+    // Signal groups, controller object has a list value "groups"
+    // defining which ones are used
+    "signal_groups":{
+        //Values used, id not specified later
+        // request_type can be:
+        //      "fixed" - always on
+        //      "detector" - defined by detectors (see detectors section)
+        // green_end can be:
+        //      "after_ext" - green terminates after own extensions end
+        //      "remain" - remains green until other extensions out
+        "default":{
+            "min_green": 3,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 5,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "after-ext"
+            },
+
+        "group0":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+
+        "group1":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+
+        "group2":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+
+        "group3":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+
+        "group4":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+
+        "group5":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            },
+
+        "group6":{
+            "min_green": 5,
+            "min_amber_red": 1,
+            "min_red": 5,
+            "min_amber": 3,
+            "max_green": 1000,
+            "max_amber_red": 1,
+            "max_red": -1,
+            "max_amber": 3,
+            "request_type": "detector",
+            "phase_request": false,
+            "green_end": "remain"
+            }
+        
+        },
+
+    "detectors":{
+        "req0m5":{
+            "type": "request",
+            "sumo_id": "e1Det_E_E1_0_5",
+            "request_groups": ["group0"]
+        },
+        "req0m100":{
+            "type": "request",
+            "sumo_id": "e1Det_E_E0_0_100",
+            "request_groups": ["group0"]
+        },
+        "req1m5":{
+            "type": "request",
+            "sumo_id": "e1Det_E_E1_1_5",
+            "request_groups": ["group1"]
+        },
+        "req1m60":{
+            "type": "request",
+            "sumo_id": "e1Det_E_E1_1_60",
+            "request_groups": ["group1"]
+        },
+        "req2m5":{
+            "type": "request",
+            "sumo_id": "e1Det_E_S0_0_5",
+            "request_groups": ["group2"]
+        },
+        "req2m60":{
+            "type": "request",
+            "sumo_id": "e1Det_E_S0_0_60",
+            "request_groups": ["group2"]
+        },
+        "req3m5":{
+            "type": "request",
+            "sumo_id": "e1Det_E_W1_0_5",
+            "request_groups": ["group3"]
+        },
+        "req3m100":{
+            "type": "request",
+            "sumo_id": "e1Det_E_W0_0_100",
+            "request_groups": ["group3"]
+        },
+        "req4m5":{
+            "type": "request",
+            "sumo_id": "e1Det_E_W1_1_5",
+            "request_groups": ["group4"]
+        },
+        "req4m60":{
+            "type": "request",
+            "sumo_id": "e1Det_E_W1_1_60",
+            "request_groups": ["group4"]
+        },
+        "req5m5":{
+            "type": "request",
+            "sumo_id": "e1Det_E_N0_0_5",
+            "request_groups": ["group5"]
+        },
+        "req5m60":{
+            "type": "request",
+            "sumo_id": "e1Det_E_N0_0_60",
+            "request_groups": ["group5"]
+        },
+        "req6m5":{
+            "type": "request",
+            "sumo_id": "e1Det_E_bE0_0_5",
+            "request_groups": ["group6"]
+        },
+
+
+        "ext0m5":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_E1_0_5",
+            "group": "group0",
+            "ext_time": 2.0
+        },
+        "ext0m100":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_E0_0_100",
+            "group": "group0",
+            "ext_time": 6.0
+        },
+        "ext1m5":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_E1_1_5",
+            "group": "group1",
+            "ext_time": 2.0
+        },
+        "ext1m60":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_E1_1_60",
+            "group": "group1",
+            "ext_time": 6.0
+        },
+        "ext2m5":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_S0_0_5",
+            "group": "group2",
+            "ext_time": 2.0
+        },
+        "ext2m60":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_S0_0_60",
+            "group": "group2",
+            "ext_time": 6.0
+        },
+        "ext3m5":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_W1_0_5",
+            "group": "group3",
+            "ext_time": 2.0
+        },
+        "ext3m100":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_W0_0_100",
+            "group": "group3",
+            "ext_time": 6.0
+        },
+        "ext4m5":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_W1_1_5",
+            "group": "group4",
+            "ext_time": 2.0
+        },
+        "ext4m60":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_W1_1_60",
+            "group": "group4",
+            "ext_time": 6.0
+        },
+        "ext5m5":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_N0_0_5",
+            "group": "group5",
+            "ext_time": 2.0
+        },
+        "ext5m60":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_N0_0_60",
+            "group": "group5",
+            "ext_time": 6.0
+        },
+        "ext6m5":{
+            "type": "extender",
+            "sumo_id": "e1Det_E_bE0_0_5",
+            "group": "group6",
+            "ext_time": 3.0
+        }
+    },
+
+    // This defines groups used in each phase
+    // (see phases matrix to see which ones are on)
+    "group_list": ["group0", "group1", "group2", "group3", "group4", "group5", "group6"],
+
+    // Each row is a phase and index is the group
+    "phases":[
+        [1, 0, 0, 1, 0, 0, 1],
+        [0, 1, 0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0, 1, 0]
+        ],
+
+    // transfer from  each group to another
+    // this is a group_list*group_list matrix
+    // each row refers to starting group and column the end group
+    "intergreens":[
+        [0.0, 0.0, 2.0, 0.0, 2.0, 2.0, 0.0],
+        [0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0],
+        [2.0, 2.0, 0.0, 2.0, 2.0, 0.0, 2.0],
+        [0.0, 2.0, 2.0, 0.0, 0.0, 2.0, 0.0],
+        [2.0, 0.0, 2.0, 0.0, 0.0, 2.0, 2.0],
+        [2.0, 2.0, 0.0, 2.0, 2.0, 0.0, 2.0],
+        [0.0, 0.0, 2.0, 0.0, 2.0, 2.0, 0.0]
+        ]
+
+    }
+}
+

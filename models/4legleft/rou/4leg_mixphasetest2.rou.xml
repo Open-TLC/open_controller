@@ -1,0 +1,166 @@
+<routes>
+        <vType id="Tcar" accel="0.8" decel="4.5" sigma="0.5" length="5" minGap="2.5" maxSpeed="13" guiShape="passenger"/>
+        
+        <route id="RWE" edges="E_W0 E_W1 -E_E1 -E_E0" />
+        <route id="REW" edges="E_E0 E_E1 -E_W1 -E_W0" />
+        
+        <route id="RNS" edges="E_N0 -E_S0" />
+        <route id="RSN" edges="E_S0 -E_N0" />
+        
+        <route id="RWN" edges="E_W0 E_W1 -E_N0" />
+        <route id="RES" edges="E_E0 E_E1 -E_S0" />
+
+        <route id="RWS" edges="E_W0 E_W1 -E_S0" />
+        <route id="REN" edges="E_E0 E_E1 -E_N0" />
+
+          
+      
+      <vehicle id="V_WE0" type="Tcar" route="RWN" depart="0" departSpeed="13"/>
+      
+      <vehicle id="V_WE1" type="Tcar" route="RWN" depart="2" departSpeed="13"/>
+
+      <vehicle id="V_WE2" type="Tcar" route="RWN" depart="6" departSpeed="13"/>
+    
+
+      <vehicle id="V_WE3" type="Tcar" route="RWN" depart="8" departSpeed="13"/>
+      <vehicle id="V_WN0" type="Tcar" route="RWE" depart="9" departSpeed="13"/>
+
+      <vehicle id="V_WE4" type="Tcar" route="RWE" depart="10" departSpeed="13"/>
+      <vehicle id="V_WN1" type="Tcar" route="RWN" depart="11" departSpeed="13"/>
+
+      <vehicle id="V_WE5" type="Tcar" route="RWS" depart="12" departSpeed="13"/>
+      <vehicle id="V_WN2" type="Tcar" route="RWN" depart="13" departSpeed="13"/>
+
+      <vehicle id="V_WE6" type="Tcar" route="RWE" depart="14" departSpeed="13"/>
+      <vehicle id="V_WN3" type="Tcar" route="RWN" depart="15" departSpeed="13"/>
+
+
+      <vehicle id="V_WN5" type="Tcar" route="RWE" depart="16" departSpeed="13"/>
+     
+      <vehicle id="V_WN6" type="Tcar" route="RWE" depart="18" departSpeed="13"/>
+
+      <vehicle id="V_WN7" type="Tcar" route="RWE" depart="20" departSpeed="13"/>
+     
+      <vehicle id="V_WN8" type="Tcar" route="RWE" depart="22" departSpeed="13"/>
+
+      <vehicle id="V_WN9" type="Tcar" route="RWE" depart="24" departSpeed="13"/>
+     
+      <vehicle id="V_WN9B" type="Tcar" route="RWE" depart="26" departSpeed="13"/>
+
+
+      <vehicle id="V_WN10" type="Tcar" route="RWN" depart="28" departSpeed="13"/>
+      <vehicle id="V_ES1"  type="Tcar" route="RES" depart="29" departSpeed="13"/>
+
+      <vehicle id="V_WN11" type="Tcar" route="RWN" depart="30" departSpeed="13"/>
+      <vehicle id="V_ES2"  type="Tcar" route="RES" depart="31" departSpeed="13"/>
+
+      <vehicle id="V_WN12" type="Tcar" route="RWN" depart="32" departSpeed="13"/>
+      <vehicle id="V_ES3"  type="Tcar" route="RES" depart="33" departSpeed="13"/>
+
+      <vehicle id="V_WN12B" type="Tcar" route="RWN" depart="34" departSpeed="13"/>
+      <vehicle id="V_ES3B"   type="Tcar" route="RES" depart="35" departSpeed="13"/>
+
+
+      <vehicle id="V_ES4" type="Tcar" route="RES" depart="37" departSpeed="13"/>
+
+      <vehicle id="V_ES5" type="Tcar" route="RES" depart="39" departSpeed="13"/>
+
+      <vehicle id="V_ES7" type="Tcar" route="RES" depart="41" departSpeed="13"/>
+
+      <vehicle id="V_ES8" type="Tcar" route="RES" depart="43" departSpeed="13"/>
+     
+      <vehicle id="V_ES9" type="Tcar" route="RES" depart="45" departSpeed="13"/>
+
+      <vehicle id="V_ES9B" type="Tcar" route="RES" depart="47" departSpeed="13"/>
+
+
+      <vehicle id="V_ES10" type="Tcar" route="RES" depart="49" departSpeed="13"/>
+      <vehicle id="V_EW1"  type="Tcar" route="REW" depart="51" departSpeed="13"/>
+
+      <vehicle id="V_ES11" type="Tcar" route="RES" depart="52" departSpeed="13"/>
+      <vehicle id="V_EW2"  type="Tcar" route="REN" depart="53" departSpeed="13"/>
+    
+      <vehicle id="V_ES12" type="Tcar" route="RES" depart="54" departSpeed="13"/>
+      <vehicle id="V_EW3"  type="Tcar" route="REW" depart="55" departSpeed="13"/>
+
+      <vehicle id="V_ES13"  type="Tcar" route="RES" depart="56" departSpeed="13"/>
+      <vehicle id="V_EW4"   type="Tcar" route="REN" depart="57" departSpeed="13"/>
+
+      <vehicle id="V_ES14"  type="Tcar" route="RES" depart="58" departSpeed="13"/>
+      <vehicle id="V_EW5"   type="Tcar" route="REW" depart="59" departSpeed="13"/>
+
+
+      <vehicle id="V_EW6"  type="Tcar" route="REW" depart="61" departSpeed="13"/>
+
+      <vehicle id="V_EW7"  type="Tcar" route="REN" depart="63" departSpeed="13"/>
+
+      <vehicle id="V_EW8"  type="Tcar" route="REW" depart="65" departSpeed="13"/>
+
+      <vehicle id="V_EW9"  type="Tcar" route="REN" depart="67" departSpeed="13"/>
+
+      <vehicle id="V_EW10"  type="Tcar" route="REW" depart="69" departSpeed="13"/>
+
+
+      <vehicle id="V_EW11"   type="Tcar" route="REN" depart="71" departSpeed="13"/>
+      <vehicle id="V_WE10"  type="Tcar" route="RWE" depart="72" departSpeed="13"/>
+
+      <vehicle id="V_EW12"   type="Tcar" route="REW" depart="73" departSpeed="13"/>
+      <vehicle id="V_WE11"  type="Tcar" route="RWE" depart="74" departSpeed="13"/>
+
+      <vehicle id="V_EW13"  type="Tcar" route="REN" depart="75" departSpeed="13"/>
+      <vehicle id="V_WE12"  type="Tcar" route="RWE" depart="76" departSpeed="13"/>
+
+      <vehicle id="V_EW14"  type="Tcar" route="REW" depart="77" departSpeed="13"/>
+      <vehicle id="V_WE13"  type="Tcar" route="RWE" depart="78" departSpeed="13"/>
+
+      <vehicle id="V_NS0" type="Tcar" route="RNS" depart="90"  />
+
+      <vehicle id="V_NS1" type="Tcar" route="RNS" depart="92"  />
+
+      <vehicle id="V_NS2" type="Tcar" route="RNS" depart="94"  />
+
+      <vehicle id="V_NS3" type="Tcar" route="RNS" depart="96"  />
+
+      <vehicle id="V_NS4" type="Tcar" route="RNS" depart="98"  />
+
+      <vehicle id="V_SN0" type="Tcar" route="RSN" depart="100"  />  
+
+
+      <vehicle id="V_NS5" type="Tcar" route="RNS" depart="102"  />
+      <vehicle id="V_SN1" type="Tcar" route="RSN" depart="101"  />  
+
+      <vehicle id="V_NS6" type="Tcar" route="RNS" depart="103"  />
+      <vehicle id="V_SN2" type="Tcar" route="RSN" depart="104"  />  
+
+      <vehicle id="V_NS7" type="Tcar" route="RNS" depart="105"  />
+      <vehicle id="V_SN3" type="Tcar" route="RSN" depart="106"  />  
+
+
+      <vehicle id="V_SN4" type="Tcar" route="RSN" depart="108"  />  
+
+      <vehicle id="V_SN5" type="Tcar" route="RSN" depart="110"  /> 
+
+      <vehicle id="V_SN6" type="Tcar" route="RSN" depart="112"  />  
+ 
+      <vehicle id="V_SN7" type="Tcar" route="RSN" depart="114"  />  
+
+
+      <vehicle id="V_WE100" type="Tcar" route="RWE" depart="10000" />       	
+        
+        
+<!-- 
+
+    
+                      
+        <flow id="RWE"   from="E_W0"   to="-E_E0"  route="RWE"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+        <flow id="REW"   from="E_E0"   to="-E_W0"  route="REW"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+   
+        <flow id="RNS"   from="E_N0"   to="-E_S0"  route="RNS"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+        <flow id="RSN"   from="E_S0"   to="-E_N0"  route="RSN"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+
+        <flow id="RWN"   from="E_W0"   to="-E_N0"  route="RWN"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+        <flow id="RES"   from="E_E0"   to="-E_S0"  route="RES"  begin="0" end="360000" type="Tcar" color="255,0,0" departSpeed="max" vehsPerHour="300"> </flow>
+
+-->
+
+</routes>

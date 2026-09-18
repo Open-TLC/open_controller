@@ -1,0 +1,114 @@
+# timer: Timer options. This applies to all services.
+timer:
+  # timer_mode: fixed (simulate as quickly as possible) / real
+  # (simulate at real time: 1 s of simulation takes 1 s of real time).
+  timer_mode: fixed
+  # real_time_multiplier: If timer mode is real, the simulation speed can be varied with this.
+  # If set to 1, 1 s of simulation takes 1 s of real time.
+  # If set to 2, 1 s of simulation takes 0.5 s of real time.
+  real_time_multiplier: 1
+  # time_step: How often to update controller in seconds.
+  time_step: 0.1
+
+# nats: NATS options. This applies to all services.
+nats:
+  # url: URL of the NATS server.
+  # When running locally in docker compose, this is the same as NATS service name.
+  url: nats
+  # port: NATS server port number.
+  port: 4222
+
+# simengine: Options of the simulation runner service.
+simengine:
+  # sumo_conf: Filepath of SUMO simulation configuration file.
+  sumo_conf: models/some.sumocfg
+  # publisher: Options for the simulation data publisher.
+  publisher:
+    # mode: change (send output when values change) / update (send output on every update cycle).
+    mode: change
+    # data_types: What outputs to send.
+    # TODO: Valid data types will need to be decided on.
+    data_types:
+      - groups
+      - dets
+      - v2x
+
+# traffic_indicators: Options for the Traffic Indicators service.
+traffic_indicators:
+  input_streams:
+    sig_inputs:
+      connection: nats
+      type: groups
+      subtype: sumo
+      nats_subject: group.status.270.*
+    radar270.1:
+      connection: nats
+  inputs:
+    dets:  # Induction loops
+      - id: 2-002
+        type: falling_edge
+        stream: sig_inputs
+        name: 2-002  # NATS subject suffix
+    object_filters:  # Radars and cameras
+      - id: "270_1_0"
+        type: simple
+        stream: radar270.1
+        lane: "0"
+    groups:
+      - id: group1
+        type: simple
+        stream: sig_inputs  # See streams above
+        group: "7"  # NATS subject suffix, we read subject "group.status.270.7" in this example
+    lanes:  # Does sensor fusion with data inputs
+      - id: grp2_1
+        in_dets: ["2-040"]
+        out_dets: ["2-002"]  # Counts difference between input and output dets
+        object_lists: ["270_1_0"]  # Radar data filtered by lane and type?
+  outputs:
+    - view: group1_view
+      connection: nats
+      type: area
+      nats_output_subject: group.view.270.1
+      trigger: time  # time / new message
+      trigger_time: 1.0
+      # References lane ID
+      lanes: ["grp2_1"]  # Lanes -> dets + object_filters -> input_streams
+      group: group1
+
+# clockwork: Options for Clockwork (controller runner service ).
+clockwork:
+  # publisher: Options for the signal group state publisher.
+  publisher:
+    # mode: change (send output when values change) / update (send output on every update cycle).
+    mode: change
+  # controllers: Options for signal controllers.
+  controllers:
+      # id: Unique ID for the controller. This has to match the SUMO object and NATS subjects.
+    - id: j1
+      # type: Control logic type. Currently supported controller types:
+      # - fixed_time: Very dumb controller, that rotates specified stages with pre-determined stage durations.
+      type: fixed_time
+      # options: Dictinary of control logic specific options.
+      # Schema depends on the selected controller type.
+      options:
+        phases:
+          - signal_states: ggrrrr
+            duration: 10
+          - signal_states: rrggrr
+            duration: 10
+          - signal_states: rrrrgg
+            duration: 10
+        yellow_duration: 3
+  # detectors: Settings for all detectors used in the control.
+  detectors:
+      # id: Unique ID for the detector. Format: <intersection ID>.<unique detector id>
+    - id: j1.0
+      # type: Detector type. Currently supported detector types:
+      # - e1_detector: SUMO E1 detector. This creates a point detector.
+      # - e2_detector: SUMO E2 detector. This creates an area detector.
+      # - e3_detector: SUMO E3 detector. This creates an area detector.
+      # - traffic_indicators: Detector that uses data from Traffic Indicators. This creates an area detector.
+      type: e1_detector
+      # options: Dictionary of detector specific options.
+      # Schema depends on the detector type.
+      options: {}
