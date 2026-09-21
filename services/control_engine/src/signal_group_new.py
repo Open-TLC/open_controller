@@ -151,6 +151,10 @@ class SignalGroup:
 
     def tick_vehicle_actuated(self):
 
+        Debug = True  # Debugging helper, set state and group yuo want to debug
+        if (Debug == True) and (self.signal_state == "f") and (self._id == "group2"):
+            Debug = True
+
         if self.signal_state == "a" and self._min_red_time_passed():
             self._amber_red_start_at()
             self.set_signal_state("b")
@@ -168,20 +172,25 @@ class SignalGroup:
         if self.signal_state == "g" and self.intergreens_passed():
             self.set_signal_state("0")
 
-        elif self.signal_state == "0" and self._min_amber_red_time_passed():
+        if self.signal_state == "0" and self._min_amber_red_time_passed():
             self._green_start_at()
             self.set_signal_state("1")
 
-        elif self.signal_state == "1" and self._min_green_time_passed():
-            self._amber_start_at()
+        if self.signal_state == "1" and self._min_green_time_passed():
+            self.set_signal_state("5")
+
+        if self.signal_state == "5" and not (self.is_extending):
+            self.set_signal_state("4")
+
+        if self.signal_state == "4" and self.end_green_requested:
             self.set_signal_state("<")
 
-        elif self.signal_state == "<" and self._min_amber_time_passed():
+        if self.signal_state == "<" and self._min_amber_time_passed():
             self._red_start_at()
             self.set_signal_state("a")
 
-    # else:
-    #    self.set_signal_state("a")
+        # else:
+        # self.set_signal_state("a")
 
     def _red_start_at(self) -> None:
         self.red_started_at = self._timer.seconds
