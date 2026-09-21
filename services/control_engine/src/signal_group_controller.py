@@ -30,7 +30,7 @@ from services.control_engine.src.requesters.requester import Requester
 from services.control_engine.src.requesters.trigger_requester import TriggerRequester
 
 from .signal_controller import ControllerStatus, SignalController
-from .signal_group import SignalGroup
+from .signal_group_new import SignalGroup
 from .timer import Timer
 
 OC_TO_SUMO_MAP: dict[str, str] = {

@@ -49,9 +49,9 @@ class SignalGroup:
         group_id: str,
         group_conf: SignalGroupConfig,
         intergreens: dict[str, float],
-        min_length: float,
-        max_length: float,
-        remain_green: bool,
+        # min_length: float,
+        # max_length: float,
+        # remain_green: bool,
     ) -> None:
         """Create new signal group.
 
@@ -75,14 +75,14 @@ class SignalGroup:
         self._min_amber_time = group_conf["min_amber"]
 
         self._constant_request: bool = group_conf["constant_request"]
-        self._max_green_time = max_length
-        self._remain_green = remain_green
+        self._max_green_time = group_conf["max_green"]
+        self._remain_green = group_conf["remain_green"]
 
-        self._signal_state: str
+        self._signal_state: str = "a"
         self.green_permission: bool = False
         self.end_green_requested: bool = False
 
-        self.min_red_started_at: float = 0.0
+        self.red_started_at: float = 0.0
         self.amber_red_started_at: float = 0.0
         self.green_started_at: float = 0.0
         self.amber_started_at: float = 0.0
@@ -126,23 +126,88 @@ class SignalGroup:
         for ext in self._extenders:
             ext.tick()
 
-        self.set_signal_state("a")
+            # if self._id == "group1": # Bedug
+            Debug = True
 
-        if self.signal_state == "a":
-            if self._min_red_time_passed:
-                self.set_signal_state("0")
+        self.tick_vehicle_actuated()
 
-        if self.signal_state == "0":
-            if self._min_amber_red_time_passed:
-                self.set_signal_state("1")
+    def tick_fixed_time(self):
 
-        if self.signal_state == "1":
-            if self._min_green_time_passed:
-                self.set_signal_state("<")
+        if self.signal_state == "a" and self._min_red_time_passed():
+            self._amber_red_start_at()
+            self.set_signal_state("0")
 
-        if self.signal_state == "<":
-            if self._min_amber_time_passed:
-                self.set_signal_state("a")
+        elif self.signal_state == "0" and self._min_amber_red_time_passed():
+            self._green_start_at()
+            self.set_signal_state("1")
+
+        elif self.signal_state == "1" and self._min_green_time_passed():
+            self._amber_start_at()
+            self.set_signal_state("<")
+
+        elif self.signal_state == "<" and self._min_amber_time_passed():
+            self._red_start_at()
+            self.set_signal_state("a")
+
+    def tick_vehicle_actuated(self):
+
+        if self.signal_state == "a" and self._min_red_time_passed():
+            self._amber_red_start_at()
+            self.set_signal_state("b")
+
+        if self.signal_state == "b" and self.is_requesting:
+            self.set_signal_state("c")
+
+        if self.signal_state == "c" and self.green_permission:
+            self.set_signal_state("f")
+            self.end_conflict_greens()
+
+        if self.signal_state == "f" and not (self.conflict_group_blocking()):
+            self.set_signal_state("g")
+
+        if self.signal_state == "g" and self.intergreens_passed():
+            self.set_signal_state("0")
+
+        elif self.signal_state == "0" and self._min_amber_red_time_passed():
+            self._green_start_at()
+            self.set_signal_state("1")
+
+        elif self.signal_state == "1" and self._min_green_time_passed():
+            self._amber_start_at()
+            self.set_signal_state("<")
+
+        elif self.signal_state == "<" and self._min_amber_time_passed():
+            self._red_start_at()
+            self.set_signal_state("a")
+
+    # else:
+    #    self.set_signal_state("a")
+
+    def _red_start_at(self) -> None:
+        self.red_started_at = self._timer.seconds
+
+    def _amber_red_start_at(self) -> None:
+        self.amber_red_started_at = self._timer.seconds
+
+    def _green_start_at(self) -> None:
+        self.green_started_at = self._timer.seconds
+
+    def _amber_start_at(self) -> None:
+        self.amber_started_at = self._timer.seconds
+
+    def _min_red_time_passed(self) -> bool:
+        ret = self.red_started_at + self._min_red_time < self._timer.seconds
+        return ret
+
+    def _min_amber_red_time_passed(self) -> bool:
+        ret = self.amber_red_started_at + self._amber_red_time < self._timer.seconds
+        return ret
+
+    def _min_green_time_passed(self) -> bool:
+        return self.green_started_at + self._min_green_time < self._timer.seconds
+
+    def _min_amber_time_passed(self) -> bool:
+        return self.amber_started_at + self._min_amber_time < self._timer.seconds
 
     @property
     def is_extending(self) -> bool:
@@ -190,24 +255,6 @@ class SignalGroup:
         for grp in self.conflict_groups:
             grp.green_permission = False
         self.green_permission = True
-
-    def _red_start_at(self) -> None:
-        self.red_started_at = self._timer.seconds
-
-    def _amber_red_start_at(self) -> None:
-        self.amber_red_started_at = self._timer.seconds
-
-    def _green_start_at(self) -> None:
-        self.green_started_at = self._timer.seconds
-
-    def _amber_start_at(self) -> None:
-        self.amber_started_at = self._timer.seconds
-
-    def _min_red_time_passed(self) -> bool:
-        return self.min_red_started_at + self._min_red_time < self._timer.seconds
-
-    def _min_green_time_passed(self) -> bool:
-        return self.green_started_at + self._min_green_time < self._timer.seconds
 
     def _max_green_time_passed(self) -> bool:
         """Group has extended past its maximum allowed time."""
