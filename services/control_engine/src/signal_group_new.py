@@ -152,40 +152,46 @@ class SignalGroup:
     def tick_vehicle_actuated(self):
 
         Debug = True  # Debugging helper, set state and group yuo want to debug
-        if (Debug == True) and (self.signal_state == "f") and (self._id == "group2"):
+        if (
+            (Debug == True)
+            and (self.signal_state == "5")
+            and (self._id == "group2")
+            and (self._timer.seconds == 61.1)
+        ):
             Debug = True
 
         if self.signal_state == "a" and self._min_red_time_passed():
             self._amber_red_start_at()
             self.set_signal_state("b")
 
-        if self.signal_state == "b" and self.is_requesting:
+        elif self.signal_state == "b" and self.is_requesting:
             self.set_signal_state("c")
 
-        if self.signal_state == "c" and self.green_permission:
+        elif self.signal_state == "c" and self.green_permission:
             self.set_signal_state("f")
             self.end_conflict_greens()
 
-        if self.signal_state == "f" and not (self.conflict_group_blocking()):
+        elif self.signal_state == "f" and not (self.conflict_group_blocking()):
             self.set_signal_state("g")
 
-        if self.signal_state == "g" and self.intergreens_passed():
+        elif self.signal_state == "g" and self.intergreens_passed():
             self.set_signal_state("0")
 
-        if self.signal_state == "0" and self._min_amber_red_time_passed():
+        elif self.signal_state == "0" and self._min_amber_red_time_passed():
             self._green_start_at()
             self.set_signal_state("1")
 
-        if self.signal_state == "1" and self._min_green_time_passed():
+        elif self.signal_state == "1" and self._min_green_time_passed():
             self.set_signal_state("5")
+            self.end_green_requested = False
 
-        if self.signal_state == "5" and not (self.is_extending):
+        elif self.signal_state == "5" and not (self.is_extending):
             self.set_signal_state("4")
 
-        if self.signal_state == "4" and self.end_green_requested:
+        elif self.signal_state == "4" and self.end_green_requested:
             self.set_signal_state("<")
 
-        if self.signal_state == "<" and self._min_amber_time_passed():
+        elif self.signal_state == "<" and self._min_amber_time_passed():
             self._red_start_at()
             self.set_signal_state("a")
 
@@ -272,7 +278,7 @@ class SignalGroup:
     def _end_green_requested(self) -> bool:
         return self.end_green_requested
 
-    def _end_green_cb(self) -> None:
+    def _end_green_off(self) -> None:
         self.end_green_requested = False
 
     def _start_waiting_req_and_perm(self) -> None:
