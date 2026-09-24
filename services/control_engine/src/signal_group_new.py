@@ -151,14 +151,9 @@ class SignalGroup:
 
     def tick_vehicle_actuated(self):
 
-        Debug = True  # Debugging helper, set state and group yuo want to debug
-        if (
-            (Debug == True)
-            and (self.signal_state == "5")
-            and (self._id == "group2")
-            and (self._timer.seconds == 61.1)
-        ):
-            Debug = True
+        debug = True  # Debugging helper, set state and group you want to debug
+        if debug:
+            self._define_breakpoint()
 
         if self.signal_state == "a" and self._min_red_time_passed():
             self._amber_red_start_at()
@@ -189,14 +184,22 @@ class SignalGroup:
             self.set_signal_state("4")
 
         elif self.signal_state == "4" and self.end_green_requested:
+            self._amber_start_at()
             self.set_signal_state("<")
 
         elif self.signal_state == "<" and self._min_amber_time_passed():
             self._red_start_at()
             self.set_signal_state("a")
 
-        # else:
-        # self.set_signal_state("a")
+    def _define_breakpoint(self):
+        if (
+            (self.signal_state == "g")
+            and (self._id == "group3")
+            and (self._timer.seconds >= 21.0)
+        ):
+            breakpoint = True  # Set your breakpoint here
+        else:
+            breakpoint = False
 
     def _red_start_at(self) -> None:
         self.red_started_at = self._timer.seconds
