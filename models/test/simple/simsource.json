@@ -1,0 +1,50 @@
+{
+  "simulation": {
+    "sumocfg": "models/test/simple/simple.sumocfg",
+    "mode": "nats",
+    "nats": {
+      "ip": "localhost",
+      "port": 4222
+    }
+  },
+
+  "outputs": {
+    "sig_outputs": {
+      "type": "group",
+      "trigger": "change",
+      "controller_mapping_mode": "direct",
+      "controller_map": {
+        "1": "J1"
+      },
+      "signal_mapping_mode": "direct",
+      "signal_map": {
+        "1": "1"
+      }
+    },
+
+    "rad_outputs": {
+      "radars": {}
+    },
+
+    "det_outputs": {}
+  },
+  "inputs": {
+    "sig_inputs": {
+      "type": "group",
+      "trigger": "update",
+      "topic_prefix": "group.control",
+      "controller_mapping_mode": "direct",
+      "controller_map": {
+        "1": "J1"
+      },
+      "signal_mapping_mode": "direct",
+      "signal_map": {
+        "1": "1"
+      }
+    },
+
+    "rad_inputs": {},
+
+    "det_inputs": {}
+  }
+}

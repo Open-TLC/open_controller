@@ -3,6 +3,8 @@ from typing import Any
 
 
 class ControllerStatus:
+    """Status of a controller."""
+
     def __init__(self, step_count: int, current_phase: str, next_phase: str) -> None:
         self.step_count: int = step_count
         self.current_phase: str = current_phase
@@ -17,16 +19,27 @@ class SignalController(ABC):
     a JSON file in a standard format.
     """
 
+    @property
+    @abstractmethod
+    def id(self) -> str:
+        """Controllers ID."""
+        ...
+
     @abstractmethod
     def tick(self) -> None:
         """Advance the controller by one step.
-        This updates detections and signal states.
+
+        This updates detections and signal states. If controller is supposed to be
+        updated at certain intervals, it needs to handle spam protection itself. Users
+        of SignalController can call tick how often they want, and the controller should
+        keep track of update frequency itself.
         """
         ...
 
     @abstractmethod
     def reset(self) -> None:
         """Reset controller state.
+
         All configurations are persisted.
         """
         ...
@@ -44,6 +57,7 @@ class SignalController(ABC):
     @abstractmethod
     def all_red(self) -> None:
         """Transition to all red.
+
         Gracefully transition to all red and remain there indefinitely.
         This is a safety feature used for unexpected situations (alien attack?).
         """

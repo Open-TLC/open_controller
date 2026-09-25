@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file         value="4leg_cyc6.net.xml"/>
+        
+        <additional-files value="../det/4legleft_13dets65mPT.det.xml"/> 
+                
+        <route-files  value="../rou/4leg_mixphasetestcyc4.rou.xml"/>          
+                        
+        <!-- COMMENTED OUT:
+        
+
+        COPY/PASTE ROUTE/TRAFFIC FILES AND ADDITIONAL FILES FROM BELOW (Don't copy the text after #-character)
+                          
+        # CHOOSE DETECTORS CONFIGURATION   
+        # Detector_naming convention: "sumodet_"+Laneid+"DetPos" (negative pos value = from the stop line)
+        <additional-files value="det/4legleft_6dets.det.xml"/>   # 6 Detectors at 40m from the stop line 
+        <additional-files value="det/4legleft_12dets.det.xml"/>  # Main: 3m/120m, Left: 3m/65m, Side: 3m/70m
+        <additional-files value="det/4legleft_12dets_B.det.xml"/ # Main: 3m/65m, Left: 3m/65m, Side: 3m/70m> 
+       
+        # CHOOSE ROUTES & TRAFFIC FILE:
+        <route-files  value="rou/4leg_novehs.rou.xml"/> 
+        <route-files  value="rou/4leg_1veh.rou.xml"/>
+        <route-files  value="rou/4leg_1vehb_slow.rou.xml"/>    
+        <route-files  value="rou/4leg_1veh1cyc.rou.xml"/>     
+        <route-files  value="rou/4leg_fewvehs.rou.xml"/>       
+        <route-files  value="rou/4leg_mixphasetest.rou.xml"/>         
+        <route-files  value="rou/4leg_mixphasetestcyc.rou.xml"/>   
+        <route-files  value="rou/4leg_flows_medium.rou.xml"/>  
+        <route-files  value="rou/4leg_flows_high.rou.xml"/>   
+        <route-files  value="../rou/4leg_mixphasetestcyc2.rou.xml"/>       
+        <route-files  value="../rou/4leg_mixphasetestcyc3.rou.xml"/>       
+        <route-files  value="../rou/4leg_flows_medium_bikes.rou.xml"/>       
+
+ 
+
+        # FIXED TIME SIGNAL CONTROL:
+        # 4leg_cyc.tll.xml 
+                           
+        END OF COMMENT OUT -->
+        
+    </input>
+
+    <time>
+  
+        <begin        value="0"/>        
+        <step-length  value="0.1"/>   
+        <end          value="30000"/>
+        <delay        value="600"/>
+
+        
+    </time>
+
+    <report>
+        <verbose     value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+</configuration>
+
+
+

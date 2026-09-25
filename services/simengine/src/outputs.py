@@ -1,22 +1,20 @@
-# -*- coding: utf-8 -*-
-""" Output storage and handling
-"""
+"""Output storage and handling"""
 # Copyright 2024 by Conveqs Oy and Kari Koskinen
 # All Rights Reserved
 #
 
 import json
 from datetime import datetime
-from shapely.geometry import Polygon, Point
 
-# The in-process sumo engine is used instead of the TraCI socket
 import libsumo as traci
+from shapely.geometry import Point, Polygon
 
+CLENUP_TIME_LIMIT = 0.5  # seconds
 
-CLENUP_TIME_LIMIT = 0.5 # seconds
 
 class Radar:
-    "This class is for handling the virtual radars"
+    """This class is for handling the virtual radars"""
+
     def __init__(self, aoi, lane_map=None, vehicle_types=None):
         # aoi = area of interest
         poly_coords = []
@@ -26,14 +24,14 @@ class Radar:
             self.aoi = Polygon(poly_coords)
         else:
             self.aoi = None
-        
+
         self.lane_map = lane_map
         self.vehicle_types = vehicle_types
         self.vehicles = {}
         self.id_counter = 0
 
     def get_new_id(self):
-        "Returns a new unique id for the vehicle"
+        """Returns a new unique id for the vehicle"""
         prev_id = self.id_counter
         self.id_counter += 1
         if self.id_counter > 255:
@@ -41,146 +39,135 @@ class Radar:
         return prev_id
 
     def add_vehicle(self, new_veh):
-        "Adds the vehicel to the radar if it is in the area of interest"
+        """Adds the vehicel to the radar if it is in the area of interest"""
         # filter out the vehicles that are not of pre-defined type
         if self.vehicle_types:
-            if not new_veh['sumo_type'] in self.vehicle_types:
-                BP=1
+            if new_veh["sumo_type"] not in self.vehicle_types:
+                BP = 1
                 return
-        
+
         # Filter out all the vehs outside aoi, if it is defined
         if self.aoi:
-            if not self.aoi.contains(new_veh['sumo_loc']):
+            if not self.aoi.contains(new_veh["sumo_loc"]):
                 return
-        
+
         # If no aoi or veh within it, we add the vehicle
         veh = dict(new_veh)
-        if not veh['sumo_id'] in self.vehicles:
+        if veh["sumo_id"] not in self.vehicles:
             # We need to generate an id for the vehicle
-            veh['id'] = self.get_new_id()
+            veh["id"] = self.get_new_id()
         else:
-            veh['id'] = self.vehicles[veh['sumo_id']]['id']
-            
+            veh["id"] = self.vehicles[veh["sumo_id"]]["id"]
 
-        # We update the values    
-        vehicle_id = veh['sumo_id']
-        veh['lat'] = veh['sumo_loc'].x
-        veh['lon'] = veh['sumo_loc'].y
-        
+        # We update the values
+        vehicle_id = veh["sumo_id"]
+        veh["lat"] = veh["sumo_loc"].x
+        veh["lon"] = veh["sumo_loc"].y
 
         speed = traci.vehicle.getSpeed(vehicle_id)
         angle = traci.vehicle.getAngle(vehicle_id)
-        veh['speed'] = speed
-        veh['acceleration'] = traci.vehicle.getAcceleration(vehicle_id)
-        veh['sumo_angle'] = angle
-        veh['len'] = traci.vehicle.getLength(vehicle_id)
-        veh['lane'] = self.get_veh_lane(vehicle_id)
-        veh['cyc_ago'] = 0
+        veh["speed"] = speed
+        veh["acceleration"] = traci.vehicle.getAcceleration(vehicle_id)
+        veh["sumo_angle"] = angle
+        veh["len"] = traci.vehicle.getLength(vehicle_id)
+        veh["lane"] = self.get_veh_lane(vehicle_id)
+        veh["cyc_ago"] = 0
 
-        sumo_class = traci.vehicle.getTypeID(vehicle_id)           
+        sumo_class = traci.vehicle.getTypeID(vehicle_id)
         # FIXME: These should be configurable
-        veh['sumo_class'] =  sumo_class
-        if sumo_class == 'car_type':
-            veh['class'] = 4
-        elif sumo_class == 'truck_type':
-            veh['class'] = 7
-        elif sumo_class == 'bike_type':
-            veh['class'] = 2
-        elif sumo_class == 'tram_type':
-            veh['class'] = 8
+        veh["sumo_class"] = sumo_class
+        if sumo_class == "car_type":
+            veh["class"] = 4
+        elif sumo_class == "truck_type":
+            veh["class"] = 7
+        elif sumo_class == "bike_type":
+            veh["class"] = 2
+        elif sumo_class == "tram_type":
+            veh["class"] = 8
         else:
-            veh['class'] = sumo_class
+            veh["class"] = sumo_class
 
-        
-        veh['quality'] = 100        
-        veh['lastupdate'] = datetime.now()
+        veh["quality"] = 100
+        veh["lastupdate"] = datetime.now()
         # Finally we add/replace the vehicle data
-        self.vehicles[veh['sumo_id']] = veh
-
+        self.vehicles[veh["sumo_id"]] = veh
 
     def get_veh_lane(self, vehicle_id):
-        "Returns the lane of the vehicle"
+        """Returns the lane of the vehicle"""
         if not self.lane_map:
             sumo_lane = traci.vehicle.getLaneIndex(vehicle_id)
             return sumo_lane
-        
-        #Mapping is defined
+
+        # Mapping is defined
         sumo_lane_id = traci.vehicle.getLaneID(vehicle_id)
         if sumo_lane_id in self.lane_map:
             return self.lane_map[sumo_lane_id]
-        else:
-            #print("Lane not found in the lane map:", sumo_lane_id)            
-            return -1 # TODO: Should be handled better, maybe omit these vehicles?
-
+        # print("Lane not found in the lane map:", sumo_lane_id)
+        return -1  # TODO: Should be handled better, maybe omit these vehicles?
 
     def remove_old_data(self):
-        "Removes the vehicles that have not been updated for a while"
+        """Removes the vehicles that have not been updated for a while"""
         # We need to check the age of the data
         for veh_id in list(self.vehicles.keys()):
             veh = self.vehicles[veh_id]
             now = datetime.now()
-            lats_update = veh['lastupdate']
+            lats_update = veh["lastupdate"]
             time_since_update = (now - lats_update).total_seconds()
             if time_since_update > CLENUP_TIME_LIMIT:
                 del self.vehicles[veh_id]
 
-
     def get_radar_data(self):
         """Returns 'sumo radar' data to twinobject for updating veh tracking
-            This data should be the same format as in the live radar output
+        This data should be the same format as in the live radar output
         """
         tstamp = round(datetime.now().timestamp() * 1000)
         data = {}
-        data['source'] = 'sumo'
-        data['status'] = 'OK'
-        data['tstamp'] = tstamp    
-        data['nobjects'] = len(self.vehicles)    
-        data['objects'] = []
+        data["source"] = "sumo"
+        data["status"] = "OK"
+        data["tstamp"] = tstamp
+        data["nobjects"] = len(self.vehicles)
+        data["objects"] = []
         for veh in self.vehicles.values():
             # We copy the dict to avoid modifying the original
             # Note: this could be improved, maybe we should use a class
             out_vehicle = dict(veh)
-            del out_vehicle['sumo_loc'] # Wont serialize
-            del out_vehicle['lastupdate'] # Wont serialize
-            data['objects'].append(out_vehicle)
+            del out_vehicle["sumo_loc"]  # Wont serialize
+            del out_vehicle["lastupdate"]  # Wont serialize
+            data["objects"].append(out_vehicle)
         return data
 
 
-    
-
 class DetStorage:
-    "This is a class for storing the detector states and indicating any change"
+    """This is a class for storing the detector states and indicating any change"""
+
     def __init__(self, conf):
         # this will contain the dictionary of all the detector messages
         self.statuses = {}
         self.conf = conf
-        self.topic_prefix = conf['topic_prefix']
+        self.topic_prefix = conf["topic_prefix"]
 
     def add_det_value(self, det_id, loop_on):
-        "Adds a detector status to the dictionary returns True if the status has changed"
-        if det_id not in self.statuses:
-            self.statuses[det_id] = loop_on
-            return True
-        elif loop_on != self.statuses[det_id]:
+        """Adds a detector status to the dictionary returns True if the status has changed"""
+        if det_id not in self.statuses or loop_on != self.statuses[det_id]:
             self.statuses[det_id] = loop_on
             return True
         return False
 
     def read_det_values_from_sumo(self):
-        "Returns dict of detector statuses"
+        """Returns dict of detector statuses"""
         sumo_loops = traci.inductionloop.getIDList()
         det_statuses = {}
-        
+
         for det_id_sumo in sumo_loops:
             det_status = {}
 
             current_time = datetime.now().isoformat()
             det_status["tstamp"] = str(current_time)
-            
+
             vehnum = traci.inductionloop.getLastStepVehicleNumber(det_id_sumo)
             occup = traci.inductionloop.getLastStepOccupancy(det_id_sumo)
 
-            if (vehnum > 0) or (occup > 0):   # DBIK 10.22  or (occup > 0):
+            if (vehnum > 0) or (occup > 0):  # DBIK 10.22  or (occup > 0):
                 loop_on = True
             else:
                 loop_on = False
@@ -194,7 +181,7 @@ class DetStorage:
         from_sumo = self.read_det_values_from_sumo()
         for det_id in from_sumo:
             det_status = {}
-            det_status["id"] = self.topic_prefix + '.' +  det_id
+            det_status["id"] = self.topic_prefix + "." + det_id
             det_status["loop_on"] = from_sumo[det_id]["loop_on"]
             det_status["tstamp"] = str(datetime.now().isoformat())
             det_status_json = json.dumps(det_status)
@@ -208,26 +195,27 @@ class DetStorage:
         for det_id in from_sumo:
             if self.add_det_value(det_id, from_sumo[det_id]["loop_on"]):
                 det_status = {}
-                det_status["id"] = self.topic_prefix + '.' + det_id
+                det_status["id"] = self.topic_prefix + "." + det_id
                 det_status["loop_on"] = from_sumo[det_id]["loop_on"]
                 det_status["tstamp"] = str(datetime.now().isoformat())
                 det_status_json = json.dumps(det_status)
                 messages[self.topic_prefix + "." + det_id] = det_status_json.encode()
         return messages
 
-
     def test():
         print("Test")
 
+
 class GroupStorage:
     """This is a class for string the groups statuses"""
+
     def __init__(self, conf):
         self.statuses = {}
         self.conf = conf
-        self.topic_prefix = conf['topic_prefix']
+        self.topic_prefix = conf["topic_prefix"]
 
     def read_group_statuses_from_sumo(self):
-        "Returns dict of traffic light statuses"
+        """Returns dict of traffic light statuses"""
         sumo_lights = traci.trafficlight.getIDList()
         light_statuses = {}
         current_time = datetime.now().isoformat()
@@ -247,7 +235,7 @@ class GroupStorage:
                 id += 1
                 light_statuses[light_id] = light_status
         return light_statuses
-    
+
     def get_messages_current(self):
         """Returns a dict (keys are channels, values are json-strings) with data to be send to NATS"""
         messages = {}
@@ -258,79 +246,85 @@ class GroupStorage:
         return messages
 
     def add_group_value(self, group_id, substate):
-        "Adds a group status to the dictionary returns True if the status has changed"
-        if group_id not in self.statuses:
-            self.statuses[group_id] = substate
-            return True
-        elif substate != self.statuses[group_id]:
+        """Adds a group status to the dictionary returns True if the status has changed"""
+        if group_id not in self.statuses or substate != self.statuses[group_id]:
             self.statuses[group_id] = substate
             return True
         return False
 
     def get_messages_changed(self):
-        """Returns a dict (keys are channels, values are json-strings) 
-            with data to be send to NATS, but only for the ones changed"""
+        """Returns a dict (keys are channels, values are json-strings)
+        with data to be send to NATS, but only for the ones changed
+        """
         messages = {}
         from_sumo = self.read_group_statuses_from_sumo()
         for group_id, group_vals in from_sumo.items():
             if self.add_group_value(group_id, group_vals["substate"]):
                 light_status_json = json.dumps(group_vals)
-                messages[self.topic_prefix + "." + group_id] = light_status_json.encode()
+                messages[self.topic_prefix + "." + group_id] = (
+                    light_status_json.encode()
+                )
         return messages
+
 
 class RadarStorage:
     """This is a class for string the radar detections"""
+
     def __init__(self, conf):
         self.statuses = {}
         self.conf = conf
 
-        for rad_id, rad_conf in self.conf['radars'].items():
+        for rad_id, rad_conf in self.conf["radars"].items():
             # Lane map, if defined
-            if 'lane_map' in rad_conf:
-                lane_map = rad_conf['lane_map']
+            if "lane_map" in rad_conf:
+                lane_map = rad_conf["lane_map"]
             else:
                 lane_map = None
-            
+
             # Area of interest, if defined
-            if 'area_of_interest' in rad_conf:
-                aoi = rad_conf['area_of_interest']
+            if "area_of_interest" in rad_conf:
+                aoi = rad_conf["area_of_interest"]
             else:
-                aoi = [] # same as empty list, if it is set in the conf
-            
+                aoi = []  # same as empty list, if it is set in the conf
+
             # Vehicle type list, if defined
-            if 'vehicle_types' in rad_conf:
-                vehicle_types = rad_conf['vehicle_types']
+            if "vehicle_types" in rad_conf:
+                vehicle_types = rad_conf["vehicle_types"]
             else:
                 vehicle_types = None
 
-            self.conf['radars'][rad_id]['radar_object'] = Radar(aoi, lane_map=lane_map, vehicle_types=vehicle_types)
-        
+            self.conf["radars"][rad_id]["radar_object"] = Radar(
+                aoi,
+                lane_map=lane_map,
+                vehicle_types=vehicle_types,
+            )
+
     def get_messages_current(self):
         """Returns a dict (keys are channels, values are json-strings) with data to be send to NATS"""
         self.update_radars()
         messages = {}
-        for radar_conf in self.conf['radars'].values():
-            radar_data = radar_conf['radar_object'].get_radar_data()
+        for radar_conf in self.conf["radars"].values():
+            radar_data = radar_conf["radar_object"].get_radar_data()
             radar_status_json = json.dumps(radar_data)
             messages[radar_conf["topic"]] = radar_status_json.encode()
         return messages
-    
+
     def update_radars(self):
         """We read the objects from the SUMO and update them to the radar objects"""
-        for radar_conf in self.conf['radars'].values():
-                radar_conf['radar_object'].remove_old_data()
-        
+        for radar_conf in self.conf["radars"].values():
+            radar_conf["radar_object"].remove_old_data()
+
         veh_id_list = traci.vehicle.getIDList()
         for vehicle_id in veh_id_list:
             new_vehicle = {}
-            new_vehicle['sumo_id'] = vehicle_id
+            new_vehicle["sumo_id"] = vehicle_id
             # We need to calculate the location in order for the radar to determine
             # whether the vehicle is within radar beam (in the area of interest)
             pos_x, pos_y = traci.vehicle.getPosition(vehicle_id)
             lon, lat = traci.simulation.convertGeo(pos_x, pos_y)
-            new_vehicle['sumo_loc'] = Point(lat, lon)
+            new_vehicle["sumo_loc"] = Point(lat, lon)
             # We also need the vehicle type, in case we want to filter the vehicles
             # based on the type
-            new_vehicle['sumo_type'] = traci.vehicle.getTypeID(vehicle_id) 
-            for radar_conf in self.conf['radars'].values():
-                radar_conf['radar_object'].add_vehicle(new_vehicle)
+            new_vehicle["sumo_type"] = traci.vehicle.getTypeID(vehicle_id)
+            for radar_conf in self.conf["radars"].values():
+                radar_conf["radar_object"].add_vehicle(new_vehicle)
