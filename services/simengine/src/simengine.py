@@ -480,12 +480,11 @@ def get_traffic_light_statatuses():
 def read_command_line():
     """Returns parsed command line arguments
 
-    Note: this engine has its own argparse setup, separate from
-    confread_ms (used by simengine_integrated.py). The two engines are
-    run independently and have always had their own command lines; the
-    WebSUMO options (--nats-server, --nats-port, --nowebsumo) follow
-    each engine's existing pattern. Unifying the two parsers would be a
-    separate refactor.
+    Note: this engine has its own argparse setup, separate from the
+    integrated engine's (read_command_line in the control engine's
+    configuration.py). The two engines are run independently and have
+    their own command lines; the WebSUMO options (--nats-server,
+    --nats-port, --nowebsumo) follow this engine's existing pattern.
     """
     operation_description = """
     Runs the sumo in real time and relays the detector and group states

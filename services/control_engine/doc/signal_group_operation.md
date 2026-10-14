@@ -15,23 +15,32 @@ The diagrams in this document are generated directly from the `transitions`-base
 state machine implementation in `signal_group.py`, so they always reflect the
 actual code rather than a hand-drawn approximation of it.
 
-From the repository root, with a controller config file (e.g. one of the files
-under `models/`, or your own):
+From the repository root, with a YAML controller configuration (e.g. one of the
+files under `models/`, or your own):
 
 ```
 mkdir -p tmp
 
 # Full ring: all four phases in one diagram
-pipenv run python services/control_engine/src/signal_group.py --conf-file models/test/simple/contr.json
+uv run python -m services.control_engine.src.signal_group --conf-file models/test/simple/contr.yaml
 
 # One diagram per phase (Red, AmberRed, Green, Amber)
-pipenv run python services/control_engine/src/signal_group.py --submachines --conf-file models/test/simple/contr.json
+uv run python -m services.control_engine.src.signal_group --submachines --conf-file models/test/simple/contr.yaml
 ```
+
+Generating the diagrams needs the `graphviz` system package (the `dot`
+command) in addition to the Python dependencies.
 
 The full ring is written to `tmp/ring.png`, and the per-phase diagrams to
 `tmp/ring_red.png`, `tmp/ring_amber_red.png`, `tmp/ring_green.png` and
-`tmp/ring_amber.png`. It always diagrams the first signal group listed under
-`controller.signal_groups` in the given config file.
+`tmp/ring_amber.png`. It always diagrams one signal group of the first
+controller listed under `clockwork.controllers` in the given configuration
+file.
+
+Where an arrow's guard is implemented as a named condition method, the label
+shows its name (e.g. `_min_time_passed`); guards implemented as inline
+lambdas show as `<lambda>` on the diagram - the sections below spell out what
+each of those conditions is.
 
 ## Operation
 
@@ -40,111 +49,102 @@ The full ring is written to `tmp/ring.png`, and the per-phase diagrams to
 ![Full signal group ring](figures/full_signalgroup_ring.png)
 
 The signal group cycles through Red, AmberRed, Green and Amber in a fixed order -
-there is no other possible sequence. Each of the four phases is its own nested
-state machine, shown individually below.
-
-Every arrow in the diagrams below is a `next_state` transition. Where an arrow
-has no label, the transition is unconditional (it fires as soon as the
-previous state's entry logic runs); where it has a label, that label is the
-guard condition that must become true before the transition fires. Making
-these conditions explicit here - even for the simple phases - is meant to
-match exactly what the diagrams show, since it's easy to assume a phase like
-AmberRed is "just a timer" without naming what actually ends it.
+there is no other possible sequence. Every transition is a `next_state`
+transition, fired on every controller tick; a transition happens when its
+guard conditions are true. Each of the four phases is its own nested state
+machine: AmberRed and Amber are plain fixed-time phases (`FixedTime`), Red
+adds the group-based green-start logic (`GroupBasedRed`), and Green adds the
+extension logic (`ExtendedGreen`).
 
 ### AmberRed
 
 ![AmberRed substate machine](figures/signalgroup_ring_amber_red.png)
 
-AmberRed is one of the simple phases: `Init` moves unconditionally to
-`MinimumTime`, which runs a minimum time that, in this phase, is also its
-maximum time. `MinimumTime` moves to `Exit` once the `min_time_passed`
-condition becomes true, ending the phase.
+AmberRed is one of the simple phases: it starts in `MinimumTime`, which runs
+a minimum time that, in this phase, is also its maximum time (`min_amber_red`
+in the configuration). `MinimumTime` moves to `Exit` once `_min_time_passed`
+becomes true, ending the phase.
 
 ### Amber
 
 ![Amber substate machine](figures/signalgroup_ring_amber.png)
 
-Amber works the same way as AmberRed: `Init` moves unconditionally to
-`MinimumTime`, and `MinimumTime` moves to `Exit` once `min_time_passed` is
-true - again, minimum time and maximum time are the same here.
+Amber works the same way as AmberRed: `MinimumTime` moves to `Exit` once
+`_min_time_passed` is true - again, minimum time and maximum time are the
+same here (`min_amber`).
 
 ### Red
 
 ![Red substate machine](figures/signalgroup_ring_red.png)
 
-Red is more complex than the other two fixed-time phases:
+Red (`GroupBasedRed`) is more complex than the two fixed-time phases:
 
-- `Init` moves unconditionally to `MinimumTime`, same as AmberRed and Amber.
-- `MinimumTime` moves to `CanEnd` once `min_time_passed` is true.
-- `CanEnd` moves to `ForceGreen` once `has_green_request & has_green_permission`
-  is true - i.e. the signal group has a green request and the controller has
-  given it permission to go green.
-- In `ForceGreen`, the controller attempts to end any conflicting green
-  groups. `ForceGreen` moves to `WaitIntergreen` once `all_conflicts_red` is
-  true, meaning those conflicting groups have actually turned red.
-- `WaitIntergreen` is the all-red time; it moves to `Exit`, ending the Red
-  phase, once `intergreens_passed` is true.
+- `MinimumTime` moves to `WaitRequestAndPermission` once `_min_time_passed`
+  is true (`min_red`). Entering `WaitRequestAndPermission` also clears any
+  leftover end-green request on the group.
+- `WaitRequestAndPermission` moves to `EndingConflicts` once the group both
+  has a green request (`is_requesting`) and the controller has given it
+  permission to go green (`green_permission`).
+- On entering `EndingConflicts` the group requests all of its conflicting
+  groups to end their greens (`end_conflict_greens()`). It moves on to
+  `WaitIntergreen` once no conflicting group is blocking anymore
+  (`conflict_group_blocking()` is false), meaning the conflicts have left
+  their Green/Amber states.
+- `WaitIntergreen` waits for the intergreen times towards the conflicting
+  groups to pass; it moves to `Exit`, ending the Red phase, once
+  `_intergreens_passed` is true. From this point on the transition to green
+  can no longer be blocked.
 
 ### Green
 
 ![Green substate machine](figures/signalgroup_ring_green.png)
 
-Green starts the same way as the other phases, but what happens after the
-minimum time depends on configuration (the `green_end` setting) as well as
-the status of external signals (extensions):
+Green (`ExtendedGreen`) starts the same way as the other phases, but what
+happens after the minimum time depends on the group's extenders and the
+`remain_green` configuration setting:
 
-- `Init` moves unconditionally to `MinimumTime`, same as the other phases.
-- `MinimumTime` moves to `Extending` once `min_time_passed` is true. Every
-  green phase always passes through `Extending`, regardless of mode.
-- From `Extending`, what happens next depends on `green_end`:
-  - In **"terminate after ext" mode** (`terminate_after_ext_mode`), green
-    always stops when either the extensions end
-    (`external_not_extending & terminate_after_ext_mode`) or the maximum
-    green time is reached (`max_time_passed & terminate_after_ext_mode`) -
-    both move straight to `Exit`.
-  - In **"remain green" mode** (`remain_green_mode`), `Extending` moves to
-    `RemainGreen` instead of `Exit` - in this mode the phase never exits
-    directly from `Extending`. This happens on any of three conditions:
-    extensions have ended (`external_not_extending & remain_green_mode`),
-    another group has priority (`other_group_request_priority &
-    remain_green_mode`, e.g. a public transport priority request), or the
-    maximum time has passed (`max_time_passed & remain_green_mode`).
-- `RemainGreen` moves to `Exit` once `other_group_requests_end_green` is
-  true - in practice, a conflicting group wants to start its own green and
-  cannot do so until this group ends its green.
-- If `extension_repetitive` mode is on and an external extension restarts
-  (`external_extending & extension_repetitive`), `RemainGreen` can also
-  move back to `Extending`.
+- `MinimumTime` moves to `Extending` once `_min_time_passed` is true
+  (`min_green`). Every green phase always passes through `Extending`.
+- From `Extending`, what happens next depends on `remain_green`:
+  - With `remain_green: false`, green ends when the extenders stop extending
+    (`is_extending` becomes false) or when the maximum green time is reached
+    (`_max_time_passed`, `max_green`) - both move straight to `Exit`.
+  - With `remain_green: true`, the same two conditions move to `RemainGreen`
+    instead: the group keeps a passive green after its extensions end.
+- `RemainGreen` moves to `Exit` once a conflicting group requests this group
+  to end its green (`end_green_requested`, set by the conflicting group's
+  `end_conflict_greens()` when it starts its own green process) - in
+  practice, the group stays green until someone else needs the right of way.
 
 ## Interfaces
 
-Signal groups generally operate independently of each other, and change state
-automatically within `tick()` (`SignalGroup.tick()`, `signal_group.py`)
-whenever their conditions are met - `tick()` simply calls `next_state()` on
-every time step, which fires whichever `next_state` transition (if any) has
-its guard condition currently true.
+Signal groups generally operate independently of each other, and change
+state automatically within `tick()` (`SignalGroup.tick()`,
+`signal_group.py`): every tick first updates the group's requesters and
+extenders, then calls `next_state()`, which fires whichever `next_state`
+transition (if any) has its guard conditions currently true.
 
-Some of these conditions are purely clock-driven, such as `min_time_passed`
-and `intergreens_passed` above. Many others, however, depend on external
-input variables that get set from outside the state machine - namely:
+Some of the conditions are purely clock-driven, such as `_min_time_passed`
+and `_intergreens_passed` above. The others depend on objects attached to
+the group from the outside:
 
-- **Request green** - whether there is demand for green time for this group.
-  Exposed as the `SignalGroup.request_green` property (backed by
-  `_request_green`), set from outside the group (e.g. by detections). Read by
-  the `has_green_request()` condition function, which is what actually feeds
-  the `CanEnd -> ForceGreen` transition in the Red substate machine.
-- **Extend** - whether there is demand to extend the green for this group.
-  This isn't a plain flag on `SignalGroup` itself: it comes from an external
-  extender object - `SignalGroup.extender` (an `Extender`) and/or
-  `SignalGroup.e3extender` (an `e3Extender`), both defined in `extender.py` -
-  each of which exposes its own `extend` property. The `external_extending()`
-  condition in the Green substate machine (`VehicleActuated`) reads
-  `self.group.extender.extend` and `self.group.e3extender.extend` and is true
-  if either extender is requesting an extension.
-- **Permission to go green** - whether the traffic controller allows this
-  group to start green if it has a request. This exists to coordinate the
-  order in which groups go green when several of them want to at the same
-  time. Exposed as the `SignalGroup.permit_green` property (backed by
-  `_permit_green`), set by the controller. Read by the `has_green_permission()`
-  condition function, alongside `has_green_request()`, for the same
-  `CanEnd -> ForceGreen` transition.
+- **Requesters** (`requesters/`) decide whether there is demand for green
+  time. The group's `is_requesting` property is true if any of its
+  requesters is requesting - or always, if the group is configured with
+  `constant_request`. Current requester types are the presence requester
+  (demand while a detector is occupied) and the trigger requester (demand
+  latched by a detector pulse until served). This feeds the
+  `WaitRequestAndPermission -> EndingConflicts` transition in Red.
+- **Extenders** (`extenders/`) decide whether the active green should
+  continue. The group's `is_extending` property is true if any of its
+  extenders is extending. Current extender types are the gap-seeking
+  extender (extends while vehicles keep arriving within the gap time) and
+  the smart extender. This feeds the `Extending` transitions in Green.
+- **Permission to go green** (`green_permission`) - whether the controller
+  allows this group to start green if it has a request. This coordinates
+  the order in which groups go green when several of them want to at the
+  same time: the phase ring controller
+  (`signal_group_controller.py`) grants and revokes it per main phase.
+- **End-green request** (`end_green_requested`) - set on this group by a
+  conflicting group that is starting its own green process; it ends this
+  group's `RemainGreen` state.
