@@ -16,6 +16,11 @@ class BaseE2AreaDetector(AreaDetector, ABC):
         self._average_speed: float = 0.0
         self._average_time_loss: float = 0.0
 
+    @property
+    def id(self) -> str:
+        """ID of the detector."""
+        return self._id
+
     def tick(self) -> None:
         """Update the detectors internal state."""
         raw_count, raw_speed, raw_loss = self._fetch_metrics()
@@ -63,8 +68,16 @@ class E2AreaDetector(BaseE2AreaDetector):
 class E2TransitAreaDetector(BaseE2AreaDetector, TransitAreaDetector):
     """AreaDetector implementation using SUMO's E2 detector for transit only."""
 
+    def __init__(self, detector_id: str) -> None:
+        super().__init__(detector_id)
+        # ID needs to be overridden to differentiate transit detector from possible
+        # general detector that uses the same SUMO detector. This makes it possible
+        # to re-use SUMO detectors across logical detectors.
+        self._id = f"transit_{detector_id}"
+        self._sumo_id = detector_id
+
     def _fetch_metrics(self) -> tuple[float, float, float]:
-        vehicle_ids = libsumo.lanearea.getLastStepVehicleIDs(self._id)
+        vehicle_ids = libsumo.lanearea.getLastStepVehicleIDs(self._sumo_id)
         transit_ids = [
             v
             for v in vehicle_ids
