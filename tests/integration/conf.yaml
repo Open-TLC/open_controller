@@ -22,8 +22,3 @@ clockwork:
           - signal_states: rrrrgg
             duration: 10
         yellow_duration: 3
-
-  detectors:
-    - id: j1.0
-      type: e1_detector
-      options: {}
