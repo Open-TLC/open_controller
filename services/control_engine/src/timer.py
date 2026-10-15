@@ -21,7 +21,7 @@ class Timer:
 
         self._target_wall_interval = self._step_length / self._time_multiplier
 
-        self._do_warnings = True  # warnings
+        self._do_warnings = warnings
 
         self._steps: int = 0
         self._start_wall_time: float = time.monotonic()
@@ -57,21 +57,28 @@ class Timer:
         if self._mode == "fixed":
             return 0
 
-        now = time.monotonic()
-
         # The time it should have taken to complete current steps.
-        expected_wall_time = now + self._target_wall_interval
+        expected_wall_time = self._start_wall_time + (
+            self._steps * self._target_wall_interval
+        )
 
+        now = time.monotonic()
         diff = expected_wall_time - now
 
-        if diff < 0 and self._do_warnings:
-            logger.warning(
-                "Can't keep up. Timer is running %.3fs behind timer at step %d. Wall time %.1fs Now %.1fs)",
-                diff,
-                self._steps,
-                expected_wall_time,
-                now,
-            )
+        # Falling far behind means the loop was paused or stalled. Re-anchor the
+        # start time so the clock resumes at normal speed instead of rushing
+        # through the missed steps. The 0.1 s floor keeps ordinary sleep jitter
+        # at high multipliers from triggering this.
+        if diff < -max(self._target_wall_interval, 0.1):
+            if self._do_warnings:
+                logger.warning(
+                    "Can't keep up. Timer is running %.3fs behind at step %d; "
+                    "resuming from current time.",
+                    -diff,
+                    self._steps,
+                )
+            self._start_wall_time -= diff
+            diff = 0.0
 
         return max(0.0, diff)
 
