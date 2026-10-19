@@ -1,13 +1,5 @@
-import sys
-from collections import defaultdict
-from collections.abc import Callable
-from contextlib import contextmanager
-from typing import Any, TypedDict
+from typing import TypedDict
 
-from transitions.extensions import HierarchicalGraphMachine, HierarchicalMachine
-from transitions.extensions.diagrams_graphviz import NestedGraph
-
-from services.control_engine.src.configuration import ClockworkConf, read_command_line
 from services.control_engine.src.extenders.extender import Extender
 from services.control_engine.src.requesters.requester import Requester
 

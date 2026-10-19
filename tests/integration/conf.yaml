@@ -1,5 +1,5 @@
 timer:
-  mode: real
+  timer_mode: real
   real_time_multiplier: 100
   time_step: 0.1
 

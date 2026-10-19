@@ -89,7 +89,7 @@ class TimerConf:
     """Configuration object for timer settings."""
 
     def __init__(self, raw_conf: dict[str, Any]) -> None:
-        timer_mode = str(raw_conf.get("mode"))
+        timer_mode = str(raw_conf.get("timer_mode"))
         if timer_mode not in SUPPORTED_TIMER_MODES:
             raise ValueError(
                 f"Unknown timer mode {timer_mode}. "

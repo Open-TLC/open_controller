@@ -1,5 +1,5 @@
 timer:
-  mode: fixed
+  timer_mode: fixed
   time_step: 1.0
   real_time_multiplier: 1.0
 nats:

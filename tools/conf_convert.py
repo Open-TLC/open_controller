@@ -104,7 +104,7 @@ def _parse_timer_params(timer_params: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Real time multiplier must be greater than 0")
 
     return {
-        "mode": mode,
+        "timer_mode": mode,
         "time_step": step,
         "real_time_multiplier": multiplier,
     }

@@ -12,7 +12,7 @@ MULTIPLIER = 10
 class TestTimer(unittest.TestCase):
     def _create_timer(self) -> Timer:
         params = {
-            "mode": "real",
+            "timer_mode": "real",
             "time_step": 0.1,
             "real_time_multiplier": MULTIPLIER,
         }
@@ -46,7 +46,7 @@ class TestTimer(unittest.TestCase):
 
     def test_timer_resumes_normal_speed_after_pause(self) -> None:
         params = {
-            "mode": "real",
+            "timer_mode": "real",
             "time_step": 0.1,
             "real_time_multiplier": 10,
         }

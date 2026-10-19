@@ -15,7 +15,7 @@ MULTIPLIER = 1000
 class TestGapSeekingExtender(unittest.TestCase):
     def test_extension(self):
         params = {
-            "mode": "real",
+            "timer_mode": "real",
             "time_step": 0.1,
             "real_time_multiplier": MULTIPLIER,
         }
