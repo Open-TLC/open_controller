@@ -1,5 +1,10 @@
 # Traffic indicator configuration
 
+> **Note:** Traffic Indicators still uses the JSON configuration described
+> here. The project is moving all configuration to a single YAML file in
+> stages; the Traffic Indicators reader for the new format is planned
+> (issue #89) but is not part of the clockwork rewrite.
+
 ## About
 
 This document explains configuring the traffic indicators component, which is part of the [Open Controller](../../../README.md) software package. For usage of this component, see [Traffic indicators overview](./overview.md).

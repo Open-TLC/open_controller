@@ -62,26 +62,40 @@ merged into one document. The viewer needs nothing on its own disk.
 
 ## Running: integrated mode
 
-A plain python command — not docker:
+    make integrated
 
-    pipenv run python services/simengine/src/simengine_integrated.py \
-        --conf-file models/testmodel/oc_demo_basic.json
-
-The NATS broker and the viewer are run separately, e.g. from the
-compose file: `docker compose up nats websumo`. Then open
+brings up the integrated stack (`integrated.compose.yaml`): nats, the
+integrated engine (`simengine_integrated_container`, with the model
+named in its Dockerfile) and the websumo viewer. Then open
 `http://localhost:8775`, pick the scenario, Load, Start.
 
-Optional flags: `--nats-server`, `--nats-port`, `--nowebsumo`.
+The engine can also be run as a plain python command with a YAML
+configuration:
+
+    uv run -m services.simengine.src.simengine_integrated \
+        --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.yaml
+
+The integrated engine takes the NATS address from the `nats` section of
+the YAML configuration (`url` and `port`); there are no
+`--nats-server`/`--nats-port` flags. In the container stacks the broker
+is reached as `url: nats`, the compose hostname. For a plain local run
+against a locally started broker (e.g. `docker compose up nats websumo`),
+set `url: localhost` in the configuration (a plain hostname, without the
+`nats://` scheme). If the broker cannot be reached,
+the interface prints one warning and the simulation runs without the
+viewer.
+
+Optional flag: `--nowebsumo`.
 
 ## Running: the container stack
 
-    docker compose up
+    make up
 
-brings up everything: nats, the controller, the UI, indicators, the
-independent engine (`simengine.py`, also with this interface) and the
-websumo viewer on port 8775. The websumo image is self-contained: the
-build clones the public Open-TLC/websumo repository, nothing outside
-this repository is needed.
+brings up everything (`docker-compose.yaml`): nats, clockwork, the UI,
+indicators, the independent engine (`simengine.py`, also with this
+interface) and the websumo viewer on port 8775. The websumo image is
+self-contained: the build clones the public Open-TLC/websumo
+repository, nothing outside this repository is needed.
 
 After pulling new code, rebuild — `docker compose up` never rebuilds
 images by itself:
@@ -95,7 +109,9 @@ New websumo commits: `docker compose build --no-cache websumo`.
 ## Troubleshooting
 
 - **No scenario in the viewer's list**: nothing is publishing. Check
-  `docker logs oc_simengine_container` for the line
+  the engine's log (`docker logs oc_simengine_container` for the
+  distributed stack, `docker logs simengine_integrated_container` for
+  the integrated one) for the line
   `WebSUMO interface publishing scenario ... to nats://...`. If the
   line is missing, the image is stale (rebuild, see above). If it says
   `Warning: running without WebSUMO - could not connect`, the broker

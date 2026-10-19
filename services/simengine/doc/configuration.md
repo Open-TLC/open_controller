@@ -1,17 +1,38 @@
 # Simengine configuration
 
-The simulation engine uses a json-configuration file. 
+There are two simulation engines, and during the ongoing configuration
+migration they use different configuration formats:
+
+- **The integrated engine** (`simengine_integrated.py`, started with
+  `make integrated`) runs the simulation and the Clockwork controllers in
+  one process. It is configured with the central **YAML** configuration
+  file: its `simengine` section names the SUMO configuration file
+  (`sumo_conf`) and the publisher options, and the `timer` and `clockwork`
+  sections configure the rest. See the
+  [configuration reference](../../control_engine/doc/configuration.md)
+  and the commented [template](../../../configuration/template.yaml).
+- **The independent engine** (`simengine.py`, the `sumo-simulator`
+  container of the distributed stack) still uses the **JSON**
+  configuration described in the rest of this document. This format is
+  legacy: the plan is that all the now-separate configuration files are
+  eventually replaced by the one YAML file, in stages.
+
+The rest of this document describes the independent engine's JSON
+configuration.
+
+## The JSON configuration of the independent engine
+
 In section "simulation" the Sumo-configuration file is defined (sumocfg).
 The Sumo-model can involve one or more intersections. 
 All the sensors and detectors should have unique names.
 Currently one "mode" is supported namely "nats". 
 All the messages go through the nats message broker.
-For the nats-server you have define an IP-address and port number. 
+For the nats-server you have to define an IP-address and port number. 
 
-Therest of the file is divided into the following sections.
+The rest of the file is divided into the following sections.
 In the section "outputs" all outputs are defined including
 detectors, signals and radars. The signal control inputs are
-defined the section "inputs" The radars are specified in the 
+defined in the section "inputs". The radars are specified in the 
 "radars" section, but the radars actually used are listed
 in the "rad_outputs" section. 
 
@@ -76,7 +97,7 @@ detector states of the real signal controller. If only detector status is needed
 ```
 The input side of the simengine is configured in the "inputs" section. 
 Traffic signal inputs from the controller are configured within the section "sig_inputs".
-The key values are same than with the outputs. 
+The key values are the same as with the outputs. 
 In most cases the mapping modes are of type "direct" meaning that there is
 no mapping between names in Sumo and the Open Controller. 
 
@@ -98,13 +119,13 @@ no mapping between names in Sumo and the Open Controller.
     }
 },
 ```
-Each radar is defined in its own section starting with key value thast is the name of the radar.
-Any number of radars can be predefined, but only the ones lited in the "rad_outputs" sections will be used.
+Each radar is defined in its own section starting with a key value that is the name of the radar.
+Any number of radars can be predefined, but only the ones listed in the "rad_outputs" section will be used.
 Here the topic has fixed prefix "radar", but the full topic name has to be given under the "topic". 
 The topic name consists of "radar" + "intersection number" + "radar number" + "object_port.json".
 The "area_of_interest" is a polygon of geocoordinates. The polygon can have any number of points. 
 Only vehicles inside the polygon will be counted in and sent out through the NATS-channel. 
-In Sumo the lanes are defined bya string consisting of edge-name + "-" + lane number. 
+In Sumo the lanes are defined by a string consisting of edge-name + "-" + lane number. 
 The lane mapping is needed especially if the controller is intended for live control in the field.
 In that case, the Sumo-lane are mapped to radar-lanes of the real radars in the field. 
 This way the simulated controller will work directly in the field. 

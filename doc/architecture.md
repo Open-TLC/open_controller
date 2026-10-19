@@ -74,6 +74,38 @@ as the consumer doesn't need to know the origin of the data.
 **Sends:** [traffic data](#traffic-indicators-data)  
 **Consumes:** [detector data](#detections), [realised states](#realised-states)
 
+### WebSUMO
+
+WebSUMO is a browser-based viewer for the running simulation. Simengine
+publishes the simulation state (vehicles, persons, signal states, detector
+occupancy) over NATS on the `sim.<scenario>.*` subjects, and serves the
+scenario's network and detector files over NATS request-reply, so the viewer
+needs no scenario files of its own. The viewer is strictly an observer: it
+never controls the simulation, and the simulation runs unaffected if the
+viewer (or the whole NATS connection) is absent.
+
+The WebSUMO viewer itself lives in its own repository
+([Open-TLC/websumo](https://github.com/Open-TLC/websumo)); the container
+build clones it at a pinned commit. The interface and its subjects are
+described in
+[services/simengine/doc/websumo.md](../services/simengine/doc/websumo.md).
+
+#### Interactions
+
+**Consumes:** simulation state (`sim.<scenario>.state`), scenario files
+(request-reply on `sim.<scenario>.net` / `.detectors`)
+
+### User Interface
+
+The user interface is a browser-based dashboard (port 8050) for monitoring
+Open Controller. It follows the message traffic on NATS (signal states,
+detections) and the [status of Clockwork](#clockwork-status).
+
+#### Interactions
+
+**Consumes:** [signal group states](#signal-states),
+[detector data](#detections), [clockwork status](#clockwork-status)
+
 ## Communications
 
 Open Controller is built around [NATS](https://nats.io), a high performance pub-sub
@@ -130,9 +162,48 @@ well, the sub states here should match the [control states](#signal-states).
 
 > Nro. 3
 
+Detector statuses read from the simulation (or, in the field, from the real
+detectors). Sent by Simengine per detector; depending on the output's
+`trigger` configuration a message is sent on every update or only when the
+status changes. The subject prefix is configurable (`detector.status` for
+plain status distribution, `detector.control` when driving a real
+controller's detector inputs in hardware-in-the-loop mode).
+
+Simengine also sends radar object lists on the
+`radar.<intersection>.<radar>.objects_port.json` subjects; these are consumed
+by Traffic Indicators.
+
+**Subject:** `detector.status.<detector ID>`  
+**Format:**
+
+```json
+{
+    "id": "detector.status.<detector ID>",
+    "loop_on": true,
+    "tstamp": "YYYY-MM-DDTHH:MM:SS.SSSSSS"
+}
+```
+
 ### Traffic Indicators data
 
 > Nro. 4
+
+Processed traffic numbers computed by Traffic Indicators from the raw
+detections, currently the queue lengths per lane in each radar's area. The
+subject is derived from the radar's input subject.
+
+**Subject:** `radar.<intersection>.<radar>.queues.json`  
+**Format:**
+
+```json
+{
+    "radar_id": "radar270",
+    "queue_lengths": {"0": 2, "1": 0},
+    "tstamp": 1756400000000.0
+}
+```
+
+The time stamp is a millisecond epoch value.
 
 ### Controller commands
 
@@ -155,7 +226,7 @@ stop
 
 ### Clockwork status
 
-Clockwork responds to status (like healtcheck) queries with its current working status.
+Clockwork responds to status (like healthcheck) queries with its current working status.
 
 **Subject:** `clockwork.status`  
 **Format:**
