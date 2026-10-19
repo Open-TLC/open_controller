@@ -15,6 +15,11 @@ class BaseE1Detector(PointDetector, ABC):
         self._occupied: bool = False
         self._detection_start: float = -1
 
+    @property
+    def id(self) -> str:
+        """ID of the detector."""
+        return self._id
+
     def tick(self) -> None:
         """Update the detector."""
         self._current_time = libsumo.simulation.getTime()

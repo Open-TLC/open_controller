@@ -13,7 +13,7 @@
 	},
 
 	"controller": {
-		"name": "Simple 3-phase controller",
+		"name": "j1",
 		"sumo_name": "J1",
 		"print_status": false,
 
@@ -24,7 +24,7 @@
 				"min_red": 3,
 				"min_amber": 3,
 				"max_green": 30,
-				"request_type": "detector",
+				"request_type": "fixed",
 				"green_end": "after_ext"
 			},
 			"east-l": {

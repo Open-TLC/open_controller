@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2023-02-25 11:58:46 by Eclipse SUMO netedit Version 1.10.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="C:\Deve\Sumo\clockwork_tc\models\4legleft\4l_ped\4leg_ped5.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="C:\Deve\Sumo\clockwork_tc\models\4legleft\4l_ped\4leg_ped5.net.xml"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="false"/>
+    </pedestrian>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <tlLogic id="N_J1" type="static" programID="0" offset="0">
+        <phase duration="24" state="rGrGGrrGGr"/>
+        <phase duration="3" state="rrryygryyg"/>
+        <phase duration="6" state="rrrrrGrrrG"/>
+        <phase duration="3" state="rrrrryrrry"/>
+        <phase duration="24" state="rGrrrGrrrG"/>
+        <phase duration="3" state="yrrrrryrrr"/>
+        <phase duration="24" state="GrrrrrGrrr"/>
+        <phase duration="3" state="ryyrryrrrr"/>
+    </tlLogic>
+</additional>

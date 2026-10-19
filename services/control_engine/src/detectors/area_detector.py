@@ -9,6 +9,12 @@ class AreaDetector(ABC):
     point like induction loop.
     """
 
+    @property
+    @abstractmethod
+    def id(self) -> str:
+        """ID of the detector."""
+        ...
+
     @abstractmethod
     def tick(self) -> None:
         """Update the detectors internal state."""

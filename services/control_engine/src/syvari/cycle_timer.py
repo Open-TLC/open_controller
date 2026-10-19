@@ -1,5 +1,4 @@
-from typing import Any
-
+from services.control_engine.src.configuration import TimerConf
 from services.control_engine.src.timer import Timer
 
 
@@ -10,15 +9,15 @@ class CycleTimer(Timer):
     cycle phase across multiple connected controllers.
     """
 
-    def __init__(self, timer_prm: dict[str, Any], cycle_length: float):
+    def __init__(self, conf: TimerConf, cycle_length: float):
         """Create cycle timer.
 
         Args:
-            timer_prm: Dictionary of Timer object parameters.
+            conf: Base timer configuration.
             cycle_length: The length of a single cycle in seconds.
 
         """
-        super().__init__(timer_prm)
+        super().__init__(conf)
         self._cycle_length: float = cycle_length
 
     @property

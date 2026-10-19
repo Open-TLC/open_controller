@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        
+        <net-file         value="4legleft50m.net.xml"/>
+        
+        <additional-files value="../det/4legleft_6dets.det.xml"/> 
+        
+        <route-files      value="../rou/4leg_mixphasetest.rou.xml"/>
+                        
+        <!-- COMMENTED OUT:
+        
+        COPY/PASTE ROUTE/TRAFFIC FILES AND ADDITIONAL FILES FROM BELOW (Don't copy the text after #-character)
+                          
+        # DETECTORS     
+        # Detector_naming convention: "sumodet_"+Laneid+"DetPos" (negative pos value = from the stop line)
+        <additional-files value="det/4legleft_6dets.det.xml"/>      # 6 Detectors at 40m from the stop line 
+        <additional-files value="det/4legleft_12dets.det.xml"/>     # Mainroad: 3m/120m, LefTurn: 3m/65m, Side Road: 3m/70m
+                   
+        # ROUTES & TRAFFIC   
+        <route-files  value="rou/4legleft_novehs.rou.xml"/>         # No cars for testing the fixed request sequence
+        <route-files  value="rou/4legleft_1veh.rou.xml"/>           # 1 car for detector testing
+        <route-files  value="rou/4legleft_fewvehs.rou.xml"/>        # Few cars for testing the requests
+        <route-files  value="rou/4legleft_mixphasetest.rou.xml"/>   # Traffic flows for testing phase sequences       
+        <route-files  value="rou/4legleft_lowflows.rou.xml"/>       # Continuous vehicles flows, low traffic    
+                           
+        END OF COMMENT OUT -->
+        
+    </input>
+
+    <time>
+  
+        <begin        value="0"/>        
+        <step-length  value="0.1"/>   
+        <end          value="30000"/>
+
+        
+    </time>
+
+    <report>
+        <verbose     value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+</configuration>
+
+
+

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    
+    <e1Detector id="e1Det_E_W1_0_30" lane="E_W1_0" pos="-40.00" freq="10.00" file="NUL"/>
+    <e1Detector id="e1Det_E_W1_1_30" lane="E_W1_1" pos="-40.00" freq="10.00" file="NUL"/>
+
+    <e1Detector id="e1Det_E_E1_0_30" lane="E_E1_0" pos="-40.00" freq="10.00" file="NUL"/>  
+    <e1Detector id="e1Det_E_E1_1_30" lane="E_E1_1" pos="-40.00" freq="10.00" file="NUL"/>
+    
+    <e1Detector id="e1Det_E_N0_0_30" lane="E_N0_0" pos="-40.00" freq="10.00" file="NUL"/>
+    <e1Detector id="e1Det_E_S0_0_30" lane="E_S0_0" pos="-40.00" freq="10.00" file="NUL"/>
+    
+</additional>

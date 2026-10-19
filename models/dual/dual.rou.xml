@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-07-13 17:50:58 by Eclipse SUMO netedit Version 1.18.0
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <!-- VTypes -->
+    <vType id="car_type" length="5.00" minGap="0.50" maxSpeed="30.00" guiShape="passenger" accel="4.6" decel="4.5" sigma="0.1"/>
+    <!-- Vehicles, persons and containers (sorted by depart) -->
+    <flow id="f_0" type="car_type" begin="0.00" from="E0" to="E1" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_1" type="car_type" begin="0.00" from="E0" to="E2" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_10" type="car_type" begin="0.00" from="-E2" to="E5" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_11" type="car_type" begin="0.00" from="-E2" to="E1" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_2" type="car_type" begin="0.00" from="-E5" to="E1" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_3" type="car_type" begin="0.00" from="E0" to="E5" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_4" type="car_type" begin="0.00" from="-E5" to="-E0" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_5" type="car_type" begin="0.00" from="-E5" to="E2" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_6" type="car_type" begin="0.00" from="-E1" to="E2" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_7" type="car_type" begin="0.00" from="-E1" to="-E0" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_8" type="car_type" begin="0.00" from="-E1" to="E5" end="3600.00" vehsPerHour="400.00"/>
+    <flow id="f_9" type="car_type" begin="0.00" from="-E2" to="-E0" end="3600.00" vehsPerHour="400.00"/>
+</routes>

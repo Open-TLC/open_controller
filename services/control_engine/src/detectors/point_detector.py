@@ -11,6 +11,12 @@ class PointDetector(ABC):
     vehicles exist above it.
     """
 
+    @property
+    @abstractmethod
+    def id(self) -> str:
+        """ID of the detector."""
+        ...
+
     @abstractmethod
     def tick(self) -> None:
         """Update the detector."""
