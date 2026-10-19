@@ -75,15 +75,17 @@ configuration:
     uv run -m services.simengine.src.simengine_integrated \
         --conf-file models/JS_266-267_DEMO/contr/JS2_266-267_DEMO.yaml
 
-Note that in integrated mode the NATS address is fixed to `nats:4222`
-(the compose hostname; there are no `--nats-server`/`--nats-port`
-flags). In a plain local run that host does not resolve, so the
-interface prints one warning and the simulation runs without the
-viewer — to view a local run, make `nats` resolve to the broker (e.g.
-an `/etc/hosts` entry for a locally started `docker compose up nats
-websumo`).
+The integrated engine takes the NATS address from the `nats` section of
+the YAML configuration (`url` and `port`); there are no
+`--nats-server`/`--nats-port` flags. In the container stacks the broker
+is reached as `url: nats`, the compose hostname. For a plain local run
+against a locally started broker (e.g. `docker compose up nats websumo`),
+set `url: localhost` in the configuration (a plain hostname, without the
+`nats://` scheme). If the broker cannot be reached,
+the interface prints one warning and the simulation runs without the
+viewer.
 
-Optional flags: `--nowebsumo`, `--print-status`.
+Optional flag: `--nowebsumo`.
 
 ## Running: the container stack
 

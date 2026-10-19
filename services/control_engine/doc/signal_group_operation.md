@@ -9,6 +9,12 @@ happens while the signal group is in that phase.
 Red -> AmberRed -> Green -> Amber -> Red -> ...
 ```
 
+> **Note:** this state machine (`signal_group.py`) is the reference
+> implementation of the signal group. The phase ring controller currently
+> imports a simplified interim implementation, `signal_group_dev.py`, which
+> follows the same phase sequence without the `transitions` machinery. The state machine is planned to become the default again; this
+> document describes it.
+
 ## Creating the state diagrams
 
 The diagrams in this document are generated directly from the `transitions`-based

@@ -247,7 +247,7 @@ the new YAML ones. These will be migrated in later stages.
 Old JSON controller configurations can be converted to the new YAML format
 with the converter tool:
 
-    uv run python tools/conf_convert.py -i models/JS270_DEMO/contr/JS270_DEMO.json -o models/JS270_DEMO/contr/JS270_DEMO.yaml
+    uv run -m tools.conf_convert -i models/JS270_DEMO/contr/JS270_DEMO.json -o models/JS270_DEMO/contr/JS270_DEMO.yaml
 
 Check the generated file manually after conversion.
 
@@ -277,10 +277,11 @@ Linting and the test suites are run through the Makefile:
 
     make lint          # ruff
     make build-test    # build the unit test image
-    make test          # run the unit tests (tests/unit)
+    make test          # run the unit tests (tests/unit) and the integration test
 
-The integration test (`tests/integration`) runs the integrated simulation in
-a container and fails if it crashes.
+The integration test (`tests/integration`) starts Clockwork and a NATS
+server in containers and checks over NATS that the controller starts,
+publishes signal states and responds to commands.
 
 # Documentation and further reading
 
