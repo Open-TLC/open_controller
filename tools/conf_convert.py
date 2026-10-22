@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import re
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -299,6 +300,7 @@ def _parse_single_controller(
     detector_ids: list[str],
 ) -> dict[str, Any]:
     """Parse a single controller configuration dictionary."""
+    controller = _number_signal_groups_from_one(controller)
     controller_id: str = str(controller.get("sumo_name", ""))
     if not controller_id:
         raise ValueError("Input configuration doesn't include controller name")
@@ -343,6 +345,11 @@ def _parse_single_controller(
     extenders = _parse_extenders(controller, detector_ids)
     requesters = _parse_requesters(controller, detector_ids)
 
+    for extender in extenders:
+        extender["id"] = _renumber_grouped_id(extender["id"], "ext")
+    for requester in requesters:
+        requester["id"] = _renumber_grouped_id(requester["id"], "req")
+
     phases = [_FlowList(row) for row in controller.get("phases", [])]
     intergreens = [_FlowList(row) for row in controller.get("intergreens", [])]
 
@@ -362,6 +369,69 @@ def _parse_single_controller(
         "type": controller.get("type", "phasering"),
         "options": options,
     }
+
+
+def _number_signal_groups_from_one(controller: dict[str, Any]) -> dict[str, Any]:
+    """Shift numbered group names up by one and update their references."""
+    def renumber(value: Any) -> Any:
+        if isinstance(value, str):
+            match = re.fullmatch(r"group(\d+)", value)
+            return f"group{int(match.group(1)) + 1}" if match else value
+        if isinstance(value, list):
+            return [renumber(item) for item in value]
+        return value
+
+    result = dict(controller)
+    if isinstance(controller.get("signal_groups"), dict):
+        result["signal_groups"] = {
+            renumber(name): options
+            for name, options in controller["signal_groups"].items()
+        }
+
+    for key in ("group_list", "group_outputs"):
+        if isinstance(controller.get(key), list):
+            result[key] = renumber(controller[key])
+
+    if isinstance(controller.get("detectors"), dict):
+        result["detectors"] = {
+            detector_id: {
+                **detector,
+                **(
+                    {"group": renumber(detector["group"])}
+                    if "group" in detector
+                    else {}
+                ),
+                **(
+                    {"request_groups": renumber(detector["request_groups"])}
+                    if "request_groups" in detector
+                    else {}
+                ),
+            }
+            for detector_id, detector in controller["detectors"].items()
+        }
+
+    if isinstance(controller.get("extenders"), dict):
+        result["extenders"] = {
+            extender_id: {
+                **extender,
+                **(
+                    {"group": renumber(extender["group"])}
+                    if "group" in extender
+                    else {}
+                ),
+            }
+            for extender_id, extender in controller["extenders"].items()
+        }
+
+    return result
+
+
+def _renumber_grouped_id(identifier: str, prefix: str) -> str:
+    """Shift the group number in an ext/req ID while preserving its suffix."""
+    match = re.fullmatch(rf"{re.escape(prefix)}(\d+)(.*)", identifier)
+    if not match:
+        return identifier
+    return f"{prefix}{int(match.group(1)) + 1}{match.group(2)}"
 
 
 MODE_MAP = {
