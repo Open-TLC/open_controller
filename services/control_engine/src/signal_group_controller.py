@@ -117,7 +117,8 @@ class PhaseRingController(SignalController):
         # Initially the controller is locked to the first phase. It will then start
         # transitioning all groups in that phase to green.
         self._state: str = "locked"
-        self._current_phase_idx: int = 0
+        # Phase numbers exposed by the controller are one-based.
+        self._current_phase_idx: int = 1
         self._next_phase_idx: int | None = None
         self._last_print_data = ""
         self._last_print_time = 0
@@ -211,7 +212,7 @@ class PhaseRingController(SignalController):
     def _tick_minimum(self) -> None:
         groups_in_minimum: bool = any(
             grp.signal_state in {"f", "g", "0", "1"}  # DBIK20260910 added state "f"
-            for grp in self._phases[self._current_phase_idx]
+            for grp in self._phases[self._current_phase_idx - 1]
         )
         # Do not advance, until all groups have started their greens and
         # cleared their minimum times.
@@ -233,7 +234,7 @@ class PhaseRingController(SignalController):
             return
 
         # Check if a requesting group in next phase can start.
-        for group in self._phases[self._next_phase_idx]:
+        for group in self._phases[self._next_phase_idx - 1]:
             has_request = group.is_requesting
             can_start = not any(
                 grp.signal_state
@@ -256,7 +257,7 @@ class PhaseRingController(SignalController):
     def _tick_transition(self) -> None:
         num_groups_waiting: int = 0
 
-        for group in self._phases[self._current_phase_idx]:
+        for group in self._phases[self._current_phase_idx - 1]:
             has_request = group.is_requesting
             can_start = not any(
                 grp.signal_state in {"0", "1", "5"} for grp in group.conflict_groups
@@ -282,16 +283,17 @@ class PhaseRingController(SignalController):
             return None
 
         num_phases = len(self._phases)
-        # Start checking immediately after current phase
-        # (or at 0 if no phase is current)
+        # Start checking immediately after current phase.
         start_offset = (
-            (self._current_phase_idx + 1) if self._current_phase_idx is not None else 0
+            self._current_phase_idx % num_phases
+            if self._current_phase_idx is not None
+            else 0
         )
 
         for offset in range(num_phases):
             idx = (start_offset + offset) % num_phases
             if any(group.is_requesting for group in self._phases[idx]):
-                return idx
+                return idx + 1
 
         return None
 
