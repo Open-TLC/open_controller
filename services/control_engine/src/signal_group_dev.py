@@ -172,7 +172,9 @@ class SignalGroup:
             self.set_signal_state("5")
             self.end_green_requested = False
 
-        elif self.signal_state == "5" and not (self.is_extending):
+        elif self.signal_state == "5" and (
+            not (self.is_extending) or self._max_green_time_passed
+        ):
             self.set_signal_state("4")
 
         elif self.signal_state == "4" and self.end_green_requested:
@@ -185,9 +187,9 @@ class SignalGroup:
 
     def _define_breakpoint(self):
         if (
-            (self.signal_state == "g")
-            and (self._id == "group3")
-            and (self._timer.seconds >= 21.0)
+            # Define your breakpoint here
+            (self.signal_state == "5") and (self._id == "group11")
+            # and (self._timer.seconds >= 21.0)
         ):
             breakpoint = True  # Set your breakpoint here
         else:
