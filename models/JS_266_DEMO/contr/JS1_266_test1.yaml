@@ -1,0 +1,704 @@
+timer:
+  timer_mode: real
+  time_step: 0.1
+  real_time_multiplier: 3.0
+nats:
+  url: localhost
+  port: 4222
+simengine:
+  sumo_conf: ../testmodels/iisakki/JS_266/cfgFiles/JS_266-267_14.sumocfg
+clockwork:
+  publisher:
+    mode: change
+  controllers:
+  - id: 266_Pork_Mech
+    type: phasering
+    options:
+      print_status: false
+      sumo_outputs:
+      - group1
+      - group1
+      - group2
+      - group3
+      - group4
+      - group5
+      - group6
+      - group7
+      - group8
+      - group9
+      - group10
+      - group11
+      - group12
+      - group13
+      - group14
+      - group15
+      - group16
+      - group17
+      - group18
+      - group19
+      - group20
+      - group21
+      signal_groups:
+        group1:
+          min_green: 8.0
+          min_amber_red: 1
+          min_red: 5
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group2:
+          min_green: 6.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group3:
+          min_green: 8.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group4:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group5:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group6:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group7:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group8:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group9:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group10:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group11:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group12:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group13:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group14:
+          min_green: 5.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 10
+          constant_request: false
+          remain_green: true
+        group15:
+          min_green: 10.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group16:
+          min_green: 10.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group17:
+          min_green: 10.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group18:
+          min_green: 2
+          min_amber_red: 1
+          min_red: 2
+          min_amber: 3
+          max_green: 10
+          constant_request: true
+          remain_green: true
+        group19:
+          min_green: 10.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group20:
+          min_green: 10.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+        group21:
+          min_green: 10.0
+          min_amber_red: 1
+          min_red: 5.0
+          min_amber: 3
+          max_green: 30
+          constant_request: true
+          remain_green: true
+      extenders:
+      - id: group4
+        type: smart
+        group: group4
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_266_Mech_South
+      - id: group3
+        type: smart
+        group: group3
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_266_Mech_Right
+      - id: group2
+        type: smart
+        group: group2
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_266_Mech_Left
+      - id: group11
+        type: smart
+        group: group11
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_266_Ramp_Right
+      - id: group1
+        type: smart
+        group: group1
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_266_Mech_North
+      - id: group9
+        type: smart
+        group: group9
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_266_Mid_Left
+      - id: group12
+        type: smart
+        group: group12
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_266_Ramp_Left
+      - id: group13
+        type: smart
+        group: group13
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_266_Mid_North
+      - id: group5
+        type: smart
+        group: group5
+        options:
+          mode: pressure_and_time
+          threshold: 0.25
+          time_discount: 60
+          detectors:
+          - e3Det_266_Mech_North_R
+      requesters:
+      - id: req1m20A
+        type: trigger
+        group: group1
+        side_groups: []
+        options:
+          detectors:
+          - 266_102A
+      - id: req1m20B
+        type: trigger
+        group: group1
+        side_groups: []
+        options:
+          detectors:
+          - 266_102B
+      - id: req1m50A
+        type: trigger
+        group: group1
+        side_groups: []
+        options:
+          detectors:
+          - 266_105A
+      - id: req1m50B
+        type: trigger
+        group: group1
+        side_groups: []
+        options:
+          detectors:
+          - 266_105B
+      - id: req2m20A
+        type: trigger
+        group: group2
+        side_groups: []
+        options:
+          detectors:
+          - 266_202B
+      - id: req2m50A
+        type: trigger
+        group: group2
+        side_groups: []
+        options:
+          detectors:
+          - 266_205A
+      - id: req2m50B
+        type: trigger
+        group: group2
+        side_groups: []
+        options:
+          detectors:
+          - 266_205B
+      - id: req3m10A
+        type: trigger
+        group: group3
+        side_groups:
+        - group10
+        options:
+          detectors:
+          - 266_301A
+      - id: req3m10B
+        type: trigger
+        group: group3
+        side_groups:
+        - group10
+        options:
+          detectors:
+          - 266_301B
+      - id: req3m60A
+        type: trigger
+        group: group3
+        side_groups:
+        - group10
+        options:
+          detectors:
+          - 266_306A
+      - id: req3m60B
+        type: trigger
+        group: group3
+        side_groups:
+        - group10
+        options:
+          detectors:
+          - 266_306B
+      - id: req4m10A
+        type: trigger
+        group: group4
+        side_groups: []
+        options:
+          detectors:
+          - 266_401A
+      - id: req4m10B
+        type: trigger
+        group: group4
+        side_groups: []
+        options:
+          detectors:
+          - 266_401B
+      - id: req4m60A
+        type: trigger
+        group: group4
+        side_groups: []
+        options:
+          detectors:
+          - 266_406A
+      - id: req4m60B
+        type: trigger
+        group: group4
+        side_groups: []
+        options:
+          detectors:
+          - 266_406B
+      - id: req9m20A
+        type: trigger
+        group: group9
+        side_groups: []
+        options:
+          detectors:
+          - 266_902A
+      - id: req9m20B
+        type: trigger
+        group: group9
+        side_groups: []
+        options:
+          detectors:
+          - 266_902B
+      - id: req11m20A
+        type: trigger
+        group: group11
+        side_groups: []
+        options:
+          detectors:
+          - 266_1102A
+      - id: req11m20B
+        type: trigger
+        group: group11
+        side_groups: []
+        options:
+          detectors:
+          - 266_1102B
+      - id: req11m40A
+        type: trigger
+        group: group11
+        side_groups: []
+        options:
+          detectors:
+          - 266_1104A
+      - id: req11m40B
+        type: trigger
+        group: group11
+        side_groups: []
+        options:
+          detectors:
+          - 266_1104B
+      - id: req11m180B
+        type: trigger
+        group: group11
+        side_groups: []
+        options:
+          detectors:
+          - 266_1118B
+      - id: req12m20A
+        type: trigger
+        group: group12
+        side_groups: []
+        options:
+          detectors:
+          - 266_1202A
+      - id: req12m20B
+        type: trigger
+        group: group12
+        side_groups: []
+        options:
+          detectors:
+          - 266_1202B
+      - id: req12m40A
+        type: trigger
+        group: group12
+        side_groups: []
+        options:
+          detectors:
+          - 266_1204A
+      - id: req12m40B
+        type: trigger
+        group: group12
+        side_groups: []
+        options:
+          detectors:
+          - 266_1204B
+      - id: req12m180B
+        type: trigger
+        group: group12
+        side_groups: []
+        options:
+          detectors:
+          - 266_1218B
+      - id: req15m02A
+        type: trigger
+        group: group15
+        side_groups: []
+        options:
+          detectors:
+          - 266_1501A
+      - id: req15m02B
+        type: trigger
+        group: group15
+        side_groups: []
+        options:
+          detectors:
+          - 266_1501B
+      - id: req16m02A
+        type: trigger
+        group: group16
+        side_groups: []
+        options:
+          detectors:
+          - 266_1601A
+      - id: req16m02B
+        type: trigger
+        group: group16
+        side_groups: []
+        options:
+          detectors:
+          - 266_1601B
+      group_list:
+      - group1
+      - group2
+      - group3
+      - group4
+      - group5
+      - group6
+      - group7
+      - group8
+      - group9
+      - group10
+      - group11
+      - group12
+      - group13
+      - group14
+      - group15
+      - group16
+      - group17
+      - group18
+      - group19
+      - group20
+      - group21
+      phases:
+      - [1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1]
+      - [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
+      - [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]
+      - [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0]
+      intergreens:
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 8.0, 8.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 5.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 1.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 5.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 1.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 6.0, 7.0, 3.0, 4.0, 6.0, 6.0, 0.0, 6.0, 0.0, 0.0, 0.0, 4.0, 0.0, 7.0, 0.0, 1.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 6.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 2.0, 5.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [8.0, 8.0, 3.0, 0.0, 6.0, 7.0, 3.0, 6.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 8.0,
+        8.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 7.0, 8.0, 0.0, 6.0, 7.0, 0.0, 7.0, 0.0, 0.0, 1.0, 5.0, 0.0, 0.0, 8.0, 8.0, 0.0, 0.0,
+        0.0, 8.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 13.0, 13.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0]
+  detectors:
+  - id: 266_102A
+    type: e1_detector
+    options: {}
+  - id: 266_102B
+    type: e1_detector
+    options: {}
+  - id: 266_105A
+    type: e1_detector
+    options: {}
+  - id: 266_105B
+    type: e1_detector
+    options: {}
+  - id: 266_202B
+    type: e1_detector
+    options: {}
+  - id: 266_205A
+    type: e1_detector
+    options: {}
+  - id: 266_205B
+    type: e1_detector
+    options: {}
+  - id: 266_301A
+    type: e1_detector
+    options: {}
+  - id: 266_301B
+    type: e1_detector
+    options: {}
+  - id: 266_306A
+    type: e1_detector
+    options: {}
+  - id: 266_306B
+    type: e1_detector
+    options: {}
+  - id: 266_401A
+    type: e1_detector
+    options: {}
+  - id: 266_401B
+    type: e1_detector
+    options: {}
+  - id: 266_406A
+    type: e1_detector
+    options: {}
+  - id: 266_406B
+    type: e1_detector
+    options: {}
+  - id: 266_902A
+    type: e1_detector
+    options: {}
+  - id: 266_902B
+    type: e1_detector
+    options: {}
+  - id: 266_1102A
+    type: e1_detector
+    options: {}
+  - id: 266_1102B
+    type: e1_detector
+    options: {}
+  - id: 266_1104A
+    type: e1_detector
+    options: {}
+  - id: 266_1104B
+    type: e1_detector
+    options: {}
+  - id: 266_1118B
+    type: e1_detector
+    options: {}
+  - id: 266_1202A
+    type: e1_detector
+    options: {}
+  - id: 266_1202B
+    type: e1_detector
+    options: {}
+  - id: 266_1204A
+    type: e1_detector
+    options: {}
+  - id: 266_1204B
+    type: e1_detector
+    options: {}
+  - id: 266_1218B
+    type: e1_detector
+    options: {}
+  - id: 266_1501A
+    type: e1_detector
+    options: {}
+  - id: 266_1501B
+    type: e1_detector
+    options: {}
+  - id: 266_1601A
+    type: e1_detector
+    options: {}
+  - id: 266_1601B
+    type: e1_detector
+    options: {}
+  - id: e3Det_266_Mech_North
+    type: e3_detector
+    options: {}
+  - id: e3Det_266_Mech_Left
+    type: e3_detector
+    options: {}
+  - id: e3Det_266_Mech_Right
+    type: e3_detector
+    options: {}
+  - id: e3Det_266_Mech_South
+    type: e3_detector
+    options: {}
+  - id: e3Det_266_Mid_Left
+    type: e3_detector
+    options: {}
+  - id: e3Det_266_Mid_North
+    type: e3_detector
+    options: {}
+  - id: e3Det_266_Ramp_Right
+    type: e3_detector
+    options: {}
+  - id: e3Det_266_Ramp_Left
+    type: e3_detector
+    options: {}
+  - id: e3Det_266_Mech_North_R
+    type: e3_detector
+    options: {}
