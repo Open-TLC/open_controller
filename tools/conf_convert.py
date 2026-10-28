@@ -300,7 +300,9 @@ def _parse_single_controller(
     detector_ids: list[str],
 ) -> dict[str, Any]:
     """Parse a single controller configuration dictionary."""
-    controller = _number_signal_groups_from_one(controller)
+    renumber_from_zero = _numbering_starts_at_zero(controller)
+    if renumber_from_zero:
+        controller = _number_signal_groups_from_one(controller)
     controller_id: str = str(controller.get("sumo_name", ""))
     if not controller_id:
         raise ValueError("Input configuration doesn't include controller name")
@@ -345,10 +347,11 @@ def _parse_single_controller(
     extenders = _parse_extenders(controller, detector_ids)
     requesters = _parse_requesters(controller, detector_ids)
 
-    for extender in extenders:
-        extender["id"] = _renumber_grouped_id(extender["id"], "ext")
-    for requester in requesters:
-        requester["id"] = _renumber_grouped_id(requester["id"], "req")
+    if renumber_from_zero:
+        for extender in extenders:
+            extender["id"] = _renumber_grouped_id(extender["id"], "ext")
+        for requester in requesters:
+            requester["id"] = _renumber_grouped_id(requester["id"], "req")
 
     phases = [_FlowList(row) for row in controller.get("phases", [])]
     intergreens = [_FlowList(row) for row in controller.get("intergreens", [])]
@@ -369,6 +372,35 @@ def _parse_single_controller(
         "type": controller.get("type", "phasering"),
         "options": options,
     }
+
+
+def _numbering_starts_at_zero(controller: dict[str, Any]) -> bool:
+    """Return whether each numbered identifier family starts at zero."""
+    numbered_ids: dict[str, list[int]] = {
+        "group": [],
+        "ext": [],
+        "req": [],
+    }
+
+    def collect(identifier: Any, prefix: str) -> None:
+        if isinstance(identifier, str):
+            match = re.match(rf"^{prefix}(\d+)", identifier)
+            if match:
+                numbered_ids[prefix].append(int(match.group(1)))
+
+    for identifier in controller.get("signal_groups", {}):
+        collect(identifier, "group")
+    for identifier in controller.get("extenders", {}):
+        collect(identifier, "ext")
+
+    for identifier, detector in controller.get("detectors", {}).items():
+        detector_type = detector.get("type")
+        if detector_type == "extender":
+            collect(identifier, "ext")
+        elif detector_type == "request":
+            collect(identifier, "req")
+
+    return all(not numbers or min(numbers) == 0 for numbers in numbered_ids.values())
 
 
 def _number_signal_groups_from_one(controller: dict[str, Any]) -> dict[str, Any]:
