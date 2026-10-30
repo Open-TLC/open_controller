@@ -6,7 +6,7 @@ nats:
   url: localhost
   port: 4222
 simengine:
-  sumo_conf: ../testmodels/iisakki/JS_266/cfgFiles/JS_266-267_14.sumocfg
+  sumo_conf: models/JS_266_DEMO/cfgFiles/JS_266-267.sumocfg
 clockwork:
   publisher:
     mode: change
@@ -14,7 +14,7 @@ clockwork:
   - id: 266_Pork_Mech
     type: phasering
     options:
-      print_status: false
+      print_status: true
       sumo_outputs:
       - group1
       - group1
