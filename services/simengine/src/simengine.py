@@ -43,7 +43,7 @@ SUMO_BIN_NO_GRAPH = "sumo"
 
 TIMER_PARAMS = {
     "time_step": 0.1,
-    "mode": "real",
+    "timer_mode": "real",
     "real_time_multiplier": 1,
 }
 
