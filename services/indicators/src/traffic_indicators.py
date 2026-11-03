@@ -14,7 +14,10 @@ RADAR_TEST_TOPIC = "radar.270.1.objects_port.json"
 CONF_FILE = "models/testmodel/indicators.json"
 
 import asyncio
+import logging
+import sys
 from nats.aio.client import Client as NATS
+from nats.errors import NoServersError
 import argparse
 from confread import GlobalConf
 from radar import Radar
@@ -188,7 +191,25 @@ async def main():
     # Nats connection
     nats_connection_params = config.get_nats_params()
     nats = NATS()
-    await nats.connect(nats_connection_params)
+    connected = False
+    waiting_reported = False
+
+    async def nats_error(e):
+        # While connecting, the client retries for about two minutes and by
+        # default logs a full traceback for every failed attempt. Say once
+        # that we are waiting instead; after connecting, log as before.
+        nonlocal waiting_reported
+        if connected:
+            logging.getLogger("nats").error("nats: encountered error", exc_info=e)
+        elif not waiting_reported:
+            waiting_reported = True
+            print(f"Traffic indicators: waiting for NATS at {nats_connection_params} ...", file=sys.stderr)
+
+    try:
+        await nats.connect(nats_connection_params, error_cb=nats_error)
+    except NoServersError:
+        sys.exit(f"Traffic indicators: No NATS found at {nats_connection_params}")
+    connected = True
 
     # Sub to all subjects in config
     all_subs = sensor_twin.get_all_configured_nats_subs()

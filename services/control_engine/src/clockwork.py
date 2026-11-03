@@ -11,10 +11,13 @@ This module runs a signal controller and sends the provided signal states to NAT
 
 import argparse
 import asyncio
+import logging
+import sys
 
 from nats import connect
 from nats.aio.client import Client
 from nats.aio.msg import Msg
+from nats.errors import NoServersError
 
 from services.control_engine.src.detectors.area_detector import AreaDetector
 from services.control_engine.src.detectors.point_detector import PointDetector
@@ -82,7 +85,25 @@ class Clockwork:
         nats_url: str = instance._conf.nats.server
         nats_port: int = instance._conf.nats.port
         nats_address: str = f"nats://{nats_url}:{nats_port}"
-        nc: Client = await connect(nats_address)
+        connected = False
+        waiting_reported = False
+
+        async def nats_error(e: Exception) -> None:
+            # While connecting, the client retries for about two minutes and by
+            # default logs a full traceback for every failed attempt. Say once
+            # that we are waiting instead; after connecting, log as before.
+            nonlocal waiting_reported
+            if connected:
+                logging.getLogger("nats").error("nats: encountered error", exc_info=e)
+            elif not waiting_reported:
+                waiting_reported = True
+                print(f"Clockwork: waiting for NATS at {nats_address} ...", file=sys.stderr)
+
+        try:
+            nc: Client = await connect(nats_address, error_cb=nats_error)
+        except NoServersError:
+            sys.exit(f"Clockwork: No NATS found at {nats_address}")
+        connected = True
         instance._nc = nc
 
         instance._detectors = await create_detectors(instance._conf.detectors, nc=nc)

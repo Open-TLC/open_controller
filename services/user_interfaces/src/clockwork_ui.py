@@ -21,8 +21,11 @@ import dash_leaflet as dl
 import plotly.express as px
 import pandas as pd
 import asyncio
+import logging
+import os
 from threading import Thread
 from nats.aio.client import Client as NATS
+from nats.errors import NoServersError
 import json
 from message_storage import MessageStorage
 import time
@@ -145,8 +148,29 @@ async def async_main():
     
     nats_server = command_line_args.nats_server + ":" + str(command_line_args.nats_port)
     nats = NATS()
-    await nats.connect(nats_server)
-    
+    connected = False
+    waiting_reported = False
+
+    async def nats_error(e):
+        # While connecting, the client retries for about two minutes and by
+        # default logs a full traceback for every failed attempt. Say once
+        # that we are waiting instead; after connecting, log as before.
+        nonlocal waiting_reported
+        if connected:
+            logging.getLogger("nats").error("nats: encountered error", exc_info=e)
+        elif not waiting_reported:
+            waiting_reported = True
+            print(f"Clockwork UI: waiting for NATS at {nats_server} ...", file=sys.stderr)
+
+    try:
+        await nats.connect(nats_server, error_cb=nats_error)
+    except NoServersError:
+        print(f"Clockwork UI: No NATS found at {nats_server}", file=sys.stderr)
+        # This runs in a thread next to the Dash server, so sys.exit would
+        # only end this thread; exit the whole process instead.
+        os._exit(1)
+    connected = True
+
     async def message_handler(msg):
         global current_status
         subject = msg.subject
