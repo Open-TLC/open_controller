@@ -97,7 +97,10 @@ class Clockwork:
                 logging.getLogger("nats").error("nats: encountered error", exc_info=e)
             elif not waiting_reported:
                 waiting_reported = True
-                print(f"Clockwork: waiting for NATS at {nats_address} ...", file=sys.stderr)
+                print(
+                    f"Clockwork: waiting for NATS at {nats_address} ...",
+                    file=sys.stderr,
+                )
 
         try:
             nc: Client = await connect(nats_address, error_cb=nats_error)
