@@ -51,6 +51,12 @@ class Clockwork:
         self._conf_file: str = args.conf_file
         self._conf = ClockworkConf(self._conf_file, print_status)
 
+        # Command line NATS settings override the configuration file.
+        if args.nats_server:
+            self._conf.nats.server = args.nats_server
+        if args.nats_port:
+            self._conf.nats.port = args.nats_port
+
         self._nc: Client
 
         self._publishers: dict[str, StatePublisher] = {}
