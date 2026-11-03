@@ -7,7 +7,8 @@ The module is meant to be used by Clockwork.
 # All Rights Reserved
 
 import argparse
-from typing import Any
+import sys
+from typing import Any, NoReturn
 
 import yaml
 
@@ -141,9 +142,17 @@ def load_sim_engine_conf_from_file(filename) -> SimEngineConf:
     return SimEngineConf(raw_conf)
 
 
+class _ArgumentParser(argparse.ArgumentParser):
+    """Put the parse error in the SystemExit so debuggers show it."""
+
+    def error(self, message: str) -> NoReturn:
+        self.print_usage(sys.stderr)
+        raise SystemExit(f"{self.prog}: error: {message}")
+
+
 def read_command_line():
     """Read command line arguments."""
-    parser = argparse.ArgumentParser()
+    parser = _ArgumentParser()
 
     parser.add_argument(
         "--conf-file",
