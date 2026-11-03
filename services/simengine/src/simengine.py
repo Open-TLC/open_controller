@@ -10,12 +10,14 @@ to a nats-server (in localhost or given address)
 import argparse
 import asyncio
 import json
+import logging
 import sys
 from datetime import datetime
 
 import libsumo as traci
 from nats.aio.client import Client
 from nats.aio.client import Client as NATS
+from nats.errors import NoServersError
 
 from services.control_engine.src.configuration import TimerConf
 from services.control_engine.src.timer import Timer
@@ -137,7 +139,25 @@ class SumoNatsInterface:
     async def connect_nats(self):
         """Connects to the nats server"""
         self.nats = Client()
-        await self.nats.connect(self.nats_server)
+        connected = False
+        waiting_reported = False
+
+        async def nats_error(e):
+            # While connecting, the client retries for about two minutes and by
+            # default logs a full traceback for every failed attempt. Say once
+            # that we are waiting instead; after connecting, log as before.
+            nonlocal waiting_reported
+            if connected:
+                logging.getLogger("nats").error("nats: encountered error", exc_info=e)
+            elif not waiting_reported:
+                waiting_reported = True
+                print(f"Simengine: waiting for NATS at {self.nats_server} ...", file=sys.stderr)
+
+        try:
+            await self.nats.connect(self.nats_server, error_cb=nats_error)
+        except NoServersError:
+            sys.exit(f"Simengine: No NATS found at {self.nats_server}")
+        connected = True
 
     async def send_statuses_to_nats(self):
         """This function will handle all the reading from sumo as well as sending data into nats"""
