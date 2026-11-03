@@ -173,4 +173,15 @@ def read_command_line():
         action="store_true",
     )
 
+    parser.add_argument(
+        "--nats-server",
+        help="NATS server address, overrides nats.url in --conf-file.",
+    )
+
+    parser.add_argument(
+        "--nats-port",
+        help="NATS server port, overrides nats.port in --conf-file.",
+        type=int,
+    )
+
     return parser.parse_args()
