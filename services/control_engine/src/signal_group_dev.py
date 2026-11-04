@@ -156,10 +156,28 @@ class SignalGroup:
 
         elif self.signal_state == "c" and self.green_permission:
             self.set_signal_state("f")
-            self.end_conflict_greens()
 
-        elif self.signal_state == "f" and not (self.conflict_group_blocking()):
-            self.set_signal_state("g")
+        elif self.signal_state == "f":
+            # Keep requesting conflicting greens to end while this group waits
+            # for its turn. Only latch the request on groups that are currently
+            # green, so it cannot be carried into a later green cycle.
+            for group in self.conflict_groups:
+                if (
+                    group.signal_state in {"1", "5", "4"}
+                    and not group.end_green_requested
+                ):
+                    group.end_green_requested = True
+                    print(
+                        "group: ",
+                        self._id,
+                        " state: ",
+                        self.signal_state,
+                        " end group: ",
+                        group._id,
+                    )
+
+            if not self.conflict_group_blocking():
+                self.set_signal_state("g")
 
         elif self.signal_state == "g" and self.intergreens_passed():
             self.set_signal_state("0")
@@ -170,7 +188,6 @@ class SignalGroup:
 
         elif self.signal_state == "1" and self._min_green_time_passed():
             self.set_signal_state("5")
-            self.end_green_requested = False
 
         elif self.signal_state == "5" and not (self.is_extending):
             self.set_signal_state("4")
@@ -178,6 +195,7 @@ class SignalGroup:
         elif self.signal_state == "4" and self.end_green_requested:
             self._amber_start_at()
             self.set_signal_state("<")
+            self.end_green_requested = False
 
         elif self.signal_state == "<" and self._min_amber_time_passed():
             self._red_start_at()
