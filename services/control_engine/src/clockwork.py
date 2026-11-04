@@ -116,7 +116,7 @@ class Clockwork:
             controller = create_controller(conf, instance._timer, instance._detectors)
             instance._controllers.append(controller)
 
-            example_states = controller.signal_states
+            example_states = controller.signal_states_by_sumo_link
             group_nums = [str(i) for i, _ in enumerate(example_states)]
 
             # Create state publisher for the controller.
@@ -177,9 +177,9 @@ class Clockwork:
                 # Update all controllers and publish their states.
                 for controller in self._controllers:
                     controller.tick()
-                    new_states: str = controller.signal_states
+                    new_states: str = controller.signal_states_by_sumo_link
                     await self._publishers[controller.id].publish(new_states)
-                    self._signal_states[controller.id] = new_states
+                    self._signal_states[controller.id] = controller.signal_states
 
         finally:
             # Clean up command subscription and NATS client.

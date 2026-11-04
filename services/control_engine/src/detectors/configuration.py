@@ -3,6 +3,9 @@ from nats.aio.client import Client
 from services.control_engine.src.detectors.traffic_indicators_area_detector import (
     TrafficIndicatorsAreaDetector,
 )
+from services.control_engine.src.detectors.nats_e1_detector import (
+    NatsE1PointDetector,
+)
 
 from .area_detector import AreaDetector
 from .point_detector import PointDetector
@@ -36,6 +39,7 @@ class DetectorConfiguration:
 
         self.type = det_type
         self.id = conf["id"]
+        self.options = conf.get("options", {})
 
 
 async def create_detectors(
@@ -59,7 +63,19 @@ async def create_detectors(
 
     for conf in detector_configurations:
         if conf.type == SUPPORTED_DETECTOR_TYPES[0]:
-            point_detectors.append(E1PointDetector(conf.id))
+            if nc is None:
+                # Integrated SimEngine and Clockwork share one libsumo instance.
+                point_detectors.append(E1PointDetector(conf.id))
+            else:
+                # In distributed mode, SUMO runs in SimEngine's process and its
+                # detector state arrives through NATS.
+                topic_prefix = conf.options.get(
+                    "topic_prefix",
+                    "detector.control",
+                )
+                point_detectors.append(
+                    await NatsE1PointDetector.create(nc, conf.id, topic_prefix),
+                )
 
         elif conf.type == SUPPORTED_DETECTOR_TYPES[1]:
             area_detectors.append(E2AreaDetector(conf.id))

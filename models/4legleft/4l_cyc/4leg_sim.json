@@ -1,0 +1,58 @@
+{
+  "simulation": {
+    "sumocfg": "models/dual/dual.sumocfg",
+    "mode": "nats",
+    "nats": {
+      "ip": "nats",
+      "port": 4222
+    }
+  },
+  "outputs": {
+    "sig_outputs": {
+      "type": "group",
+      "trigger": "update",
+      "controller_mapping_mode": "direct",
+      "controller_map": {
+        "1": "j1",
+        "2": "j2"
+      },
+      "signal_mapping_mode": "direct",
+      "signal_map": {
+        "1": "1",
+        "2": "2"
+      }
+    },
+    "rad_outputs": {
+      "radars": {}
+    },
+    "det_outputs": {
+      "type": "detector",
+      "trigger": "change",
+      "det_mapping_mode": "direct",
+      "topic_prefix": "detector.control",
+      "det_map": {
+        "sumo_det1": "det1"
+      },
+      "notes": "This is the detector output"
+    }
+  },
+  "inputs": {
+    "sig_inputs": {
+      "type": "group",
+      "trigger": "update",
+      "topic_prefix": "group.control",
+      "controller_mapping_mode": "direct",
+      "controller_map": {
+        "1": "j1",
+        "2": "j2"
+      },
+      "signal_mapping_mode": "direct",
+      "signal_map": {
+        "1": "1",
+        "2": "2"
+      }
+    },
+    "rad_inputs": {},
+    "det_inputs": {}
+  }
+}

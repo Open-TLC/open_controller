@@ -82,6 +82,11 @@ class SignalController(ABC):
         ...
 
     @property
+    def signal_states_by_sumo_link(self) -> str:
+        """Signal states ordered by SUMO traffic-light link index."""
+        return self.signal_states
+
+    @property
     @abstractmethod
     def signal_states_sumo(self) -> str:
         """Signal states in SUMO format."""

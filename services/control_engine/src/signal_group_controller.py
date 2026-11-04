@@ -178,6 +178,14 @@ class PhaseRingController(SignalController):
             for grp_id in self._sumo_outputs
         )
 
+    @property
+    def signal_states_by_sumo_link(self) -> str:
+        """Return OC signal states in SUMO link-index order."""
+        return "".join(
+            self._groups_by_id[grp_id].signal_state
+            for grp_id in self._sumo_outputs
+        )
+
     def tick(self) -> None:
         """Advance all signal groups and process phase transitions."""
         states_out = ""
