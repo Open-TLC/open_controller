@@ -701,15 +701,7 @@
                 "sumo_id": "e3Det_266_Mech_North_R",
                 "channel": "group.e3.266.5",
                 "group": "group5"
-                },
-
-        "e3d15m30":{
-                "type": "e3detector",
-                "sumo_id": "e3Det_266_Ped_South",
-                "channel": "group.e3.266.15",
-                "group": "group15"
                 }
-
     },
 
     

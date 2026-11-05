@@ -14,23 +14,29 @@ cmds = [
     [
         sys.executable,
         "C:/DEVE/open_controller/services/simengine/src/simengine.py",
-        "--nats-server", "10.8.0.36",
-        "--conf", "models/JS_266_DEMO/sim/JS_266_sim_hwil_demo.json",
-        "--sumo-conf", "models/JS_266_DEMO/cfgFiles/JS_266-267_HWIL.sumocfg",
-        "--graph"
+        "--nats-server",
+        "10.8.0.36",
+        "--conf",
+        "models/JS_266_DEMO/sim/JS_266_sim_hwil_demo.json",
+        "--sumo-conf",
+        "models/JS_266_DEMO/cfgFiles/JS_266-267_HWIL.sumocfg",
+        "--graph",
     ],
     [
         sys.executable,
         "C:/DEVE/open_controller/services/control_engine/src/clockwork.py",
-        "--nats-server", "10.8.0.36",
-        "--conf-file=models/JS_266_DEMO/contr/JS1_266_DEMO_042026B.json"
+        "--nats-server",
+        "10.8.0.36",
+        "--conf-file=models/JS_266_DEMO/contr/JS1_266_DEMO_042026D.json",
     ],
     [
         sys.executable,
         "C:/DEVE/open_controller/services/indicators/src/traffic_indicators.py",
-        "--nats-server", "10.8.0.36",
-        "--conf", "models/JS_266_DEMO/ind/JS_266-267_live_radars.json"
-    ]
+        "--nats-server",
+        "10.8.0.36",
+        "--conf",
+        "models/JS_266_DEMO/ind/JS_266-267_live_radars.json",
+    ],
 ]
 
 processes = []
@@ -46,11 +52,7 @@ def start_processes():
 
     print("Starting processes...")
     for cmd in cmds:
-        p = subprocess.Popen(
-            cmd,
-            cwd=WORKDIR,
-            creationflags=CREATE_NEW_CONSOLE
-        )
+        p = subprocess.Popen(cmd, cwd=WORKDIR, creationflags=CREATE_NEW_CONSOLE)
         processes.append(p)
 
     started = True
@@ -74,6 +76,7 @@ def stop_processes():
 
     # Give them time to exit
     import time
+
     time.sleep(3)
 
     # Force kill if still alive
