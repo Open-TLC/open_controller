@@ -19,7 +19,7 @@
 
 "sumo":{
     "graph" : true,
-    "file_name": "../testmodels/iisakki/JS_266/cfgFiles/JS_266-267_14.sumocfg",
+    "file_name": "models/JS_266_DEMO/cfgFiles/JS_266-267_HWIL.sumocfg",
     "print_status": true
 
 },
