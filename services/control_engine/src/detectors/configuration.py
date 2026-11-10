@@ -6,6 +6,9 @@ from services.control_engine.src.detectors.traffic_indicators_area_detector impo
 from services.control_engine.src.detectors.nats_e1_detector import (
     NatsE1PointDetector,
 )
+from services.control_engine.src.detectors.nats_e2_detector import (
+    NatsE2AreaDetector,
+)
 
 from .area_detector import AreaDetector
 from .point_detector import PointDetector
@@ -78,7 +81,16 @@ async def create_detectors(
                 )
 
         elif conf.type == SUPPORTED_DETECTOR_TYPES[1]:
-            area_detectors.append(E2AreaDetector(conf.id))
+            if nc is None:
+                area_detectors.append(E2AreaDetector(conf.id))
+            else:
+                topic_prefix = conf.options.get(
+                    "topic_prefix",
+                    "detector.control",
+                )
+                area_detectors.append(
+                    await NatsE2AreaDetector.create(nc, conf.id, topic_prefix),
+                )
 
         elif conf.type == SUPPORTED_DETECTOR_TYPES[2]:
             area_detectors.append(E3AreaDetector(conf.id))
