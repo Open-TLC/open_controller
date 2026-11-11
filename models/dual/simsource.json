@@ -28,7 +28,11 @@
       "radars": {}
     },
 
-    "det_outputs": {}
+    "det_outputs": {
+      "type": "detector",
+      "trigger": "change",
+      "topic_prefix": "detector.control"
+    }
   },
   "inputs": {
     "sig_inputs": {
