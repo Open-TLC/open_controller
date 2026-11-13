@@ -3,7 +3,7 @@ timer:
   time_step: 0.1
   real_time_multiplier: 1.0
 nats:
-  url: localhost
+  url: 10.8.0.36
   port: 4222
 simengine:
   sumo_conf: ../testmodels/iisakki/JS_266/cfgFiles/JS_266-267_14.sumocfg
@@ -11,7 +11,7 @@ clockwork:
   publisher:
     mode: change
   controllers:
-  - id: 266_Pork_Mech
+  - id: 266
     type: phasering
     options:
       print_status: true

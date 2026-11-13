@@ -36,11 +36,17 @@ class StatePublisher:
 
         self._update_always: bool = mode == "update"
 
-        self._old_states: str = ""  # Previous states for keeping track of changes
+        self._old_states: str | dict[str, str] | None = None
 
-    async def publish(self, states: str) -> None:
+    async def publish(self, states: str | dict[str, str]) -> None:
         """Publish states to controller state subject."""
-        if len(states) != len(self._group_ids):
+        if isinstance(states, dict):
+            if set(states) != set(self._group_ids):
+                raise ValueError(
+                    "Logical signal group IDs don't match the publisher mapping: "
+                    f"{sorted(states)} != {sorted(self._group_ids)}.",
+                )
+        elif len(states) != len(self._group_ids):
             raise ValueError(
                 "Number of states doesn't correspond to the number of signal groups, "
                 f"{len(states)} != {len(self._group_ids)}.",
@@ -48,7 +54,7 @@ class StatePublisher:
 
         return await self._publish_if_necessary(states)
 
-    async def _publish_if_necessary(self, states: str) -> None:
+    async def _publish_if_necessary(self, states: str | dict[str, str]) -> None:
         changed: bool = states != self._old_states
         self._old_states = states
 
@@ -57,14 +63,23 @@ class StatePublisher:
         if changed or self._update_always:
             await self._publish_to_nats(states)
 
-    async def _publish_to_nats(self, states: str) -> None:
-        for i, group_id in enumerate(self._group_ids):
+    async def _publish_to_nats(self, states: str | dict[str, str]) -> None:
+        if isinstance(states, dict):
+            state_items = [
+                (group_id, int(group_id), states[group_id])
+                for group_id in self._group_ids
+            ]
+        else:
+            state_items = [
+                (group_id, i, states[i])
+                for i, group_id in enumerate(self._group_ids)
+            ]
+
+        for group_id, group_number, state in state_items:
             subject = f"{self._controller_subject}.{group_id}"
 
-            state = states[i]
-
             msg = (
-                _GroupStateMessage(subject, state, i, _is_green(state))
+                _GroupStateMessage(subject, state, group_number, _is_green(state))
                 .to_json()
                 .encode()
             )

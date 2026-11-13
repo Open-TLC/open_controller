@@ -171,6 +171,24 @@ class PhaseRingController(SignalController):
         return "".join(grp.signal_state for grp in self._groups)
 
     @property
+    def signal_states_by_logical_group(self) -> dict[str, str]:
+        """Return states keyed by the configured logical group number."""
+        states: dict[str, str] = {}
+        for group_id in self._group_ids:
+            if not group_id.startswith("group") or not group_id[5:].isdigit():
+                raise ValueError(
+                    "Logical-group publishing requires group IDs in the form "
+                    f"'group<number>'; got {group_id!r}.",
+                )
+            group_number = int(group_id[5:])
+            if group_number < 1:
+                raise ValueError(
+                    f"Logical signal group numbers must start at 1; got {group_id!r}.",
+                )
+            states[str(group_number)] = self._groups_by_id[group_id].signal_state
+        return states
+
+    @property
     def signal_states_sumo(self) -> str:
         """Return signal states mapped to SUMO formatting."""
         return "".join(

@@ -5,7 +5,7 @@
 -->
 
 <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
-    <tlLogic id="266_Pork_Mech" type="static" programID="1" offset="-10">
+    <tlLogic id="266" type="static" programID="1" offset="-10">
         <phase duration="20" state="rGrGGGGGGrGrrGrGrGrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="3"  state="rGryyyyyGrGrrGrGrGrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="30" state="rGGrrrrrGGGrrGrGrGrrrrrrrrrrrrrrrrrrrrrr"/>

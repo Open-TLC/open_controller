@@ -3,7 +3,7 @@
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
     
     <input>
-       <net-file value="../net/JS_266A.net.xml"/>
+       <net-file value="../net/JS_266B.net.xml"/>
        <route-files value="../rou/JS_266-267_cars_trucks_HWIL.rou.xml, ../rou/JS_266-267_trams.rou.xml, ../rou/JS_266-267_bikes_north_south.rou.xml"/>
        <additional-files v="../add/JS_266-267_stations.add.xml, ../add/JS_266_e1dets_new.add.xml, ../add/JS_266_e3dets.add.xml,
                             ../tll/ft266_1.tll.xml, ../tll/ft267_1.tll.xml"/>

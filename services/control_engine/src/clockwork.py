@@ -116,8 +116,21 @@ class Clockwork:
             controller = create_controller(conf, instance._timer, instance._detectors)
             instance._controllers.append(controller)
 
-            example_states = controller.signal_states_by_sumo_link
-            group_nums = [str(i) for i, _ in enumerate(example_states)]
+            if instance._conf.publisher.group_id_mode == "logical_group":
+                logical_states = getattr(
+                    controller,
+                    "signal_states_by_logical_group",
+                    None,
+                )
+                if logical_states is None:
+                    raise ValueError(
+                        "Logical-group publishing requires a controller that exposes "
+                        "signal_states_by_logical_group.",
+                    )
+                group_nums = list(logical_states)
+            else:
+                example_states = controller.signal_states_by_sumo_link
+                group_nums = [str(i) for i, _ in enumerate(example_states)]
 
             # Create state publisher for the controller.
             instance._publishers[controller.id] = StatePublisher(
@@ -177,7 +190,10 @@ class Clockwork:
                 # Update all controllers and publish their states.
                 for controller in self._controllers:
                     controller.tick()
-                    new_states: str = controller.signal_states_by_sumo_link
+                    if self._conf.publisher.group_id_mode == "logical_group":
+                        new_states = controller.signal_states_by_logical_group
+                    else:
+                        new_states = controller.signal_states_by_sumo_link
                     await self._publishers[controller.id].publish(new_states)
                     self._signal_states[controller.id] = controller.signal_states
 

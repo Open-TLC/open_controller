@@ -276,23 +276,87 @@ class SumoNatsInterface:
         (This message is sent by the clockwork or other external controller)
         """
         controller_nats_id = channel.split(".")[-2]
-        light_id = int(channel.split(".")[-1])
+        group_id = channel.split(".")[-1]
 
-        # Find the the sumo controller that mathces with the NATS controller id DBIK202508
+        input_conf = self.group_input or {}
+        topic_prefix = input_conf.get("topic_prefix", GROUP_CHANNEL_CONTROL)
+        if topic_prefix == "group.status":
+            # ITC-2 status messages do not have a separate `group` field;
+            # their ID carries the controller and logical group identifiers.
+            message_id = message.get("id")
+            if not isinstance(message_id, str):
+                raise ValueError(
+                    "group.status messages must include a string 'id' field.",
+                )
+            id_parts = message_id.split(".")
+            if len(id_parts) != 4 or ".".join(id_parts[:2]) != "group.status":
+                raise ValueError(
+                    f"Invalid group.status message id: {message_id!r}.",
+                )
+            status_controller_id, group_id = id_parts[2:]
+            if status_controller_id != controller_nats_id:
+                raise ValueError(
+                    f"Message controller {status_controller_id} does not match "
+                    f"NATS subject controller {controller_nats_id}.",
+                )
+
+        controller_map = input_conf.get("controller_map", {})
+        controller_sumo_id = str(
+            controller_map.get(controller_nats_id, controller_nats_id),
+        )
         sumo_controllers = traci.trafficlight.getIDList()
-        if controller_nats_id not in sumo_controllers:
-            raise ValueError(
-                f"Received signal states for unknown controller: {controller_nats_id}",
-            )
+        if controller_sumo_id not in sumo_controllers:
+            matches = [
+                sumo_id
+                for sumo_id in sumo_controllers
+                if controller_sumo_id in sumo_id
+            ]
+            if len(matches) == 1:
+                controller_sumo_id = matches[0]
+            else:
+                raise ValueError(
+                    "Received signal states for unknown or ambiguous controller: "
+                    f"{controller_nats_id} (mapped to {controller_sumo_id!r})",
+                )
 
-        controller_sumo_id: str = ""
+        group_link_map = input_conf.get("group_link_map")
+        if group_link_map is None:
+            # Backwards-compatible mode: the NATS suffix is a SUMO link index.
+            link_ids = [int(group_id)]
+        else:
+            if group_id not in group_link_map:
+                raise ValueError(
+                    f"No SUMO link mapping configured for logical group {group_id!r} "
+                    f"on controller {controller_nats_id!r}.",
+                )
+            configured_links = group_link_map[group_id]
+            if not isinstance(configured_links, list):
+                raise ValueError(
+                    f"group_link_map[{group_id!r}] must be a list of "
+                    "SUMO link indices.",
+                )
+            link_ids = [int(link_id) for link_id in configured_links]
 
-        for sumo_id in sumo_controllers:
-            if controller_nats_id in sumo_id:
-                controller_sumo_id = sumo_id
+            if topic_prefix != "group.status":
+                try:
+                    message_group = int(message["group"])
+                except (KeyError, TypeError, ValueError) as e:
+                    raise ValueError(
+                        "Logical-group control messages must include a numeric "
+                        "'group' field.",
+                    ) from e
+                if message_group != int(group_id):
+                    raise ValueError(
+                        f"NATS subject group {group_id} doesn't match payload "
+                        f"group {message_group}.",
+                    )
 
-        if not controller_sumo_id:
-            raise ValueError("Couldn't bind controller to SUMO ID")
+            if not link_ids:
+                print(
+                    f"Ignoring logical group {group_id} for SUMO: "
+                    "no link indices are mapped.",
+                )
+                return
 
         # Status message contains no command for green
         # We induce the state from the substate
@@ -303,9 +367,21 @@ class SumoNatsInterface:
         else:
             sumo_group_state = "r"
 
-        print(f"Setting {controller_sumo_id}:{light_id} -> {sumo_group_state}")
-
-        traci.trafficlight.setLinkState(controller_sumo_id, light_id, sumo_group_state)
+        link_count = len(
+            traci.trafficlight.getRedYellowGreenState(controller_sumo_id),
+        )
+        for light_id in link_ids:
+            if light_id < 0 or light_id >= link_count:
+                raise ValueError(
+                    f"SUMO link index {light_id} is out of range for controller "
+                    f"{controller_sumo_id!r} (valid range: 0..{link_count - 1}).",
+                )
+            print(f"Setting {controller_sumo_id}:{light_id} -> {sumo_group_state}")
+            traci.trafficlight.setLinkState(
+                controller_sumo_id,
+                light_id,
+                sumo_group_state,
+            )
 
     def control_V2X_speed(self, subject, msg_dict):
         """Sets the speed for given V2X vehicles"""
