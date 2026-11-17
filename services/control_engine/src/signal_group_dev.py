@@ -167,14 +167,15 @@ class SignalGroup:
                     and not group.end_green_requested
                 ):
                     group.end_green_requested = True
-                    print(
-                        "group: ",
-                        self._id,
-                        " state: ",
-                        self.signal_state,
-                        " end group: ",
-                        group._id,
-                    )
+                    if False:  # Debug output
+                        print(
+                            "group: ",
+                            self._id,
+                            " state: ",
+                            self.signal_state,
+                            " end group: ",
+                            group._id,
+                        )
 
             if not self.conflict_group_blocking():
                 self.set_signal_state("g")

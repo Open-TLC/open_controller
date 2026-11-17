@@ -1,0 +1,61 @@
+{
+  "simulation": {
+    "sumocfg": "models/4legleft/4l_cyc/4leg_cyc.sumocfg",
+    "sumo_conf": "models/4legleft/4l_cyc/4leg_cyc.sumocfg",
+    "mode": "nats",
+    "nats": {
+      "ip": "localhost",
+      "port": 4222
+    }
+  },
+  "outputs": {
+    "sig_outputs": {
+      "type": "group",
+      "trigger": "update",
+      "topic_prefix": "group.data",
+      "controller_mapping_mode": "direct",
+      "controller_map": {
+        "N_J1": "N_J1"
+      },
+      "signal_mapping_mode": "direct",
+      "signal_map": {}
+    },
+    "rad_outputs": {
+      "radars": {}
+    },
+    "det_outputs": {
+      "type": "detector",
+      "trigger": "change",
+      "det_mapping_mode": "direct",
+      "topic_prefix": "detector.control",
+      "det_map": {
+        "sumo_det1": "det1"
+      },
+      "notes": "This is the detector output"
+    }
+  },
+  "inputs": {
+    "sig_inputs": {
+      "type": "group",
+      "trigger": "update",
+      "topic_prefix": "group.control",
+      "controller_mapping_mode": "direct",
+      "controller_map": {
+        "N_J1": "N_J1"
+      },
+      "signal_mapping_mode": "direct",
+      "signal_map": {},
+      "group_link_map": {
+        "1": [3, 4],
+        "2": [5],
+        "3": [6],
+        "4": [7, 8],
+        "5": [9],
+        "6": [0],
+        "7": [1, 2]
+      }
+    },
+    "rad_inputs": {},
+    "det_inputs": {}
+  }
+}

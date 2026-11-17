@@ -82,6 +82,14 @@ class PublisherConf:
             )
         self.mode = mode
 
+        group_id_mode = raw_conf.get("group_id_mode", "sumo_link")
+        if group_id_mode not in ["sumo_link", "logical_group"]:
+            raise ValueError(
+                "Unknown publisher group_id_mode "
+                f"{group_id_mode}. Supported modes: sumo_link, logical_group.",
+            )
+        self.group_id_mode = group_id_mode
+
 
 SUPPORTED_TIMER_MODES: list[str] = ["fixed", "real"]
 

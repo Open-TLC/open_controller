@@ -28,7 +28,7 @@ else:
     DEFAULT_SUBJECT_STAT_DETECTORS = "detector.status"  # Prefix
 
 
-DEFAULT_SUBJECT_STAT_GROUPS = "group.status"  # Prefix
+DEFAULT_SUBJECT_STAT_GROUPS = "group.data"  # Prefix for SimEngine outputs
 
 
 class GlobalConf:
@@ -48,6 +48,19 @@ class GlobalConf:
         # Step 3: Read command line
         if command_line_params:
             self.set_vals_from_command(command_line_params)
+        self.validate_signal_topics()
+
+    def validate_signal_topics(self):
+        """Keep signal input and output on separate NATS subject prefixes."""
+        sig_input = self.conf.get("inputs", {}).get("sig_inputs", {})
+        sig_output = self.conf.get("outputs", {}).get("sig_outputs", {})
+        input_prefix = sig_input.get("topic_prefix")
+        output_prefix = sig_output.get("topic_prefix")
+        if input_prefix and input_prefix == output_prefix:
+            raise ValueError(
+                "Signal input and output topic_prefix values must differ; "
+                f"both are {input_prefix!r}.",
+            )
 
     def __str__(self):
         return str(self.conf)

@@ -28,7 +28,7 @@ clockwork:
   - id: j1
     type: phasering
     options:
-      print_status: false
+      print_status: true
       sumo_outputs:
       - east-r
       - east-l
