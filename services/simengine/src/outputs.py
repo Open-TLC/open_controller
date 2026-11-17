@@ -146,60 +146,66 @@ class DetStorage:
         self.conf = conf
         self.topic_prefix = conf["topic_prefix"]
 
-    def add_det_value(self, det_id, loop_on):
-        """Adds a detector status to the dictionary returns True if the status has changed"""
-        if det_id not in self.statuses or loop_on != self.statuses[det_id]:
-            self.statuses[det_id] = loop_on
+    def add_det_value(self, det_id, detector_values):
+        """Store detector values and report whether their state changed."""
+        if det_id not in self.statuses or detector_values != self.statuses[det_id]:
+            self.statuses[det_id] = (
+                detector_values.copy()
+                if isinstance(detector_values, dict)
+                else detector_values
+            )
             return True
         return False
 
     def read_det_values_from_sumo(self):
         """Returns dict of detector statuses"""
-        sumo_loops = traci.inductionloop.getIDList()
         det_statuses = {}
+        current_time = datetime.now().isoformat()
 
-        for det_id_sumo in sumo_loops:
-            det_status = {}
-
-            current_time = datetime.now().isoformat()
-            det_status["tstamp"] = str(current_time)
-
+        for det_id_sumo in traci.inductionloop.getIDList():
             vehnum = traci.inductionloop.getLastStepVehicleNumber(det_id_sumo)
             occup = traci.inductionloop.getLastStepOccupancy(det_id_sumo)
+            det_statuses[det_id_sumo] = {
+                "tstamp": current_time,
+                "loop_on": (vehnum > 0) or (occup > 0),
+            }
 
-            if (vehnum > 0) or (occup > 0):  # DBIK 10.22  or (occup > 0):
-                loop_on = True
-            else:
-                loop_on = False
-            det_status["loop_on"] = loop_on
-            det_statuses[det_id_sumo] = det_status
+        for det_id_sumo in traci.lanearea.getIDList():
+            vehicle_count = traci.lanearea.getLastStepVehicleNumber(det_id_sumo)
+            average_speed = traci.lanearea.getLastStepMeanSpeed(det_id_sumo)
+            average_time_loss = traci.lanearea.getLastIntervalMeanTimeLoss(det_id_sumo)
+            det_statuses[det_id_sumo] = {
+                "tstamp": current_time,
+                "vehicle_count": max(0.0, float(vehicle_count)),
+                "average_speed": max(0.0, float(average_speed)),
+                "average_time_loss": max(0.0, float(average_time_loss)),
+            }
         return det_statuses
 
     def get_messages_current(self):
         """Returns a dict with data to be send to NATS"""
         messages = {}
         from_sumo = self.read_det_values_from_sumo()
-        for det_id in from_sumo:
-            det_status = {}
-            det_status["id"] = self.topic_prefix + "." + det_id
-            det_status["loop_on"] = from_sumo[det_id]["loop_on"]
-            det_status["tstamp"] = str(datetime.now().isoformat())
-            det_status_json = json.dumps(det_status)
-            messages[self.topic_prefix + "." + det_id] = det_status_json.encode()
+        for det_id, detector_values in from_sumo.items():
+            subject = f"{self.topic_prefix}.{det_id}"
+            det_status = {"id": subject, **detector_values}
+            messages[subject] = json.dumps(det_status).encode()
         return messages
 
     def get_messages_changed(self):
         """Returns a dict with data to be send to NATS, but only for the ones changed"""
         messages = {}
         from_sumo = self.read_det_values_from_sumo()
-        for det_id in from_sumo:
-            if self.add_det_value(det_id, from_sumo[det_id]["loop_on"]):
-                det_status = {}
-                det_status["id"] = self.topic_prefix + "." + det_id
-                det_status["loop_on"] = from_sumo[det_id]["loop_on"]
-                det_status["tstamp"] = str(datetime.now().isoformat())
-                det_status_json = json.dumps(det_status)
-                messages[self.topic_prefix + "." + det_id] = det_status_json.encode()
+        for det_id, detector_values in from_sumo.items():
+            values_without_timestamp = {
+                key: value
+                for key, value in detector_values.items()
+                if key != "tstamp"
+            }
+            if self.add_det_value(det_id, values_without_timestamp):
+                subject = f"{self.topic_prefix}.{det_id}"
+                det_status = {"id": subject, **detector_values}
+                messages[subject] = json.dumps(det_status).encode()
         return messages
 
     def test():
