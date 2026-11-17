@@ -9,7 +9,7 @@ simengine:
   sumo_conf: ../testmodels/iisakki/JS_266/cfgFiles/JS_266-267_14.sumocfg
 clockwork:
   publisher:
-    mode: change
+    mode: group_change
     group_id_mode: logical_group
   controllers:
   - id: 266

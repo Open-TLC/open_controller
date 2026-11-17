@@ -23,7 +23,7 @@ class StatePublisher:
             nc: NATS client used to publish messages.
             controller_id: ID of the signal controller.
             group_ids: List of signal group IDs in the same order as the states.
-            mode: "update" or "change"
+            mode: "update", "change", or "group_change"
 
         """
         self._controller_id = controller_id
@@ -34,9 +34,20 @@ class StatePublisher:
 
         self._group_ids = group_ids.copy()
 
+        self._mode = mode
         self._update_always: bool = mode == "update"
 
         self._old_states: str | dict[str, str] | None = None
+        self._old_group_states: dict[str, str] | None = None
+
+    async def publish_initial_red(self) -> None:
+        """Send the startup red command to every group in group_change mode."""
+        if self._mode != "group_change":
+            return
+
+        red_states = {group_id: "a" for group_id in self._group_ids}
+        await self._publish_to_nats(red_states)
+        self._old_group_states = red_states
 
     async def publish(self, states: str | dict[str, str]) -> None:
         """Publish states to controller state subject."""
@@ -55,6 +66,27 @@ class StatePublisher:
         return await self._publish_if_necessary(states)
 
     async def _publish_if_necessary(self, states: str | dict[str, str]) -> None:
+        if self._mode == "group_change":
+            current_states = self._states_by_group(states)
+            if self._old_group_states is None:
+                # Also support direct use of StatePublisher without Clockwork's
+                # startup hook: send the red baseline before any live states.
+                await self.publish_initial_red()
+
+            assert self._old_group_states is not None
+            changed_states = {
+                group_id: state
+                for group_id, state in current_states.items()
+                if self._old_group_states[group_id] != state
+            }
+            if changed_states:
+                await self._publish_to_nats(
+                    changed_states,
+                    group_ids=list(changed_states),
+                )
+            self._old_group_states = current_states
+            return
+
         changed: bool = states != self._old_states
         self._old_states = states
 
@@ -63,16 +95,29 @@ class StatePublisher:
         if changed or self._update_always:
             await self._publish_to_nats(states)
 
-    async def _publish_to_nats(self, states: str | dict[str, str]) -> None:
+    def _states_by_group(self, states: str | dict[str, str]) -> dict[str, str]:
+        if isinstance(states, dict):
+            return states.copy()
+        return {
+            group_id: states[index]
+            for index, group_id in enumerate(self._group_ids)
+        }
+
+    async def _publish_to_nats(
+        self,
+        states: str | dict[str, str],
+        group_ids: list[str] | None = None,
+    ) -> None:
+        selected_group_ids = self._group_ids if group_ids is None else group_ids
         if isinstance(states, dict):
             state_items = [
                 (group_id, int(group_id), states[group_id])
-                for group_id in self._group_ids
+                for group_id in selected_group_ids
             ]
         else:
             state_items = [
                 (group_id, i, states[i])
-                for i, group_id in enumerate(self._group_ids)
+                for i, group_id in enumerate(selected_group_ids)
             ]
 
         for group_id, group_number, state in state_items:

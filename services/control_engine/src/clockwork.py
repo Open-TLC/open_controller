@@ -165,6 +165,11 @@ class Clockwork:
         await self._nc.publish(STATUS_SUBJECT, b"started")
 
         try:
+            # In group_change mode, establish an explicit red baseline before the
+            # first controller tick can publish any live substate changes.
+            for publisher in self._publishers.values():
+                await publisher.publish_initial_red()
+
             while self._keep_alive:
                 # When not updating, wait for state to change (start or exit) before
                 # advancing.
@@ -216,6 +221,8 @@ class Clockwork:
             self._timer.reset()
             for controller in self._controllers:
                 controller.reset()
+            for publisher in self._publishers.values():
+                await publisher.publish_initial_red()
             self._update = True
             self._state_changed.set()
 

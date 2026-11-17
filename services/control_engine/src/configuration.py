@@ -76,9 +76,10 @@ class PublisherConf:
 
     def __init__(self, raw_conf: dict[str, Any]) -> None:
         mode = raw_conf.get("mode") or DEFAULT_PUBLISHER_MODE
-        if mode not in ["change", "update"]:
+        if mode not in ["change", "update", "group_change"]:
             raise ValueError(
-                f"Unknown publisher mode {mode}. Supported modes: change, update.",
+                "Unknown publisher mode "
+                f"{mode}. Supported modes: change, update, group_change.",
             )
         self.mode = mode
 
